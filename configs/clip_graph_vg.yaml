@@ -1,0 +1,25 @@
+# Example experiment config (plain YAML, read into dataclasses by mmxai.utils.config).
+# One file = one experiment. Copy and edit; never select values on the test split.
+experiment: clip_graph_vg
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+seeds: [0, 1, 2]
+
+features:
+  model: ViT-B-32
+  pretrained: laion2b_s34b_b79k
+  cache_dir: artifacts/features
+
+retrieval:
+  top_k: 100
+
+graph:
+  edges: [contains, scene_relation]   # add conceptnet later; statistical edges from train only
+  gnn: gcn                            # gcn | gat | sage
+  hidden_dim: 256
+  num_layers: 2
+
+rerank:
+  alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # chosen on val only
+
+output_dir: results/runs
