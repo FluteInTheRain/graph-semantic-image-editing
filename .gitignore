@@ -2,8 +2,47 @@ __pycache__/
 *.pyc
 .venv/
 .ipynb_checkpoints/
+# was `data/`: anchored so it no longer hides src/mmxai/data/, and `/*` lets data/README.md be re-included
 /data/*
-!/data/README.md
 *.pt
 *.ckpt
 .DS_Store
+
+# --- data & large artifacts (see docs/decisions/0008) ---
+!/data/README.md
+artifacts/
+*.npy
+*.npz
+*.faiss
+*.index
+*.pth
+*.safetensors
+mmkg/images/
+
+# --- experiment outputs (see docs/decisions/0010) ---
+results/runs/
+runs/
+*.log
+
+# --- python tooling ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+
+# --- editors / OS ---
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+
+# --- secrets ---
+.env
+
+# --- Claude Code: personal, never commit (see docs/decisions/0020, 0021) ---
+.claude/settings.local.json
+CLAUDE.local.md
