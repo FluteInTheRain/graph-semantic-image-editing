@@ -182,7 +182,7 @@ Mỗi lần chạy xử lý một bộ dữ liệu. Muốn làm song song thì m
 | `"flickr30k"` | Flickr30k | 10–25 phút |
 
 1. Tải notebook lên Kaggle, bật GPU và Internet.
-2. Gắn ảnh bằng **Add Input**: `eeshawn/flickr30k` cho Flickr30k (bắt buộc), `lyte69/visualgenome-part1-part2` cho Visual Genome (nên có, nếu không notebook tự tải khoảng 15 GB, và chưa rõ dung lượng thư mục tạm có đủ không). Không cần làm theo §3 trên Kaggle: notebook tự tải file JSON.
+2. Gắn ảnh bằng **Add Input**: [`eeshawn/flickr30k`](https://www.kaggle.com/datasets/eeshawn/flickr30k) cho Flickr30k (bắt buộc), [`lyte69/visualgenome-part1-part2`](https://www.kaggle.com/datasets/lyte69/visualgenome-part1-part2) cho Visual Genome (nên có, nếu không notebook tự tải khoảng 15 GB, và chưa rõ dung lượng thư mục tạm có đủ không). Không cần làm theo §3 trên Kaggle: notebook tự tải file JSON.
 3. **Đổi `DATASET`.** Không đổi code giữa hai lần chạy, nếu không hai bộ embedding có thể không so sánh được.
 4. Chọn **Save Version → Save & Run All**. Chỉ cách này mới giữ lại output: file trong phiên làm việc thường sẽ mất khi phiên kết thúc. Notebook chạy smoke trước, lỗi thì dừng; đạt thì chạy đầy đủ rồi tự kiểm tra kết quả.
 5. Mở phần Output của phiên bản vừa chạy và kiểm tra `meta.json` (§6). Nếu kiểm tra thất bại, thư mục kết quả sẽ không được tạo.
