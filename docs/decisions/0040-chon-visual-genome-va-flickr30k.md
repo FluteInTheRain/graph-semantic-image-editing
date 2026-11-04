@@ -16,7 +16,7 @@ Cấp độ 2 yêu cầu thực nghiệm trên **ít nhất 2 tập công khai**
 
 Số đếm từ file gốc ngày 2026-11-04: Visual Genome có 108.077 ảnh và 5.408.689 region; `dataset_flickr30k.json` có 31.014 ảnh, 155.070 caption, chia 29.000 / 1.014 / 1.000.
 
-Trên Kaggle, ảnh Flickr30k lấy từ bản sao `eeshawn/flickr30k`. Danh sách file của bản này có đủ 31.014 ảnh, không trùng tên, và có nêu điều khoản gốc.
+Trên Kaggle, ảnh Flickr30k lấy từ bản sao `eeshawn/flickr30k`: danh sách file có đủ 31.014 ảnh, không trùng tên, và có nêu điều khoản gốc. Ảnh Visual Genome lấy từ `lyte69/visualgenome-part1-part2`: danh sách file có đủ 108.077 ảnh.
 
 ## Các phương án đã cân nhắc
 
@@ -40,7 +40,7 @@ Trên Kaggle, ảnh Flickr30k lấy từ bản sao `eeshawn/flickr30k`. Danh sá
 - Visual Genome: https://homes.cs.washington.edu/~ranjay/visualgenome/api.html
 - Dataset card Visual Genome: https://huggingface.co/datasets/visual_genome
 - Flickr30k: https://shannon.cs.illinois.edu/DenotationGraph/
-- Bản sao trên Kaggle: https://www.kaggle.com/datasets/eeshawn/flickr30k
+- Bản sao trên Kaggle: https://www.kaggle.com/datasets/eeshawn/flickr30k, https://www.kaggle.com/datasets/lyte69/visualgenome-part1-part2
 - NativE: https://github.com/zjukg/NATIVE
 - AdaMF-MAT: https://github.com/zjukg/AdaMF-MAT
 - MKGformer: https://github.com/zjunlp/MKGformer

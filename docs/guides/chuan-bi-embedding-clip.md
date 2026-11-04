@@ -50,6 +50,7 @@ text_image_ids = texts["image_ids"]  # văn bản i thuộc về ảnh text_imag
 Embedding đã chuẩn hoá L2, nên tích vô hướng chính là cosine:
 
 ```python
+# Filter to the split you are allowed to use first (see the note below).
 scores = image_embeddings @ text_embeddings[0]
 ```
 
@@ -177,22 +178,22 @@ Mỗi lần chạy xử lý một bộ dữ liệu. Muốn làm song song thì m
 
 | `DATASET` | Bộ dữ liệu | Thời gian ước tính (chưa đo) |
 |---|---|---|
-| `"visual_genome"` | Visual Genome | 20–40 phút; tới ~75 phút nếu phải tải ảnh |
-| `"flickr30k"` | Flickr30k | 10–25 phút nếu ảnh có sẵn trên Kaggle |
+| `"visual_genome"` | Visual Genome | 20–40 phút nếu gắn sẵn ảnh; tới ~75 phút nếu phải tải |
+| `"flickr30k"` | Flickr30k | 10–25 phút |
 
 1. Tải notebook lên Kaggle, bật GPU và Internet.
-2. Gắn dữ liệu ảnh vào notebook, hoặc tải theo §3 vào thư mục tạm, vì thư mục output có giới hạn dung lượng.
+2. Gắn ảnh bằng **Add Input**: `eeshawn/flickr30k` cho Flickr30k (bắt buộc), `lyte69/visualgenome-part1-part2` cho Visual Genome (nên có, nếu không notebook tự tải khoảng 15 GB, và chưa rõ dung lượng thư mục tạm có đủ không). Không cần làm theo §3 trên Kaggle: notebook tự tải file JSON.
 3. **Đổi `DATASET`.** Không đổi code giữa hai lần chạy, nếu không hai bộ embedding có thể không so sánh được.
-4. Run All. Notebook chạy smoke trước, lỗi thì dừng; đạt thì chạy đầy đủ rồi kiểm tra kết quả.
-5. Xem kết quả kiểm tra (§6). Không đăng nếu có lỗi.
-6. Tạo Kaggle dataset từ output:
+4. Chọn **Save Version → Save & Run All**. Chỉ cách này mới giữ lại output: file trong phiên làm việc thường sẽ mất khi phiên kết thúc. Notebook chạy smoke trước, lỗi thì dừng; đạt thì chạy đầy đủ rồi tự kiểm tra kết quả.
+5. Mở phần Output của phiên bản vừa chạy và kiểm tra `meta.json` (§6). Nếu kiểm tra thất bại, thư mục kết quả sẽ không được tạo.
+6. Tạo Kaggle dataset từ output đó:
    - `clip-features-visual-genome`: công khai, ghi nguồn và CC BY 4.0.
    - `clip-features-flickr30k`: **riêng tư, chia sẻ cho nhóm**, cho tới khi xác nhận được điều khoản cho phép đăng công khai.
 7. Dán link vào §2 của file này.
 
 Không lưu token Kaggle trong repo hoặc trong nội dung notebook.
 
-**Khi sửa code:** sửa trong `src/mmxai/` trước, rồi chạy `uv run python scripts/sync_notebook_code.py` để cập nhật notebook. `tests/test_notebooks_match_src.py` sẽ báo lỗi nếu bản sao bị lệch.
+**Khi sửa code:** sửa trong `src/mmxai/` trước, rồi chạy `uv run python scripts/sync_notebook_code.py` để cập nhật notebook. `tests/test_notebooks_match_src.py` sẽ báo lỗi nếu bản sao bị lệch. Khi gỡ lỗi trên Kaggle, sau khi sửa một ô code hãy **Restart Kernel** rồi chạy lại, để code đang chạy khớp với `code_hash`. Sửa module sẽ đổi `code_hash`, nên phải chạy lại cả hai bộ dữ liệu trước khi đăng.
 
 ## 6. Kiểm tra kết quả
 
@@ -218,7 +219,9 @@ Mở `meta.json` và xác nhận: `is_partial` là `false`, `code_hash` và `ope
 | Hết bộ nhớ GPU | Giảm `image_batch_size` hoặc `text_batch_size` trong config |
 | Chạy rất chậm dù có GPU | Kiểm tra `num_workers`. Đọc và thay đổi kích thước ảnh diễn ra trên CPU |
 | `meta.json` không khớp config | Không dùng cache đó. Tạo lại hoặc sửa đúng config |
-| Hết dung lượng trên Kaggle | Đặt ảnh ở thư mục tạm, không đặt trong thư mục output |
+| Hết dung lượng trên Kaggle | Gắn sẵn ảnh bằng Add Input thay vì để notebook tải |
+| Báo "text and image rows look misaligned" | Đây là lỗi lệch hàng, chỉ sửa lỗi đó. **Không** đổi model, seed hay số region để check này đạt, vì như vậy là chọn tham số theo kết quả (PDF §6) |
+| In ra `device: cpu` | Chưa bật GPU. Dừng lại, bật GPU rồi chạy lại |
 
 ## 8. Câu hỏi vấn đáp thường gặp
 

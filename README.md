@@ -576,6 +576,7 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 | [`docs/decisions/`](docs/decisions/) | Các ADR (Architecture Decision Record – ghi chép quyết định thiết kế): bố cục repo, lựa chọn dữ liệu/mô hình và lý do |
 | [`CLAUDE.md`](CLAUDE.md) | Cấu hình và quy ước cho trợ lý AI (Claude Code) khi làm việc trong repo |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Hướng dẫn đóng góp: quy trình branch, commit, review |
+| [`docs/guides/chuan-bi-embedding-clip.md`](docs/guides/chuan-bi-embedding-clip.md) | Tải dữ liệu, dùng hoặc tạo lại embedding CLIP (Visual Genome, Flickr30k) |
 
 💡 Nhắc lại theo PDF §9: dùng công cụ AI phải **khai báo trong báo cáo**.
 

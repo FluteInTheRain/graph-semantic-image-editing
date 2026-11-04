@@ -2,7 +2,10 @@
 
 import json
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from mmxai.features.pipeline import CODE_MODULES
 
@@ -84,3 +87,60 @@ def test_notebook_has_no_outputs():
         if cell["cell_type"] == "code":
             assert cell["outputs"] == []
             assert cell["execution_count"] is None
+
+
+def load_helpers(tmp_path: Path) -> dict:
+    """Run the notebook's helper cell with Kaggle folders redirected and downloads recorded."""
+    helper_cells = [
+        cell_text(cell)
+        for cell in load_cells()
+        if cell["cell_type"] == "code" and "def prepare_visual_genome" in cell_text(cell)
+    ]
+    namespace = {"subprocess": subprocess, "Path": Path, "CODE_ROOT": str(tmp_path / "code")}
+    exec(helper_cells[0], namespace)
+
+    namespace["KAGGLE_INPUT"] = tmp_path / "input"
+    namespace["VISUAL_GENOME_DIR"] = tmp_path / "temp" / "visual_genome"
+    namespace["FLICKR_DIR"] = tmp_path / "temp" / "flickr30k"
+    namespace["downloads"] = []
+    namespace["download_and_unzip"] = lambda url, target: namespace["downloads"].append(url)
+    return namespace
+
+
+def test_attached_visual_genome_needs_no_image_download(tmp_path):
+    helpers = load_helpers(tmp_path)
+    for folder in ["images/VG_100K", "images2/VG_100K_2"]:
+        (tmp_path / "input" / "vg" / folder).mkdir(parents=True)
+    (tmp_path / "input" / "vg" / "images2" / "VG_100K_2" / "1.jpg").write_bytes(b"x")
+
+    _, images_dir = helpers["prepare_visual_genome"]()
+
+    # The copy keeps its two parts in different folders; the loader expects one.
+    assert (images_dir / "VG_100K_2" / "1.jpg").exists()
+    assert (images_dir / "VG_100K").is_dir()
+    assert not any("images" in url.split("/")[-1] for url in helpers["downloads"])
+    assert any("region_descriptions" in url for url in helpers["downloads"])
+
+
+def test_visual_genome_downloads_images_when_nothing_is_attached(tmp_path):
+    helpers = load_helpers(tmp_path)
+    (tmp_path / "input").mkdir()
+    helpers["prepare_visual_genome"]()
+    assert any(url.endswith("images.zip") for url in helpers["downloads"])
+    assert any(url.endswith("images2.zip") for url in helpers["downloads"])
+
+
+def test_flickr_images_found_through_symlinked_input(tmp_path):
+    helpers = load_helpers(tmp_path)
+    real_folder = tmp_path / "mounted" / "flickr30k_images"
+    real_folder.mkdir(parents=True)
+    (tmp_path / "input").mkdir()
+    (tmp_path / "input" / "flickr").symlink_to(tmp_path / "mounted")
+    assert helpers["find_flickr_images"]().name == "flickr30k_images"
+
+
+def test_missing_flickr_images_tell_the_user_what_to_attach(tmp_path):
+    helpers = load_helpers(tmp_path)
+    (tmp_path / "input").mkdir()
+    with pytest.raises(FileNotFoundError, match="eeshawn/flickr30k"):
+        helpers["find_flickr_images"]()

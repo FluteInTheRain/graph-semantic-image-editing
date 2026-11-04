@@ -7,6 +7,9 @@
 | Thành phần | Bản dùng | Nguồn |
 |---|---|---|
 | Ảnh, `image_data.json`, `region_descriptions.json` | v1.2 | https://homes.cs.washington.edu/~ranjay/visualgenome/api.html |
+| Ảnh (trên Kaggle) | Bản sao | https://www.kaggle.com/datasets/lyte69/visualgenome-part1-part2 |
+
+Đã đối chiếu **danh sách file** của bản sao ngày 2026-11-04: có đủ 108.077 ảnh; 170 file rỗng và các ảnh thừa khác không nằm trong danh sách cần dùng. Chưa kiểm tra nội dung ảnh.
 
 Ngày tải: chưa tải đầy đủ. Hai file JSON được tải để đếm ngày 2026-11-04. Ghi ngày tải ảnh sau lần chạy thật.
 

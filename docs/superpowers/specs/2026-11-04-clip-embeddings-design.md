@@ -255,6 +255,8 @@ khai được ngay sau khi ghi nguồn. Mọi điều kiện được ghi vào d
 | Thư viện | Dùng torch có sẵn trên Kaggle, cài `open-clip-torch==3.3.0` (bản trong `uv.lock`), ghi phiên bản vào `meta.json` |
 | Smoke | Chạy thử 1.000 ảnh + 10.000 văn bản rồi `verify_features`. Lỗi thì dừng, không chạy phần đầy đủ |
 | Ảnh Flickr30k | Gắn [`eeshawn/flickr30k`](https://www.kaggle.com/datasets/eeshawn/flickr30k), thư mục `flickr30k_images/`. Danh sách file đã đối chiếu 2026-11-04: 31.783 ảnh không trùng tên, có đủ 31.014 ảnh của Karpathy. Nội dung ảnh sẽ được kiểm tra khi chạy (`failed_image_ids`). Caption vẫn lấy từ `dataset_flickr30k.json`, không dùng `captions.txt` của bản sao |
+| Ảnh Visual Genome | Gắn [`lyte69/visualgenome-part1-part2`](https://www.kaggle.com/datasets/lyte69/visualgenome-part1-part2). Danh sách file đã đối chiếu 2026-11-04: có đủ 108.077 ảnh; 170 file rỗng đều không nằm trong danh sách cần dùng. Bản này để `VG_100K` và `VG_100K_2` ở hai thư mục khác nhau nên notebook tạo symlink. Không gắn thì notebook tự tải |
+| Xuất bản | Dùng Save Version → Save & Run All để giữ output. Kiểm tra chạy trước khi thư mục có tên cuối cùng, nên kết quả lỗi không xuất hiện trong output |
 | Kaggle dataset | `clip-features-visual-genome`, `clip-features-flickr30k` |
 | Bí mật | Không cần token GitHub. Không lưu token Kaggle trong repo hay notebook. Người đăng tự thao tác bằng tài khoản của họ |
 
@@ -295,9 +297,7 @@ Cần `uv sync` chạy được trước bước 2. Hiện máy này chưa cài 
 
 | Câu hỏi | Trạng thái |
 |---|---|
-| Có bản sao ảnh Visual Genome trên Kaggle không? | Chưa kiểm tra. Nếu không có thì notebook tải từ nguồn chính thức |
 | Giới hạn số phiên GPU chạy song song của Kaggle | Chưa xác nhận. Nếu không cho phép thì chạy lần lượt, không phải sửa code |
-| Bố cục thư mục sau khi giải nén `images.zip`, `images2.zip` | Chưa xác nhận. Tên trường JSON của cả hai bộ đã xác nhận trên file thật |
 
 ## 13. Phần để người xây dựng tự quyết
 
