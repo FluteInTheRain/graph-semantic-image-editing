@@ -26,3 +26,4 @@ bộ nội dung khi vấn đáp**. File này là nguồn để viết mục "Kha
 | Ngày | Thành viên | Công cụ | Phần việc AI hỗ trợ | Phần đã chỉnh sửa | Đã tự kiểm tra/hiểu chưa |
 |---|---|---|---|---|---|
 | 2026-11-01 | (trưởng nhóm) | Claude Code (Opus) | Dựng cấu hình công cụ AI: `CLAUDE.md`, `.claude/` (settings, hooks, rules, agents, skills), `.mcp.json`, ADR-0020 đến ADR-0027, file này | (chưa) | Chưa |
+| 2026-11-04 | qphulong | Claude Code (Opus 5.5), skill `superpowers:brainstorming`, subagent builder check | Viết bản thiết kế `docs/superpowers/specs/2026-11-04-clip-embeddings-design.md` và hướng dẫn `docs/guides/chuan-bi-embedding-clip.md`; so sánh bản sao Flickr30k trên Kaggle | (chưa) | Chưa |
