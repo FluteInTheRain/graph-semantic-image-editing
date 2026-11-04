@@ -5,6 +5,7 @@
 | File (sẽ tạo) | Bộ dữ liệu |
 |---|---|
 | `data_cards/visual_genome.md` | Visual Genome |
+| `data_cards/flickr30k.md` | Flickr30k |
 | `data_cards/fb15k237_img.md` | FB15k-237-IMG |
 | `data_cards/mkg_wy.md` | MKG-W / MKG-Y |
 | `data_cards/mmkg_vi.md` | MMKG tiếng Việt tự xây (bắt buộc ở cấp độ 3) |
