@@ -1,6 +1,6 @@
 # Hướng dẫn: tải dữ liệu và tạo lại embedding CLIP
 
-> **Đã chạy thật trên Kaggle ngày 2026-11-04**, kết quả kiểm tra ở §6. Còn thiếu: link Kaggle ở §2 và thời gian đo được ở §5. Thiết kế: [`docs/superpowers/specs/2026-11-04-clip-embeddings-design.md`](../superpowers/specs/2026-11-04-clip-embeddings-design.md).
+> **Đã chạy thật trên Kaggle ngày 2026-11-04**, kết quả kiểm tra ở §6. Còn thiếu: thời gian đo được ở §5. Thiết kế: [`docs/superpowers/specs/2026-11-04-clip-embeddings-design.md`](../superpowers/specs/2026-11-04-clip-embeddings-design.md).
 
 ## 1. Bạn cần làm gì?
 
@@ -14,9 +14,12 @@
 
 ## 2. Dùng embedding có sẵn
 
-Link Kaggle sẽ được điền sau khi đăng: `TODO`.
+Embedding nằm trong Output của notebook Kaggle: <https://www.kaggle.com/code/qphulong/prepare-clip-embeddings-for-mmkg-xai/>
 
-Đặt file tải về như sau:
+1. Mở link trên, chọn **View Versions**.
+2. Notebook có 2 phiên bản, mỗi phiên bản ứng với một bộ dữ liệu. Mở một phiên bản, vào tab **Output**. Tên thư mục trong đó (`flickr30k` hoặc `visual_genome`) cho biết đó là bộ nào.
+3. Tải 3 file của bộ đó về, rồi làm lại với phiên bản còn lại.
+4. Đặt file vào đúng thư mục dưới đây, tính từ thư mục gốc của repo:
 
 ```text
 artifacts/features/
@@ -31,6 +34,12 @@ artifacts/features/
 ```
 
 Thư mục `features/` là bắt buộc: config đọc từ `output_root: artifacts/features`, nên đặt ở `artifacts/<dataset>/` thì code sẽ không tìm thấy.
+
+Kiểm tra: lệnh sau phải liệt kê đủ 6 file.
+
+```bash
+find artifacts/features -type f
+```
 
 `artifacts/` đã có trong `.gitignore`, nên các file này không bị commit nhầm.
 

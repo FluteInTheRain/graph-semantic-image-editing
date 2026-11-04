@@ -42,7 +42,7 @@ Dữ liệu không có đồ thị. Dự kiến liên kết từ trong caption s
 
 ## Embedding
 
-Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`, toàn bộ caption. `image_id` là số trong tên file, ví dụ `1000092795.jpg` → `1000092795`. Tạo trên Kaggle ngày 2026-11-04. Kaggle dataset dự kiến: `clip-features-flickr30k`, riêng tư. Link: chưa ghi nhận.
+Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`, toàn bộ caption. `image_id` là số trong tên file, ví dụ `1000092795.jpg` → `1000092795`. Tạo trên Kaggle ngày 2026-11-04. Tải từ tab Output của notebook https://www.kaggle.com/code/qphulong/prepare-clip-embeddings-for-mmkg-xai/, cách làm ở §2 của `docs/guides/chuan-bi-embedding-clip.md`. ADR-0041 dự kiến dùng Kaggle dataset riêng tư `clip-features-flickr30k`; hiện nhóm chia sẻ qua Output của notebook.
 
 ## Hạn chế và rủi ro
 
