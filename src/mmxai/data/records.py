@@ -12,7 +12,8 @@ class ImageRecord:
     path: Path
 
 
-@dataclass(frozen=True)
+# slots keeps memory down: Visual Genome holds 5.4 million of these before sampling.
+@dataclass(frozen=True, slots=True)
 class TextRecord:
     """One text to encode, linked to the image it describes."""
 
