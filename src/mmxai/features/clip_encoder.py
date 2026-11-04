@@ -52,6 +52,13 @@ def load_frozen_clip(model_name: str, pretrained: str, device: str) -> ClipBundl
     return ClipBundle(model, preprocess, tokenizer, real_device)
 
 
+def library_versions() -> dict[str, str]:
+    """Record the versions that produced the embeddings."""
+    import open_clip
+
+    return {"open_clip": open_clip.__version__, "torch": torch.__version__}
+
+
 class ImageRecordDataset(Dataset):
     """Reads images in DataLoader workers, because decoding is the slow part."""
 

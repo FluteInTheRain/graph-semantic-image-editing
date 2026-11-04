@@ -90,9 +90,14 @@ def check_alignment(
     matched_rows = np.array([row_of_image[int(text_image_ids[row])] for row in text_rows])
     shuffled_rows = rng.permutation(matched_rows)
 
-    samples = text_embeddings[text_rows]
-    matched_score = np.sum(samples * image_embeddings[matched_rows], axis=1).mean()
-    shuffled_score = np.sum(samples * image_embeddings[shuffled_rows], axis=1).mean()
+    # A shuffle can leave a pair unchanged, which says nothing, so compare only changed pairs.
+    changed = shuffled_rows != matched_rows
+    if not changed.any():
+        return []
+
+    samples = text_embeddings[text_rows[changed]]
+    matched_score = np.sum(samples * image_embeddings[matched_rows[changed]], axis=1).mean()
+    shuffled_score = np.sum(samples * image_embeddings[shuffled_rows[changed]], axis=1).mean()
     if matched_score <= shuffled_score:
         return [
             "text and image rows look misaligned: "

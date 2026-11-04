@@ -7,7 +7,7 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | Script | Làm gì | Gọi vào |
 |---|---|---|
 | `scripts/make_splits.py` | Tạo file split train/val/test cố định, ghi vào `splits/` | `mmxai.data` |
-| `scripts/extract_features.py` | Trích đặc trưng CLIP **một lần**, lưu cache | `mmxai.features` |
+| `scripts/extract_features.py` (đã có) | Trích đặc trưng CLIP **một lần**, lưu cache. Hướng dẫn: `docs/guides/chuan-bi-embedding-clip.md` | `mmxai.features.pipeline` |
 | `scripts/build_index.py` | Dựng chỉ mục FAISS | `mmxai.index` |
 | `scripts/build_graph.py` | Dựng đồ thị ảnh - đối tượng - khái niệm (cạnh thống kê chỉ từ train) | `mmxai.graph` |
 | `scripts/train_gnn.py` | Huấn luyện GNN graph scorer | `mmxai.models` |

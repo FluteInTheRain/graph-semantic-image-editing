@@ -154,3 +154,12 @@ def test_misaligned_rows_fail_sanity_check(tmp_path):
     arrays["text_embeddings"] = arrays["text_embeddings"][::-1]
     with pytest.raises(FeatureVerificationError, match="misaligned"):
         verify_features(write_flickr(tmp_path / "out", arrays))
+
+
+def test_shuffle_that_changes_nothing_is_not_called_misaligned(tmp_path):
+    # With few rows a shuffle can leave every pair unchanged; that proves nothing.
+    arrays = make_arrays(5)
+    keep = arrays["text_image_ids"] == arrays["image_ids"][0]
+    arrays["text_embeddings"] = arrays["text_embeddings"][keep]
+    arrays["text_image_ids"] = arrays["text_image_ids"][keep]
+    verify_features(write_flickr(tmp_path / "out", arrays, is_partial=True))
