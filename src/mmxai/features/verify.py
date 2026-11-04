@@ -61,9 +61,9 @@ def check_texts_per_image(text_image_ids: np.ndarray, meta: dict) -> list[str]:
     if meta["dataset"] == "visual_genome" and counts.max() > meta["regions_per_image"]:
         return [f"some images have more than {meta['regions_per_image']} regions"]
     # A trial run may stop in the middle of an image's captions.
-    if meta["dataset"] == "flickr30k" and not meta["is_partial"]:
-        if (counts != CAPTIONS_PER_IMAGE).any():
-            return [f"some images do not have exactly {CAPTIONS_PER_IMAGE} captions"]
+    is_complete_flickr = meta["dataset"] == "flickr30k" and not meta["is_partial"]
+    if is_complete_flickr and (counts != CAPTIONS_PER_IMAGE).any():
+        return [f"some images do not have exactly {CAPTIONS_PER_IMAGE} captions"]
     return []
 
 
