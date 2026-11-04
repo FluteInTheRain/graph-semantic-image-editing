@@ -1,7 +1,6 @@
 # Hướng dẫn: tải dữ liệu và tạo lại embedding CLIP
 
-> ⚠️ **Code chưa được viết.** Phần tải dữ liệu (§3) dùng được ngay. Các lệnh ở §4 trở đi mô tả cách chạy **dự kiến**
-> theo [bản thiết kế](../superpowers/specs/2026-11-04-clip-embeddings-design.md). Cập nhật file này khi code xong.
+> ⚠️ **Chưa chạy thật.** Code và notebook đã có, nhưng CLIP thật mới chạy lần đầu khi bạn chạy notebook trên Kaggle. Link Kaggle ở §2 và thời gian ở §5 sẽ được cập nhật sau lần chạy đó. Thiết kế: [`docs/superpowers/specs/2026-11-04-clip-embeddings-design.md`](../superpowers/specs/2026-11-04-clip-embeddings-design.md).
 
 ## 1. Bạn cần làm gì?
 
