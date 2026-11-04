@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 import numpy as np
@@ -42,8 +43,13 @@ def save_features(
     text_id_name: str,
     text_id_values: np.ndarray,
     meta: dict,
+    check: Callable[[Path], None] | None = None,
 ) -> None:
-    """Write one complete feature set. Refuses to overwrite an existing one."""
+    """Write one complete feature set. Refuses to overwrite an existing one.
+
+    `check` runs on the finished files before they get their final name, so
+    output that fails it is removed and can never be mistaken for a real result.
+    """
     output_dir = Path(output_dir)
     if output_dir.exists():
         raise FileExistsError(f"{output_dir} already exists; delete it to extract again")
@@ -68,6 +74,13 @@ def save_features(
     np.savez(temp_dir / TEXT_FILE, **text_arrays)
     with open(temp_dir / META_FILE, "w", encoding="utf-8") as file:
         json.dump(meta, file, indent=2)
+
+    if check is not None:
+        try:
+            check(temp_dir)
+        except Exception:
+            shutil.rmtree(temp_dir)
+            raise
 
     os.replace(temp_dir, output_dir)
 

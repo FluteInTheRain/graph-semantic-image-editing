@@ -143,6 +143,8 @@ def run_extraction(
     print(f"{config.dataset}: {len(images)} images, {len(texts)} texts")
 
     bundle = clip_encoder.load_frozen_clip(config.model, config.pretrained, config.device)
+    # A forgotten GPU setting otherwise only shows up as a run that takes hours.
+    print(f"device: {bundle.device}")
     image_embeddings, image_ids, failed_ids = clip_encoder.encode_images(
         bundle, images, config.image_batch_size, config.num_workers
     )
@@ -173,7 +175,7 @@ def run_extraction(
         text_id_name=TEXT_ID_NAMES[config.dataset],
         text_id_values=[text.text_id for text in texts],
         meta=meta,
+        check=verify_features,
     )
-    verify_features(output_dir)
     print(f"saved and verified: {output_dir}")
     return output_dir

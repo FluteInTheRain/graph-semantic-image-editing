@@ -20,6 +20,7 @@ from mmxai.features.pipeline import (
     run_extraction,
     with_path_overrides,
 )
+from mmxai.features.verify import FeatureVerificationError
 from mmxai.utils.config import FeatureConfig
 
 DIM = 16
@@ -93,7 +94,9 @@ def fake_encoder(monkeypatch):
         module.calls.append("texts")
         return np.stack([vector_for(int(text)) for text in texts])
 
-    module.load_frozen_clip = lambda model_name, pretrained, device: object()
+    module.load_frozen_clip = lambda model_name, pretrained, device: types.SimpleNamespace(
+        device="cpu"
+    )
     module.library_versions = lambda: {"open_clip": "3.3.0", "torch": "fake"}
     module.encode_images = encode_images
     module.encode_texts = encode_texts
@@ -235,3 +238,23 @@ def test_rerun_fails_before_encoding(tmp_path, fake_encoder):
     with pytest.raises(FileExistsError):
         run_extraction(config)
     assert fake_encoder.calls == []
+
+
+def test_failed_verification_leaves_no_output_folder(tmp_path, fake_encoder):
+    config = make_config(tmp_path)
+    write_flickr_files(Path(config.data_dir))
+    fake_encoder.encode_texts = lambda bundle, texts, batch_size: np.full((len(texts), DIM), np.nan)
+    with pytest.raises(FeatureVerificationError):
+        run_extraction(config)
+    # Nothing may remain that could be published as a finished result.
+    assert list(Path(config.output_root).rglob("meta.json")) == []
+
+
+def test_run_extraction_prints_the_device(tmp_path, fake_encoder, capsys):
+    config = make_config(tmp_path)
+    write_flickr_files(Path(config.data_dir))
+    fake_encoder.load_frozen_clip = lambda model, pretrained, device: types.SimpleNamespace(
+        device="cuda"
+    )
+    run_extraction(config)
+    assert "device: cuda" in capsys.readouterr().out

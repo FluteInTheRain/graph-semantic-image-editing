@@ -144,3 +144,46 @@ def test_meta_is_valid_json_on_disk(tmp_path):
     output_dir = tmp_path / "features"
     save_small_features(output_dir)
     assert json.loads((output_dir / "meta.json").read_text()) == {"dataset": "flickr30k"}
+
+
+def failing_check(folder: Path) -> None:
+    raise ValueError("bad output")
+
+
+def test_failed_check_removes_all_output(tmp_path):
+    output_dir = tmp_path / "features"
+    with pytest.raises(ValueError, match="bad output"):
+        save_features(
+            output_dir,
+            image_embeddings=np.eye(2),
+            image_ids=np.array([10, 20]),
+            text_embeddings=np.eye(2),
+            text_image_ids=np.array([10, 20]),
+            text_id_name="caption_index",
+            text_id_values=np.array([0, 0]),
+            meta={"dataset": "flickr30k"},
+            check=failing_check,
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_check_runs_before_the_final_folder_exists(tmp_path):
+    output_dir = tmp_path / "features"
+    seen = []
+
+    def record_state(folder: Path) -> None:
+        seen.append((output_dir.exists(), (folder / "meta.json").exists()))
+
+    save_features(
+        output_dir,
+        image_embeddings=np.eye(2),
+        image_ids=np.array([10, 20]),
+        text_embeddings=np.eye(2),
+        text_image_ids=np.array([10, 20]),
+        text_id_name="caption_index",
+        text_id_values=np.array([0, 0]),
+        meta={"dataset": "flickr30k"},
+        check=record_state,
+    )
+    assert seen == [(False, True)]
+    assert output_dir.exists()
