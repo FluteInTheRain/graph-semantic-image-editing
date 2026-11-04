@@ -5,6 +5,8 @@
 | File | Vai trò |
 |---|---|
 | `configs/clip_graph_vg.yaml` | Ví dụ mẫu (chưa dùng bởi code): CLIP + GCN trên Visual Genome. Copy để tạo thí nghiệm mới. |
+| `configs/features_visual_genome.yaml` | Trích embedding CLIP cho Visual Genome (5 region mỗi ảnh) |
+| `configs/features_flickr30k.yaml` | Trích embedding CLIP cho Flickr30k |
 
 Quy tắc (lý do: `docs/decisions/0007-cau-hinh-yaml-va-dataclass.md`):
 - YAML thuần. Code sau này sẽ đọc bằng `yaml.safe_load` rồi nạp vào `dataclass` (dự kiến đặt ở `src/mmxai/utils/`).

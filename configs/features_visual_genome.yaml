@@ -1,0 +1,17 @@
+# CLIP feature extraction for Visual Genome (see docs/guides/chuan-bi-embedding-clip.md).
+dataset: visual_genome
+dataset_version: "1.2"
+data_dir: data/visual_genome
+output_root: artifacts/features
+
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto            # cuda if available, otherwise cpu
+image_batch_size: 256
+text_batch_size: 1024
+num_workers: 4
+max_failed_image_fraction: 0.001
+
+# Fixed before any retrieval result exists, so the choice cannot favour a model.
+regions_per_image: 5
+sampling_seed: 0

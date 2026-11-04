@@ -1,0 +1,13 @@
+# CLIP feature extraction for Flickr30k (see docs/guides/chuan-bi-embedding-clip.md).
+dataset: flickr30k
+dataset_version: karpathy
+data_dir: data/flickr30k
+output_root: artifacts/features
+
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto            # cuda if available, otherwise cpu
+image_batch_size: 256
+text_batch_size: 1024
+num_workers: 4
+max_failed_image_fraction: 0.001
