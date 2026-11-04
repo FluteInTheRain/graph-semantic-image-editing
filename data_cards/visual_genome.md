@@ -11,7 +11,7 @@
 
 Đã đối chiếu **danh sách file** của bản sao ngày 2026-11-04: có đủ 108.077 ảnh; 170 file rỗng và các ảnh thừa khác không nằm trong danh sách cần dùng. Chưa kiểm tra nội dung ảnh.
 
-Ngày tải: chưa tải đầy đủ. Hai file JSON được tải để đếm ngày 2026-11-04. Ghi ngày tải ảnh sau lần chạy thật.
+Ngày chạy trên Kaggle: 2026-11-04. Người chạy cần ghi rõ ảnh lấy từ bản sao đã gắn hay do notebook tự tải.
 
 ## Giấy phép
 
@@ -28,7 +28,7 @@ CC BY 4.0 theo dataset card trên Hugging Face (https://huggingface.co/datasets/
 | Region mỗi ảnh | Ít nhất 3, nhiều nhất 267 |
 | Văn bản sau khi chọn 5 region mỗi ảnh | 540.383 |
 
-Số ảnh mã hoá được thật, và số ảnh lỗi nếu có, sẽ ghi sau lần chạy trên Kaggle.
+Lần chạy ngày 2026-11-04 mã hoá đủ 108.077 ảnh và 540.383 văn bản, `failed_image_ids` rỗng. Một ảnh chỉ có 3 văn bản, các ảnh còn lại có 5.
 
 ## Split
 
@@ -40,9 +40,11 @@ Dùng đối tượng và quan hệ có sẵn trong dữ liệu. Phần dựng �
 
 ## Embedding
 
-Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`. Chọn 5 region mỗi ảnh ngẫu nhiên với `sampling_seed: 0`, chỉ bỏ `phrase` rỗng, và làm trước khi có bất kỳ kết quả truy vấn nào. Kaggle dataset dự kiến: `clip-features-visual-genome`, công khai. Link: chưa đăng.
+Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`. Chọn 5 region mỗi ảnh ngẫu nhiên với `sampling_seed: 0`, chỉ bỏ `phrase` rỗng, và làm trước khi có bất kỳ kết quả truy vấn nào. Tạo trên Kaggle ngày 2026-11-04. Kaggle dataset dự kiến: `clip-features-visual-genome`, công khai. Link: chưa ghi nhận.
 
 ## Hạn chế và rủi ro
 
 - Region chỉ mô tả một phần ảnh, thường ngắn và chung chung, nên nhiều ảnh có thể khớp cùng một câu. Điều này ảnh hưởng tới cách diễn giải Recall@K.
 - Ảnh Visual Genome lấy một phần từ MS-COCO.
+- Có 5 vector ảnh trùng hệt một ảnh khác, nhiều khả năng là ảnh trùng. Khi tạo split, các ảnh này phải nằm cùng một tập để tránh rò rỉ (PDF §6).
+- 140.886 vector văn bản (26%) trùng một vector khác, nhiều khả năng do cùng một câu ngắn xuất hiện ở nhiều ảnh; chưa đối chiếu với văn bản gốc. Cần quyết định cách xử lý trước khi dùng làm truy vấn hoặc cặp dương khi huấn luyện.

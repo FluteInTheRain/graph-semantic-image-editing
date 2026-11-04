@@ -1,6 +1,6 @@
 # Hướng dẫn: tải dữ liệu và tạo lại embedding CLIP
 
-> ⚠️ **Chưa chạy thật.** Code và notebook đã có, nhưng CLIP thật mới chạy lần đầu khi bạn chạy notebook trên Kaggle. Link Kaggle ở §2 và thời gian ở §5 sẽ được cập nhật sau lần chạy đó. Thiết kế: [`docs/superpowers/specs/2026-11-04-clip-embeddings-design.md`](../superpowers/specs/2026-11-04-clip-embeddings-design.md).
+> **Đã chạy thật trên Kaggle ngày 2026-11-04**, kết quả kiểm tra ở §6. Còn thiếu: link Kaggle ở §2 và thời gian đo được ở §5. Thiết kế: [`docs/superpowers/specs/2026-11-04-clip-embeddings-design.md`](../superpowers/specs/2026-11-04-clip-embeddings-design.md).
 
 ## 1. Bạn cần làm gì?
 
@@ -29,6 +29,8 @@ artifacts/features/
     ├── text_features.npz
     └── meta.json
 ```
+
+Thư mục `features/` là bắt buộc: config đọc từ `output_root: artifacts/features`, nên đặt ở `artifacts/<dataset>/` thì code sẽ không tìm thấy.
 
 `artifacts/` đã có trong `.gitignore`, nên các file này không bị commit nhầm.
 
@@ -209,6 +211,22 @@ Script tự kiểm tra sau khi chạy. Có lỗi thì script báo thất bại.
 
 Mở `meta.json` và xác nhận: `is_partial` là `false`, `code_hash` và `open_clip_version` giống nhau ở hai bộ dữ liệu, và
 `failed_image_ids` rỗng hoặc rất ít.
+
+### Kết quả lần chạy ngày 2026-11-04
+
+Kiểm tra lại trên bản đã tải về máy: `verify_features` đạt ở cả hai bộ, và file `.npz` không hỏng (CRC).
+
+| Mục | Flickr30k | Visual Genome |
+|---|---|---|
+| Số ảnh | 31.014 | 108.077 |
+| Số văn bản | 155.070 | 540.383 |
+| Số văn bản mỗi ảnh | 5 | 5, riêng một ảnh có 3 |
+| `failed_image_ids` | rỗng | rỗng |
+| `is_partial` | `false` | `false` |
+
+Cả hai bộ dùng `open_clip` 3.3.0, `torch` 2.11.0+cu130 và cùng `code_hash` `6f1ebf3a…ba027`, khớp với code hiện tại trong `src/mmxai/`.
+
+Chưa kiểm tra: máy kiểm tra không có dữ liệu thô nên chưa mã hoá lại để so nội dung, và chưa so checksum với bản trên Kaggle. Bằng chứng hàng khớp với nội dung chỉ là cặp đúng có cosine cao hơn cặp xáo trộn.
 
 ## 7. Lỗi thường gặp
 

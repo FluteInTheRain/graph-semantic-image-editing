@@ -10,7 +10,7 @@
 | Ảnh (trên Kaggle) | Bản sao https://www.kaggle.com/datasets/eeshawn/flickr30k, không phải bản nhóm tải trực tiếp từ tác giả |
 | Ảnh (chính thức) | Form tại https://shannon.cs.illinois.edu/DenotationGraph/ |
 
-Đã đối chiếu **danh sách file** của bản sao ngày 2026-11-04: 31.783 ảnh, không trùng tên, có đủ 31.014 ảnh trong `dataset_flickr30k.json`. Chưa kiểm tra nội dung ảnh; lần chạy thật sẽ báo ảnh hỏng trong `failed_image_ids`.
+Đã đối chiếu **danh sách file** của bản sao ngày 2026-11-04: 31.783 ảnh, không trùng tên, có đủ 31.014 ảnh trong `dataset_flickr30k.json`. Lần chạy ngày 2026-11-04 mã hoá được toàn bộ, `failed_image_ids` rỗng.
 
 ## Giấy phép và điều kiện sử dụng
 
@@ -30,7 +30,7 @@ Trang chính thức ghi: ảnh chỉ dành cho nghiên cứu/giáo dục phi th�
 | Caption | 155.070, đúng 5 caption mỗi ảnh |
 | Split Karpathy | 29.000 train / 1.014 val / 1.000 test |
 
-769 ảnh còn lại của bản đầy đủ không có trong file này nên không được dùng. Số ảnh mã hoá được thật sẽ ghi sau lần chạy trên Kaggle.
+769 ảnh còn lại của bản đầy đủ không có trong file này nên không được dùng. Lần chạy ngày 2026-11-04 mã hoá đủ 31.014 ảnh và 155.070 caption.
 
 ## Split
 
@@ -42,9 +42,10 @@ Dữ liệu không có đồ thị. Dự kiến liên kết từ trong caption s
 
 ## Embedding
 
-Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`, toàn bộ caption. `image_id` là số trong tên file, ví dụ `1000092795.jpg` → `1000092795`. Kaggle dataset dự kiến: `clip-features-flickr30k`, riêng tư. Link: chưa đăng.
+Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`, toàn bộ caption. `image_id` là số trong tên file, ví dụ `1000092795.jpg` → `1000092795`. Tạo trên Kaggle ngày 2026-11-04. Kaggle dataset dự kiến: `clip-features-flickr30k`, riêng tư. Link: chưa ghi nhận.
 
 ## Hạn chế và rủi ro
 
 - Ảnh lấy qua bản sao của người khác, nguồn gốc không do nhóm kiểm soát.
 - Cần tự dựng liên kết ConceptNet; chất lượng liên kết ảnh hưởng tới điểm đồ thị.
+- Có 1 vector ảnh trùng hệt một ảnh khác, nhiều khả năng là ảnh trùng. Khi tạo split, các ảnh này phải nằm cùng một tập để tránh rò rỉ (PDF §6). Có 500 vector caption trùng, nhiều khả năng do câu giống nhau; chưa đối chiếu với văn bản gốc.
