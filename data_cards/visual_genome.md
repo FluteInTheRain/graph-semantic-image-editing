@@ -32,13 +32,13 @@ Lần chạy ngày 2026-11-04 mã hoá đủ 108.077 ảnh và 540.383 văn bả
 
 ## Split
 
-Visual Genome không có split chính thức nên nhóm tự tạo (ADR-0009, ADR-0042): chia theo ảnh, test 5.000, val 5.000, train phần còn lại; ảnh có embedding trùng nhau luôn nằm cùng một tập. Tạo bằng:
+Visual Genome không có split chính thức nên nhóm tự tạo (ADR-0009, ADR-0042): chia theo ảnh, test 5.000, val 5.000, train 98.077; ảnh có embedding gần trùng (cosine ≥ 0,99) luôn nằm cùng một tập. Lần tạo ngày 2026-11-05 có 247 nhóm 2 ảnh, không có nhóm lớn hơn; chạy lại cho ra file giống hệt từng byte. Tạo bằng:
 
 ```bash
 uv run python scripts/make_splits.py --config configs/splits_visual_genome.yaml
 ```
 
-Kết quả: `splits/visual_genome/split_seed0.json`. Chưa tạo file thật (cần tải embedding về `artifacts/features/` trước).
+Kết quả: `splits/visual_genome/split_seed0.json` (đã commit, đóng băng).
 
 ## Cách liên kết ảnh - thực thể
 
