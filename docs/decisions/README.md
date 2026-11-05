@@ -56,3 +56,10 @@ Thư mục này chứa các **ADR** (Architecture Decision Record): mỗi file g
 | [0025](0025-skill-du-an-new-adr-run-experiment-log-ai-usage.md) | Ba skill dự án: `/new-adr`, `/run-experiment`, `/log-ai-usage` |
 | [0026](0026-mcp-context7-arxiv-va-khong-bat-plugin-cap-du-an.md) | MCP cấp dự án gồm context7 (tài liệu thư viện) và arxiv; không bật plugin ở cấp dự án |
 | [0027](0027-nhat-ky-su-dung-ai.md) | Ghi nhật ký dùng công cụ AI trong `docs/ai-usage-log.md` để khai báo trong báo cáo |
+
+## Quyết định khi cài đặt (0040 trở đi)
+
+| ADR | Quyết định |
+|---|---|
+| [0040](0040-chon-visual-genome-va-flickr30k.md) | Dùng Visual Genome và Flickr30k + ConceptNet làm hai tập công khai |
+| [0041](0041-dinh-dang-embedding-npz-va-chia-se-qua-kaggle.md) | Lưu embedding dạng `.npz` + `meta.json`, chia sẻ qua Kaggle, notebook chứa bản sao code |

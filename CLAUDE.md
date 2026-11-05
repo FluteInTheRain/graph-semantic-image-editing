@@ -38,7 +38,7 @@ báo xong vẫn phải chạy `uv run ruff check` và `uv run pytest`, và dán 
   `eval/` (metric), `explain/` (giải thích + fidelity), `utils/` (config, seed).
 - `scripts/` – CLI mỏng, chỉ đọc tham số rồi gọi hàm trong `src/mmxai/`. `configs/` – YAML, một file = một thí nghiệm.
 - `splits/`, `queries/` – file split và bộ truy vấn đánh giá **đã commit, đóng băng** (hook chặn sửa).
-- `data/` (gitignored) – dữ liệu thô, đặc trưng, index. `results/runs/` (gitignored) – output từng lần chạy;
+- `data/` (gitignored) – dữ liệu thô. `artifacts/` (gitignored) – đặc trưng, index, checkpoint. `results/runs/` (gitignored) – output từng lần chạy;
   `results/tables/`, `results/figures/` – bảng/hình tổng hợp được commit.
 - `tests/`, `notebooks/`, `app/` (demo), `mmkg/` + `data_cards/` (MMKG tự xây, cấp độ 3), `reports/`.
 - `docs/decisions/` – ADR. `docs/ai-usage-log.md` – nhật ký dùng công cụ AI.
@@ -84,7 +84,7 @@ Chi tiết + test bắt buộc: ADR-0009. Nghi ngờ rò rỉ → dừng lại, 
   `env.json` (commit, phiên bản); số trong báo cáo chỉ lấy từ `results/tables/` (ADR-0010).
 - Split và bộ truy vấn được commit; muốn đổi → ADR mới + chạy lại mọi mô hình.
 - CLIP / mô hình thị giác: **đóng băng, chỉ inference**. Đặc trưng trích **một lần** rồi cache trong
-  `data/`. Không fine-tune CLIP, không huấn luyện bộ phát hiện đối tượng. Chỉ mô hình đồ thị được huấn luyện.
+  `artifacts/`. Không fine-tune CLIP, không huấn luyện bộ phát hiện đối tượng. Chỉ mô hình đồ thị được huấn luyện.
 
 ## Quyết định và tài liệu
 

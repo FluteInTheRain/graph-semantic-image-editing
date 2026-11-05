@@ -6,7 +6,8 @@
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `data/visual_genome/` | `images/`, `objects.json`, `relationships.json`, `image_data.json` |
+| `data/visual_genome/` | `images/`, `objects.json`, `relationships.json`, `image_data.json`, `region_descriptions.json` |
+| `data/flickr30k/` | `images/`, `dataset_flickr30k.json` |
 | `data/fb15k237_img/` | Triple train/valid/test + thư mục ảnh thực thể |
 | `data/mkg_w/`, `data/mkg_y/` | Triple + ảnh của MKG-W / MKG-Y |
 | `data/conceptnet/` | File assertions ConceptNet (đã lọc tiếng Anh/Việt) |
@@ -17,7 +18,8 @@
 
 | Bộ dữ liệu | Nguồn | Ghi chú |
 |---|---|---|
-| Visual Genome | Trang chính thức Visual Genome (homes.cs.washington.edu/~ranjay/visualgenome) | Dùng v1.4 hoặc v1.2; ghi rõ phiên bản vào data card |
+| Visual Genome | Trang chính thức Visual Genome (homes.cs.washington.edu/~ranjay/visualgenome) | Ảnh, metadata, region description: v1.2; đối tượng và quan hệ: v1.4 hoặc v1.2, ghi rõ vào data card |
+| Flickr30k | Form tại shannon.cs.illinois.edu/DenotationGraph; caption và split từ `caption_datasets.zip` của Karpathy | Chỉ dùng cho nghiên cứu/giáo dục phi thương mại. Xem `docs/guides/chuan-bi-embedding-clip.md` |
 | FB15k-237-IMG | Kho GitHub `zjunlp/MKGformer` | Theo hướng dẫn tải trong README của kho |
 | MKG-W / MKG-Y | Kho GitHub của NativE / AdaMF-MAT (`zjukg`) | Kiểm tra giấy phép |
 | ConceptNet | conceptnet.io (bản assertions CSV) | Rất lớn, nên lọc trước |
