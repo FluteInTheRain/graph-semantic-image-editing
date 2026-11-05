@@ -1,6 +1,10 @@
 """Build and save the plain-CLIP image vector store of each split (no graph).
 
-One folder per split, so a store never mixes test images with train images.
+Decision (ADR-0042): one folder per split instead of one index of all images,
+because a search in the test store can then never return a train image.
+Decision: only val and test are built (config `splits`), because nothing searches
+train yet; the stores can be rebuilt in seconds from the Kaggle features, so the
+features on Kaggle stay the single shared source (ADR-0041).
 """
 
 from dataclasses import dataclass

@@ -1,13 +1,15 @@
 # Plain CLIP text-to-image retrieval on Visual Genome, no graph (ADR-0043).
-# Run on val while developing; run on test once, with nothing changed afterwards.
+# Val:  uv run python scripts/evaluate_clip.py --config configs/clip_vg.yaml --seed 0
+# Test: add --split test; run once per seed (0, 1, 2) on committed code, change nothing after.
 experiment: clip_vg
 dataset: visual_genome
 split_file: splits/visual_genome/split_seed0.json
 features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0009): develop on val; test is reported once.
 eval_split: val
-# Same number of candidates that CLIP + Graph will re-rank.
+# Decision (ADR-0043): the same number of candidates that CLIP + Graph will re-rank.
 top_k: 100
 recall_ks: [1, 5, 10]
-# Only absorbs float noise between equal sentences; fixed before any run, never tuned.
+# Decision (ADR-0043): only absorbs float noise between equal sentences; fixed before any run.
 same_text_threshold: 0.9999
 output_dir: results/runs

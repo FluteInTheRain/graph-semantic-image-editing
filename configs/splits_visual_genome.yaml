@@ -1,11 +1,14 @@
 # Fixed train/val/test split of Visual Genome images (ADR-0042).
+# Run once: uv run python scripts/make_splits.py --config configs/splits_visual_genome.yaml
 dataset: visual_genome
 # Image ids and embeddings come from the CLIP feature set (ADR-0041).
 features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
 output_dir: splits/visual_genome
+# Decision (ADR-0011): one fixed split; training seeds are separate.
 split_seed: 0
+# Decision (ADR-0042): 5000 val + 5000 test images (MS-COCO 5k convention), the rest is train.
 num_val: 5000
 num_test: 5000
-# Images with cosine >= this are treated as copies of one picture and kept in one set.
-# Fixed before any retrieval result was seen (ADR-0042); grouping too much is harmless.
+# Decision (ADR-0042): images with cosine >= this are copies of one picture and stay in one set.
+# Fixed from pair counts before any retrieval result; grouping too much is harmless.
 duplicate_threshold: 0.99

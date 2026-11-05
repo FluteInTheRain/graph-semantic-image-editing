@@ -1,4 +1,11 @@
-"""Make, save and load the fixed train/val/test split of images (ADR-0009, ADR-0042)."""
+"""Make, save and load the fixed train/val/test split of images (ADR-0009, ADR-0042).
+
+Decisions in this file (grep "Decision (ADR"):
+- split by image, texts follow their image;
+- near-duplicate images (cosine >= duplicate_threshold) stay in one set;
+- one fixed split file, its seed separate from training seeds;
+- ids stored as sorted strings, a committed split is never overwritten.
+"""
 
 import json
 from dataclasses import dataclass
@@ -39,6 +46,11 @@ def group_near_duplicate_images(
     image from also being seen in train. If A is close to B and B to C, all three
     form one group. Grouping too much is harmless: it only keeps images together.
     Groups are sorted by their smallest id, so the result never depends on row order.
+
+    Decision (ADR-0042): group by cosine >= threshold (0.99 in the config), not by
+    exact equality, because exact equality found only 5 pairs while 16 pairs had
+    cosine >= 0.999 (the same photo re-encoded). The threshold was fixed from the
+    pair counts, before any retrieval result existed.
     """
     vectors = np.asarray(embeddings, dtype=np.float32)
     num_images = len(vectors)
@@ -77,6 +89,12 @@ def assign_groups(
 
     A group goes into test or val only if the whole group still fits, so a group
     is never split and both sets reach their exact size whenever possible.
+
+    Decision (ADR-0042): the unit is an image group, never a single text, because
+    two texts of one image in different sets would leak that image into test.
+    Fixed sizes 5000 test / 5000 val follow the MS-COCO 5k convention and keep
+    almost all images for training the graph model.
+    Decision (ADR-0011): `seed` here only shapes the split; training seeds are separate.
     """
     num_images = sum(len(group) for group in groups)
     if num_val + num_test > num_images:
@@ -123,7 +141,8 @@ def make_split(
 
     split = {"dataset": dataset, "seed": seed}
     for name in SPLIT_NAMES:
-        # Strings, because the README fixes ids as strings; numeric order keeps git diffs readable.
+        # Decision (ADR-0009): ids as strings, because splits/README.md fixes that format;
+        # numeric order keeps git diffs readable.
         split[name] = [str(image_id) for image_id in sorted(assigned[name])]
     check_split(split)
     return split
@@ -151,7 +170,11 @@ def split_path(output_dir: str | Path, seed: int) -> Path:
 
 
 def save_split(split: dict, path: str | Path) -> None:
-    """Write a split file. A committed split is frozen, so never overwrite one."""
+    """Write a split file.
+
+    Decision (ADR-0009): never overwrite, because every model must use the same
+    committed split; a new split needs a new seed, an ADR and new runs of every model.
+    """
     path = Path(path)
     if path.exists():
         raise FileExistsError(f"{path} already exists; a new split needs a new seed and an ADR")

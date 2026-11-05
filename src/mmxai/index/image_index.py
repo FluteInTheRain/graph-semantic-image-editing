@@ -27,8 +27,11 @@ class ImageIndex:
 def build_image_index(embeddings: np.ndarray, image_ids: np.ndarray) -> ImageIndex:
     """Index L2-normalised embeddings so that inner product equals cosine similarity.
 
-    IndexFlatIP compares the query with every image: exact and deterministic,
-    and fast enough for a few thousand images.
+    Decision (ADR-0043): IndexFlatIP, an exact search that compares the query with
+    every image, instead of an approximate index (IVF, HNSW), because it is
+    deterministic (the same list on every run) and searching 5,000 images takes
+    seconds. Inner product equals cosine because the features are L2-normalised
+    (ADR-0041).
     """
     if len(embeddings) != len(image_ids):
         raise ValueError(f"{len(embeddings)} embeddings but {len(image_ids)} image ids")

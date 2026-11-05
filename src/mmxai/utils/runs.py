@@ -35,7 +35,8 @@ def git_state() -> dict:
         text=True,
         check=False,
     ).stdout.strip()
-    # A dirty tree means the result cannot be traced back to the commit alone.
+    # Decision (ADR-0010): record whether tracked files had uncommitted changes, because
+    # a dirty tree means the result cannot be traced back to the commit alone.
     return {"git_commit": commit, "git_dirty": changes != ""}
 
 

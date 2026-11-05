@@ -2,6 +2,14 @@
 
 Steps: keep only the images and texts of the evaluated split, index the
 images with FAISS, search with every text, and score the ranks.
+
+Decision (ADR-0043): the gallery is every image of the evaluated split and the
+queries are their sampled region descriptions, because the PDF (section 6) keeps
+test images and test queries away from everything else.
+Decision (ADR-0043): top_k = 100 (config), the same candidate count CLIP + Graph
+will re-rank, so both models start from the same list.
+Decision (ADR-0009): val may be run while developing; test is run once per seed,
+on committed code, with nothing changed afterwards.
 """
 
 from dataclasses import asdict, dataclass
@@ -19,7 +27,7 @@ from mmxai.index.image_index import build_image_index, search_images
 from mmxai.utils.runs import collect_env, file_sha256, make_run_dir, write_run_files
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
-# Never "train": retrieval is only reported on held-out images.
+# Decision (ADR-0009): never "train", because retrieval is only reported on held-out images.
 EVAL_SPLITS = ("val", "test")
 
 
@@ -87,8 +95,11 @@ def evaluate_clip(
 def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
     """Evaluate, write the run folder and return its path.
 
-    CLIP is frozen and the index is exact, so the seed changes nothing; it is
-    kept so this run sits in the same seed-based tables as CLIP + Graph (ADR-0011).
+    Decision (ADR-0011): the seed is kept although it changes nothing (CLIP is
+    frozen, the index is exact, so std over seeds is 0), so this run fits the same
+    3-seed tables as CLIP + Graph.
+    Decision (ADR-0009, ADR-0010): metrics.json records the split file hash and the
+    feature code hash, so every number names exactly the data it came from.
     """
     meta = load_meta(config.features_dir)
     if meta["dataset"] != config.dataset or meta["is_partial"]:

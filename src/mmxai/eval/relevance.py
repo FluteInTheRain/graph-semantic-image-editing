@@ -3,6 +3,14 @@
 Short region descriptions such as "a man" appear in many images. Counting only
 the source image as correct would punish CLIP for returning another image that
 has exactly the same sentence, so every such image counts as relevant.
+
+Decision (ADR-0043): every gallery image that owns the same sentence is relevant,
+because 26% of text vectors are repeated and "source image only" would mark
+correct answers as wrong. Rejected: dropping repeated queries (biases the query
+set towards long sentences) and matching strings (needs the multi-GB JSON).
+Decision (ADR-0043): only the 5 sampled regions of each image are compared, so
+absolute Recall is a lower bound; every model uses the same rule, so comparisons
+stay fair.
 """
 
 import numpy as np
@@ -17,8 +25,11 @@ def same_text_relevant_images(
     """For each text, return the ids of images that own a text with cosine >= threshold.
 
     The .npz files hold vectors, not strings, so equal sentences are found by
-    near-equal vectors. The threshold only absorbs float noise from batched GPU
-    encoding; it must never be tuned on results.
+    near-equal vectors.
+
+    Decision (ADR-0043): threshold 0.9999 (config `same_text_threshold`), because
+    batched GPU encoding moves equal sentences apart by about 1e-6 while different
+    sentences sit far lower. It was fixed before any run and must never be tuned on results.
     """
     relevant: list[set[int]] = []
     # Chunks keep memory at chunk_size x num_texts instead of num_texts x num_texts.

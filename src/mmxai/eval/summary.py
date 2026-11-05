@@ -11,7 +11,8 @@ from pathlib import Path
 
 import yaml
 
-MIN_SEEDS = 3  # PDF section 6
+# Decision (PDF section 6, ADR-0011): an experiment enters the table only with >= 3 seeds.
+MIN_SEEDS = 3
 
 
 def load_run_records(runs_dir: str | Path) -> list[dict]:
@@ -49,7 +50,8 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
     for record in records:
         if record["metrics"]["split"] != split:
             continue
-        # A run made with uncommitted code cannot be reproduced from its commit.
+        # Decision (ADR-0010): skip runs made with uncommitted code, because they
+        # cannot be reproduced from their commit.
         if record["git_dirty"]:
             continue
         by_experiment.setdefault(record["experiment"], []).append(record)
@@ -59,6 +61,8 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
     for experiment in sorted(by_experiment):
         runs = by_experiment[experiment]
         seeds = [run["metrics"]["seed"] for run in runs]
+        # Decision (ADR-0009): test runs once per seed; a repeat means someone re-ran
+        # after seeing the numbers, so refuse instead of silently picking one.
         if len(set(seeds)) != len(seeds):
             raise ValueError(
                 f"{experiment}: a seed was run more than once on {split}; "
@@ -81,7 +85,8 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
         for name in metric_names(runs[0]["metrics"]):
             values = [run["metrics"][name] for run in runs]
             row[f"{name}_mean"] = statistics.mean(values)
-            # Sample standard deviation (ddof=1), as fixed by ADR-0011.
+            # Decision (ADR-0011): sample standard deviation (ddof=1), because the seeds
+            # are a small sample of possible runs.
             row[f"{name}_std"] = statistics.stdev(values)
         row["split_sha256"] = split_hashes.pop()
         row["git_commits"] = " ".join(sorted({run["git_commit"] for run in runs}))

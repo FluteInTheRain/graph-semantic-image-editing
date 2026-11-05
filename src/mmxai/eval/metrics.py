@@ -2,6 +2,12 @@
 
 A query's result is reduced to one number: the 1-based rank of the first
 relevant image, or None when no relevant image is among the candidates.
+
+Decision (ADR-0043): with several relevant images, the first one found decides
+the rank, because the user is served as soon as one correct image appears.
+Decision (ADR-0043): ranks stop at top_k (100), so MRR is reported as MRR@100 and
+a query with no relevant image in the top 100 adds 0. CLIP + Graph only re-ranks
+those same 100 candidates, so both models are scored under the same cut.
 """
 
 from collections.abc import Sequence
