@@ -3,11 +3,16 @@
 A query's result is reduced to one number: the 1-based rank of the first
 relevant image, or None when no relevant image is among the candidates.
 
-Decision (ADR-0043): with several relevant images, the first one found decides
-the rank, because the user is served as soon as one correct image appears.
-Decision (ADR-0043): ranks stop at top_k (100), so MRR is reported as MRR@100 and
-a query with no relevant image in the top 100 adds 0. CLIP + Graph only re-ranks
-those same 100 candidates, so both models are scored under the same cut.
+Decision (ADR-0043): with several relevant images, the first one found decides the rank.
+  Why: the user is served as soon as one correct image appears.
+  Decided by: Claude Code, 2026-11-05, in ADR-0043 (awaiting team review).
+
+Decision (ADR-0043): ranks stop at top_k (100); report MRR@100, a query with no
+relevant image in the top 100 adds 0.
+  Why: CLIP + Graph only re-ranks those same 100 candidates, so both models are
+  scored under the same cut.
+  Decided by: Claude Code, 2026-11-05, in ADR-0043 (top_k = 100 taken from
+  FluteInTheRain's template configs/clip_graph_vg.yaml).
 """
 
 from collections.abc import Sequence

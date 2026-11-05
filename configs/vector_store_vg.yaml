@@ -1,9 +1,10 @@
 # Plain-CLIP image vector store of Visual Genome, one FAISS index per split (no graph).
-# Run: uv run python scripts/build_index.py --config configs/vector_store_vg.yaml
+# How to run: see the docstring of scripts/build_index.py.
 dataset: visual_genome
 split_file: splits/visual_genome/split_seed0.json
 features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
-# Decision (ADR-0042): one store per split so a search never mixes splits;
-# train is left out because nothing searches it yet.
+# Decision: one store per split so a search never mixes splits; train is left out
+# because nothing searches it yet.
+#   Decided by: Claude Code, 2026-11-05 (not separately reviewed).
 splits: [val, test]
 output_root: artifacts/vector_store

@@ -11,7 +11,9 @@ from pathlib import Path
 
 import yaml
 
-# Decision (PDF section 6, ADR-0011): an experiment enters the table only with >= 3 seeds.
+# Decision (ADR-0011): an experiment enters the table only with >= 3 seeds.
+#   Why: PDF section 6 requires at least 3 seeds and mean +- std.
+#   Decided by: FluteInTheRain, ADR-0011.
 MIN_SEEDS = 3
 
 
@@ -50,8 +52,9 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
     for record in records:
         if record["metrics"]["split"] != split:
             continue
-        # Decision (ADR-0010): skip runs made with uncommitted code, because they
-        # cannot be reproduced from their commit.
+        # Decision (ADR-0010): skip runs made with uncommitted code.
+        #   Why: they cannot be reproduced from their commit.
+        #   Decided by: Claude Code, 2026-11-05, applying ADR-0010 (not separately reviewed).
         if record["git_dirty"]:
             continue
         by_experiment.setdefault(record["experiment"], []).append(record)
@@ -61,8 +64,10 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
     for experiment in sorted(by_experiment):
         runs = by_experiment[experiment]
         seeds = [run["metrics"]["seed"] for run in runs]
-        # Decision (ADR-0009): test runs once per seed; a repeat means someone re-ran
-        # after seeing the numbers, so refuse instead of silently picking one.
+        # Decision (ADR-0009): refuse a seed that was run more than once on the same split.
+        #   Why: test runs once per seed; a repeat means someone re-ran after seeing the
+        #   numbers, so silently picking one would hide it.
+        #   Decided by: Claude Code, 2026-11-05, applying ADR-0009 (not separately reviewed).
         if len(set(seeds)) != len(seeds):
             raise ValueError(
                 f"{experiment}: a seed was run more than once on {split}; "
@@ -85,8 +90,9 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
         for name in metric_names(runs[0]["metrics"]):
             values = [run["metrics"][name] for run in runs]
             row[f"{name}_mean"] = statistics.mean(values)
-            # Decision (ADR-0011): sample standard deviation (ddof=1), because the seeds
-            # are a small sample of possible runs.
+            # Decision (ADR-0011): sample standard deviation (ddof=1).
+            #   Why: the seeds are a small sample of possible runs.
+            #   Decided by: FluteInTheRain, ADR-0011.
             row[f"{name}_std"] = statistics.stdev(values)
         row["split_sha256"] = split_hashes.pop()
         row["git_commits"] = " ".join(sorted({run["git_commit"] for run in runs}))
