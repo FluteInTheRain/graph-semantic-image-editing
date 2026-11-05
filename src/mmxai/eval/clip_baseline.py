@@ -4,7 +4,6 @@ Steps: keep only the images and texts of the evaluated split, index the
 images with FAISS, search with every text, and score the ranks.
 """
 
-import hashlib
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +16,7 @@ from mmxai.eval.metrics import compute_metrics, first_relevant_rank
 from mmxai.eval.relevance import same_text_relevant_images
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.index.image_index import build_image_index, search_images
-from mmxai.utils.runs import collect_env, make_run_dir, write_run_files
+from mmxai.utils.runs import collect_env, file_sha256, make_run_dir, write_run_files
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 # Never "train": retrieval is only reported on held-out images.
@@ -83,11 +82,6 @@ def evaluate_clip(
     several = sum(1 for images in relevant if len(images) > 1)
     metrics["fraction_queries_with_several_relevant"] = several / len(relevant)
     return metrics
-
-
-def file_sha256(path: str | Path) -> str:
-    """Hash the split file so a result names exactly the split it used (ADR-0009)."""
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:

@@ -1,0 +1,7 @@
+# Plain-CLIP image vector store of Visual Genome, one FAISS index per split (no graph).
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# The galleries used for evaluation; train is left out because nothing searches it yet.
+splits: [val, test]
+output_root: artifacts/vector_store

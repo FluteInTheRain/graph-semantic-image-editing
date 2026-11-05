@@ -5,7 +5,12 @@ import pytest
 
 pytest.importorskip("faiss")
 
-from mmxai.index.image_index import build_image_index, search_images  # noqa: E402
+from mmxai.index.image_index import (  # noqa: E402
+    build_image_index,
+    load_image_index,
+    save_image_index,
+    search_images,
+)
 
 
 def unit_rows(array: np.ndarray) -> np.ndarray:
@@ -46,3 +51,35 @@ def test_top_k_larger_than_the_gallery_is_an_error():
 def test_ids_and_embeddings_must_have_the_same_length():
     with pytest.raises(ValueError):
         build_image_index(unit_rows([[1, 0], [0, 1]]), np.array([1]))
+
+
+def test_saved_index_gives_the_same_results(tmp_path):
+    rng = np.random.default_rng(1)
+    images = unit_rows(rng.normal(size=(20, 8)))
+    queries = unit_rows(rng.normal(size=(3, 8)))
+    original = build_image_index(images, np.arange(500, 520))
+
+    save_image_index(original, tmp_path / "store", meta={"split": "test"})
+    loaded = load_image_index(tmp_path / "store")
+
+    assert (
+        search_images(loaded, queries, 5)[1].tolist()
+        == search_images(original, queries, 5)[1].tolist()
+    )
+
+
+def test_save_refuses_to_overwrite(tmp_path):
+    index = build_image_index(unit_rows([[1, 0], [0, 1]]), np.array([1, 2]))
+    save_image_index(index, tmp_path / "store", meta={})
+
+    with pytest.raises(FileExistsError):
+        save_image_index(index, tmp_path / "store", meta={})
+
+
+def test_load_rejects_ids_that_do_not_match_the_index(tmp_path):
+    index = build_image_index(unit_rows([[1, 0], [0, 1]]), np.array([1, 2]))
+    save_image_index(index, tmp_path / "store", meta={})
+    np.save(tmp_path / "store" / "image_ids.npy", np.array([1, 2, 3]))
+
+    with pytest.raises(ValueError, match="rows"):
+        load_image_index(tmp_path / "store")

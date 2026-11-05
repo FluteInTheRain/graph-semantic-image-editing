@@ -1,5 +1,6 @@
 """Write one run folder under results/runs/ (ADR-0010) so every number traces back to its run."""
 
+import hashlib
 import json
 import platform
 import subprocess
@@ -7,6 +8,11 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+
+def file_sha256(path: str | Path) -> str:
+    """Hash a file such as the split, so an output names exactly the input it used (ADR-0009)."""
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def make_run_dir(output_dir: str | Path, experiment: str, seed: int, now: datetime) -> Path:

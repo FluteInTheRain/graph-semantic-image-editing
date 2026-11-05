@@ -1,9 +1,15 @@
 """Exact nearest-neighbour search over image embeddings with FAISS (PDF section 4.1)."""
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import faiss
 import numpy as np
+
+INDEX_FILE = "images.faiss"
+IDS_FILE = "image_ids.npy"
+META_FILE = "meta.json"
 
 
 @dataclass
@@ -43,3 +49,30 @@ def search_images(
     queries = np.ascontiguousarray(query_embeddings, dtype=np.float32)
     scores, rows = image_index.index.search(queries, top_k)
     return scores, image_index.image_ids[rows]
+
+
+def save_image_index(image_index: ImageIndex, folder: str | Path, meta: dict) -> None:
+    """Write the index, its row-to-id map and a description. Refuses to overwrite.
+
+    The id file matters as much as the index: without it a search result is only
+    a row number. meta.json says where the vectors came from, for anyone who
+    downloads the folder without the repo.
+    """
+    folder = Path(folder)
+    if folder.exists():
+        raise FileExistsError(f"{folder} already exists; delete it to build again")
+    folder.mkdir(parents=True)
+    faiss.write_index(image_index.index, str(folder / INDEX_FILE))
+    np.save(folder / IDS_FILE, image_index.image_ids, allow_pickle=False)
+    with open(folder / META_FILE, "w", encoding="utf-8") as file:
+        json.dump(meta, file, indent=2)
+
+
+def load_image_index(folder: str | Path) -> ImageIndex:
+    """Read a folder written by save_image_index."""
+    folder = Path(folder)
+    index = faiss.read_index(str(folder / INDEX_FILE))
+    image_ids = np.load(folder / IDS_FILE, allow_pickle=False)
+    if index.ntotal != len(image_ids):
+        raise ValueError(f"{folder}: index has {index.ntotal} rows but {len(image_ids)} ids")
+    return ImageIndex(index=index, image_ids=image_ids)
