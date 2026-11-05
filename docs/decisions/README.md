@@ -64,3 +64,4 @@ Thư mục này chứa các **ADR** (Architecture Decision Record): mỗi file g
 | [0040](0040-chon-visual-genome-va-flickr30k.md) | Dùng Visual Genome và Flickr30k + ConceptNet làm hai tập công khai |
 | [0041](0041-dinh-dang-embedding-npz-va-chia-se-qua-kaggle.md) | Lưu embedding dạng `.npz` + `meta.json`, chia sẻ qua Kaggle, notebook chứa bản sao code |
 | [0042](0042-split-co-dinh-cho-visual-genome.md) | Chia Visual Genome theo ảnh: test 5.000, val 5.000, train phần còn lại; ảnh trùng luôn cùng tập |
+| [0043](0043-giao-thuc-danh-gia-clip-thuan-tren-visual-genome.md) | Đánh giá văn bản → ảnh: truy vấn là region description, mọi ảnh có cùng câu đều là đáp án, FAISS top 100, Recall@1/5/10 + MRR@100 |
