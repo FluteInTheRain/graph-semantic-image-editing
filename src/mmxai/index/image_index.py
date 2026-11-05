@@ -32,8 +32,8 @@ def build_image_index(embeddings: np.ndarray, image_ids: np.ndarray) -> ImageInd
       Why: deterministic (the same list on every run) and searching 5,000 images takes
       seconds. Inner product equals cosine because the features are L2-normalised
       (ADR-0041).
-      Decided by: Claude Code, 2026-11-05, in ADR-0043; matches "FAISS Flat" assumed
-      in ADR-0011 (FluteInTheRain).
+      Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043;
+      matches "FAISS Flat" assumed in ADR-0011).
     """
     if len(embeddings) != len(image_ids):
         raise ValueError(f"{len(embeddings)} embeddings but {len(image_ids)} image ids")

@@ -107,7 +107,7 @@ def assign_groups(
     Decision: fill test first, then val, then train, and only place a group where it
     fits whole.
       Why: keeps groups together and still gives exact set sizes.
-      Decided by: Claude Code, 2026-11-05 (implementation detail, not separately reviewed).
+      Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code).
     """
     num_images = sum(len(group) for group in groups)
     if num_val + num_test > num_images:

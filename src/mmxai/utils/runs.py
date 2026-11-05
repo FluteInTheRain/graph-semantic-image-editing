@@ -37,8 +37,8 @@ def git_state() -> dict:
     ).stdout.strip()
     # Decision (ADR-0010): record whether tracked files had uncommitted changes.
     #   Why: a dirty tree means the result cannot be traced back to the commit alone.
-    #   Decided by: FluteInTheRain, ADR-0010 (git state in env.json); dirty flag added
-    #   by Claude Code, 2026-11-05.
+    #   Decided by: FluteInTheRain, ADR-0010 (git state in env.json); dirty flag:
+    #   FluteInTheRain, 2026-11-05 (proposed by Claude Code).
     return {"git_commit": commit, "git_dirty": changes != ""}
 
 

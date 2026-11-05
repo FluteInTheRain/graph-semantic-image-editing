@@ -5,6 +5,6 @@ split_file: splits/visual_genome/split_seed0.json
 features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
 # Decision: one store per split so a search never mixes splits; train is left out
 # because nothing searches it yet.
-#   Decided by: Claude Code, 2026-11-05 (not separately reviewed).
+#   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code).
 splits: [val, test]
 output_root: artifacts/vector_store

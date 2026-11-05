@@ -34,8 +34,7 @@ def same_text_relevant_images(
     Decision (ADR-0043): "same sentence" means cosine >= 0.9999 (config `same_text_threshold`).
       Why: batched GPU encoding moves equal sentences apart by about 1e-6, while
       different sentences sit far lower. Fixed before any run; never tune it on results.
-      Decided by: Claude Code, 2026-11-05, in ADR-0043 (not separately reviewed;
-      awaiting team review of ADR-0043).
+      Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043).
     """
     relevant: list[set[int]] = []
     # Chunks keep memory at chunk_size x num_texts instead of num_texts x num_texts.

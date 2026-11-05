@@ -2,13 +2,12 @@
 
 Decision: one store (folder) per split instead of one index of all images.
   Why: a search in the test store can then never return a train image (ADR-0042).
-  Decided by: Claude Code, 2026-11-05, after FluteInTheRain asked to save the
-  vector store (not separately reviewed).
+  Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code).
 
 Decision: build only val and test (config `splits`).
   Why: nothing searches train yet. Stores rebuild in seconds from the Kaggle
   features, so Kaggle stays the single shared source (ADR-0041).
-  Decided by: Claude Code, 2026-11-05 (not separately reviewed).
+  Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code).
 """
 
 from dataclasses import dataclass

@@ -54,7 +54,7 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
             continue
         # Decision (ADR-0010): skip runs made with uncommitted code.
         #   Why: they cannot be reproduced from their commit.
-        #   Decided by: Claude Code, 2026-11-05, applying ADR-0010 (not separately reviewed).
+        #   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code, applying ADR-0010).
         if record["git_dirty"]:
             continue
         by_experiment.setdefault(record["experiment"], []).append(record)
@@ -67,7 +67,7 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
         # Decision (ADR-0009): refuse a seed that was run more than once on the same split.
         #   Why: test runs once per seed; a repeat means someone re-ran after seeing the
         #   numbers, so silently picking one would hide it.
-        #   Decided by: Claude Code, 2026-11-05, applying ADR-0009 (not separately reviewed).
+        #   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code, applying ADR-0009).
         if len(set(seeds)) != len(seeds):
             raise ValueError(
                 f"{experiment}: a seed was run more than once on {split}; "

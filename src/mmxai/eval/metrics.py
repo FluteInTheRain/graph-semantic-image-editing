@@ -5,14 +5,14 @@ relevant image, or None when no relevant image is among the candidates.
 
 Decision (ADR-0043): with several relevant images, the first one found decides the rank.
   Why: the user is served as soon as one correct image appears.
-  Decided by: Claude Code, 2026-11-05, in ADR-0043 (awaiting team review).
+  Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043).
 
 Decision (ADR-0043): ranks stop at top_k (100); report MRR@100, a query with no
 relevant image in the top 100 adds 0.
   Why: CLIP + Graph only re-ranks those same 100 candidates, so both models are
   scored under the same cut.
-  Decided by: Claude Code, 2026-11-05, in ADR-0043 (top_k = 100 taken from
-  FluteInTheRain's template configs/clip_graph_vg.yaml).
+  Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043;
+  top_k = 100 taken from FluteInTheRain's template configs/clip_graph_vg.yaml).
 """
 
 from collections.abc import Sequence
