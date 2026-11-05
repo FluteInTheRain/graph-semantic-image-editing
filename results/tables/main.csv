@@ -1,0 +1,2 @@
+experiment,split,num_seeds,seeds,R@1_mean,R@1_std,R@5_mean,R@5_std,R@10_mean,R@10_std,MRR@100_mean,MRR@100_std,split_sha256,git_commits
+clip_vg,test,3,0 1 2,0.0584,0.0,0.1422,0.0,0.2018,0.0,0.1076,0.0,0c65b3e5fa9fedc3c225e77806dc9832d5e2135cadba973fd3506d80a002c4ee,c1678efc8680718ed10952f25498d538514bc2d7
