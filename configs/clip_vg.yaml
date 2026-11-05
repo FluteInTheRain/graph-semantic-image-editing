@@ -1,0 +1,18 @@
+# Plain CLIP text-to-image retrieval on Visual Genome, no graph (ADR-0043).
+# How to run: see the docstring of scripts/evaluate_clip.py.
+experiment: clip_vg
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0009): develop on val; test is reported once (pass --split test).
+#   Decided by: FluteInTheRain, ADR-0009.
+eval_split: val
+# Decision (ADR-0043): the same number of candidates that CLIP + Graph will re-rank.
+#   Decided by: FluteInTheRain, template configs/clip_graph_vg.yaml; kept in ADR-0043.
+top_k: 100
+# Recall cut-offs required by PDF section 7.
+recall_ks: [1, 5, 10]
+# Decision (ADR-0043): only absorbs float noise between equal sentences; fixed before any run.
+#   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043).
+same_text_threshold: 0.9999
+output_dir: results/runs
