@@ -32,7 +32,13 @@ Lần chạy ngày 2026-11-04 mã hoá đủ 108.077 ảnh và 540.383 văn bả
 
 ## Split
 
-Chưa có. Visual Genome không có split chính thức nên phải tạo bằng `scripts/make_splits.py` (chưa viết) trước khi huấn luyện (ADR-0009).
+Visual Genome không có split chính thức nên nhóm tự tạo (ADR-0009, ADR-0042): chia theo ảnh, test 5.000, val 5.000, train phần còn lại; ảnh có embedding trùng nhau luôn nằm cùng một tập. Tạo bằng:
+
+```bash
+uv run python scripts/make_splits.py --config configs/splits_visual_genome.yaml
+```
+
+Kết quả: `splits/visual_genome/split_seed0.json`. Chưa tạo file thật (cần tải embedding về `artifacts/features/` trước).
 
 ## Cách liên kết ảnh - thực thể
 

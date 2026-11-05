@@ -1,0 +1,8 @@
+# Fixed train/val/test split of Visual Genome images (ADR-0042).
+dataset: visual_genome
+# Image ids and embeddings come from the CLIP feature set (ADR-0041).
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+output_dir: splits/visual_genome
+split_seed: 0
+num_val: 5000
+num_test: 5000
