@@ -20,7 +20,7 @@ Dữ liệu sau khi trích embedding (data card `data_cards/visual_genome.md`): 
 
 1. **Đơn vị chia là ảnh.** Văn bản (region description) thuộc tập của ảnh tương ứng, lọc theo `image_ids` trong `text_features.npz`.
 2. **Kích thước:** test 5.000 ảnh, val 5.000 ảnh, train là phần còn lại (khoảng 98.077 ảnh).
-3. **Cách đánh giá dự kiến:** truy vấn là region description của ảnh test, kho tìm kiếm là toàn bộ ảnh test, đáp án đúng là ảnh gốc của câu. Val dùng cùng cách với ảnh val.
+3. **Cách đánh giá dự kiến:** truy vấn là region description của ảnh test, kho tìm kiếm là toàn bộ ảnh test. Val dùng cùng cách với ảnh val. Định nghĩa đáp án đúng chi tiết nằm ở ADR-0043 (mọi ảnh có cùng câu đều đúng).
 4. **Ảnh trùng:** hai ảnh có cosine giữa hai embedding ≥ `0.99` được coi là cùng một bức ảnh (có thể đã đổi kích thước hoặc nén lại) và vào cùng một **nhóm**; nhóm nối theo chuỗi (A gần B, B gần C thì A, B, C cùng nhóm). Cả nhóm luôn nằm cùng một tập. Ngưỡng nằm trong config (`duplicate_threshold`) và được chốt ngày 2026-11-05, trước khi có bất kỳ kết quả truy vấn nào. Lý do chọn ngưỡng rộng: gom thừa vô hại (chỉ giữ vài ảnh giống nhau ở cùng một tập), còn gom thiếu thì gây rò rỉ. Số đếm trên toàn bộ 108.077 ảnh ngày 2026-11-05: 5 cặp trùng hệt từng số, 16 cặp có cosine ≥ 0,999, 247 cặp ≥ 0,99; ví dụ `285982` và `2375578` có cosine 0,99992 dù không trùng hệt.
 5. **Thuật toán:** sắp các nhóm theo `image_id` nhỏ nhất, xáo bằng `np.random.default_rng(split_seed)`, rồi lần lượt đặt từng nhóm vào test nếu test còn đủ chỗ cho cả nhóm, nếu không thì vào val nếu val còn chỗ, còn lại vào train.
 6. **Một file split duy nhất:** `splits/visual_genome/split_seed0.json` với `split_seed: 0`. Seed huấn luyện tách riêng (ADR-0011).
@@ -46,7 +46,7 @@ Dữ liệu sau khi trích embedding (data card `data_cards/visual_genome.md`): 
 - **CLIP thuần có std = 0:** split cố định và CLIP đóng băng là tất định, nên std qua 3 seed chỉ phản ánh nhiễu khi huấn luyện GNN. Báo cáo cần nói rõ điều này.
 - **Còn thiếu test `queries/` ⊆ test** (ADR-0009): viết khi định dạng `queries/*.jsonl` được chốt.
 - **Split phụ thuộc bộ đặc trưng:** nếu trích lại embedding bằng model khác thì nhóm ảnh trùng có thể khác, nhưng split đã commit vẫn giữ nguyên và vẫn dùng được, vì nó chỉ chứa `image_id`.
-- **Câu trùng chưa xử lý:** data card ghi 26% vector văn bản trùng vector khác (câu ngắn như "a man" xuất hiện ở nhiều ảnh). Một câu như vậy có thể khớp nhiều ảnh test, làm Recall@K thấp không công bằng. Cách xử lý (bỏ truy vấn trùng, hay coi mọi ảnh có cùng câu là đáp án đúng) thuộc phần đánh giá và cần ADR riêng.
+- **Câu trùng:** data card ghi 26% vector văn bản trùng vector khác (câu ngắn như "a man" xuất hiện ở nhiều ảnh). Đã xử lý ở ADR-0043: mọi ảnh có cùng câu đều là đáp án đúng.
 - **Việc tiếp theo:** tải embedding từ Kaggle, chạy `scripts/make_splits.py`, commit file split; sau đó dựng FAISS index và metric trên tập test.
 
 ## Nguồn tham khảo

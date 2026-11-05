@@ -20,7 +20,7 @@ Dữ liệu có sẵn (ADR-0041, ADR-0042): mỗi ảnh có 5 region description
 |---|---|
 | Truy vấn | Mọi region description (đã chọn 5 mỗi ảnh) của ảnh thuộc tập đánh giá |
 | Kho tìm kiếm | Mọi ảnh thuộc tập đánh giá (test: 5.000 ảnh) |
-| Đáp án đúng | Mọi ảnh trong kho có ít nhất một region description **cùng câu** với truy vấn, gồm cả ảnh gốc |
+| Đáp án đúng | Mọi ảnh trong kho có ít nhất một trong **5 region description đã lấy mẫu** (ADR-0041) **cùng câu** với truy vấn, gồm cả ảnh gốc. Câu nằm trong các region không được lấy mẫu thì không được xét, nên Recall tuyệt đối là **cận dưới**; so sánh giữa các mô hình vẫn công bằng vì dùng cùng định nghĩa |
 | "Cùng câu" | Cosine giữa hai vector văn bản ≥ `0.9999`. File `.npz` không chứa chuỗi văn bản, nên so vector thay cho so chuỗi. Ngưỡng này chỉ để bù sai số số học khi GPU tính theo batch (cỡ 1e-6), **không** được chỉnh theo kết quả |
 | Tìm kiếm | FAISS `IndexFlatIP` (tìm chính xác). Embedding đã chuẩn hoá L2 nên inner product = cosine |
 | Số ứng viên | `top_k = 100`, giống số ứng viên mà CLIP + Graph sẽ xếp hạng lại |
@@ -44,9 +44,12 @@ Code: `src/mmxai/eval/` (metric, đáp án đúng), `src/mmxai/index/` (FAISS), 
 
 - **So sánh công bằng:** CLIP thuần và CLIP + Graph dùng cùng truy vấn, cùng kho, cùng định nghĩa đáp án và cùng 100 ứng viên.
 - **Rò rỉ dữ liệu:** bước tìm câu trùng chỉ so các câu trong cùng tập đánh giá, không dùng nhãn hay kết quả của mô hình. Ngưỡng `0.9999` được chốt trước khi chạy và không được đổi sau khi xem kết quả test.
-- **Giới hạn:** hai câu khác chữ nhưng cùng nghĩa ("a man" và "man") vẫn là hai câu khác nhau. Ảnh test trùng nhau (ADR-0042) không được tính là đáp án của nhau; theo data card chỉ có 5 cặp trên toàn bộ dữ liệu nên ảnh hưởng không đáng kể.
+- **Giới hạn:** hai câu khác chữ nhưng cùng nghĩa ("a man" và "man") vẫn là hai câu khác nhau. Ảnh gần trùng (ADR-0042: 247 cặp có cosine ≥ 0,99 trên toàn bộ dữ liệu, mỗi cặp nằm chung một tập) không được tính là đáp án của nhau, nên FAISS có thể đẩy ảnh gốc xuống hạng 2 khi hai ảnh gần bằng điểm. Ảnh hưởng nhỏ (ước tính khoảng 11 cặp trong test). Muốn đổi thì phải viết ADR mới, lý do không được dựa trên số test, và chạy lại mọi mô hình.
+- **Vì sao 26% mà chỉ 11,3%:** data card đếm 26% vector văn bản trùng trên toàn bộ 540.383 câu; trong kho test 5.000 ảnh chỉ 11,28% truy vấn có nhiều hơn một đáp án, vì phần lớn bản trùng của một câu nằm ở ảnh ngoài tập test.
 - **MRR bị cắt ở 100** nên hơi thấp hơn MRR trên toàn bộ thứ hạng; báo cáo phải ghi là MRR@100.
-- **Việc tiếp theo:** chạy trên val để kiểm pipeline, rồi trên test một lần; ghi bảng vào `results/tables/main.csv`.
+- **Cách chạy:** `uv run python scripts/evaluate_clip.py --config configs/clip_vg.yaml --seed <k>` chạy val (mặc định trong config); thêm `--split test` để chạy test, mỗi seed một lần, trên code đã commit. Sau đó `uv run python scripts/summarize_runs.py` ghi `results/tables/main.csv`.
+- **Đã chạy ngày 2026-11-05:** val một lần (kiểm pipeline), rồi test seed 0, 1, 2 trên commit `c1678ef`; không đổi config hay code tính điểm sau đó.
+- **Việc trước khi so sánh CLIP + Graph trên test** (góp ý của `experiment-reviewer` và `leakage-auditor`): lưu kết quả từng truy vấn (cần cho paired test và tách trực tiếp/gián tiếp); thêm R@100 (giới hạn trên của mọi cách re-rank); tách hàm lấy ứng viên để CLIP + Graph dùng đúng 100 ứng viên này; `summarize_runs` kiểm cùng split, `top_k`, ngưỡng và bộ đặc trưng giữa mọi thí nghiệm và đếm cả run dirty khi kiểm seed chạy lặp; kiểm `meta.json` khi nạp vector store.
 
 ## Nguồn tham khảo
 
