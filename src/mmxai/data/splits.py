@@ -1,11 +1,12 @@
 """Make, save and load the fixed train/val/test split of images (ADR-0009, ADR-0042)."""
 
 import json
-from dataclasses import MISSING, dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-import yaml
+
+from mmxai.utils.yaml_config import load_yaml_dataclass
 
 SPLIT_NAMES = ("train", "val", "test")
 
@@ -23,19 +24,8 @@ class SplitConfig:
 
 
 def load_split_config(path: str | Path) -> SplitConfig:
-    """Load one YAML config. A mistyped key is an error, never ignored (ADR-0007)."""
-    with open(path, encoding="utf-8") as file:
-        values = yaml.safe_load(file)
-
-    known_keys = {field.name for field in fields(SplitConfig)}
-    required_keys = {field.name for field in fields(SplitConfig) if field.default is MISSING}
-    unknown_keys = set(values) - known_keys
-    missing_keys = required_keys - set(values)
-    if unknown_keys:
-        raise ValueError(f"unknown config keys: {sorted(unknown_keys)}")
-    if missing_keys:
-        raise ValueError(f"missing config keys: {sorted(missing_keys)}")
-    return SplitConfig(**values)
+    """Load the split config from YAML (ADR-0007)."""
+    return load_yaml_dataclass(path, SplitConfig)
 
 
 def group_duplicate_images(embeddings: np.ndarray, image_ids: np.ndarray) -> list[list[int]]:
