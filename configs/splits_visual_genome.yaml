@@ -6,3 +6,6 @@ output_dir: splits/visual_genome
 split_seed: 0
 num_val: 5000
 num_test: 5000
+# Images with cosine >= this are treated as copies of one picture and kept in one set.
+# Fixed before any retrieval result was seen (ADR-0042); grouping too much is harmless.
+duplicate_threshold: 0.99

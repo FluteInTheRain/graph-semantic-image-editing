@@ -21,7 +21,7 @@ Dữ liệu sau khi trích embedding (data card `data_cards/visual_genome.md`): 
 1. **Đơn vị chia là ảnh.** Văn bản (region description) thuộc tập của ảnh tương ứng, lọc theo `image_ids` trong `text_features.npz`.
 2. **Kích thước:** test 5.000 ảnh, val 5.000 ảnh, train là phần còn lại (khoảng 98.077 ảnh).
 3. **Cách đánh giá dự kiến:** truy vấn là region description của ảnh test, kho tìm kiếm là toàn bộ ảnh test, đáp án đúng là ảnh gốc của câu. Val dùng cùng cách với ảnh val.
-4. **Ảnh trùng:** ảnh có embedding giống hệt nhau (so sánh chính xác từng số) tạo thành một **nhóm**. Cả nhóm luôn nằm cùng một tập.
+4. **Ảnh trùng:** hai ảnh có cosine giữa hai embedding ≥ `0.99` được coi là cùng một bức ảnh (có thể đã đổi kích thước hoặc nén lại) và vào cùng một **nhóm**; nhóm nối theo chuỗi (A gần B, B gần C thì A, B, C cùng nhóm). Cả nhóm luôn nằm cùng một tập. Ngưỡng nằm trong config (`duplicate_threshold`) và được chốt ngày 2026-11-05, trước khi có bất kỳ kết quả truy vấn nào. Lý do chọn ngưỡng rộng: gom thừa vô hại (chỉ giữ vài ảnh giống nhau ở cùng một tập), còn gom thiếu thì gây rò rỉ. Số đếm trên toàn bộ 108.077 ảnh ngày 2026-11-05: 5 cặp trùng hệt từng số, 16 cặp có cosine ≥ 0,999, 247 cặp ≥ 0,99; ví dụ `285982` và `2375578` có cosine 0,99992 dù không trùng hệt.
 5. **Thuật toán:** sắp các nhóm theo `image_id` nhỏ nhất, xáo bằng `np.random.default_rng(split_seed)`, rồi lần lượt đặt từng nhóm vào test nếu test còn đủ chỗ cho cả nhóm, nếu không thì vào val nếu val còn chỗ, còn lại vào train.
 6. **Một file split duy nhất:** `splits/visual_genome/split_seed0.json` với `split_seed: 0`. Seed huấn luyện tách riêng (ADR-0011).
 7. **Nguồn id:** `image_features.npz` của bộ đặc trưng `ViT-B-32__laion2b_s34b_b79k` (ADR-0041). Tham số nằm trong `configs/splits_visual_genome.yaml`. Code: `src/mmxai/data/splits.py`, `scripts/make_splits.py`.
@@ -35,10 +35,13 @@ Dữ liệu sau khi trích embedding (data card `data_cards/visual_genome.md`): 
 | Test 1.000 ảnh (như Flickr30k Karpathy) | Recall cao, dễ đọc | Ít truy vấn (~5.000), std giữa các seed lớn hơn | Kho quá nhỏ với 108.077 ảnh sẵn có |
 | 3 file split (seed 0, 1, 2) | CLIP thuần cũng có std | Mỗi split cần huấn luyện GNN riêng; trái ADR-0011 | ADR-0011 đã chốt split cố định |
 | Chia ngẫu nhiên, bỏ qua ảnh trùng | Code đơn giản hơn | Có thể có cùng ảnh ở cả train và test | Vi phạm PDF §6 |
+| Chỉ gom ảnh có embedding trùng hệt từng số | Đơn giản (`np.unique`) | Bỏ sót bản sao đã đổi kích thước/nén lại (ít nhất 11 cặp có cosine ≥ 0,999) | `leakage-auditor` phát hiện, số đếm xác nhận |
+| Gom theo hash file ảnh | Chính xác cho bản sao byte-giống-byte | Không có ảnh gốc trên máy; vẫn bỏ sót ảnh nén lại | Không bắt được trường hợp chính |
 
 ## Hệ quả
 
 - **Rò rỉ dữ liệu:** ảnh trùng không thể nằm ở hai tập khác nhau. Code đồ thị và huấn luyện phải lọc ảnh và văn bản theo split trước khi dùng (ADR-0009).
+- **File split nặng ~1,4 MB** (108.077 id dạng chuỗi, mỗi id một dòng theo `splits/README.md`), vượt giới hạn 1 MB của `check-added-large-files`. Thư mục `splits/` được loại khỏi kiểm tra này trong `.pre-commit-config.yaml`, vì file split là sản phẩm bắt buộc phải nộp (PDF §8), không phải dữ liệu hay artifact.
 - **Nguồn sự thật là file đã commit**, không phải lần chạy lại script. Numpy không cam kết giữ nguyên luồng ngẫu nhiên giữa các phiên bản, nên chạy lại bằng numpy khác có thể ra split khác. Code luôn đọc file trong `splits/` và lọc theo danh sách tường minh của từng tập (không suy "không thuộc train thì là test").
 - **CLIP thuần có std = 0:** split cố định và CLIP đóng băng là tất định, nên std qua 3 seed chỉ phản ánh nhiễu khi huấn luyện GNN. Báo cáo cần nói rõ điều này.
 - **Còn thiếu test `queries/` ⊆ test** (ADR-0009): viết khi định dạng `queries/*.jsonl` được chốt.

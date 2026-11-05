@@ -10,7 +10,7 @@ from mmxai.data.splits import (
     SPLIT_NAMES,
     assign_groups,
     check_split,
-    group_duplicate_images,
+    group_near_duplicate_images,
     load_split,
     load_split_config,
     make_split,
@@ -28,10 +28,14 @@ def make_embeddings(num_images: int) -> np.ndarray:
     return embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
 
 
+def split_of(embeddings: np.ndarray, image_ids: np.ndarray, seed: int = 0) -> dict:
+    """Group, then split, the way scripts/make_splits.py does."""
+    groups = group_near_duplicate_images(embeddings, image_ids, threshold=0.99)
+    return make_split(groups, "visual_genome", num_val=4, num_test=5, seed=seed)
+
+
 def make_small_split() -> dict:
-    embeddings = make_embeddings(20)
-    image_ids = np.arange(100, 120)
-    return make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=0)
+    return split_of(make_embeddings(20), np.arange(100, 120))
 
 
 def all_ids(split: dict) -> list[str]:
@@ -43,15 +47,46 @@ def test_duplicate_embeddings_form_one_group():
     embeddings[3] = embeddings[1]
     image_ids = np.array([40, 10, 30, 20])
 
-    groups = group_duplicate_images(embeddings, image_ids)
+    groups = group_near_duplicate_images(embeddings, image_ids, threshold=0.99)
 
     assert groups == [[10, 20], [30], [40]]
 
 
 def test_distinct_embeddings_give_single_image_groups():
-    groups = group_duplicate_images(make_embeddings(3), np.array([3, 1, 2]))
+    groups = group_near_duplicate_images(make_embeddings(3), np.array([3, 1, 2]), threshold=0.99)
 
     assert groups == [[1], [2], [3]]
+
+
+def test_near_identical_embeddings_form_one_group():
+    # A resized copy of a picture: cosine about 0.9995, not exactly equal.
+    embeddings = np.array([[1, 0, 0], [1, 0.03, 0], [0, 1, 0]], dtype=np.float32)
+    embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
+
+    groups = group_near_duplicate_images(embeddings, np.array([1, 2, 3]), threshold=0.99)
+
+    assert groups == [[1, 2], [3]]
+
+
+def test_chain_of_near_duplicates_forms_one_group():
+    # A~B and B~C (cosine about 0.992) but A and C are further apart (about 0.968).
+    angles = np.array([0.0, 0.127, 0.254, 1.5])
+    embeddings = np.stack([np.cos(angles), np.sin(angles)], axis=1).astype(np.float32)
+
+    groups = group_near_duplicate_images(embeddings, np.array([1, 2, 3, 4]), threshold=0.99)
+
+    assert groups == [[1, 2, 3], [4]]
+
+
+def test_grouping_does_not_depend_on_chunk_size():
+    embeddings = make_embeddings(30)
+    embeddings[20] = embeddings[3]
+    image_ids = np.arange(30)
+
+    small = group_near_duplicate_images(embeddings, image_ids, threshold=0.99, chunk_size=4)
+    large = group_near_duplicate_images(embeddings, image_ids, threshold=0.99, chunk_size=100)
+
+    assert small == large
 
 
 def test_assign_groups_fills_test_and_val_to_exact_size():
@@ -111,15 +146,8 @@ def test_split_does_not_depend_on_row_order():
     image_ids = np.arange(100, 120)
     shuffled_rows = np.random.default_rng(5).permutation(20)
 
-    original = make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=0)
-    shuffled = make_split(
-        embeddings[shuffled_rows],
-        image_ids[shuffled_rows],
-        "visual_genome",
-        num_val=4,
-        num_test=5,
-        seed=0,
-    )
+    original = split_of(embeddings, image_ids)
+    shuffled = split_of(embeddings[shuffled_rows], image_ids[shuffled_rows])
 
     assert original == shuffled
 
@@ -130,15 +158,15 @@ def test_make_split_rejects_repeated_image_id():
     image_ids[3] = image_ids[4]
 
     with pytest.raises(ValueError):
-        make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=0)
+        split_of(embeddings, image_ids)
 
 
 def test_different_seed_gives_different_test_set():
     embeddings = make_embeddings(20)
     image_ids = np.arange(100, 120)
 
-    first = make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=0)
-    second = make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=1)
+    first = split_of(embeddings, image_ids, seed=0)
+    second = split_of(embeddings, image_ids, seed=1)
 
     assert first["test"] != second["test"]
 
@@ -149,7 +177,7 @@ def test_duplicate_images_land_in_the_same_set():
     image_ids = np.arange(100, 120)
 
     for seed in range(10):
-        split = make_split(embeddings, image_ids, "visual_genome", num_val=4, num_test=5, seed=seed)
+        split = split_of(embeddings, image_ids, seed=seed)
         holders = [name for name in SPLIT_NAMES if "102" in split[name]]
         assert "107" in split[holders[0]]
 
@@ -215,7 +243,7 @@ def test_load_split_config_rejects_unknown_key(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text(
         "dataset: visual_genome\nfeatures_dir: f\noutput_dir: o\n"
-        "split_seed: 0\nnum_val: 1\nnum_test: 1\nnum_tset: 1\n",
+        "split_seed: 0\nnum_val: 1\nnum_test: 1\nduplicate_threshold: 0.99\nnum_tset: 1\n",
         encoding="utf-8",
     )
 
@@ -228,6 +256,7 @@ def test_committed_config_loads():
 
     assert config.num_test == 5000
     assert config.num_val == 5000
+    assert config.duplicate_threshold == 0.99
 
 
 def test_every_committed_split_file_is_valid():

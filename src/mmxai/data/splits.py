@@ -21,6 +21,7 @@ class SplitConfig:
     split_seed: int
     num_val: int
     num_test: int
+    duplicate_threshold: float
 
 
 def load_split_config(path: str | Path) -> SplitConfig:
@@ -28,22 +29,43 @@ def load_split_config(path: str | Path) -> SplitConfig:
     return load_yaml_dataclass(path, SplitConfig)
 
 
-def group_duplicate_images(embeddings: np.ndarray, image_ids: np.ndarray) -> list[list[int]]:
-    """Group images whose embeddings are exactly equal.
+def group_near_duplicate_images(
+    embeddings: np.ndarray, image_ids: np.ndarray, threshold: float, chunk_size: int = 512
+) -> list[list[int]]:
+    """Group images whose embeddings have cosine >= threshold, following chains.
 
-    Equal embeddings almost surely mean the same picture stored twice. Keeping
-    such copies in one set stops a test image from also being seen in train.
+    A near-identical embedding almost surely means the same picture stored twice,
+    possibly resized or re-compressed. Keeping such copies in one set stops a test
+    image from also being seen in train. If A is close to B and B to C, all three
+    form one group. Grouping too much is harmless: it only keeps images together.
     Groups are sorted by their smallest id, so the result never depends on row order.
     """
-    _, group_of_row = np.unique(embeddings, axis=0, return_inverse=True)
-    # The shape of the inverse changed between numpy versions; flatten to be safe.
-    group_of_row = group_of_row.reshape(-1)
+    vectors = np.asarray(embeddings, dtype=np.float32)
+    num_images = len(vectors)
 
-    ids_by_group: dict[int, list[int]] = {}
-    for row, group in enumerate(group_of_row.tolist()):
-        ids_by_group.setdefault(group, []).append(int(image_ids[row]))
+    # Union-find: parent[row] points towards the row that represents its group.
+    parent = list(range(num_images))
 
-    groups = [sorted(ids) for ids in ids_by_group.values()]
+    def find_root(row: int) -> int:
+        while parent[row] != row:
+            row = parent[row]
+        return row
+
+    # Chunks keep memory at chunk_size x num_images instead of num_images x num_images.
+    for start in range(0, num_images, chunk_size):
+        similarities = vectors[start : start + chunk_size] @ vectors.T
+        rows, columns = np.nonzero(similarities >= threshold)
+        for row, column in zip(rows.tolist(), columns.tolist(), strict=True):
+            root_a = find_root(start + row)
+            root_b = find_root(column)
+            if root_a != root_b:
+                parent[root_b] = root_a
+
+    ids_by_root: dict[int, list[int]] = {}
+    for row in range(num_images):
+        ids_by_root.setdefault(find_root(row), []).append(int(image_ids[row]))
+
+    groups = [sorted(ids) for ids in ids_by_root.values()]
     groups.sort(key=lambda ids: ids[0])
     return groups
 
@@ -79,15 +101,14 @@ def assign_groups(
 
 
 def make_split(
-    embeddings: np.ndarray,
-    image_ids: np.ndarray,
-    dataset: str,
-    num_val: int,
-    num_test: int,
-    seed: int,
+    groups: list[list[int]], dataset: str, num_val: int, num_test: int, seed: int
 ) -> dict:
-    """Return the split in the file format of splits/README.md: sorted string ids."""
-    groups = group_duplicate_images(embeddings, image_ids)
+    """Return the split in the file format of splits/README.md: sorted string ids.
+
+    Takes the groups from group_near_duplicate_images, which is slow on the full
+    dataset, so the caller computes them once.
+    """
+    num_images = sum(len(group) for group in groups)
     assigned = assign_groups(groups, num_val, num_test, seed)
 
     # Later code filters by these lists, so a missing image or a short test set
@@ -97,7 +118,7 @@ def make_split(
             f"got {len(assigned['test'])} test and {len(assigned['val'])} val images, "
             f"expected {num_test} and {num_val}"
         )
-    if sum(len(assigned[name]) for name in SPLIT_NAMES) != len(image_ids):
+    if sum(len(assigned[name]) for name in SPLIT_NAMES) != num_images:
         raise ValueError("the split does not cover every image exactly once")
 
     split = {"dataset": dataset, "seed": seed}
