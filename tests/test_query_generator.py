@@ -19,9 +19,12 @@ from mmxai.queries.generator import (
     canonical_predicate,
     canonicalize_graphs,
     chain_problem,
+    direct_text,
     enumerate_chains,
+    first_mention,
     generate_pairs,
     indirect_text,
+    is_plural,
     load_query_benchmark_config,
     reasoning_type,
     usable_relations,
@@ -153,21 +156,48 @@ def test_enumerate_chains_respects_min_and_max_hops():
     assert sorted(chain.hop_count for chain in up_to_three) == [2, 2, 3]
 
 
-def test_path_and_shared_subject_chains_read_correctly():
-    path_graph = make_graph(
-        [(1, 1, "riding", 2), (2, 2, "on", 3)], {1: "man", 2: "horse", 3: "beach"}
-    )
-    path_chain = enumerate_chains(1, path_graph.relations, 2, 2)[0]
-    subject_graph = make_graph(
-        [(1, 1, "holding", 2), (2, 1, "wearing", 3)], {1: "man", 2: "umbrella", 3: "hat"}
-    )
-    subject_chain = enumerate_chains(1, subject_graph.relations, 2, 2)[0]
+def test_path_chain_reads_correctly():
+    graph = make_graph([(1, 1, "riding", 2), (2, 2, "on", 3)], {1: "man", 2: "horse", 3: "beach"})
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+    templates = CONFIG.predicate_templates
 
-    assert reasoning_type(path_chain) == "path"
-    assert indirect_text(path_chain, path_graph) == "A man is riding the thing that is on a beach."
-    assert reasoning_type(subject_chain) == "shared_subject"
-    assert indirect_text(subject_chain, subject_graph) == (
-        "The thing that is wearing a hat is holding an umbrella."
+    assert direct_text(chain, graph, templates) == (
+        "A man is riding a horse, and the horse is on a beach."
+    )
+    assert indirect_text(chain, graph, templates) == "A man is riding something that is on a beach."
+
+
+def test_path_chain_reads_the_same_when_found_backwards():
+    # The walk starts at the lowest id (beach), so node order is beach, horse, man.
+    graph = make_graph([(1, 3, "on", 1), (2, 2, "riding", 3)], {1: "beach", 2: "man", 3: "horse"})
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert indirect_text(chain, graph, CONFIG.predicate_templates) == (
+        "A man is riding something that is on a beach."
+    )
+
+
+def test_plural_names_get_some_and_are():
+    shoes = SceneObject(1, "shoes", "shoes", "shoe.n.01")
+    glass = SceneObject(2, "glass", "glass", "glass.n.02")
+    man = SceneObject(3, "man", "man", "")
+    apple = SceneObject(4, "apple", "apple", "apple.n.01")
+
+    assert is_plural(shoes)
+    assert not is_plural(glass)
+    assert not is_plural(man)
+    assert first_mention(shoes) == "some shoes"
+    assert first_mention(apple) == "an apple"
+    assert first_mention(man) == "a man"
+
+
+def test_plural_subject_takes_are():
+    graph = make_graph([(1, 1, "on", 2), (2, 3, "wearing", 1)], {1: "shoes", 2: "floor", 3: "man"})
+    graph.objects[1] = SceneObject(1, "shoes", "shoes", "shoe.n.01")
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert direct_text(chain, graph, CONFIG.predicate_templates) == (
+        "A man is wearing some shoes, and the shoes are on a floor."
     )
 
 

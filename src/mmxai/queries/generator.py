@@ -4,8 +4,10 @@ A chain is k >= 2 annotated relations that link distinct objects of ONE image by
 object id, e.g. (person -holding-> frisbee) and (dog -looks at-> frisbee) share the
 frisbee node. From one chain we write two queries with the same answers:
 
-    direct   names every object:   "A person is holding a frisbee, and a dog looks at the frisbee."
-    indirect hides inner objects:  "A person is holding the thing that a dog looks at."
+    direct   names every object:
+        "A person is holding a frisbee, and a dog is looking at the frisbee."
+    indirect hides inner objects:
+        "A person is holding the thing that a dog is looking at."
 
 The indirect query can only be resolved by following the relations, which is the
 "child - plays - football" kind of query the PDF (Task 2) asks for. (The frisbee
@@ -21,7 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
-from mmxai.data.scene_graph import Relation, SceneGraph, load_scene_graphs
+from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject, load_scene_graphs
 from mmxai.data.splits import load_split
 from mmxai.queries.schema import STATUS_CANDIDATE, write_jsonl
 from mmxai.queries.validator import (
@@ -31,34 +33,6 @@ from mmxai.queries.validator import (
     write_review_manifest,
 )
 from mmxai.utils.yaml_config import load_yaml_dataclass
-
-# Predicates starting with one of these words describe a position, not an action,
-# so they need "is" to read as a sentence: "a cup is on a table".
-POSITION_WORDS = {
-    "above",
-    "across",
-    "against",
-    "along",
-    "among",
-    "around",
-    "at",
-    "atop",
-    "behind",
-    "below",
-    "beneath",
-    "beside",
-    "between",
-    "by",
-    "in",
-    "inside",
-    "near",
-    "next",
-    "on",
-    "outside",
-    "over",
-    "under",
-    "underneath",
-}
 
 # Rejection reasons, counted so the report can say why chains were thrown away.
 REJECT_GENERIC_NAME = "generic_name"
@@ -257,69 +231,8 @@ def node_names(chain: Chain, graph: SceneGraph) -> list[str]:
 # --- Templates -------------------------------------------------------------------------------
 
 
-def verb_phrase(predicate: str) -> str:
-    """Make a predicate read as a present-tense verb: "holding" -> "is holding", "on" -> "is on".
-
-    Predicates that already are a verb ("has", "wears", "looks at") stay unchanged.
-    """
-    first_word = predicate.split()[0]
-    if first_word in ("is", "are"):
-        return predicate
-    if first_word.endswith("ing") or first_word.endswith("ed") or first_word in POSITION_WORDS:
-        return f"is {predicate}"
-    return predicate
-
-
-def with_article(name: str) -> str:
-    if name[0] in "aeiou":
-        return f"an {name}"
-    return f"a {name}"
-
-
 def as_sentence(text: str) -> str:
     return text[0].upper() + text[1:] + "."
-
-
-def direct_text(chain: Chain, graph: SceneGraph) -> str:
-    """Name every object: "a" at first mention, "the" afterwards (same object id)."""
-    mentioned = set()
-
-    def mention(node_id: int) -> str:
-        name = graph.objects[node_id].name
-        if node_id in mentioned:
-            return f"the {name}"
-        mentioned.add(node_id)
-        return with_article(name)
-
-    clauses = []
-    for relation in chain.relations:
-        subject = mention(relation.subject_id)
-        target = mention(relation.object_id)
-        clauses.append(f"{subject} {verb_phrase(relation.predicate)} {target}")
-    return as_sentence(", and ".join(clauses))
-
-
-def describe_node(chain: Chain, graph: SceneGraph, node_position: int) -> str:
-    """Noun phrase for a node: the last node is named, inner (bridge) nodes are hidden
-    behind "the thing that ..." built from the next relation of the chain."""
-    if node_position == len(chain.node_ids) - 1:
-        return with_article(graph.objects[chain.node_ids[node_position]].name)
-    relation = chain.relations[node_position]
-    rest = describe_node(chain, graph, node_position + 1)
-    verb = verb_phrase(relation.predicate)
-    if chain.is_subject(node_position, node_position):
-        return f"the thing that {verb} {rest}"
-    return f"the thing that {rest} {verb}"
-
-
-def indirect_text(chain: Chain, graph: SceneGraph) -> str:
-    """Name the two end objects, describe every inner object only through its relations."""
-    first = with_article(graph.objects[chain.node_ids[0]].name)
-    rest = describe_node(chain, graph, 1)
-    verb = verb_phrase(chain.relations[0].predicate)
-    if chain.is_subject(0, 0):
-        return as_sentence(f"{first} {verb} {rest}")
-    return as_sentence(f"{rest} {verb} {first}")
 
 
 def reasoning_type(chain: Chain) -> str:
@@ -333,6 +246,90 @@ def reasoning_type(chain: Chain) -> str:
     if bridge_is_subject_of_first and bridge_is_subject_of_second:
         return "shared_subject"  # A <-p- X -q-> B
     return "path"  # A -p-> X -q-> B
+
+
+def synset_lemma(synset: str) -> str:
+    """ "fire_hydrant.n.01" -> "fire hydrant"."""
+    return synset.split(".")[0].replace("_", " ")
+
+
+def is_plural(scene_object: SceneObject) -> bool:
+    """True when the name is the synset lemma + "s"/"es" ("shoes" vs shoe.n.01).
+
+    Deliberately narrow: irregular plurals ("men") read as singular and are left
+    to the reviewer, instead of guessing English grammar from a word list.
+    """
+    if not scene_object.synset:
+        return False
+    last_word = scene_object.name.split()[-1]
+    lemma_last_word = synset_lemma(scene_object.synset).split()[-1]
+    return last_word in (lemma_last_word + "s", lemma_last_word + "es")
+
+
+def first_mention(scene_object: SceneObject) -> str:
+    """ "a man", "an apple", "some shoes"."""
+    if is_plural(scene_object):
+        return f"some {scene_object.name}"
+    if scene_object.name[0] in "aeiou":
+        return f"an {scene_object.name}"
+    return f"a {scene_object.name}"
+
+
+def verb_for(phrase: str, plural_subject: bool) -> str:
+    """Templates are written for one subject ("is holding"); a plural subject takes "are"."""
+    if plural_subject and phrase.startswith("is "):
+        return "are " + phrase[len("is ") :]
+    return phrase
+
+
+def chain_roles(chain: Chain, graph: SceneGraph) -> tuple:
+    """(first, first_relation, bridge, last, last_relation) in reading order.
+
+    shared_object A -p-> X <-q- B: first = A, last = B.
+    path          A -p-> X -q-> C: first = A (the subject pointing INTO the bridge),
+                                   last = C, whatever direction the walk found it in.
+    """
+    bridge_id = chain.node_ids[1]
+    bridge = graph.objects[bridge_id]
+    if reasoning_type(chain) == "shared_object":
+        first_relation, last_relation = chain.relations
+        first = graph.objects[first_relation.subject_id]
+        last = graph.objects[last_relation.subject_id]
+        return first, first_relation, bridge, last, last_relation
+    if chain.relations[0].object_id == bridge_id:
+        first_relation, last_relation = chain.relations
+    else:
+        last_relation, first_relation = chain.relations
+    first = graph.objects[first_relation.subject_id]
+    last = graph.objects[last_relation.object_id]
+    return first, first_relation, bridge, last, last_relation
+
+
+def direct_text(chain: Chain, graph: SceneGraph, templates: dict[str, str]) -> str:
+    """Name every object; the bridge is "a X" at first mention and "the X" afterwards."""
+    first, first_relation, bridge, last, last_relation = chain_roles(chain, graph)
+    first_verb = verb_for(templates[first_relation.predicate], is_plural(first))
+    opening = f"{first_mention(first)} {first_verb} {first_mention(bridge)}"
+    if reasoning_type(chain) == "shared_object":
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(last))
+        closing = f"{first_mention(last)} {last_verb} the {bridge.name}"
+    else:
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(bridge))
+        closing = f"the {bridge.name} {last_verb} {first_mention(last)}"
+    return as_sentence(f"{opening}, and {closing}")
+
+
+def indirect_text(chain: Chain, graph: SceneGraph, templates: dict[str, str]) -> str:
+    """Name the two end objects; the bridge is described only through its relations."""
+    first, first_relation, bridge, last, last_relation = chain_roles(chain, graph)
+    first_verb = verb_for(templates[first_relation.predicate], is_plural(first))
+    if reasoning_type(chain) == "shared_object":
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(last))
+        hidden = f"the thing that {first_mention(last)} {last_verb}"
+    else:
+        # "something" is singular, so the template is used as written.
+        hidden = f"something that {templates[last_relation.predicate]} {first_mention(last)}"
+    return as_sentence(f"{first_mention(first)} {first_verb} {hidden}")
 
 
 def path_hint(chain: Chain) -> str:
@@ -387,11 +384,19 @@ def make_pair(
         "split": config.split,
         "verification_status": STATUS_CANDIDATE,
     }
-    direct = {"qid": f"{pair_id}-d", "text": direct_text(chain, graph), "type": "direct"}
+    direct = {
+        "qid": f"{pair_id}-d",
+        "text": direct_text(chain, graph, config.predicate_templates),
+        "type": "direct",
+    }
     direct.update(shared)
     direct["reasoning_type"] = "explicit"
     direct["hidden_names"] = []
-    indirect = {"qid": f"{pair_id}-i", "text": indirect_text(chain, graph), "type": "indirect"}
+    indirect = {
+        "qid": f"{pair_id}-i",
+        "text": indirect_text(chain, graph, config.predicate_templates),
+        "type": "indirect",
+    }
     indirect.update(shared)
     indirect["reasoning_type"] = reasoning_type(chain)
     indirect["hidden_names"] = names[1:-1]
@@ -412,7 +417,7 @@ def chain_problem(
     # No check for two chain nodes with one name: usable_relations already keeps only
     # names that are unique in the image, so every node of a chain has its own name.
     names = node_names(chain, graph)
-    text = indirect_text(chain, graph)
+    text = indirect_text(chain, graph, config.predicate_templates)
     # Naming the hidden object would turn the indirect query into a reworded direct one.
     if hidden_names_in_text(text, names[1:-1]):
         return REJECT_HIDDEN_NAME_IN_TEXT
@@ -479,7 +484,7 @@ def generate_pairs(
             num_pairs += 1
             pair_id = f"vg-{config.split}-{num_pairs:03d}"
             records.extend(make_pair(chain, graph, pair_id, matches, config))
-            seen_texts.add(indirect_text(chain, graph))
+            seen_texts.add(indirect_text(chain, graph, config.predicate_templates))
             taken += 1
     return records, rejections
 
