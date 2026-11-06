@@ -17,6 +17,7 @@ Text comes from fixed templates, no language model: every word is traceable to a
 annotation, and the generation rules are fixed in the config before any result.
 """
 
+import re
 from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -42,6 +43,7 @@ from mmxai.utils.yaml_config import load_yaml_dataclass
 
 # Rejection reasons, counted so the report can say why chains were thrown away.
 REJECT_GENERIC_NAME = "generic_name"
+REJECT_NON_WORD_NAME = "name_not_plain_words"
 REJECT_PREDICATE_NOT_ALLOWED = "predicate_not_in_whitelist"
 REJECT_AMBIGUOUS_NAME = "ambiguous_name"
 REJECT_HIDDEN_NAME_IN_TEXT = "hidden_name_in_indirect_text"
@@ -53,6 +55,10 @@ REJECT_NO_ACTION = "no_action_predicate"
 # Pilot val 2026-11-06: shared-subject chains gave vague text and joined two names of
 # one person ("baseball player" / "batter"), so only these shapes are kept (ADR-0044).
 ALLOWED_SHAPES = ("shared_object", "path")
+
+# Lowercase words separated by single spaces. Pilot val 2026-11-06 produced "A 52 is on a
+# green/white uniform": numbers and symbols do not read as a nameable object.
+PLAIN_WORDS = re.compile(r"[a-z]+( [a-z]+)*")
 
 # Removed before the whitelist lookup so "are on a" and "on" are one predicate.
 LEADING_COPULAS = ("is ", "are ")
@@ -170,6 +176,7 @@ def usable_relations(
 
     Rules (ADR-0044), kept deliberately simple:
     - no generic name ("it", "thing"...): it cannot be checked in the image;
+    - names are plain words (no digits or symbols like "52", "green/white");
     - predicate in the whitelist (predicate_templates): every query reads correctly;
     - each object's name is unique among ALL objects of the image, so "the dog"
       points to one object and the graph by id agrees with what a reader sees.
@@ -182,6 +189,10 @@ def usable_relations(
     for relation in graph.relations:
         if relation.subject_name in generic or relation.object_name in generic:
             rejections[REJECT_GENERIC_NAME] += 1
+        elif not PLAIN_WORDS.fullmatch(relation.subject_name) or not PLAIN_WORDS.fullmatch(
+            relation.object_name
+        ):
+            rejections[REJECT_NON_WORD_NAME] += 1
         elif relation.predicate not in predicate_templates:
             rejections[REJECT_PREDICATE_NOT_ALLOWED] += 1
         elif counts[relation.subject_name] > 1 or counts[relation.object_name] > 1:

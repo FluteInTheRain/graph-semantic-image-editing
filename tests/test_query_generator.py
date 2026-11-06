@@ -14,6 +14,7 @@ from mmxai.queries.generator import (
     REJECT_AMBIGUOUS_NAME,
     REJECT_GENERIC_NAME,
     REJECT_NO_ACTION,
+    REJECT_NON_WORD_NAME,
     REJECT_PREDICATE_NOT_ALLOWED,
     REJECT_SHAPE,
     canonical_predicate,
@@ -293,3 +294,14 @@ def test_evidence_carries_the_synsets_of_both_objects():
 
     assert first["subject_synset"] == "man.n.01"
     assert first["object_synset"] == ""
+
+
+def test_names_with_digits_or_symbols_are_rejected():
+    names = {1: "52", 2: "green/white uniform", 3: "baseball player", 4: "hat"}
+    graph = make_graph([(1, 1, "on", 2), (2, 3, "wearing", 4)], names)
+    rejections = Counter()
+
+    usable = usable_relations(graph, ["it"], CONFIG.predicate_templates, rejections)
+
+    assert [relation.relationship_id for relation in usable] == [2]
+    assert rejections == Counter({REJECT_NON_WORD_NAME: 1})
