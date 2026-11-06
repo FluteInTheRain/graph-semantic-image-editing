@@ -7,7 +7,8 @@ Workflow (ADR-0044):
     build_verified_benchmark keeps ONLY verified pairs -> queries/visual_genome_test.jsonl
 
 Relevance (ADR-0044): an image is a candidate answer when its scene graph holds the
-same chain as the query: objects with the same normalised names, linked by relations
+same chain as the query: objects with the same match key (VG WordNet synset, else
+normalised name), linked by relations
 with the same normalised predicates and directions, through distinct object ids.
 The source image is therefore one answer among possibly many, never assumed alone.
 """
@@ -16,7 +17,7 @@ import csv
 import re
 from pathlib import Path
 
-from mmxai.data.scene_graph import SceneGraph
+from mmxai.data.scene_graph import SceneGraph, match_key
 from mmxai.data.splits import load_split
 from mmxai.queries.schema import (
     STATUS_CANDIDATE,
@@ -58,8 +59,16 @@ REVIEW_STATUSES = (STATUS_CANDIDATE, STATUS_REVIEWED, STATUS_VERIFIED, STATUS_RE
 # --- Chain patterns and candidate relevance ----------------------------------------------
 
 
+def evidence_key(relation: dict, side: str) -> str:
+    """Match key of one end ("subject"/"object") of a stored relation: synset, else name."""
+    synset = relation.get(f"{side}_synset", "")
+    if synset:
+        return synset
+    return relation[f"{side}_name"]
+
+
 def pattern_from_record(record: dict) -> tuple[list[str], list[tuple[str, bool]]]:
-    """Return (node names n0..nk, steps) of the query's chain.
+    """Return (node match keys n0..nk, steps) of the query's chain.
 
     Step i links node i to node i+1 by a predicate; `forward` is True when node i is
     the subject of that relation. Everything comes from the stored evidence, so
@@ -70,31 +79,31 @@ def pattern_from_record(record: dict) -> tuple[list[str], list[tuple[str, bool]]
     if len(evidence) != len(node_ids) - 1:
         raise ValueError(f"{record['qid']}: {len(evidence)} relations for {len(node_ids)} nodes")
 
-    names = []
+    keys = []
     steps = []
     for position, relation in enumerate(evidence):
         current_id = node_ids[position]
         next_id = node_ids[position + 1]
         if relation["subject_id"] == current_id and relation["object_id"] == next_id:
             forward = True
-            current_name = relation["subject_name"]
+            current_key = evidence_key(relation, "subject")
         elif relation["object_id"] == current_id and relation["subject_id"] == next_id:
             forward = False
-            current_name = relation["object_name"]
+            current_key = evidence_key(relation, "object")
         else:
             raise ValueError(f"{record['qid']}: relation {position} does not link its chain nodes")
-        names.append(current_name)
+        keys.append(current_key)
         steps.append((relation["predicate"], forward))
     last = evidence[-1]
     if steps[-1][1]:
-        names.append(last["object_name"])
+        keys.append(evidence_key(last, "object"))
     else:
-        names.append(last["subject_name"])
-    return names, steps
+        keys.append(evidence_key(last, "subject"))
+    return keys, steps
 
 
 def extend_match(
-    graph: SceneGraph, used_ids: list[int], names: list[str], steps: list[tuple[str, bool]]
+    graph: SceneGraph, used_ids: list[int], keys: list[str], steps: list[tuple[str, bool]]
 ) -> bool:
     """Depth-first search: can the partial match `used_ids` be extended to the whole chain?"""
     step_index = len(used_ids) - 1
@@ -114,28 +123,28 @@ def extend_match(
                 continue
             next_id = relation.subject_id
         # Distinct ids: one object may not play two roles of the chain.
-        if next_id in used_ids or graph.objects[next_id].name != names[step_index + 1]:
+        if next_id in used_ids or match_key(graph.objects[next_id]) != keys[step_index + 1]:
             continue
-        if extend_match(graph, used_ids + [next_id], names, steps):
+        if extend_match(graph, used_ids + [next_id], keys, steps):
             return True
     return False
 
 
-def graph_has_pattern(graph: SceneGraph, names: list[str], steps: list[tuple[str, bool]]) -> bool:
+def graph_has_pattern(graph: SceneGraph, keys: list[str], steps: list[tuple[str, bool]]) -> bool:
     """True if some distinct objects of this image form the chain."""
-    present_names = set(graph.name_counts())
-    if not set(names) <= present_names:
+    present_keys = {match_key(scene_object) for scene_object in graph.objects.values()}
+    if not set(keys) <= present_keys:
         return False
     for scene_object in graph.objects.values():
-        if scene_object.name != names[0]:
+        if match_key(scene_object) != keys[0]:
             continue
-        if extend_match(graph, [scene_object.object_id], names, steps):
+        if extend_match(graph, [scene_object.object_id], keys, steps):
             return True
     return False
 
 
 def images_matching_pattern(
-    names: list[str], steps: list[tuple[str, bool]], graphs: dict[int, SceneGraph]
+    keys: list[str], steps: list[tuple[str, bool]], graphs: dict[int, SceneGraph]
 ) -> list[int]:
     """Ids (sorted) of every image in `graphs` whose scene graph contains the chain.
 
@@ -143,7 +152,7 @@ def images_matching_pattern(
     """
     matches = []
     for image_id in sorted(graphs):
-        if graph_has_pattern(graphs[image_id], names, steps):
+        if graph_has_pattern(graphs[image_id], keys, steps):
             matches.append(image_id)
     return matches
 
@@ -202,8 +211,8 @@ def check_evidence(record: dict, graphs: dict[int, SceneGraph]) -> list[str]:
         if stored != annotated:
             problems.append(f"{qid}: relationship {relation.relationship_id} differs: {stored}")
     if not problems:
-        names, steps = pattern_from_record(record)
-        if not graph_has_pattern(graph, names, steps):
+        keys, steps = pattern_from_record(record)
+        if not graph_has_pattern(graph, keys, steps):
             problems.append(f"{qid}: the chain does not match its own source image")
     return problems
 

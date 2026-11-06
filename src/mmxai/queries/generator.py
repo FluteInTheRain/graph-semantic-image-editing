@@ -23,7 +23,13 @@ from pathlib import Path
 
 import numpy as np
 
-from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject, load_scene_graphs
+from mmxai.data.scene_graph import (
+    Relation,
+    SceneGraph,
+    SceneObject,
+    load_scene_graphs,
+    match_key,
+)
 from mmxai.data.splits import load_split
 from mmxai.queries.schema import STATUS_CANDIDATE, write_jsonl
 from mmxai.queries.validator import (
@@ -340,7 +346,7 @@ def path_hint(chain: Chain) -> str:
     return "; ".join(parts)
 
 
-def relation_evidence(chain: Chain) -> list[dict]:
+def relation_evidence(chain: Chain, graph: SceneGraph) -> list[dict]:
     """The annotations behind the query, in chain order, with raw strings for reviewers."""
     evidence = []
     for relation in chain.relations:
@@ -349,9 +355,11 @@ def relation_evidence(chain: Chain) -> list[dict]:
                 "relationship_id": relation.relationship_id,
                 "subject_id": relation.subject_id,
                 "subject_name": relation.subject_name,
+                "subject_synset": graph.objects[relation.subject_id].synset,
                 "predicate": relation.predicate,
                 "object_id": relation.object_id,
                 "object_name": relation.object_name,
+                "object_synset": graph.objects[relation.object_id].synset,
                 "raw": [
                     relation.raw_subject_name,
                     relation.raw_predicate,
@@ -378,7 +386,7 @@ def make_pair(
         "author": config.author,
         "pair_id": pair_id,
         "source_image_id": str(chain.image_id),
-        "relation_evidence": relation_evidence(chain),
+        "relation_evidence": relation_evidence(chain, graph),
         "chain_object_ids": list(chain.node_ids),
         "hop_count": chain.hop_count,
         "split": config.split,
@@ -427,11 +435,12 @@ def chain_problem(
 
 
 def chain_pattern(chain: Chain, graph: SceneGraph) -> tuple[list[str], list[tuple[str, bool]]]:
-    """Same pattern the validator rebuilds from the stored evidence."""
+    """Same pattern (match keys + steps) the validator rebuilds from the stored evidence."""
     steps = []
     for position, relation in enumerate(chain.relations):
         steps.append((relation.predicate, chain.is_subject(position, position)))
-    return node_names(chain, graph), steps
+    keys = [match_key(graph.objects[node_id]) for node_id in chain.node_ids]
+    return keys, steps
 
 
 def generate_pairs(
@@ -472,8 +481,8 @@ def generate_pairs(
             if problem is not None:
                 rejections[problem] += 1
                 continue
-            names, steps = chain_pattern(chain, graph)
-            matches = images_matching_pattern(names, steps, graphs)
+            keys, steps = chain_pattern(chain, graph)
+            matches = images_matching_pattern(keys, steps, graphs)
             # Fixed before generation: a pattern found in very many images is too
             # generic to review by hand and says little about relational reasoning.
             if len(matches) > config.max_candidate_images:

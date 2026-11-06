@@ -27,6 +27,7 @@ from mmxai.queries.generator import (
     is_plural,
     load_query_benchmark_config,
     reasoning_type,
+    relation_evidence,
     usable_relations,
 )
 from scene_graph_fixtures import CONFIG, TEST_IDS, canonical_fixture_graphs
@@ -281,3 +282,14 @@ def test_config_rejects_more_than_two_hops(tmp_path):
 
     with pytest.raises(ValueError, match="2 hops"):
         load_query_benchmark_config(path)
+
+
+def test_evidence_carries_the_synsets_of_both_objects():
+    graph = make_graph([(1, 1, "riding", 2), (2, 2, "on", 3)], {1: "man", 2: "horse", 3: "beach"})
+    graph.objects[1] = SceneObject(1, "man", "man", "man.n.01")
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    first = relation_evidence(chain, graph)[0]
+
+    assert first["subject_synset"] == "man.n.01"
+    assert first["object_synset"] == ""

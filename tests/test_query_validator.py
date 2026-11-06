@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.generator import generate_pairs, load_query_benchmark_config, run_generation
 from mmxai.queries.schema import load_jsonl
 from mmxai.queries.validator import (
@@ -261,3 +262,46 @@ def test_build_writes_the_verified_benchmark(tmp_path):
     assert num_pairs == 1
     final = load_jsonl(config.benchmark_path)
     assert validate_queries(final, TEST_ID_STRINGS, require_verified=True) == []
+
+
+def synset_graph(image_id: int, rider: SceneObject) -> SceneGraph:
+    horse = SceneObject(2, "horse", "horse", "horse.n.01")
+    graph = SceneGraph(image_id, {1: rider, 2: horse})
+    graph.relations.append(
+        Relation(9, 1, rider.name, "riding", 2, "horse", "riding", rider.name, "horse")
+    )
+    return graph
+
+
+def test_answers_match_by_synset_not_only_by_name():
+    graphs = {
+        1: synset_graph(1, SceneObject(1, "man", "man", "man.n.01")),
+        2: synset_graph(2, SceneObject(1, "guy", "guy", "man.n.01")),
+        3: synset_graph(3, SceneObject(1, "man", "man", "")),  # no synset: key "man"
+    }
+
+    assert images_matching_pattern(["man.n.01", "horse.n.01"], [("riding", True)], graphs) == [
+        1,
+        2,
+    ]
+
+
+def test_pattern_from_record_reads_synset_keys_from_evidence():
+    record = {
+        "qid": "q",
+        "chain_object_ids": [1, 2],
+        "relation_evidence": [
+            {
+                "relationship_id": 9,
+                "subject_id": 1,
+                "subject_name": "guy",
+                "subject_synset": "man.n.01",
+                "predicate": "riding",
+                "object_id": 2,
+                "object_name": "horse",
+                "object_synset": "",
+            }
+        ],
+    }
+
+    assert pattern_from_record(record) == (["man.n.01", "horse"], [("riding", True)])

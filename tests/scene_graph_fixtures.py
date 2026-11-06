@@ -55,8 +55,11 @@ CONFIG = QueryBenchmarkConfig(
 )
 
 
-def obj(object_id: int, name: str) -> dict:
-    return {"object_id": object_id, "names": [name], "x": 0, "y": 0, "w": 1, "h": 1}
+def obj(object_id: int, name: str, synset: str = "") -> dict:
+    annotation = {"object_id": object_id, "names": [name], "x": 0, "y": 0, "w": 1, "h": 1}
+    if synset:
+        annotation["synsets"] = [synset]
+    return annotation
 
 
 def rel(relationship_id: int, subject: dict, predicate: str, target: dict) -> dict:
