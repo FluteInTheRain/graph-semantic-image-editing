@@ -13,9 +13,12 @@ from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.generator import (
     REJECT_AMBIGUOUS_NAME,
     REJECT_GENERIC_NAME,
+    REJECT_NO_ACTION,
     REJECT_PREDICATE_NOT_ALLOWED,
+    REJECT_SHAPE,
     canonical_predicate,
     canonicalize_graphs,
+    chain_problem,
     enumerate_chains,
     generate_pairs,
     indirect_text,
@@ -166,6 +169,32 @@ def test_path_and_shared_subject_chains_read_correctly():
     assert indirect_text(subject_chain, subject_graph) == (
         "The thing that is wearing a hat is holding an umbrella."
     )
+
+
+def test_shared_subject_chains_are_rejected():
+    graph = make_graph(
+        [(1, 1, "holding", 2), (2, 1, "wearing", 3)], {1: "man", 2: "umbrella", 3: "hat"}
+    )
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert reasoning_type(chain) == "shared_subject"
+    assert chain_problem(chain, graph, set(), CONFIG) == REJECT_SHAPE
+
+
+def test_chain_without_an_action_predicate_is_rejected():
+    graph = make_graph([(1, 1, "on", 2), (2, 3, "near", 2)], {1: "cup", 2: "table", 3: "plate"})
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert reasoning_type(chain) == "shared_object"
+    assert chain_problem(chain, graph, set(), CONFIG) == REJECT_NO_ACTION
+
+
+def test_path_chain_with_an_action_is_accepted():
+    graph = make_graph([(1, 1, "riding", 2), (2, 2, "on", 3)], {1: "man", 2: "horse", 3: "beach"})
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert reasoning_type(chain) == "path"
+    assert chain_problem(chain, graph, set(), CONFIG) is None
 
 
 def test_generation_is_deterministic_for_a_seed():

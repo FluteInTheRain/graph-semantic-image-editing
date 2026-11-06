@@ -67,6 +67,12 @@ REJECT_AMBIGUOUS_NAME = "ambiguous_name"
 REJECT_HIDDEN_NAME_IN_TEXT = "hidden_name_in_indirect_text"
 REJECT_DUPLICATE_TEXT = "duplicate_query_text"
 REJECT_TOO_MANY_MATCHES = "too_many_candidate_images"
+REJECT_SHAPE = "shared_subject_chain"
+REJECT_NO_ACTION = "no_action_predicate"
+
+# Pilot val 2026-11-06: shared-subject chains gave vague text and joined two names of
+# one person ("baseball player" / "batter"), so only these shapes are kept (ADR-0044).
+ALLOWED_SHAPES = ("shared_object", "path")
 
 # Removed before the whitelist lookup so "are on a" and "on" are one predicate.
 LEADING_COPULAS = ("is ", "are ")
@@ -392,8 +398,17 @@ def make_pair(
     return [direct, indirect]
 
 
-def chain_problem(chain: Chain, graph: SceneGraph, seen_texts: set[str]) -> str | None:
+def chain_problem(
+    chain: Chain, graph: SceneGraph, seen_texts: set[str], config: QueryBenchmarkConfig
+) -> str | None:
     """Return why a chain cannot become a query pair, or None if it can (cheap checks only)."""
+    if reasoning_type(chain) not in ALLOWED_SHAPES:
+        return REJECT_SHAPE
+    # Only positions ("cup on table near plate") is not the "child - plays - football"
+    # kind of relation the PDF asks the indirect group to need.
+    actions = set(config.action_predicates)
+    if not any(relation.predicate in actions for relation in chain.relations):
+        return REJECT_NO_ACTION
     # No check for two chain nodes with one name: usable_relations already keeps only
     # names that are unique in the image, so every node of a chain has its own name.
     names = node_names(chain, graph)
@@ -448,7 +463,7 @@ def generate_pairs(
             if taken >= config.max_pairs_per_image or num_pairs >= config.limit_pairs:
                 break
             chain = chains[position]
-            problem = chain_problem(chain, graph, seen_texts)
+            problem = chain_problem(chain, graph, seen_texts, config)
             if problem is not None:
                 rejections[problem] += 1
                 continue
