@@ -16,6 +16,7 @@ from mmxai.queries.generator import (
     REJECT_NO_ACTION,
     REJECT_NON_WORD_NAME,
     REJECT_PREDICATE_NOT_ALLOWED,
+    REJECT_REPEATED_KEY,
     REJECT_SHAPE,
     canonical_predicate,
     canonicalize_graphs,
@@ -219,6 +220,16 @@ def test_chain_without_an_action_predicate_is_rejected():
 
     assert reasoning_type(chain) == "shared_object"
     assert chain_problem(chain, graph, set(), CONFIG) == REJECT_NO_ACTION
+
+
+def test_chain_whose_ends_share_a_synset_is_rejected():
+    names = {1: "man", 2: "frisbee", 3: "guy"}
+    graph = make_graph([(1, 1, "holding", 2), (2, 3, "looking at", 2)], names)
+    graph.objects[1] = SceneObject(1, "man", "man", "man.n.01")
+    graph.objects[3] = SceneObject(3, "guy", "guy", "man.n.01")
+    chain = enumerate_chains(1, graph.relations, 2, 2)[0]
+
+    assert chain_problem(chain, graph, set(), CONFIG) == REJECT_REPEATED_KEY
 
 
 def test_path_chain_with_an_action_is_accepted():

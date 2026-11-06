@@ -26,7 +26,8 @@ generic_names: [it, this, that, these, those, thing, things, something, object, 
                 # Body parts (pilot val 2026-11-06): "wearing something that is on a head"
                 # is obvious, not relational reasoning.
                 head, hand, wrist, arm, leg,
-                face, hair, ear, eye, nose, mouth, neck, foot, finger, shoulder, body]
+                face, hair, ear, eye, nose, mouth, neck, foot, finger, shoulder, body,
+                hands, arms, legs, ears, eyes, feet, fingers, shoulders]
 # Decision (ADR-0044, pilot val 2026-11-06, Thuat Nguyen): whitelist of predicates with a
 #   hand-written verb phrase. Chosen from predicate frequencies on TRAIN only.
 #   Dropped on purpose: has/have, of, with, by, for, and, at, from, belonging to, between, along.

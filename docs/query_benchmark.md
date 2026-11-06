@@ -155,10 +155,11 @@ Vị từ trong Visual Genome rất lộn xộn ("ON", "is wearing", "on a"). Ta
 
 | Bộ lọc | Lý do loại (tên trong bảng tóm tắt) | Vì sao |
 |---|---|---|
-| Tên chung chung, gồm cả **bộ phận cơ thể** (`generic_names`: `thing`, `it`, `head`, `hand`...) | `generic_name` | "wearing something that is on a head" hiển nhiên, không cần suy luận quan hệ |
+| Tên chung chung, gồm cả **bộ phận cơ thể** (`generic_names`: `thing`, `it`, `head`, `hand`..., cả số nhiều `hands`, `legs`...) | `generic_name` | "wearing something that is on a head" hiển nhiên, không cần suy luận quan hệ |
 | Tên phải là **từ thường** (`PLAIN_WORDS`: chữ cái thường, cách nhau một khoảng trắng) | `name_not_plain_words` | Pilot sinh "A 52 is on a green/white uniform" |
 | Vị từ ngoài whitelist | `predicate_not_in_whitelist` | Mục 5.1 |
 | Tên đối tượng **duy nhất trong ảnh** | `ambiguous_name` | Ảnh có hai `dog` thì "the dog" mơ hồ |
+| Hai node trong chuỗi **cùng synset** (`man`/`guy` cùng `man.n.01`) | `repeated_synset_in_chain` | Đáp án khớp theo synset; có thể là cùng một người với hai tên |
 | Dạng chuỗi `shared_subject` | `shared_subject_chain` | Mục 5.2 |
 | Không có vị từ hành động | `no_action_predicate` | Mục 5.2 |
 | Tên node cầu (bị giấu) xuất hiện trong câu gián tiếp | `hidden_name_in_indirect_text` | Nếu không, đó chỉ là câu trực tiếp viết lại |

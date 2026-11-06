@@ -51,6 +51,7 @@ REJECT_DUPLICATE_TEXT = "duplicate_query_text"
 REJECT_TOO_MANY_MATCHES = "too_many_candidate_images"
 REJECT_SHAPE = "shared_subject_chain"
 REJECT_NO_ACTION = "no_action_predicate"
+REJECT_REPEATED_KEY = "repeated_synset_in_chain"
 
 # Pilot val 2026-11-06: shared-subject chains gave vague text and joined two names of
 # one person ("baseball player" / "batter"), so only these shapes are kept (ADR-0044).
@@ -180,8 +181,8 @@ def usable_relations(
     - predicate in the whitelist (predicate_templates): every query reads correctly;
     - each object's name is unique among ALL objects of the image, so "the dog"
       points to one object and the graph by id agrees with what a reader sees.
-      It also means the nodes of a chain all have different names, so an indirect
-      query can never be answered by a second, named copy of its hidden object.
+      Names are unique in the image, but answers match by synset, so objects that
+      share a synset inside one chain ("man", "guy") are rejected later, in chain_problem.
     """
     generic = set(generic_names)
     counts = graph.name_counts()
@@ -433,8 +434,11 @@ def chain_problem(
     actions = set(config.action_predicates)
     if not any(relation.predicate in actions for relation in chain.relations):
         return REJECT_NO_ACTION
-    # No check for two chain nodes with one name: usable_relations already keeps only
-    # names that are unique in the image, so every node of a chain has its own name.
+    # Names are unique in the image, but answers match by synset: "man" and "guy"
+    # (both man.n.01) in one chain are likely one person under two names.
+    keys = [match_key(graph.objects[node_id]) for node_id in chain.node_ids]
+    if len(set(keys)) < len(keys):
+        return REJECT_REPEATED_KEY
     names = node_names(chain, graph)
     text = indirect_text(chain, graph, config.predicate_templates)
     # Naming the hidden object would turn the indirect query into a reworded direct one.
