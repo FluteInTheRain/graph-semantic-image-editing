@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mmxai.data.scene_graph import build_scene_graphs
 from mmxai.queries.generator import generate_pairs, load_query_benchmark_config, run_generation
 from mmxai.queries.schema import load_jsonl
 from mmxai.queries.validator import (
@@ -28,7 +27,7 @@ from scene_graph_fixtures import (
     CONFIG,
     TEST_IDS,
     VAL_IDS,
-    synthetic_annotations,
+    canonical_fixture_graphs,
     write_annotations,
     write_split,
 )
@@ -37,7 +36,7 @@ TEST_ID_STRINGS = {str(image_id) for image_id in TEST_IDS}
 
 
 def graphs_and_candidates() -> tuple[dict, list[dict]]:
-    graphs, _ = build_scene_graphs(*synthetic_annotations(), image_ids=set(TEST_IDS))
+    graphs = canonical_fixture_graphs(TEST_IDS)
     records, _ = generate_pairs(graphs, CONFIG)
     return graphs, records
 

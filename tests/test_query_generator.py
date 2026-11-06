@@ -9,25 +9,25 @@ from dataclasses import replace
 import pytest
 import yaml
 
-from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject, build_scene_graphs
+from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.generator import (
     REJECT_AMBIGUOUS_NAME,
     REJECT_GENERIC_NAME,
-    REJECT_TRIVIAL_PREDICATE,
+    REJECT_PREDICATE_NOT_ALLOWED,
+    canonical_predicate,
+    canonicalize_graphs,
     enumerate_chains,
     generate_pairs,
     indirect_text,
     load_query_benchmark_config,
     reasoning_type,
     usable_relations,
-    verb_phrase,
 )
-from scene_graph_fixtures import CONFIG, TEST_IDS, synthetic_annotations
+from scene_graph_fixtures import CONFIG, TEST_IDS, canonical_fixture_graphs
 
 
 def fixture_graphs(image_ids: list[int]) -> dict[int, SceneGraph]:
-    graphs, _ = build_scene_graphs(*synthetic_annotations(), image_ids=set(image_ids))
-    return graphs
+    return canonical_fixture_graphs(image_ids)
 
 
 def make_graph(relations: list[tuple[int, int, str, int]], names: dict[int, str]) -> SceneGraph:
@@ -63,8 +63,8 @@ def test_fixture_gives_the_expected_direct_and_indirect_text():
     records, _ = generate_pairs(fixture_graphs([100, 300]), CONFIG)
     direct, indirect = only_pair(records)
 
-    assert direct["text"] == "A person is holding a frisbee, and a dog looks at the frisbee."
-    assert indirect["text"] == "A person is holding the thing that a dog looks at."
+    assert direct["text"] == "A person is holding a frisbee, and a dog is looking at the frisbee."
+    assert indirect["text"] == "A person is holding the thing that a dog is looking at."
     assert indirect["hidden_names"] == ["frisbee"]
     assert indirect["reasoning_type"] == "shared_object"
 
@@ -96,16 +96,37 @@ def test_answers_never_come_from_images_outside_the_given_split():
         assert set(record["relevant"]) <= {str(image_id) for image_id in TEST_IDS}
 
 
-def test_ambiguous_names_generic_names_and_trivial_predicates_are_rejected():
+def test_canonical_predicate_strips_copula_article_and_applies_aliases():
+    aliases = {"wears": "wearing"}
+
+    assert canonical_predicate("on a", aliases) == "on"
+    assert canonical_predicate("are on", aliases) == "on"
+    assert canonical_predicate("is sitting on the", aliases) == "sitting on"
+    assert canonical_predicate("wears", aliases) == "wearing"
+    # Only whole trailing words are articles: "near" must not lose its "a".
+    assert canonical_predicate("near", aliases) == "near"
+
+
+def test_canonicalize_graphs_keeps_the_raw_predicate():
+    graph = make_graph([(1, 1, "wears", 2)], {1: "man", 2: "hat"})
+
+    canonical = canonicalize_graphs({1: graph}, {"wears": "wearing"})
+
+    assert canonical[1].relations[0].predicate == "wearing"
+    assert canonical[1].relations[0].raw_predicate == "wears"
+    assert graph.relations[0].predicate == "wears"  # input left unchanged
+
+
+def test_ambiguous_generic_and_non_whitelisted_relations_are_rejected():
     names = {1: "tree", 2: "tree", 3: "dog", 4: "it", 5: "leg"}
     graph = make_graph([(1, 1, "near", 3), (2, 4, "on", 3), (3, 5, "of", 3)], names)
     rejections = Counter()
 
-    usable = usable_relations(graph, ["it"], ["of"], rejections)
+    usable = usable_relations(graph, ["it"], {"near": "is near", "on": "is on"}, rejections)
 
     assert usable == []
     assert rejections == Counter(
-        {REJECT_AMBIGUOUS_NAME: 1, REJECT_GENERIC_NAME: 1, REJECT_TRIVIAL_PREDICATE: 1}
+        {REJECT_AMBIGUOUS_NAME: 1, REJECT_GENERIC_NAME: 1, REJECT_PREDICATE_NOT_ALLOWED: 1}
     )
 
 
@@ -147,14 +168,6 @@ def test_path_and_shared_subject_chains_read_correctly():
     )
 
 
-def test_verb_phrase_adds_is_only_where_needed():
-    assert verb_phrase("holding") == "is holding"
-    assert verb_phrase("on") == "is on"
-    assert verb_phrase("parked on") == "is parked on"
-    assert verb_phrase("has") == "has"
-    assert verb_phrase("looks at") == "looks at"
-
-
 def test_generation_is_deterministic_for_a_seed():
     first, _ = generate_pairs(fixture_graphs(TEST_IDS), CONFIG)
     second, _ = generate_pairs(fixture_graphs(TEST_IDS), CONFIG)
@@ -187,5 +200,25 @@ def test_config_rejects_fewer_than_two_hops(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text(yaml.safe_dump(values), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="min_hops"):
+    with pytest.raises(ValueError, match="2 hops"):
+        load_query_benchmark_config(path)
+
+
+def test_config_rejects_action_predicates_without_template(tmp_path):
+    values = {field: getattr(CONFIG, field) for field in CONFIG.__dataclass_fields__}
+    values["action_predicates"] = ["holding", "flying"]
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(values), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="flying"):
+        load_query_benchmark_config(path)
+
+
+def test_config_rejects_more_than_two_hops(tmp_path):
+    values = {field: getattr(CONFIG, field) for field in CONFIG.__dataclass_fields__}
+    values["max_hops"] = 3
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(values), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="2 hops"):
         load_query_benchmark_config(path)

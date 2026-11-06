@@ -16,7 +16,7 @@ annotation, and the generation rules are fixed in the config before any result.
 """
 
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -62,11 +62,15 @@ POSITION_WORDS = {
 
 # Rejection reasons, counted so the report can say why chains were thrown away.
 REJECT_GENERIC_NAME = "generic_name"
-REJECT_TRIVIAL_PREDICATE = "trivial_predicate"
+REJECT_PREDICATE_NOT_ALLOWED = "predicate_not_in_whitelist"
 REJECT_AMBIGUOUS_NAME = "ambiguous_name"
 REJECT_HIDDEN_NAME_IN_TEXT = "hidden_name_in_indirect_text"
 REJECT_DUPLICATE_TEXT = "duplicate_query_text"
 REJECT_TOO_MANY_MATCHES = "too_many_candidate_images"
+
+# Removed before the whitelist lookup so "are on a" and "on" are one predicate.
+LEADING_COPULAS = ("is ", "are ")
+TRAILING_ARTICLES = (" a", " an", " the")
 
 
 @dataclass(frozen=True)
@@ -86,7 +90,12 @@ class QueryBenchmarkConfig:
     max_pairs_per_image: int
     max_candidate_images: int
     generic_names: list[str]
-    trivial_predicates: list[str]
+    # canonical predicate -> hand-written verb phrase; predicates not listed are dropped.
+    predicate_templates: dict[str, str]
+    # variant -> canonical predicate, e.g. "wears" -> "wearing".
+    predicate_aliases: dict[str, str]
+    # Subset of predicate_templates that are actions; every chain needs at least one.
+    action_predicates: list[str]
     author: str
     candidates_path: str
     manifest_path: str
@@ -99,10 +108,18 @@ def load_query_benchmark_config(path: str | Path) -> QueryBenchmarkConfig:
     config = load_yaml_dataclass(path, QueryBenchmarkConfig)
     if config.split not in ("val", "test"):
         raise ValueError(f"split must be val or test, got {config.split!r}")
-    if config.min_hops < 2:
-        raise ValueError("min_hops must be >= 2: an indirect query needs at least two relations")
-    if config.max_hops < config.min_hops:
-        raise ValueError("max_hops must be >= min_hops")
+    if config.min_hops != 2 or config.max_hops != 2:
+        raise ValueError("min_hops and max_hops must be 2: the templates cover 2 hops only")
+    unknown_actions = sorted(set(config.action_predicates) - set(config.predicate_templates))
+    if unknown_actions:
+        raise ValueError(f"action_predicates without a template: {unknown_actions}")
+    unknown_targets = sorted(
+        set(config.predicate_aliases.values()) - set(config.predicate_templates)
+    )
+    if unknown_targets:
+        raise ValueError(
+            f"predicate_aliases point to predicates without a template: {unknown_targets}"
+        )
     if config.limit_pairs < 1 or config.max_pairs_per_image < 1:
         raise ValueError("limit_pairs and max_pairs_per_image must be >= 1")
     return config
@@ -128,31 +145,59 @@ class Chain:
 # --- Which relations and chains are usable ------------------------------------------------
 
 
+def canonical_predicate(predicate: str, aliases: dict[str, str]) -> str:
+    """One key per meaning: "are on a" -> "on", "wears" -> "wearing" (with that alias)."""
+    for copula in LEADING_COPULAS:
+        if predicate.startswith(copula):
+            predicate = predicate[len(copula) :]
+    for article in TRAILING_ARTICLES:
+        if predicate.endswith(article):
+            predicate = predicate[: -len(article)]
+    return aliases.get(predicate, predicate)
+
+
+def canonicalize_graphs(
+    graphs: dict[int, SceneGraph], aliases: dict[str, str]
+) -> dict[int, SceneGraph]:
+    """Copies of the graphs with canonical predicates; raw_predicate keeps the annotation.
+
+    Done once per run so that generation, answer matching and the evidence check
+    all compare the same predicate strings.
+    """
+    result = {}
+    for image_id, graph in graphs.items():
+        relations = []
+        for relation in graph.relations:
+            predicate = canonical_predicate(relation.predicate, aliases)
+            relations.append(replace(relation, predicate=predicate))
+        result[image_id] = SceneGraph(image_id, graph.objects, relations)
+    return result
+
+
 def usable_relations(
     graph: SceneGraph,
     generic_names: list[str],
-    trivial_predicates: list[str],
+    predicate_templates: dict[str, str],
     rejections: Counter,
 ) -> list[Relation]:
     """Relations whose two objects and predicate can be named without ambiguity.
 
     Rules (ADR-0044), kept deliberately simple:
     - no generic name ("it", "thing"...): it cannot be checked in the image;
-    - no trivial predicate ("of", "and"...): it is not a real relation;
+    - predicate in the whitelist (predicate_templates): every query reads correctly;
     - each object's name is unique among ALL objects of the image, so "the dog"
       points to one object and the graph by id agrees with what a reader sees.
       It also means the nodes of a chain all have different names, so an indirect
       query can never be answered by a second, named copy of its hidden object.
     """
     generic = set(generic_names)
-    trivial = set(trivial_predicates)
     counts = graph.name_counts()
     usable = []
     for relation in graph.relations:
         if relation.subject_name in generic or relation.object_name in generic:
             rejections[REJECT_GENERIC_NAME] += 1
-        elif relation.predicate in trivial:
-            rejections[REJECT_TRIVIAL_PREDICATE] += 1
+        elif relation.predicate not in predicate_templates:
+            rejections[REJECT_PREDICATE_NOT_ALLOWED] += 1
         elif counts[relation.subject_name] > 1 or counts[relation.object_name] > 1:
             rejections[REJECT_AMBIGUOUS_NAME] += 1
         else:
@@ -392,7 +437,7 @@ def generate_pairs(
             break
         graph = graphs[image_id]
         relations = usable_relations(
-            graph, config.generic_names, config.trivial_predicates, rejections
+            graph, config.generic_names, config.predicate_templates, rejections
         )
         chains = enumerate_chains(image_id, relations, config.min_hops, config.max_hops)
         if not chains:
@@ -436,6 +481,7 @@ def run_generation(config: QueryBenchmarkConfig) -> dict:
     graphs, parse_report = load_scene_graphs(
         config.data_dir, split_ids, config.objects_file, config.relationships_file
     )
+    graphs = canonicalize_graphs(graphs, config.predicate_aliases)
     records, rejections = generate_pairs(graphs, config)
     if not records:
         raise ValueError("no candidate pair survived the filters; nothing written")

@@ -14,7 +14,8 @@ Images and their (made-up) split:
 import json
 from pathlib import Path
 
-from mmxai.queries.generator import QueryBenchmarkConfig
+from mmxai.data.scene_graph import SceneGraph, build_scene_graphs
+from mmxai.queries.generator import QueryBenchmarkConfig, canonicalize_graphs
 
 TEST_IDS = [100, 200, 300]
 VAL_IDS = [400]
@@ -35,7 +36,17 @@ CONFIG = QueryBenchmarkConfig(
     max_pairs_per_image=1,
     max_candidate_images=25,
     generic_names=["it", "thing"],
-    trivial_predicates=["of"],
+    predicate_aliases={"looks at": "looking at", "rides": "riding"},
+    predicate_templates={
+        "holding": "is holding",
+        "looking at": "is looking at",
+        "riding": "is riding",
+        "wearing": "is wearing",
+        "sitting on": "is sitting on",
+        "on": "is on",
+        "near": "is near",
+    },
+    action_predicates=["holding", "looking at", "riding", "wearing", "sitting on"],
     author="test",
     candidates_path="unused",
     manifest_path="unused",
@@ -104,6 +115,12 @@ def synthetic_annotations() -> tuple[list[dict], list[dict]]:
         }
     )
     return objects_entries, relationships_entries
+
+
+def canonical_fixture_graphs(image_ids: list[int]) -> dict[int, SceneGraph]:
+    """Fixture graphs of the given images, with predicates canonicalised as in run_generation."""
+    graphs, _ = build_scene_graphs(*synthetic_annotations(), image_ids=set(image_ids))
+    return canonicalize_graphs(graphs, CONFIG.predicate_aliases)
 
 
 def write_annotations(data_dir: Path) -> None:
