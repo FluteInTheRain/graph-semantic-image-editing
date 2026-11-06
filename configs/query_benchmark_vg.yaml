@@ -13,8 +13,8 @@ seed: 0
 # Decision (ADR-0044, proposed): 40 candidate pairs so that >= 10 survive review (PDF: >= 20 queries).
 #   Proposed by: Claude Code, 2026-11-06; not yet decided by the team.
 limit_pairs: 40
-# Decision (ADR-0044, proposed): 2-hop chains only; 3 hops give nested sentences that are
-#   hard to review. Raise max_hops to 3 only through a new decision.
+# Decision (ADR-0044, proposed): 2-hop chains only. The text templates support exactly 2 hops
+#   (the loader enforces min_hops = max_hops = 2); more hops need new templates and a new decision.
 min_hops: 2
 max_hops: 2
 # One pair per image spreads the benchmark over many images.
@@ -25,9 +25,62 @@ max_candidate_images: 25
 # Names that do not point to a checkable object.
 generic_names: [it, this, that, these, those, thing, things, something, object, objects,
                 item, stuff, part, piece, side, area, one]
-# Predicates that are not a real relation between two objects.
-trivial_predicates: [of, and, is, are, with, to, for]
-author: generator-template-v1
+# Decision (ADR-0044, pilot val 2026-11-06, Thuat Nguyen): whitelist of predicates with a
+#   hand-written verb phrase. Chosen from predicate frequencies on TRAIN only.
+#   Dropped on purpose: has/have, of, with, by, for, and, at, from, belonging to, between, along.
+predicate_templates:
+  wearing: is wearing
+  holding: is holding
+  riding: is riding
+  carrying: is carrying
+  eating: is eating
+  playing: is playing
+  watching: is watching
+  looking at: is looking at
+  pulling: is pulling
+  sitting on: is sitting on
+  sitting in: is sitting in
+  standing on: is standing on
+  standing in: is standing in
+  walking on: is walking on
+  laying on: is lying on
+  hanging on: is hanging on
+  hanging from: is hanging from
+  covering: is covering
+  attached to: is attached to
+  painted on: is painted on
+  "on": is on
+  on top of: is on top of
+  in: is in
+  inside: is inside
+  under: is under
+  above: is above
+  behind: is behind
+  in front of: is in front of
+  next to: is next to
+  near: is near
+  beside: is beside
+# Variants mapped to one canonical predicate (after stripping "is/are" and a trailing article).
+predicate_aliases:
+  wears: wearing
+  holds: holding
+  rides: riding
+  carries: carrying
+  eats: eating
+  plays: playing
+  watches: watching
+  looks at: looking at
+  pulls: pulling
+  sits on: sitting on
+  stands on: standing on
+  lying on: laying on
+  hangs on: hanging on
+  inside of: inside
+# Decision (ADR-0044): every chain needs at least one of these actions.
+action_predicates: [wearing, holding, riding, carrying, eating, playing, watching, looking at,
+                    pulling, sitting on, sitting in, standing on, standing in, walking on,
+                    laying on, hanging on, hanging from, covering]
+author: generator-template-v2
 candidates_path: queries/visual_genome_candidates.jsonl
 manifest_path: queries/query_review_manifest.csv
 benchmark_path: queries/visual_genome_test.jsonl
