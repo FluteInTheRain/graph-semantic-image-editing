@@ -1,0 +1,35 @@
+# Scene-graph-grounded query benchmark for Visual Genome, test split (ADR-0044, status: Proposed).
+# How to run: see the docstrings of scripts/generate_queries.py and scripts/build_query_benchmark.py.
+# Every value below must be fixed (on the val pilot) BEFORE generating on test, and never
+# changed after looking at retrieval results (PDF section 6, ADR-0009).
+dataset: visual_genome
+data_dir: data/visual_genome
+objects_file: objects.json
+relationships_file: relationships.json
+split_file: splits/visual_genome/split_seed0.json
+# Decision (ADR-0009): the benchmark points to test images only.
+split: test
+seed: 0
+# Decision (ADR-0044, proposed): 40 candidate pairs so that >= 10 survive review (PDF: >= 20 queries).
+#   Proposed by: Claude Code, 2026-11-06; not yet decided by the team.
+limit_pairs: 40
+# Decision (ADR-0044, proposed): 2-hop chains only; 3 hops give nested sentences that are
+#   hard to review. Raise max_hops to 3 only through a new decision.
+min_hops: 2
+max_hops: 2
+# One pair per image spreads the benchmark over many images.
+max_pairs_per_image: 1
+# Decision (ADR-0044, proposed): drop a chain found in more than 25 test images:
+#   too generic to review by hand. Fixed before any generation or retrieval result.
+max_candidate_images: 25
+# Names that do not point to a checkable object.
+generic_names: [it, this, that, these, those, thing, things, something, object, objects,
+                item, stuff, part, piece, side, area, one]
+# Predicates that are not a real relation between two objects.
+trivial_predicates: [of, and, is, are, with, to, for]
+author: generator-template-v1
+candidates_path: queries/visual_genome_candidates.jsonl
+manifest_path: queries/query_review_manifest.csv
+benchmark_path: queries/visual_genome_test.jsonl
+# PDF Task 2: at least 20 queries = 10 direct/indirect pairs.
+min_verified_pairs: 10

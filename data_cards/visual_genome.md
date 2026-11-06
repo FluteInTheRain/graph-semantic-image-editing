@@ -44,6 +44,8 @@ Kết quả: `splits/visual_genome/split_seed0.json` (đã commit, đóng băng)
 
 Dùng đối tượng và quan hệ có sẵn trong dữ liệu. Phần dựng đồ thị thuộc task sau.
 
+Bộ truy vấn đánh giá Nhiệm vụ 2 đọc `objects.json` + `relationships.json` (ADR-0044, `docs/query_benchmark.md`). Chưa tải hai file này; khi tải cần ghi bản (v1.4 hay v1.2) và ngày tải vào đây.
+
 ## Embedding
 
 Model `ViT-B-32`, pretrained `laion2b_s34b_b79k`. Chọn 5 region mỗi ảnh ngẫu nhiên với `sampling_seed: 0`, chỉ bỏ `phrase` rỗng, và làm trước khi có bất kỳ kết quả truy vấn nào. Tạo trên Kaggle ngày 2026-11-04. Tải từ tab Output của notebook https://www.kaggle.com/code/qphulong/prepare-clip-embeddings-for-mmkg-xai/, cách làm ở §2 của `docs/guides/chuan-bi-embedding-clip.md`. ADR-0041 dự kiến dùng Kaggle dataset công khai `clip-features-visual-genome`; hiện nhóm chia sẻ qua Output của notebook.
