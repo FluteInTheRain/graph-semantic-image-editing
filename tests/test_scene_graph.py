@@ -12,6 +12,7 @@ from mmxai.data.scene_graph import (
     DROP_SELF_LOOP,
     build_scene_graphs,
     load_scene_graphs,
+    match_key,
     normalize_text,
 )
 from scene_graph_fixtures import synthetic_annotations, write_annotations
@@ -104,3 +105,23 @@ def test_load_scene_graphs_reads_both_files(tmp_path):
 def test_load_scene_graphs_explains_missing_annotations(tmp_path):
     with pytest.raises(FileNotFoundError, match="docs/query_benchmark.md"):
         load_scene_graphs(tmp_path, image_ids=None)
+
+
+def test_object_synset_is_read_and_used_as_match_key():
+    objects = [
+        {
+            "image_id": 1,
+            "objects": [
+                {"object_id": 1, "names": ["guy"], "synsets": ["man.n.01"]},
+                {"object_id": 2, "names": ["horse"]},
+            ],
+        }
+    ]
+
+    graphs, _ = build_scene_graphs(objects, [], image_ids=None)
+
+    assert graphs[1].objects[1].synset == "man.n.01"
+    assert match_key(graphs[1].objects[1]) == "man.n.01"
+    # No synset annotated: fall back to the normalised name.
+    assert graphs[1].objects[2].synset == ""
+    assert match_key(graphs[1].objects[2]) == "horse"

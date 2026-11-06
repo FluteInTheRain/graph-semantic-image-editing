@@ -44,11 +44,15 @@ def normalize_text(text: str) -> str:
 
 @dataclass(frozen=True)
 class SceneObject:
-    """One annotated object; `name` is normalised, `raw_name` is what the annotator typed."""
+    """One annotated object; `name` is normalised, `raw_name` is what the annotator typed.
+
+    `synset` is the first WordNet synset VG attached to the object ("man.n.01"), or "".
+    """
 
     object_id: int
     name: str
     raw_name: str
+    synset: str = ""
 
 
 @dataclass(frozen=True)
@@ -95,6 +99,25 @@ def first_raw_name(annotation: dict) -> str:
     return ""
 
 
+def first_synset(annotation: dict) -> str:
+    """First WordNet synset of an object annotation, or "" when VG gives none."""
+    synsets = annotation.get("synsets")
+    if isinstance(synsets, list) and synsets and isinstance(synsets[0], str):
+        return synsets[0]
+    return ""
+
+
+def match_key(scene_object: SceneObject) -> str:
+    """Key that decides whether objects of two images are the same kind of thing (ADR-0044).
+
+    The synset comes from the VG annotation itself, so "man" and "guy" can match
+    without a hand-made synonym list. Objects without a synset fall back to their name.
+    """
+    if scene_object.synset:
+        return scene_object.synset
+    return scene_object.name
+
+
 def entry_image_id(entry: dict) -> int | None:
     """Image id of one top-level entry. Older VG files call it "id" instead of "image_id"."""
     image_id = entry.get("image_id", entry.get("id"))
@@ -114,7 +137,7 @@ def parse_object(annotation: dict, report: Counter) -> SceneObject | None:
     if not name:
         report[DROP_EMPTY_NAME] += 1
         return None
-    return SceneObject(object_id, name, raw_name)
+    return SceneObject(object_id, name, raw_name, first_synset(annotation))
 
 
 def add_objects(graph: SceneGraph, objects_entry: dict, report: Counter) -> None:
