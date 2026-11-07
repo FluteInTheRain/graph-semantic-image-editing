@@ -4,7 +4,7 @@
 - **Ngày:** 2026-11-07
 - **Soạn bởi:** Claude Code (AI hỗ trợ). Thành viên phải tự đọc lại các bài báo trước khi trích dẫn.
 - **Phạm vi:** chỉ module xAI (`src/mmxai/explain/`). Module Graph (dựng đồ thị, GNN, scorer trong `models/`) do phần khác của nhóm làm. Tài liệu này **không đề xuất hay sửa thiết kế của module Graph**.
-- **Tuân theo ADR-0016** (đã chấp nhận): scorer của module Graph trả về điểm kèm bản ghi đóng góp; `explain/` chỉ đọc bản ghi đó, không tự tính hay tự tìm giải thích.
+- **Nguồn sự thật là đề bài** (`Project03_Multimodal_XAI.pdf`). ADR-0016 (đã chấp nhận) là cách hiểu **chặt hơn đề** mà nhóm đã chọn: scorer tự trả về bản ghi đóng góp, `explain/` chỉ đọc. Mục 2 tách rõ yêu cầu nào đến từ đề, yêu cầu nào đến từ ADR-0016.
 
 Nguyên tắc: **áp dụng phương pháp đã có**, không phát minh mới. Với mỗi phương pháp phải trả lời được: **làm gì, vì sao chọn, input, output, luồng xử lý**.
 
@@ -24,33 +24,64 @@ Nguồn: `Project03_Multimodal_XAI.pdf`, ADR-0016, `.claude/rules/explanations.m
 
 Demo (PDF §8) phải hiển thị được quan hệ/đường đi giải thích kèm top-k kết quả. Đề chấp nhận giải thích dạng **quan hệ, đường đi hoặc đồ thị con** (PDF §1).
 
-## 2. Phân công theo ADR-0016
+## 2. Đề bài yêu cầu gì, ADR-0016 thêm gì
 
-| Việc | Module chịu trách nhiệm | Căn cứ |
+### 2.1. Đề bài cấm cái gì
+
+PDF §2: *"giải thích phải đến từ chính cơ chế xếp hạng, không được sinh một đường đi hợp lý sau khi đã có kết quả mà **đường đi đó không ảnh hưởng tới dự đoán**."*
+
+Điều bị cấm là giải thích **tách rời khỏi mô hình**. Ví dụ: xếp hạng xong mới tìm đường ngắn nhất từ `football` tới ảnh trong đồ thị. Đường đi đó nghe hợp lý, nhưng mô hình có thể chưa từng dùng nó. Cách kiểm là **fidelity** (PDF §5): bỏ hoặc làm nhiễu đường đi đó thì điểm/thứ hạng phải đổi.
+
+Đề **không** yêu cầu điểm phải phân rã được thành tổng các đóng góp. Theo đề, có hai cách đều hợp lệ:
+
+| Nguồn đóng góp | Ví dụ | Hợp lệ theo đề khi |
 |---|---|---|
-| Tính điểm đồ thị **và** bản ghi đóng góp (cạnh/path nào góp bao nhiêu) | **Graph** (`models/`) | ADR-0016 mục 1 |
-| Truyền nguyên bản ghi đóng góp tới kết quả cuối, `final = α·cosine + (1−α)·graph` | Rerank (`rerank/`) | ADR-0016 mục 2 |
-| Đọc bản ghi, trình bày giải thích; can thiệp lên đồ thị; đo fidelity/validity/sparsity; so sánh với explainer post-hoc | **xAI** (`explain/`) | ADR-0016 mục 3–6 |
+| (a) **Đọc trực tiếp** từ công thức tính điểm | Scorer tuyến tính: điểm = tổng các số hạng, mỗi số hạng ứng với một cạnh/path | Luôn hợp lệ; vẫn báo cáo fidelity |
+| (b) **Tính trên chính mô hình đang xếp hạng** | Occlusion, Integrated Gradients trên GNN phi tuyến | Chạy trên đúng mô hình đã xếp hạng **và** có số fidelity chứng minh |
 
-Module xAI **không quyết định** đóng góp được tính thế nào. Việc nghiên cứu của module xAI tập trung vào **cách trình bày và cách kiểm chứng** giải thích.
+### 2.2. Vì sao hàm phi tuyến làm "đóng góp" khó định nghĩa
+
+Phi tuyến không làm giải thích sai đề. Nó làm khái niệm **"đóng góp của một cạnh" không còn duy nhất**. Ví dụ một ảnh có hai cạnh, mask `m1`, `m2` (1 = có cạnh):
+
+| Scorer | Đủ 2 cạnh | Xoá e1 | Xoá e2 | Occlusion nói | IG / Shapley nói |
+|---|---|---|---|---|---|
+| Tuyến tính: `g = 0.6·m1 + 0.4·m2` | 1.0 | 0.4 | 0.6 | e1 = 0.6, e2 = 0.4 | e1 = 0.6, e2 = 0.4 |
+| Phi tuyến: `g = ReLU(m1 + m2 − 1)` | 1.0 | 0 | 0 | e1 = 1, e2 = 1 (tổng 2 ≠ 1) | e1 = 0.5, e2 = 0.5 |
+
+- **Tuyến tính:** mọi phương pháp cho cùng một đáp án, và đáp án đó là chính các số hạng trong công thức.
+- **Phi tuyến:** hai cạnh tương tác với nhau (giống phép "VÀ"). Mỗi phương pháp chia điểm một kiểu, nên nhóm phải chọn một cách và bảo vệ lựa chọn đó bằng fidelity.
+
+### 2.3. ADR-0016 chọn cách nào
+
+ADR-0016 chọn cách (a): scorer tự trả về bản ghi đóng góp, `explain/` chỉ đọc. Đây là cách **chặt hơn đề**, để khi vấn đáp không phải tranh luận vì sao chọn cách chia điểm này mà không chọn cách khác. Cách (b) **không trái đề**, nhưng muốn dùng nó làm nguồn chính thì cần **ADR mới thay thế phần tương ứng của ADR-0016**.
+
+### 2.4. Phân công
+
+| Việc | Module chịu trách nhiệm |
+|---|---|
+| Tính điểm đồ thị; nếu theo cách (a) thì trả thêm bản ghi đóng góp | **Graph** (`models/`) |
+| Truyền kết quả tới điểm cuối, `final = α·cosine + (1−α)·graph` | Rerank (`rerank/`) |
+| Lấy đóng góp (đọc bản ghi, hoặc tính theo cách (b) nếu ADR mới cho phép); trình bày giải thích; can thiệp lên đồ thị; đo fidelity/validity/sparsity; so sánh các explainer | **xAI** (`explain/`) |
+
+Phần lớn code của module xAI (phần 2 và 3 ở mục 3) **không phụ thuộc** đóng góp đến từ (a) hay (b). Vì vậy module xAI làm trước được mà không cần chờ nhóm Graph.
 
 ## 3. Bốn phần việc của module xAI
 
-| # | Phần việc | Phương pháp có sẵn để áp dụng | Căn cứ ADR-0016 |
+| # | Phần việc | Phương pháp có sẵn để áp dụng | Căn cứ |
 |---|---|---|---|
-| 1 | Đọc và trình bày giải thích | Lấy top-m cạnh/path theo đóng góp từ bản ghi của scorer; hiển thị dạng đường đi hoặc đồ thị con | Mục 3 |
-| 2 | Hàm can thiệp | Xoá hoặc làm nhiễu cạnh trên `edge_index` rồi gọi lại scorer. Dùng chung cho fidelity và ablation đồ thị | Mục 4, 6 |
-| 3 | **Đánh giá giải thích** (phần nghiên cứu chính) | Fid+/Fid−, characterization (GraphFramEx, LoG 2022); robust fidelity (Zheng et al., ICLR 2024); sparsity; validity; đối chứng xoá ngẫu nhiên; kiểm định Wilcoxon | Mục 4, 5 |
-| 4 | So sánh với explainer post-hoc (**chỉ làm baseline**) | Occlusion, Integrated Gradients/Saliency, GNNExplainer; attention nếu mô hình là GAT | Bảng phương án: GNNExplainer "dùng làm phương án so sánh" |
+| 1 | Lấy và trình bày giải thích | Lấy top-m cạnh/path theo đóng góp (cách (a) hoặc (b), mục 2); hiển thị dạng đường đi hoặc đồ thị con | PDF §1, §5 cấp độ 1; ADR-0016 mục 3 |
+| 2 | Hàm can thiệp | Xoá hoặc làm nhiễu cạnh trên `edge_index` rồi gọi lại scorer. Dùng chung cho fidelity và ablation đồ thị | PDF §5, §7; ADR-0016 mục 4, 6 |
+| 3 | **Đánh giá giải thích** (phần nghiên cứu chính) | Fid+/Fid−, characterization (GraphFramEx, LoG 2022); robust fidelity (Zheng et al., ICLR 2024); sparsity; validity; đối chứng xoá ngẫu nhiên; kiểm định Wilcoxon | PDF §5 cấp độ 3, §7 |
+| 4 | So sánh các explainer | Occlusion, Integrated Gradients/Saliency, GNNExplainer; attention nếu mô hình là GAT. Làm baseline nếu scorer theo cách (a); một trong số này thành nguồn chính nếu theo cách (b) | PDF §7 (mở rộng: so sánh giải thích) |
 
 Chi tiết từng phần ở mục 4.
 
 ## 4. Chi tiết từng phần
 
-### 4.1. Phần 1 – Đọc và trình bày giải thích
+### 4.1. Phần 1 – Lấy và trình bày giải thích
 
-- **Làm gì:** chọn các cạnh/path có đóng góp lớn nhất từ bản ghi của scorer, đổi id thành tên node và tên quan hệ, xuất ra dạng đọc được.
-- **Vì sao:** ADR-0016 cấm `explain/` tự tìm đường đi (ví dụ `networkx.shortest_path`). Lấy đúng các số hạng scorer đã dùng là cách duy nhất bảo đảm giải thích đến từ cơ chế xếp hạng (PDF §2).
+- **Làm gì:** chọn các cạnh/path có đóng góp lớn nhất, đổi id thành tên node và tên quan hệ, xuất ra dạng đọc được.
+- **Vì sao:** đề (PDF §2) cấm giải thích tách rời khỏi mô hình, nên `explain/` không được tự tìm đường đi bằng thuật toán riêng như `networkx.shortest_path` (ADR-0016 cũng cấm). Đóng góp phải lấy từ chính mô hình: đọc bản ghi của scorer (cách (a)), hoặc tính trên mô hình (cách (b)).
 - **Input:** kết quả rerank cho (q, i) gồm `cosine`, `graph`, `final`, `contributions`; ánh xạ id → tên node/quan hệ.
 - **Output:** đồ thị con giải thích gồm top-m cạnh/path kèm đóng góp, dùng cho demo và phân tích 5 thành công + 5 thất bại.
 - **Luồng:**
@@ -116,10 +147,10 @@ Ký hiệu: `i*` là ảnh đang giải thích, `E_x` là tập cạnh giải th
 1. **OOD:** xoá cạnh tạo ra đồ thị khác lúc huấn luyện, nhất là với GCN (chuẩn hoá theo bậc) và GAT (softmax attention dồn sang cạnh khác). Vì vậy báo cáo cả Fid+ thường lẫn robust Fid+.
 2. **Nếu scorer tuyến tính thì Fid+ cao là hiển nhiên.** Khi đó phần đáng phân tích là Fid−, và những path có đóng góp lớn nhưng xoá đi không làm tụt hạng.
 
-### 4.4. Phần 4 – So sánh với explainer post-hoc (baseline)
+### 4.4. Phần 4 – So sánh các explainer
 
-- **Làm gì:** chạy các explainer post-hoc trên **cùng mô hình**, lấy cùng số cạnh m, rồi chấm bằng cùng metric ở phần 3.
-- **Vì sao:** để trả lời bằng số câu hỏi "giải thích lấy từ scorer có trung thực hơn cách tính sau hay không". Bảng phương án của ADR-0016 cho phép dùng các phương pháp này làm phương án so sánh, không làm phương pháp chính.
+- **Làm gì:** chạy các explainer trên **cùng mô hình**, lấy cùng số cạnh m, rồi chấm bằng cùng metric ở phần 3.
+- **Vì sao:** đề tính "so sánh giải thích" là mục mở rộng (PDF §7). Nếu scorer theo cách (a), các phương pháp này là baseline, trả lời câu hỏi "đọc đóng góp từ công thức có trung thực hơn tính trên mô hình không". Nếu theo cách (b), phần này dùng để chọn và bảo vệ explainer làm nguồn chính.
 
 | Baseline | Cách làm | Ghi chú |
 |---|---|---|
@@ -162,7 +193,7 @@ Giải thích thêm:
 
 - **Vấn đề:** ADR-0016 (đã chấp nhận) yêu cầu scorer trả về điểm **kèm** bản ghi đóng góp, và đóng góp đó phải là cái thật sự tạo ra điểm. Với GNN có hàm kích hoạt phi tuyến (ReLU…) giữa các lớp, điểm cuối không phải là tổng các phần riêng của từng cạnh/path. Muốn có bản ghi đóng góp thì phải có thêm một cơ chế, và cơ chế đó cần được chọn **ngay từ thiết kế scorer**.
 - **Ai quyết:** nhóm Graph, qua một ADR của họ. Module xAI chỉ đưa **gợi ý tham khảo** (mục 7.1); quyết định cuối thuộc nhóm Graph. Mục 9.3 có thêm tài liệu về các mô hình có giải thích theo đường đi.
-- **Ảnh hưởng nếu không xử lý:** module xAI không có gì để đọc. Giải thích sẽ phải tính bằng explainer post-hoc, tức là trái ADR-0016 và trái yêu cầu PDF §2.
+- **Ảnh hưởng nếu không xử lý:** module xAI không có bản ghi đóng góp để đọc. Khi đó đóng góp phải tính theo cách (b) (mục 2): vẫn **hợp lệ theo đề** nếu chạy trên chính mô hình và có số fidelity, nhưng **trái ADR-0016**, nên cần ADR mới.
 - **Hiện trạng (2026-11-07):** chưa có ADR nào chọn GNN. `configs/clip_graph_vg.yaml` ghi `gnn: gcn`, nhưng `configs/README.md` nói đây là ví dụ mẫu chưa dùng bởi code. `src/mmxai/models/` chưa có code.
 - **Cần nhóm Graph trả lời:**
   1. Dùng GNN nào, và bao giờ có ADR?
@@ -171,7 +202,7 @@ Giải thích thêm:
 
 ### 7.1. Gợi ý cách xử lý (để nhóm Graph tham khảo)
 
-Có ba hướng, xếp theo mức độ khớp với ADR-0016. Cả ba đều dùng phương pháp đã công bố, không phải phát minh mới.
+Có ba hướng. **Cả ba đều hợp lệ theo đề**; chúng khác nhau ở mức khớp với ADR-0016 và ở việc đóng góp có duy nhất hay không (mục 2.2). Cả ba đều dùng phương pháp đã công bố, không phải phát minh mới.
 
 #### Hướng A (khuyến nghị): dùng GCN tuyến tính – SGC hoặc LightGCN
 
@@ -197,18 +228,22 @@ Có ba hướng, xếp theo mức độ khớp với ADR-0016. Cả ba đều d�
 - **Ưu:** giữ được GNN thông thường. Tổng các số hạng vẫn bằng đúng điểm.
 - **Nhược:** đóng góp chỉ chính xác **ở bước đọc ra**. Mỗi `s(q, e)` vẫn phụ thuộc embedding đã trộn thông tin từ cả vùng lân cận, nên xoá một cạnh có thể làm đổi số hạng của cạnh khác. Báo cáo phải nói rõ giới hạn này, và fidelity sẽ cho thấy mức ảnh hưởng.
 
-#### Hướng C (không khuyến nghị): giữ GNN phi tuyến, tính đóng góp bằng attribution
+#### Hướng C: giữ GNN phi tuyến, tính đóng góp bằng attribution trên mô hình
 
-- **Làm gì:** scorer tự gọi Integrated Gradients (ICML 2017) trên mask cạnh, lấy kết quả làm bản ghi đóng góp. IG có tính completeness: tổng attribution bằng `g(đủ cạnh) − g(không cạnh)`.
-- **Vì sao không khuyến nghị:** đây là phương pháp tính **sau khi có điểm**. ADR-0016 xếp nhóm phương pháp này là "chỉ dùng để so sánh". Muốn dùng làm chính phải viết **ADR mới thay thế phần đó của ADR-0016**, và phải chứng minh độ trung thực bằng số fidelity. Hướng này cũng làm mất baseline IG ở phần 4 của module xAI.
+- **Làm gì:** giữ GNN thông thường. Đóng góp tính bằng Integrated Gradients (ICML 2017) hoặc Occlusion trên chính mô hình đang xếp hạng (cách (b), mục 2). IG có tính completeness: tổng attribution bằng `g(đủ cạnh) − g(không cạnh)`.
+- **Hợp lệ theo đề không:** có, vì attribution chạy trên đúng mô hình đã xếp hạng, và độ trung thực được chứng minh bằng số fidelity (PDF §2, §5).
+- **Vì sao xếp sau A:**
+  - Trái ADR-0016, nên phải viết **ADR mới thay thế phần tương ứng**.
+  - Đóng góp là một cách chia điểm trong nhiều cách (mục 2.2), nên khi vấn đáp phải giải thích được vì sao chọn IG mà không chọn cách khác.
+  - Tốn hơn: khoảng 20–50 lần lan truyền ngược cho mỗi ứng viên.
 
 #### Tóm tắt
 
-| Hướng | Đóng góp chính xác? | Đúng ADR-0016? | Giữ GNN phi tuyến? | Chi phí |
-|---|---|---|---|---|
-| **A. SGC / LightGCN** | Có, toàn bộ | Có | Không | Thấp |
-| B. Tính điểm cuối dạng tổng theo cạnh | Chỉ ở bước đọc ra | Có, kèm ghi chú giới hạn | Có | Trung bình |
-| C. IG làm bản ghi đóng góp | Xấp xỉ | Không, cần ADR mới | Có | Cao (20–50 lần lan truyền ngược mỗi ứng viên) |
+| Hướng | Hợp lệ theo đề? | Đóng góp duy nhất? | Đúng ADR-0016? | Giữ GNN phi tuyến? | Chi phí |
+|---|---|---|---|---|---|
+| **A. SGC / LightGCN** | Có | Có, toàn bộ | Có | Không | Thấp |
+| B. Tính điểm cuối dạng tổng theo cạnh | Có | Chỉ ở bước đọc ra | Có, kèm ghi chú giới hạn | Có | Trung bình |
+| C. IG / Occlusion trên mô hình | Có, kèm số fidelity | Không, là một cách chia điểm | Không, cần ADR mới | Có | Cao |
 
 ## 8. Câu hỏi còn mở (phía xAI)
 
