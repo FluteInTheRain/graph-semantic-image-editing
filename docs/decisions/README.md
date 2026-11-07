@@ -66,3 +66,4 @@ Thư mục này chứa các **ADR** (Architecture Decision Record): mỗi file g
 | [0042](0042-split-co-dinh-cho-visual-genome.md) | Chia Visual Genome theo ảnh: test 5.000, val 5.000, train phần còn lại; ảnh trùng luôn cùng tập |
 | [0043](0043-giao-thuc-danh-gia-clip-thuan-tren-visual-genome.md) | Đánh giá văn bản → ảnh: truy vấn là region description, mọi ảnh có cùng câu đều là đáp án, FAISS top 100, Recall@1/5/10 + MRR@100 |
 | [0044](0044-bo-truy-van-danh-gia-tu-scene-graph-visual-genome.md) | (Đề xuất) Sinh cặp truy vấn trực tiếp/gián tiếp từ chuỗi quan hệ thật của scene graph Visual Genome; đáp án là mọi ảnh test có cùng chuỗi; chỉ cặp được hai thành viên kiểm tra mới vào bộ chính thức |
+| [0045](0045-do-thi-anh-khai-niem-canh-contains-cho-visual-genome.md) | (Đề xuất) Đồ thị Visual Genome bản đầu: đỉnh ảnh + đỉnh khái niệm (synset, ≥ 5 ảnh train), chỉ cạnh `contains`; vector đỉnh lấy từ CLIP đóng băng |
