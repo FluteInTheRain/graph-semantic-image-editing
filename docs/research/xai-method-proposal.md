@@ -140,9 +140,9 @@ Ký hiệu: `i*` là ảnh đang giải thích, `E_x` là tập cạnh giải th
 
 Nếu mô hình là GAT, thêm RQ5: attention có khớp với Occlusion không (Jain & Wallace 2019 dự đoán là không). RQ2 đáp ứng mục mở rộng "so sánh giải thích" của đề (PDF §7).
 
-## 6. Giao diện module xAI cần nhận
+## 6. Interface module xAI cần nhận
 
-Đây chỉ là **yêu cầu giao diện**, không phải thiết kế mô hình.
+**Interface** ở đây là hợp đồng giữa hai module: module Graph đưa cho module xAI dữ liệu gì, ở dạng nào, và gọi hàm nào. Không phải giao diện người dùng (UI). Đây chỉ là **yêu cầu interface**, không phải thiết kế mô hình.
 
 | Cần nhận | Từ module | Vì sao xAI cần |
 |---|---|---|
@@ -167,7 +167,7 @@ Giải thích thêm:
 - **Cần nhóm Graph trả lời:**
   1. Dùng GNN nào, và bao giờ có ADR?
   2. Đáp ứng ADR-0016 bằng cách nào?
-  3. Có đồng ý giao diện ở mục 6 không?
+  3. Có đồng ý interface ở mục 6 không?
 
 ## 8. Câu hỏi còn mở (phía xAI)
 
