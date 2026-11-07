@@ -1,0 +1,551 @@
+"""Generate direct/indirect query pairs from real Visual Genome relation chains (ADR-0044).
+
+A chain is k >= 2 annotated relations that link distinct objects of ONE image by
+object id, e.g. (person -holding-> frisbee) and (dog -looks at-> frisbee) share the
+frisbee node. From one chain we write two queries with the same answers:
+
+    direct   names every object:
+        "A person is holding a frisbee, and a dog is looking at the frisbee."
+    indirect hides inner objects:
+        "A person is holding the thing that a dog is looking at."
+
+The indirect query can only be resolved by following the relations, which is the
+"child - plays - football" kind of query the PDF (Task 2) asks for. (The frisbee
+example is a made-up test fixture, not a claim about Visual Genome.)
+
+Text comes from fixed templates, no language model: every word is traceable to an
+annotation, and the generation rules are fixed in the config before any result.
+"""
+
+import re
+from collections import Counter
+from dataclasses import dataclass, replace
+from pathlib import Path
+
+import numpy as np
+
+from mmxai.data.scene_graph import (
+    Relation,
+    SceneGraph,
+    SceneObject,
+    load_scene_graphs,
+    match_key,
+)
+from mmxai.data.splits import load_split
+from mmxai.queries.schema import STATUS_CANDIDATE, write_jsonl
+from mmxai.queries.validator import (
+    hidden_names_in_text,
+    images_matching_pattern,
+    validate_queries,
+    write_review_manifest,
+)
+from mmxai.utils.yaml_config import load_yaml_dataclass
+
+# Rejection reasons, counted so the report can say why chains were thrown away.
+REJECT_GENERIC_NAME = "generic_name"
+REJECT_NON_WORD_NAME = "name_not_plain_words"
+REJECT_PREDICATE_NOT_ALLOWED = "predicate_not_in_whitelist"
+REJECT_AMBIGUOUS_NAME = "ambiguous_name"
+REJECT_HIDDEN_NAME_IN_TEXT = "hidden_name_in_indirect_text"
+REJECT_DUPLICATE_TEXT = "duplicate_query_text"
+REJECT_TOO_MANY_MATCHES = "too_many_candidate_images"
+REJECT_SHAPE = "shared_subject_chain"
+REJECT_NO_ACTION = "no_action_predicate"
+REJECT_REPEATED_KEY = "repeated_synset_in_chain"
+
+# Pilot val 2026-11-06: shared-subject chains gave vague text and joined two names of
+# one person ("baseball player" / "batter"), so only these shapes are kept (ADR-0044).
+ALLOWED_SHAPES = ("shared_object", "path")
+
+# Lowercase words separated by single spaces. Pilot val 2026-11-06 produced "A 52 is on a
+# green/white uniform": numbers and symbols do not read as a nameable object.
+PLAIN_WORDS = re.compile(r"[a-z]+( [a-z]+)*")
+
+# Removed before the whitelist lookup so "are on a" and "on" are one predicate.
+LEADING_COPULAS = ("is ", "are ")
+TRAILING_ARTICLES = (" a", " an", " the")
+
+
+@dataclass(frozen=True)
+class QueryBenchmarkConfig:
+    """Settings for generating candidates and building the verified benchmark."""
+
+    dataset: str
+    data_dir: str
+    objects_file: str
+    relationships_file: str
+    split_file: str
+    split: str
+    seed: int
+    limit_pairs: int
+    min_hops: int
+    max_hops: int
+    max_pairs_per_image: int
+    max_candidate_images: int
+    generic_names: list[str]
+    # canonical predicate -> hand-written verb phrase; predicates not listed are dropped.
+    predicate_templates: dict[str, str]
+    # variant -> canonical predicate, e.g. "wears" -> "wearing".
+    predicate_aliases: dict[str, str]
+    # Subset of predicate_templates that are actions; every chain needs at least one.
+    action_predicates: list[str]
+    author: str
+    candidates_path: str
+    manifest_path: str
+    benchmark_path: str
+    min_verified_pairs: int
+
+
+def load_query_benchmark_config(path: str | Path) -> QueryBenchmarkConfig:
+    """Load the YAML config and reject settings that cannot give an indirect query."""
+    config = load_yaml_dataclass(path, QueryBenchmarkConfig)
+    if config.split not in ("val", "test"):
+        raise ValueError(f"split must be val or test, got {config.split!r}")
+    if config.min_hops != 2 or config.max_hops != 2:
+        raise ValueError("min_hops and max_hops must be 2: the templates cover 2 hops only")
+    unknown_actions = sorted(set(config.action_predicates) - set(config.predicate_templates))
+    if unknown_actions:
+        raise ValueError(f"action_predicates without a template: {unknown_actions}")
+    unknown_targets = sorted(
+        set(config.predicate_aliases.values()) - set(config.predicate_templates)
+    )
+    if unknown_targets:
+        raise ValueError(
+            f"predicate_aliases point to predicates without a template: {unknown_targets}"
+        )
+    if config.limit_pairs < 1 or config.max_pairs_per_image < 1:
+        raise ValueError("limit_pairs and max_pairs_per_image must be >= 1")
+    return config
+
+
+@dataclass(frozen=True)
+class Chain:
+    """Relations r1..rk of one image; relation i links node_ids[i] and node_ids[i + 1]."""
+
+    image_id: int
+    node_ids: tuple[int, ...]
+    relations: tuple[Relation, ...]
+
+    @property
+    def hop_count(self) -> int:
+        return len(self.relations)
+
+    def is_subject(self, position: int, node_position: int) -> bool:
+        """Is node `node_position` the subject of relation `position`?"""
+        return self.relations[position].subject_id == self.node_ids[node_position]
+
+
+# --- Which relations and chains are usable ------------------------------------------------
+
+
+def canonical_predicate(predicate: str, aliases: dict[str, str]) -> str:
+    """One key per meaning: "are on a" -> "on", "wears" -> "wearing" (with that alias)."""
+    for copula in LEADING_COPULAS:
+        if predicate.startswith(copula):
+            predicate = predicate[len(copula) :]
+    for article in TRAILING_ARTICLES:
+        if predicate.endswith(article):
+            predicate = predicate[: -len(article)]
+    return aliases.get(predicate, predicate)
+
+
+def canonicalize_graphs(
+    graphs: dict[int, SceneGraph], aliases: dict[str, str]
+) -> dict[int, SceneGraph]:
+    """Copies of the graphs with canonical predicates; raw_predicate keeps the annotation.
+
+    Done once per run so that generation, answer matching and the evidence check
+    all compare the same predicate strings.
+    """
+    result = {}
+    for image_id, graph in graphs.items():
+        relations = []
+        for relation in graph.relations:
+            predicate = canonical_predicate(relation.predicate, aliases)
+            relations.append(replace(relation, predicate=predicate))
+        result[image_id] = SceneGraph(image_id, graph.objects, relations)
+    return result
+
+
+def usable_relations(
+    graph: SceneGraph,
+    generic_names: list[str],
+    predicate_templates: dict[str, str],
+    rejections: Counter,
+) -> list[Relation]:
+    """Relations whose two objects and predicate can be named without ambiguity.
+
+    Rules (ADR-0044), kept deliberately simple:
+    - no generic name ("it", "thing"...): it cannot be checked in the image;
+    - names are plain words (no digits or symbols like "52", "green/white");
+    - predicate in the whitelist (predicate_templates): every query reads correctly;
+    - each object's name is unique among ALL objects of the image, so "the dog"
+      points to one object and the graph by id agrees with what a reader sees.
+      Names are unique in the image, but answers match by synset, so objects that
+      share a synset inside one chain ("man", "guy") are rejected later, in chain_problem.
+    """
+    generic = set(generic_names)
+    counts = graph.name_counts()
+    usable = []
+    for relation in graph.relations:
+        if relation.subject_name in generic or relation.object_name in generic:
+            rejections[REJECT_GENERIC_NAME] += 1
+        elif not PLAIN_WORDS.fullmatch(relation.subject_name) or not PLAIN_WORDS.fullmatch(
+            relation.object_name
+        ):
+            rejections[REJECT_NON_WORD_NAME] += 1
+        elif relation.predicate not in predicate_templates:
+            rejections[REJECT_PREDICATE_NOT_ALLOWED] += 1
+        elif counts[relation.subject_name] > 1 or counts[relation.object_name] > 1:
+            rejections[REJECT_AMBIGUOUS_NAME] += 1
+        else:
+            usable.append(relation)
+    return usable
+
+
+def enumerate_chains(
+    image_id: int, relations: list[Relation], min_hops: int, max_hops: int
+) -> list[Chain]:
+    """All simple paths of min_hops..max_hops relations through distinct object ids.
+
+    Walking forward or backward along an edge is allowed (the bridge can be subject
+    or object). A path and its reverse use the same relations; only the first one
+    found is kept. Start nodes and edges are visited in id order, so the result is
+    deterministic.
+    """
+    edges_by_node: dict[int, list[Relation]] = {}
+    for relation in sorted(relations, key=lambda item: item.relationship_id):
+        edges_by_node.setdefault(relation.subject_id, []).append(relation)
+        edges_by_node.setdefault(relation.object_id, []).append(relation)
+
+    chains = []
+    seen_relation_sets = set()
+
+    def walk(node_ids: list[int], path: list[Relation]) -> None:
+        if min_hops <= len(path):
+            key = frozenset(relation.relationship_id for relation in path)
+            if key not in seen_relation_sets:
+                seen_relation_sets.add(key)
+                chains.append(Chain(image_id, tuple(node_ids), tuple(path)))
+        if len(path) == max_hops:
+            return
+        current = node_ids[-1]
+        for relation in edges_by_node.get(current, []):
+            # Edges are walked in both directions, so step to whichever end is not `current`.
+            next_id = relation.object_id if relation.subject_id == current else relation.subject_id
+            if next_id in node_ids:
+                continue
+            walk(node_ids + [next_id], path + [relation])
+
+    for start in sorted(edges_by_node):
+        walk([start], [])
+    return chains
+
+
+def node_names(chain: Chain, graph: SceneGraph) -> list[str]:
+    return [graph.objects[node_id].name for node_id in chain.node_ids]
+
+
+# --- Templates -------------------------------------------------------------------------------
+
+
+def as_sentence(text: str) -> str:
+    return text[0].upper() + text[1:] + "."
+
+
+def reasoning_type(chain: Chain) -> str:
+    """Name the shape of a 2-hop chain by the bridge's role in both relations."""
+    if chain.hop_count != 2:
+        return "multi_hop_chain"
+    bridge_is_subject_of_first = chain.is_subject(0, 1)
+    bridge_is_subject_of_second = chain.is_subject(1, 1)
+    if not bridge_is_subject_of_first and not bridge_is_subject_of_second:
+        return "shared_object"  # A -p-> X <-q- B
+    if bridge_is_subject_of_first and bridge_is_subject_of_second:
+        return "shared_subject"  # A <-p- X -q-> B
+    return "path"  # A -p-> X -q-> B
+
+
+def synset_lemma(synset: str) -> str:
+    """ "fire_hydrant.n.01" -> "fire hydrant"."""
+    return synset.split(".")[0].replace("_", " ")
+
+
+def is_plural(scene_object: SceneObject) -> bool:
+    """True when the name is the synset lemma + "s"/"es" ("shoes" vs shoe.n.01).
+
+    Deliberately narrow: irregular plurals ("men") read as singular and are left
+    to the reviewer, instead of guessing English grammar from a word list.
+    """
+    if not scene_object.synset:
+        return False
+    last_word = scene_object.name.split()[-1]
+    lemma_last_word = synset_lemma(scene_object.synset).split()[-1]
+    return last_word in (lemma_last_word + "s", lemma_last_word + "es")
+
+
+def first_mention(scene_object: SceneObject) -> str:
+    """ "a man", "an apple", "some shoes"."""
+    if is_plural(scene_object):
+        return f"some {scene_object.name}"
+    if scene_object.name[0] in "aeiou":
+        return f"an {scene_object.name}"
+    return f"a {scene_object.name}"
+
+
+def verb_for(phrase: str, plural_subject: bool) -> str:
+    """Templates are written for one subject ("is holding"); a plural subject takes "are"."""
+    if plural_subject and phrase.startswith("is "):
+        return "are " + phrase[len("is ") :]
+    return phrase
+
+
+def chain_roles(chain: Chain, graph: SceneGraph) -> tuple:
+    """(first, first_relation, bridge, last, last_relation) in reading order.
+
+    shared_object A -p-> X <-q- B: first = A, last = B.
+    path          A -p-> X -q-> C: first = A (the subject pointing INTO the bridge),
+                                   last = C, whatever direction the walk found it in.
+    """
+    bridge_id = chain.node_ids[1]
+    bridge = graph.objects[bridge_id]
+    if reasoning_type(chain) == "shared_object":
+        first_relation, last_relation = chain.relations
+        first = graph.objects[first_relation.subject_id]
+        last = graph.objects[last_relation.subject_id]
+        return first, first_relation, bridge, last, last_relation
+    if chain.relations[0].object_id == bridge_id:
+        first_relation, last_relation = chain.relations
+    else:
+        last_relation, first_relation = chain.relations
+    first = graph.objects[first_relation.subject_id]
+    last = graph.objects[last_relation.object_id]
+    return first, first_relation, bridge, last, last_relation
+
+
+def direct_text(chain: Chain, graph: SceneGraph, templates: dict[str, str]) -> str:
+    """Name every object; the bridge is "a X" at first mention and "the X" afterwards."""
+    first, first_relation, bridge, last, last_relation = chain_roles(chain, graph)
+    first_verb = verb_for(templates[first_relation.predicate], is_plural(first))
+    opening = f"{first_mention(first)} {first_verb} {first_mention(bridge)}"
+    if reasoning_type(chain) == "shared_object":
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(last))
+        closing = f"{first_mention(last)} {last_verb} the {bridge.name}"
+    else:
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(bridge))
+        closing = f"the {bridge.name} {last_verb} {first_mention(last)}"
+    return as_sentence(f"{opening}, and {closing}")
+
+
+def indirect_text(chain: Chain, graph: SceneGraph, templates: dict[str, str]) -> str:
+    """Name the two end objects; the bridge is described only through its relations."""
+    first, first_relation, bridge, last, last_relation = chain_roles(chain, graph)
+    first_verb = verb_for(templates[first_relation.predicate], is_plural(first))
+    if reasoning_type(chain) == "shared_object":
+        last_verb = verb_for(templates[last_relation.predicate], is_plural(last))
+        hidden = f"the thing that {first_mention(last)} {last_verb}"
+    else:
+        # "something" is singular, so the template is used as written.
+        hidden = f"something that {templates[last_relation.predicate]} {first_mention(last)}"
+    return as_sentence(f"{first_mention(first)} {first_verb} {hidden}")
+
+
+def path_hint(chain: Chain) -> str:
+    """queries/README.md style: "person - holding - frisbee; dog - looks at - frisbee"."""
+    parts = []
+    for relation in chain.relations:
+        parts.append(f"{relation.subject_name} - {relation.predicate} - {relation.object_name}")
+    return "; ".join(parts)
+
+
+def relation_evidence(chain: Chain, graph: SceneGraph) -> list[dict]:
+    """The annotations behind the query, in chain order, with raw strings for reviewers."""
+    evidence = []
+    for relation in chain.relations:
+        evidence.append(
+            {
+                "relationship_id": relation.relationship_id,
+                "subject_id": relation.subject_id,
+                "subject_name": relation.subject_name,
+                "subject_synset": graph.objects[relation.subject_id].synset,
+                "predicate": relation.predicate,
+                "object_id": relation.object_id,
+                "object_name": relation.object_name,
+                "object_synset": graph.objects[relation.object_id].synset,
+                "raw": [
+                    relation.raw_subject_name,
+                    relation.raw_predicate,
+                    relation.raw_object_name,
+                ],
+            }
+        )
+    return evidence
+
+
+def make_pair(
+    chain: Chain,
+    graph: SceneGraph,
+    pair_id: str,
+    relevant: list[int],
+    config: QueryBenchmarkConfig,
+) -> list[dict]:
+    """The direct and the indirect record of one chain; both share pair_id and answers."""
+    names = node_names(chain, graph)
+    shared = {
+        "dataset": config.dataset,
+        "relevant": [str(image_id) for image_id in relevant],
+        "path_hint": path_hint(chain),
+        "author": config.author,
+        "pair_id": pair_id,
+        "source_image_id": str(chain.image_id),
+        "relation_evidence": relation_evidence(chain, graph),
+        "chain_object_ids": list(chain.node_ids),
+        "hop_count": chain.hop_count,
+        "split": config.split,
+        "verification_status": STATUS_CANDIDATE,
+    }
+    direct = {
+        "qid": f"{pair_id}-d",
+        "text": direct_text(chain, graph, config.predicate_templates),
+        "type": "direct",
+    }
+    direct.update(shared)
+    direct["reasoning_type"] = "explicit"
+    direct["hidden_names"] = []
+    indirect = {
+        "qid": f"{pair_id}-i",
+        "text": indirect_text(chain, graph, config.predicate_templates),
+        "type": "indirect",
+    }
+    indirect.update(shared)
+    indirect["reasoning_type"] = reasoning_type(chain)
+    indirect["hidden_names"] = names[1:-1]
+    return [direct, indirect]
+
+
+def chain_problem(
+    chain: Chain, graph: SceneGraph, seen_texts: set[str], config: QueryBenchmarkConfig
+) -> str | None:
+    """Return why a chain cannot become a query pair, or None if it can (cheap checks only)."""
+    if reasoning_type(chain) not in ALLOWED_SHAPES:
+        return REJECT_SHAPE
+    # Only positions ("cup on table near plate") is not the "child - plays - football"
+    # kind of relation the PDF asks the indirect group to need.
+    actions = set(config.action_predicates)
+    if not any(relation.predicate in actions for relation in chain.relations):
+        return REJECT_NO_ACTION
+    # Names are unique in the image, but answers match by synset: "man" and "guy"
+    # (both man.n.01) in one chain are likely one person under two names.
+    keys = [match_key(graph.objects[node_id]) for node_id in chain.node_ids]
+    if len(set(keys)) < len(keys):
+        return REJECT_REPEATED_KEY
+    names = node_names(chain, graph)
+    text = indirect_text(chain, graph, config.predicate_templates)
+    # Naming the hidden object would turn the indirect query into a reworded direct one.
+    if hidden_names_in_text(text, names[1:-1]):
+        return REJECT_HIDDEN_NAME_IN_TEXT
+    if text in seen_texts:
+        return REJECT_DUPLICATE_TEXT
+    return None
+
+
+def chain_pattern(chain: Chain, graph: SceneGraph) -> tuple[list[str], list[tuple[str, bool]]]:
+    """Same pattern (match keys + steps) the validator rebuilds from the stored evidence."""
+    steps = []
+    for position, relation in enumerate(chain.relations):
+        steps.append((relation.predicate, chain.is_subject(position, position)))
+    keys = [match_key(graph.objects[node_id]) for node_id in chain.node_ids]
+    return keys, steps
+
+
+def generate_pairs(
+    graphs: dict[int, SceneGraph], config: QueryBenchmarkConfig
+) -> tuple[list[dict], Counter]:
+    """Generate up to config.limit_pairs candidate pairs from the given split's graphs.
+
+    Images are visited in a seeded random order and at most max_pairs_per_image
+    chains are drawn per image, which spreads the benchmark over many images.
+    Candidate answers are searched in `graphs`, which must hold every image of the
+    split and nothing else. Returns (records, rejection counts).
+    """
+    rng = np.random.default_rng(config.seed)
+    image_order = sorted(graphs)
+    rng.shuffle(image_order)
+
+    rejections: Counter = Counter()
+    records: list[dict] = []
+    seen_texts: set[str] = set()
+    num_pairs = 0
+    for image_id in image_order:
+        if num_pairs >= config.limit_pairs:
+            break
+        graph = graphs[image_id]
+        relations = usable_relations(
+            graph, config.generic_names, config.predicate_templates, rejections
+        )
+        chains = enumerate_chains(image_id, relations, config.min_hops, config.max_hops)
+        if not chains:
+            continue
+        # Random order inside the image, then keep the first acceptable chains.
+        taken = 0
+        for position in rng.permutation(len(chains)).tolist():
+            if taken >= config.max_pairs_per_image or num_pairs >= config.limit_pairs:
+                break
+            chain = chains[position]
+            problem = chain_problem(chain, graph, seen_texts, config)
+            if problem is not None:
+                rejections[problem] += 1
+                continue
+            keys, steps = chain_pattern(chain, graph)
+            matches = images_matching_pattern(keys, steps, graphs)
+            # Fixed before generation: a pattern found in very many images is too
+            # generic to review by hand and says little about relational reasoning.
+            if len(matches) > config.max_candidate_images:
+                rejections[REJECT_TOO_MANY_MATCHES] += 1
+                continue
+            if image_id not in matches:
+                raise RuntimeError(f"chain of image {image_id} does not match its own graph")
+            num_pairs += 1
+            pair_id = f"vg-{config.split}-{num_pairs:03d}"
+            records.extend(make_pair(chain, graph, pair_id, matches, config))
+            seen_texts.add(indirect_text(chain, graph, config.predicate_templates))
+            taken += 1
+    return records, rejections
+
+
+def run_generation(config: QueryBenchmarkConfig) -> dict:
+    """Load the split's scene graphs, generate candidates, check them, write JSONL + manifest.
+
+    Only images of config.split are loaded, so a test benchmark never looks at
+    train or val annotations, and a val pilot never touches test.
+    Returns a summary for the CLI to print.
+    """
+    split = load_split(config.split_file)
+    split_ids = {int(image_id) for image_id in split[config.split].tolist()}
+    graphs, parse_report = load_scene_graphs(
+        config.data_dir, split_ids, config.objects_file, config.relationships_file
+    )
+    graphs = canonicalize_graphs(graphs, config.predicate_aliases)
+    records, rejections = generate_pairs(graphs, config)
+    if not records:
+        raise ValueError("no candidate pair survived the filters; nothing written")
+
+    # Self-check against the annotations before anything reaches a reviewer.
+    split_id_strings = {str(image_id) for image_id in split_ids}
+    problems = validate_queries(records, split_id_strings, graphs, expected_split=config.split)
+    if problems:
+        raise ValueError("generated candidates are invalid:\n" + "\n".join(problems))
+
+    write_jsonl(records, config.candidates_path)
+    write_review_manifest(records, config.manifest_path)
+    return {
+        "split": config.split,
+        "num_split_images": len(split_ids),
+        "num_scene_graphs": len(graphs),
+        "num_pairs": len(records) // 2,
+        "num_queries": len(records),
+        "dropped_records": dict(sorted(parse_report.items())),
+        "rejected_chains": dict(sorted(rejections.items())),
+        "candidates_path": config.candidates_path,
+        "manifest_path": config.manifest_path,
+    }
