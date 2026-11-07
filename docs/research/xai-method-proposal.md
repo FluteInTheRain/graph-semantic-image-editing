@@ -1,10 +1,10 @@
 # Đề xuất phương pháp cho module xAI (Nhiệm vụ 3)
 
-- **Trạng thái:** Bản nháp nghiên cứu, **chưa phải quyết định**. Sẽ chốt bằng ADR (mục 7) sau khi nhóm đồng ý.
+- **Trạng thái:** Bản nghiên cứu làm cơ sở cho ADR-0016 (bản sửa đổi 2026-11-07).
 - **Ngày:** 2026-11-07
 - **Soạn bởi:** Claude Code (AI hỗ trợ). Thành viên phải tự đọc lại các bài báo trước khi trích dẫn.
 - **Phạm vi:** chỉ module xAI (`src/mmxai/explain/`). Module Graph (dựng đồ thị, GNN, scorer trong `models/`) do phần khác của nhóm làm. Mô hình đồ thị được coi là **hộp đen**: nhóm Graph chọn GNN nào cũng được.
-- **Nguồn sự thật là đề bài** (`Project03_Multimodal_XAI.pdf`). Hướng trong tài liệu này khác mục 1 và 3 của ADR-0016, nên cần một ADR mới thay thế hai mục đó (mục 7).
+- **Nguồn sự thật là đề bài** (`Project03_Multimodal_XAI.pdf`). ADR-0016 đã được sửa theo hướng của tài liệu này (mục 7).
 
 Nguyên tắc: **áp dụng phương pháp đã có**, không phát minh mới. Với mỗi phương pháp phải trả lời được: **làm gì, vì sao chọn, input, output, luồng xử lý**.
 
@@ -178,20 +178,20 @@ Nếu mô hình là GAT, thêm RQ5: attention có khớp với Occlusion không 
 
 Trong lúc module Graph chưa có code, module xAI viết và test trên một **mô hình giả cỡ nhỏ trong `tests/`**. Mô hình giả này không nằm trong `models/`.
 
-## 7. Việc cần làm với ADR-0016
+## 7. Quan hệ với ADR-0016
 
-ADR-0016 (đã chấp nhận) chọn cách hiểu **chặt hơn đề**: scorer tự trả về bản ghi đóng góp (mục 1), `explain/` chỉ đọc (mục 3). Hướng trong tài liệu này khác hai mục đó. ADR đã chấp nhận không sửa nội dung được (`.claude/rules/docs.md`), nên cần **ADR mới của module xAI thay thế mục 1 và 3 của ADR-0016**:
+Bản đầu của ADR-0016 (2026-11-01) chọn cách hiểu **chặt hơn đề**: scorer tự trả về bản ghi đóng góp, `explain/` chỉ đọc. Ngày 2026-11-07, nhóm **sửa trực tiếp ADR-0016** theo hướng của tài liệu này (xem mục "Lịch sử sửa đổi" trong ADR):
 
-| Mục ADR-0016 | Giữ hay thay |
+| Mục ADR-0016 | Thay đổi |
 |---|---|
-| 1. Scorer trả về điểm kèm bản ghi đóng góp | **Thay:** đóng góp do `explain/` tính trên chính mô hình bằng explainer đã công bố |
+| 1. Module Graph | Chọn GNN tuỳ ý; chỉ cần mô hình chạy lại được và hàm tính điểm. Bỏ yêu cầu trả bản ghi đóng góp |
 | 2. `final = α·cosine + (1−α)·graph` | Giữ |
-| 3. `explain/` chỉ đọc bản ghi, cấm `shortest_path` để chọn giải thích | **Thay một phần:** `explain/` tính đóng góp trên mô hình; **vẫn cấm** chọn giải thích bằng thuật toán tìm đường riêng |
+| 3. `explain/` | Tính đóng góp trên chính mô hình bằng explainer đã công bố, chọn trên val bằng fidelity; **vẫn cấm** chọn giải thích bằng thuật toán tìm đường riêng |
 | 4. Fidelity bằng can thiệp thật, so với xoá ngẫu nhiên | Giữ |
 | 5. ≥ 10 truy vấn, đối chứng ngẫu nhiên, ≥ 3 seed | Giữ |
 | 6. Ablation dùng chung hàm can thiệp | Giữ |
 
-ADR mới viết bằng `/new-adr` sau khi nhóm đồng ý hướng này.
+`CLAUDE.md` và `.claude/rules/explanations.md` đã được cập nhật cho khớp.
 
 ## 8. Câu hỏi còn mở (phía xAI)
 
