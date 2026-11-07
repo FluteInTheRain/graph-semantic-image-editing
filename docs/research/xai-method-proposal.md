@@ -161,13 +161,54 @@ Trong lúc module Graph chưa có code, module xAI viết và test trên một *
 Giải thích thêm:
 
 - **Vấn đề:** ADR-0016 (đã chấp nhận) yêu cầu scorer trả về điểm **kèm** bản ghi đóng góp, và đóng góp đó phải là cái thật sự tạo ra điểm. Với GNN có hàm kích hoạt phi tuyến (ReLU…) giữa các lớp, điểm cuối không phải là tổng các phần riêng của từng cạnh/path. Muốn có bản ghi đóng góp thì phải có thêm một cơ chế, và cơ chế đó cần được chọn **ngay từ thiết kế scorer**.
-- **Ai quyết:** nhóm Graph, qua một ADR của họ. Module xAI không đề xuất thiết kế scorer. Mục 9.3 có tài liệu tham khảo về các mô hình có giải thích theo đường đi, nếu nhóm Graph cần.
+- **Ai quyết:** nhóm Graph, qua một ADR của họ. Module xAI chỉ đưa **gợi ý tham khảo** (mục 7.1); quyết định cuối thuộc nhóm Graph. Mục 9.3 có thêm tài liệu về các mô hình có giải thích theo đường đi.
 - **Ảnh hưởng nếu không xử lý:** module xAI không có gì để đọc. Giải thích sẽ phải tính bằng explainer post-hoc, tức là trái ADR-0016 và trái yêu cầu PDF §2.
 - **Hiện trạng (2026-11-07):** chưa có ADR nào chọn GNN. `configs/clip_graph_vg.yaml` ghi `gnn: gcn`, nhưng `configs/README.md` nói đây là ví dụ mẫu chưa dùng bởi code. `src/mmxai/models/` chưa có code.
 - **Cần nhóm Graph trả lời:**
   1. Dùng GNN nào, và bao giờ có ADR?
   2. Đáp ứng ADR-0016 bằng cách nào?
   3. Có đồng ý interface ở mục 6 không?
+
+### 7.1. Gợi ý cách xử lý (để nhóm Graph tham khảo)
+
+Có ba hướng, xếp theo mức độ khớp với ADR-0016. Cả ba đều dùng phương pháp đã công bố, không phải phát minh mới.
+
+#### Hướng A (khuyến nghị): dùng GCN tuyến tính – SGC hoặc LightGCN
+
+- **Làm gì:** bỏ hàm kích hoạt phi tuyến giữa các lớp GCN. SGC (Wu et al., ICML 2019) tính `H = S^K · X · Θ`, trong đó `S` là ma trận kề đã chuẩn hoá và `K` là số hop. LightGCN (He et al., SIGIR 2020) cũng lan truyền tuyến tính, rồi lấy tổng embedding của các lớp.
+- **Vì sao điểm phân rã được:** giả sử điểm đồ thị là tích vô hướng giữa truy vấn đã chiếu `qW` và embedding ảnh `h_i`. Khi đó:
+  ```
+  g(q, i) = ⟨qW, h_i⟩ = Σ_j (S^K)_ij · ⟨qW, x_j Θ⟩
+                         └──── đóng góp của node j vào điểm của ảnh i ────┘
+  (S^K)_ij = tổng trên các walk dài K từ i tới j, mỗi walk là tích trọng số các cạnh
+           → tách tiếp được thành đóng góp của từng walk (đường đi)
+  ```
+  Tổng các đóng góp **bằng đúng** điểm, nên bản ghi đóng góp là chính các số hạng trong tổng. Không cần ước lượng.
+- **Input / output cho scorer:** input là `x`, `edge_index`, vector truy vấn; output là `g(q, i)` kèm danh sách (walk hoặc node, đóng góp), đúng interface ở mục 6.
+- **Ưu:** vẫn thuộc họ GCN. Faithful by construction, đúng ADR-0016. Code ngắn, dễ giải thích từng dòng khi vấn đáp. Test được bằng một assert: tổng đóng góp bằng điểm.
+- **Nhược và rủi ro:**
+  - Mô hình có thể yếu hơn GCN có ReLU. Có thể đo mức chênh bằng cách chạy thêm GCN có ReLU làm biến thể so sánh.
+  - Số walk tăng nhanh theo `K`. Nên giữ `K = 2` hoặc chỉ ghi lại top walk.
+  - **Cần hỏi giảng viên** SGC/LightGCN có được tính là "GCN" cho yêu cầu cấp độ 1 không.
+
+#### Hướng B: giữ GNN phi tuyến, nhưng làm bước tính điểm cuối thành tổng theo cạnh
+
+- **Làm gì:** GNN (GCN/GAT/SAGE, có ReLU) chỉ dùng để tạo embedding node. Điểm đồ thị được tính bằng một bước đọc ra dạng tổng, ví dụ `g(q, i) = Σ_{e ∈ S(i)} s(q, e)`, trong đó `s(q, e)` là điểm của cạnh `e` tính từ embedding hai đầu cạnh và truy vấn.
+- **Ưu:** giữ được GNN thông thường. Tổng các số hạng vẫn bằng đúng điểm.
+- **Nhược:** đóng góp chỉ chính xác **ở bước đọc ra**. Mỗi `s(q, e)` vẫn phụ thuộc embedding đã trộn thông tin từ cả vùng lân cận, nên xoá một cạnh có thể làm đổi số hạng của cạnh khác. Báo cáo phải nói rõ giới hạn này, và fidelity sẽ cho thấy mức ảnh hưởng.
+
+#### Hướng C (không khuyến nghị): giữ GNN phi tuyến, tính đóng góp bằng attribution
+
+- **Làm gì:** scorer tự gọi Integrated Gradients (ICML 2017) trên mask cạnh, lấy kết quả làm bản ghi đóng góp. IG có tính completeness: tổng attribution bằng `g(đủ cạnh) − g(không cạnh)`.
+- **Vì sao không khuyến nghị:** đây là phương pháp tính **sau khi có điểm**. ADR-0016 xếp nhóm phương pháp này là "chỉ dùng để so sánh". Muốn dùng làm chính phải viết **ADR mới thay thế phần đó của ADR-0016**, và phải chứng minh độ trung thực bằng số fidelity. Hướng này cũng làm mất baseline IG ở phần 4 của module xAI.
+
+#### Tóm tắt
+
+| Hướng | Đóng góp chính xác? | Đúng ADR-0016? | Giữ GNN phi tuyến? | Chi phí |
+|---|---|---|---|---|
+| **A. SGC / LightGCN** | Có, toàn bộ | Có | Không | Thấp |
+| B. Tính điểm cuối dạng tổng theo cạnh | Chỉ ở bước đọc ra | Có, kèm ghi chú giới hạn | Có | Trung bình |
+| C. IG làm bản ghi đóng góp | Xấp xỉ | Không, cần ADR mới | Có | Cao (20–50 lần lan truyền ngược mỗi ứng viên) |
 
 ## 8. Câu hỏi còn mở (phía xAI)
 
@@ -217,6 +258,8 @@ Subagent `paper-researcher` khảo sát qua web vì MCP `arxiv` không kết n�
 - Wiegreffe & Pinter: https://arxiv.org/abs/1908.04626
 - GAtt: https://arxiv.org/abs/2406.04612
 - FGAI: https://arxiv.org/abs/2410.06950
+- SGC (Wu et al., ICML 2019): https://arxiv.org/abs/1902.07153 (do AI đề xuất, không nằm trong bản khảo sát; cần tự đọc lại)
+- LightGCN (He et al., SIGIR 2020): https://arxiv.org/abs/2002.02126 (do AI đề xuất, không nằm trong bản khảo sát; cần tự đọc lại)
 - NBFNet: https://arxiv.org/abs/2106.06935
 - ULTRA: https://arxiv.org/abs/2310.04562
 - KGAT: https://arxiv.org/abs/1905.07854
