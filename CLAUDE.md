@@ -74,7 +74,9 @@ Chi tiết + test bắt buộc: ADR-0009. Nghi ngờ rò rỉ → dừng lại, 
   một đường đi "hợp lý" sau khi đã có kết quả nếu đường đi đó không ảnh hưởng tới điểm.
 - Mỗi giải thích phải kiểm được bằng **fidelity**: bỏ/làm nhiễu các cạnh được dùng làm giải thích thì
   điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý. Kèm validity và sparsity (cấp độ 3).
-- `explain/` chỉ đọc bản ghi đóng góp do graph scorer trả về; không tự tìm đường đi mới (ADR-0016).
+- `explain/` tính đóng góp của cạnh trên **chính mô hình đã xếp hạng** (Occlusion / Integrated Gradients /
+  GNNExplainer), chọn explainer chính trên val bằng fidelity; không chọn giải thích bằng thuật toán tìm
+  đường riêng như `shortest_path` (ADR-0016).
 - Code giải thích cần test chứng minh điều trên. Chi tiết: `.claude/rules/explanations.md`.
 
 ## Tái lập (reproducibility)
