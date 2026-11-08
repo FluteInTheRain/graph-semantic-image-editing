@@ -3,6 +3,7 @@ import pytest
 
 from mmxai.explain.intervention import mark_remaining_edges
 from mmxai.explain.subgraph import edges_reaching_node
+from toy_gnn import toy_gcn, toy_sum_model
 
 # Chain 3 -> 2 -> 1 -> 0, plus an edge leaving node 0 and an edge into an unrelated node.
 DIRECTED = np.array(
@@ -12,21 +13,23 @@ DIRECTED = np.array(
     ]
 )
 
+# Mixed graph: some edges can reach node 0, some cannot.
+GRAPH = np.array(
+    [
+        [1, 2, 3, 0, 4, 2, 5, 6],
+        [0, 1, 2, 4, 3, 0, 6, 3],
+    ]
+)
 
-def test_one_layer_keeps_only_edges_into_the_node():
+
+def test_one_layer_reaches_one_step_further_than_the_direct_edges():
     reach = edges_reaching_node(DIRECTED, node=0, num_layers=1)
-
-    assert reach.tolist() == [False, False, True, False, False]
-
-
-def test_two_layers_add_edges_into_the_neighbours():
-    reach = edges_reaching_node(DIRECTED, node=0, num_layers=2)
 
     assert reach.tolist() == [False, True, True, False, False]
 
 
-def test_three_layers_reach_the_end_of_the_chain():
-    reach = edges_reaching_node(DIRECTED, node=0, num_layers=3)
+def test_two_layers_reach_the_end_of_the_chain():
+    reach = edges_reaching_node(DIRECTED, node=0, num_layers=2)
 
     assert reach.tolist() == [True, True, True, False, False]
 
@@ -37,12 +40,16 @@ def test_edges_leaving_the_node_cannot_reach_it():
     assert not reach[3]
 
 
-def test_message_can_go_out_and_come_back_in_an_undirected_graph():
-    # 0 <-> 1 stored as two opposite edges: 0 -> 1 -> 0 takes two rounds.
-    undirected = np.array([[0, 1], [1, 0]])
+def test_unrelated_edges_are_never_included():
+    reach = edges_reaching_node(DIRECTED, node=0, num_layers=3)
 
-    assert edges_reaching_node(undirected, node=0, num_layers=1).tolist() == [False, True]
-    assert edges_reaching_node(undirected, node=0, num_layers=2).tolist() == [True, True]
+    assert not reach[4]
+
+
+def test_node_without_incoming_edges_has_nothing_in_reach():
+    reach = edges_reaching_node(DIRECTED, node=6, num_layers=2)
+
+    assert reach.tolist() == [False, False, False, False, True]
 
 
 def test_rejects_zero_layers():
@@ -50,33 +57,44 @@ def test_rejects_zero_layers():
         edges_reaching_node(DIRECTED, node=0, num_layers=0)
 
 
-def toy_message_passing(edge_index: np.ndarray, features: np.ndarray, num_layers: int):
-    """Stand-in for a graph model: each round, a node adds the values sent along its edges."""
-    state = features.copy()
-    for _ in range(num_layers):
-        new_state = state.copy()
-        for source, target in edge_index.T:
-            new_state[target] += state[source]
-        state = new_state
-    return state
+def test_rejects_edges_with_wrong_shape():
+    with pytest.raises(ValueError, match="shape"):
+        edges_reaching_node(np.array([0, 1, 2]), node=0, num_layers=1)
 
 
-def test_only_edges_in_reach_change_the_node_score():
-    rng = np.random.default_rng(0)
-    graph = np.array(
-        [
-            [1, 2, 3, 0, 4, 2, 5],
-            [0, 1, 2, 4, 3, 0, 6],
-        ]
-    )
-    features = rng.uniform(1.0, 2.0, size=7)
-    num_layers = 2
-    full_score = toy_message_passing(graph, features, num_layers)[0]
+def test_gcn_degree_makes_an_edge_into_the_sender_matter():
+    # Chain 2 -> 1 -> 0 with one layer: edge 2 -> 1 changes the degree of node 1,
+    # which scales the message 1 -> 0, so it changes node 0's score.
+    chain = np.array([[2, 1], [1, 0]])
+    features = np.array([1.0, 2.0, 3.0])
+    full = toy_gcn(chain, features, num_layers=1)[0]
+    without = toy_gcn(chain[:, [1]], features, num_layers=1)[0]
 
-    reach = edges_reaching_node(graph, node=0, num_layers=num_layers)
+    assert without != pytest.approx(full)
+    assert edges_reaching_node(chain, node=0, num_layers=1)[0]
 
-    for column in range(graph.shape[1]):
-        edge = (int(graph[0, column]), int(graph[1, column]))
-        remaining = mark_remaining_edges(graph, [edge], both_directions=False)
-        score = toy_message_passing(graph[:, remaining], features, num_layers)[0]
-        assert (score != pytest.approx(full_score)) == reach[column]
+
+@pytest.mark.parametrize("model", [toy_sum_model, toy_gcn])
+@pytest.mark.parametrize("num_layers", [1, 2])
+def test_every_edge_that_changes_the_score_is_in_reach(model, num_layers):
+    features = np.random.default_rng(0).uniform(1.0, 2.0, size=7)
+    full = model(GRAPH, features, num_layers)[0]
+    reach = edges_reaching_node(GRAPH, node=0, num_layers=num_layers)
+
+    for column in range(GRAPH.shape[1]):
+        edge = (int(GRAPH[0, column]), int(GRAPH[1, column]))
+        remaining = mark_remaining_edges(GRAPH, [edge], both_directions=False)
+        score = model(GRAPH[:, remaining], features, num_layers)[0]
+        if score != pytest.approx(full):
+            assert reach[column], f"edge {edge} changes the score but is not in reach"
+
+
+@pytest.mark.parametrize("model", [toy_sum_model, toy_gcn])
+def test_keeping_only_edges_in_reach_keeps_the_score(model):
+    features = np.random.default_rng(1).uniform(1.0, 2.0, size=7)
+    reach = edges_reaching_node(GRAPH, node=0, num_layers=2)
+
+    full = model(GRAPH, features, 2)[0]
+    only_reach = model(GRAPH[:, reach], features, 2)[0]
+
+    assert only_reach == pytest.approx(full)
