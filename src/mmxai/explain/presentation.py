@@ -20,6 +20,7 @@ class Relation:
 class Explanation:
     """Relations that pushed the image up, and relations that pulled it down."""
 
+    graph_used: bool
     supporting: list[Relation]
     opposing: list[Relation]
 
@@ -29,21 +30,36 @@ def build_explanation(
     top_m: int,
     node_names: Mapping[int, str],
     relation_names: Mapping[tuple[int, int], str],
+    alpha: float,
+    min_contribution: float,
 ) -> Explanation:
     """Keep the top_m strongest relations on each side and name them.
 
-    Relations that did not change the score are left out.
+    Contributions are shown as their effect on the final score, which weighs the graph
+    by (1 - alpha). Relations whose effect is not above min_contribution are left out.
+    With alpha = 1 the graph plays no part, so no relation is shown.
     Raises ValueError if a node or relation has no name.
     """
     if top_m < 1:
         raise ValueError(f"top_m must be at least 1, got {top_m}")
+    if not 0.0 <= alpha <= 1.0:
+        raise ValueError(f"alpha must be in [0, 1], got {alpha}")
+    if min_contribution < 0:
+        raise ValueError(f"min_contribution must not be negative, got {min_contribution}")
+    if alpha == 1.0:
+        return Explanation(graph_used=False, supporting=[], opposing=[])
 
-    positive = [edge for edge in contributions if edge.contribution > 0]
-    negative = [edge for edge in contributions if edge.contribution < 0]
+    effects = [
+        EdgeContribution(edge.source, edge.target, (1 - alpha) * edge.contribution)
+        for edge in contributions
+    ]
+    positive = [edge for edge in effects if edge.contribution > min_contribution]
+    negative = [edge for edge in effects if edge.contribution < -min_contribution]
     positive.sort(key=lambda edge: edge.contribution, reverse=True)
     negative.sort(key=lambda edge: edge.contribution)
 
     return Explanation(
+        graph_used=True,
         supporting=[_name(edge, node_names, relation_names) for edge in positive[:top_m]],
         opposing=[_name(edge, node_names, relation_names) for edge in negative[:top_m]],
     )
@@ -70,6 +86,8 @@ def _name(
 
 def format_explanation(explanation: Explanation) -> str:
     """Write the explanation as plain text, one relation per line."""
+    if not explanation.graph_used:
+        return "The graph was not used (alpha = 1), so no relation explains this result."
     lines = ["Pushed the image up:"]
     lines += _format_side(explanation.supporting)
     lines.append("Pulled the image down:")
