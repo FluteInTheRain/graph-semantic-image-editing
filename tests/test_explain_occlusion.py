@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from mmxai.explain.occlusion import occlusion
+from toy_gnn import toy_gcn
 
 # Image 0 receives edges from objects 1 and 2; object 3 feeds object 1.
 # Edge 0 -> 4 leaves the image.
@@ -109,3 +110,34 @@ def test_rejects_a_score_that_depends_on_edges_out_of_reach():
 
     with pytest.raises(ValueError, match="out of reach"):
         occlusion(EDGE_INDEX, 0, 2, both_directions=False, score_image=counts_everything)
+
+
+def test_on_a_toy_gcn_each_contribution_matches_removing_that_edge():
+    graph = np.array(
+        [
+            [1, 2, 3, 0, 4, 2, 5, 6],
+            [0, 1, 2, 4, 3, 0, 6, 3],
+        ]
+    )
+    features = np.random.default_rng(0).uniform(1.0, 2.0, size=7)
+
+    def gcn_score(remaining: np.ndarray) -> float:
+        return float(toy_gcn(graph[:, remaining], features, num_layers=2)[0])
+
+    result = occlusion(graph, 0, 2, both_directions=False, score_image=gcn_score)
+    full = gcn_score(np.ones(graph.shape[1], dtype=bool))
+    tried = {(edge.source, edge.target) for edge in result}
+
+    # Recompute every drop directly, without the explain code.
+    for column in range(graph.shape[1]):
+        keep = np.ones(graph.shape[1], dtype=bool)
+        keep[column] = False
+        drop = full - gcn_score(keep)
+        edge = (int(graph[0, column]), int(graph[1, column]))
+        if edge in tried:
+            reported = next(e.contribution for e in result if (e.source, e.target) == edge)
+            assert reported == pytest.approx(drop)
+        else:
+            assert drop == pytest.approx(0.0), f"untried edge {edge} changes the score"
+
+    assert result[0].contribution != pytest.approx(0.0)
