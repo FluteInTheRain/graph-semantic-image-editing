@@ -114,13 +114,15 @@ Ký hiệu: `i*` là ảnh đang giải thích, `E_x` là tập cạnh giải th
 
 | Metric | Công thức / cách đo | Ý nghĩa |
 |---|---|---|
-| Fid+ (điểm) | `[g(q,i*) − g_{G∖E_x}(q,i*)] / g(q,i*)` | Bỏ cạnh giải thích thì điểm giảm bao nhiêu |
+| Fid+ (điểm) | `g(q,i*) − g_{G∖E_x}(q,i*)` | Bỏ cạnh giải thích thì điểm giảm bao nhiêu (lớn là tốt) |
 | Fid+ (thứ hạng) | `rank_{G∖E_x}(i*) − rank_G(i*)`, tính trên `final` với α đã chốt | Bỏ cạnh giải thích thì ảnh tụt bao nhiêu hạng |
-| Fid− | `[g(q,i*) − g_{E_x}(q,i*)] / g(q,i*)` | Chỉ giữ cạnh giải thích thì còn bao nhiêu điểm (≈ 0 là tốt) |
-| Characterization | `Fid+·(1−Fid−) / (0.5·(1−Fid−) + 0.5·Fid+)`, sau khi clip Fid về [0,1] | Gộp Fid+ và Fid− thành một số |
+| Fid− | `g(q,i*) − g_{E_x}(q,i*)` | Chỉ giữ cạnh giải thích thì điểm giảm bao nhiêu (≈ 0 là tốt) |
+| Characterization | `Fid+·(1−Fid−) / (0.5·(1−Fid−) + 0.5·Fid+)`; công thức cần Fid trong [0,1], cách đưa về [0,1] chốt khi cài | Gộp Fid+ và Fid− thành một số |
 | Robust Fid+ | Như Fid+, nhưng mỗi cạnh của `E_x` chỉ bị xoá với xác suất 0.9 (giữ với xác suất 0.1), lấy trung bình nhiều lần | Giảm ảnh hưởng của OOD |
 | Sparsity | `1 − |E_x| / |E(S(q,i*))|` | Giải thích càng gọn càng tốt |
 | Validity | (i) mọi cạnh của `E_x` có thật trong đồ thị train và nằm trong `S(q,i*)`; (ii) `E_x` nối được tới `i*` thành ít nhất một đường đi. `networkx` chỉ dùng ở bước kiểm này | Không có cạnh "ảo", giải thích đọc được thành đường đi |
+
+Fid+ và Fid− dùng **hiệu chưa chia**, đúng định nghĩa gốc của Zheng et al. (ICLR 2024). Không chia cho `g(q,i*)` vì điểm đồ thị có thể bằng 0 hoặc âm (ví dụ điểm kiểu cosine). Code: `src/mmxai/explain/fidelity.py`.
 
 **Đối chứng:** xoá cùng `|E_x|` cạnh chọn ngẫu nhiên **trong `S(q,i*)`** (không lấy từ toàn đồ thị, vì như vậy gần như không chạm cạnh nào liên quan), lặp R ≥ 20 lần. Kiểm định bằng Wilcoxon signed-rank ghép cặp theo truy vấn.
 
