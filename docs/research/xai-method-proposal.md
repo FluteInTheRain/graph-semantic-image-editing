@@ -168,10 +168,10 @@ Nếu mô hình là GAT, thêm RQ5: attention có khớp với Occlusion không 
 
 | Cần nhận | Từ module | Vì sao xAI cần |
 |---|---|---|
-| Mô hình đồ thị đã huấn luyện, **chạy lại được** trên một `edge_index` đã sửa | Graph | Phần 1, 2, 3. Cần mô hình, không chỉ embedding đã cache |
+| Mô hình đồ thị đã huấn luyện, **chạy lại được** trên một `edge_index` đã sửa, ở chế độ `eval()` (cùng đồ thị cho cùng điểm) | Graph | Phần 1, 2, 3. Cần mô hình, không chỉ embedding đã cache. Mô hình còn ngẫu nhiên (dropout) thì mức điểm giảm chỉ là nhiễu; `occlusion` báo lỗi nếu gọi hai lần ra hai điểm khác nhau |
 | Hàm tính điểm đồ thị `g(q, i)` từ embedding | Graph / Rerank | Explainer và fidelity đều phải gọi đúng hàm đã dùng khi xếp hạng |
 | `x`, `edge_index`, loại cạnh, ánh xạ id ↔ tên node/quan hệ | Graph | Hiển thị, validity, đối chứng ngẫu nhiên |
-| Số lớp GNN (để biết k-hop) | Graph | Giới hạn đồ thị con cần giải thích |
+| Số lớp GNN (để biết k-hop) | Graph | Giới hạn đồ thị con cần giải thích. `edges_reaching_node` lấy thêm 1 bước vì GCN chuẩn hoá theo bậc của node gửi; `occlusion` báo lỗi nếu cạnh ngoài vùng này vẫn làm đổi điểm (số lớp khai báo sai) |
 | Kết quả rerank: `cosine`, `graph`, `final`, thứ hạng; `α` đã chốt trên val | Rerank | Tính thứ hạng sau can thiệp |
 
 Để dùng IG và GNNExplainer có sẵn của PyG (`torch_geometric.explain`), mô hình nên được xây từ các lớp `MessagePassing` của PyG. *Cần kiểm lại API qua context7 trước khi code.* Occlusion không cần điều kiện này.
