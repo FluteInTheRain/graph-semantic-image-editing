@@ -71,5 +71,7 @@ def image_concepts_from_scene_graphs(
 
 def concept_text(synset: str) -> str:
     """The words CLIP reads for a concept: "fire_hydrant.n.01" -> "fire hydrant"."""
-    lemma = synset.split(".")[0]
+    # A synset is "<lemma>.<pos>.<sense>" and the lemma may contain dots itself
+    # ("st._bernard.n.01"), so only the last two dots are separators.
+    lemma = synset.rsplit(".", 2)[0]
     return lemma.replace("_", " ")

@@ -127,3 +127,8 @@ def test_image_without_objects_has_no_concepts():
 def test_concept_text_is_the_synset_lemma_in_plain_words():
     assert concept_text("fire_hydrant.n.01") == "fire hydrant"
     assert concept_text("dog.n.01") == "dog"
+
+
+def test_concept_text_keeps_dots_inside_the_lemma():
+    # Only the last two dots split off ".n.01"; a lemma may contain dots itself.
+    assert concept_text("st._bernard.n.01") == "st. bernard"
