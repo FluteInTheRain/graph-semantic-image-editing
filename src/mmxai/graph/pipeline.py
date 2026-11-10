@@ -99,6 +99,13 @@ def run_build_graph(
     image_concepts, synset_sources = image_concepts_from_scene_graphs(graphs, name_to_synset)
 
     concepts = select_concepts(image_concepts, split["train"], config.min_train_images)
+    if not concepts:
+        # Checked here: later steps would either crash on an empty array or save an
+        # empty graph, and neither says the threshold is the cause.
+        raise ValueError(
+            f"no concept appears in >= {config.min_train_images} train images; "
+            "lower min_train_images"
+        )
     graph = build_contains_graph(image_concepts, all_ids, concepts)
 
     concept_names = [concept_text(key) for key in graph.concept_keys.tolist()]

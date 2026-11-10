@@ -4,6 +4,7 @@ Made-up data: images 1-2 train, 3 val, 4 test. "zebra" is only in the test image
 The val image's "grass" has no synset and must get grass.n.01 from the train dictionary.
 """
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -125,3 +126,12 @@ def test_committed_config_loads():
 
     assert config.dataset == "visual_genome"
     assert "{}" in config.concept_prompt
+
+
+def test_no_concept_left_is_a_clear_error(tmp_path):
+    # Train has only 2 images, so no concept can reach 3 train images.
+    config = dataclasses.replace(make_config(tmp_path), min_train_images=3)
+
+    with pytest.raises(ValueError, match="min_train_images"):
+        run_build_graph(config, fake_encoder)
+    assert not Path(config.output_dir).exists()
