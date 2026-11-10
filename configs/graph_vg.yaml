@@ -1,4 +1,7 @@
 # Image-concept graph of Visual Genome with "contains" edges only (ADR-0045, status: Proposed).
+# Edges come from the annotations. On val/test these are the same annotations that define
+# the query answers, so since ADR-0046 this graph is only the upper-bound ablation; the main
+# model uses configs/graph_vg_clip_topk.yaml.
 # How to run: see the docstring of scripts/build_graph.py and docs/guides/xay-do-thi.md.
 dataset: visual_genome
 # objects.json v1.4 from the official Visual Genome download page (gitignored data/).
@@ -11,6 +14,11 @@ split_file: splits/visual_genome/split_seed0.json
 #   Why: a concept met in one image links no images together; 5 keeps ~3.9k concepts.
 #   Proposed by Claude Code, 2026-11-07; not yet decided by the team.
 min_train_images: 5
+# Decision (ADR-0046): annotation edges are the upper-bound ablation, never the main model.
+edge_source: annotations
+# Not used with annotation edges; kept so both graph configs have the same keys.
+clip_topk_k: 16
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
 # Decision (ADR-0045): concept node vector = CLIP text embedding of this sentence.
 #   Proposed by Claude Code, 2026-11-07; not yet decided by the team.
 concept_prompt: "a photo of a {}"
@@ -19,4 +27,4 @@ model: ViT-B-32
 pretrained: laion2b_s34b_b79k
 device: auto
 text_batch_size: 256
-output_dir: artifacts/graphs/visual_genome/contains_v1
+output_dir: artifacts/graphs/visual_genome/contains_annotations_v2

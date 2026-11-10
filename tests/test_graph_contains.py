@@ -125,13 +125,10 @@ def test_save_rejects_one_feature_row_per_concept_mismatch(tmp_path):
         )
 
 
-GRAPH_META = {"config": {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}}
-
-
 def test_same_clip_model_passes():
     feature_meta = {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}
 
-    check_same_clip_model(GRAPH_META, feature_meta)
+    check_same_clip_model("ViT-B-32", "laion2b_s34b_b79k", feature_meta)
 
 
 def test_a_different_clip_model_is_an_error():
@@ -139,7 +136,7 @@ def test_a_different_clip_model_is_an_error():
     feature_meta = {"model": "ViT-B-32", "pretrained": "openai"}
 
     with pytest.raises(ValueError, match="openai"):
-        check_same_clip_model(GRAPH_META, feature_meta)
+        check_same_clip_model("ViT-B-32", "laion2b_s34b_b79k", feature_meta)
 
 
 def test_every_image_node_records_its_split():

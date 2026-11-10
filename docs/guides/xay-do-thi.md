@@ -44,12 +44,22 @@ sha256sum data/visual_genome/objects.json
 # phải ra 94238b6187c0ea1f97acc1fdaec106bd3dee12bb0f81b23dc8b07e9173514985
 ```
 
-Embedding của ảnh **chưa cần** để dựng đồ thị. Nó chỉ cần khi đổi đồ thị sang `Data` của PyG (mục 5).
+Đồ thị chính (cạnh CLIP top-k) cần thêm **embedding ảnh đã cache** (ADR-0041) trong `artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/`. Đồ thị cạnh annotation không cần nó.
 
 ## 3. Chạy
 
+Có hai config, khác nhau ở **nguồn cạnh** (`edge_source`, ADR-0046):
+
+| Config | `edge_source` | Cạnh `contains` của mỗi ảnh | Dùng cho |
+|---|---|---|---|
+| `configs/graph_vg_clip_topk.yaml` | `clip_topk` | 16 khái niệm có cosine CLIP (ảnh – câu "a photo of a ...") cao nhất | **Mô hình chính** |
+| `configs/graph_vg.yaml` | `annotations` | Đồ vật được gán nhãn trong ảnh | Chỉ ablation **cận trên** |
+
+Vì sao: annotation của ảnh test cũng là thứ quyết định đáp án của truy vấn (ADR-0044). Nối ảnh test với khái niệm bằng annotation là cho đồ thị đọc đáp án. Cạnh CLIP top-k của một ảnh chỉ phụ thuộc vào vector CLIP của chính nó, không dùng nhãn. Cả hai đồ thị dùng **cùng từ vựng khái niệm**, đếm trên annotation của ảnh **train**.
+
 ```bash
-uv run python scripts/build_graph.py --config configs/graph_vg.yaml
+uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml
+uv run python scripts/build_graph.py --config configs/graph_vg.yaml   # ablation
 ```
 
 - Lần đầu chạy, open_clip tự tải trọng số CLIP từ Hugging Face (~600 MB).
@@ -58,14 +68,15 @@ uv run python scripts/build_graph.py --config configs/graph_vg.yaml
   HF_HUB_DISABLE_IMPLICIT_TOKEN=1 uv run python scripts/build_graph.py --config configs/graph_vg.yaml
   ```
 - Không cần GPU: trên CPU mất khoảng **3–4 phút** và tối đa **~4,3 GB RAM** (đo ngày 2026-11-07, laptop 11 GB RAM).
-- Script **không ghi đè**. Muốn dựng lại thì tự xoá `artifacts/graphs/visual_genome/contains_v1/`.
+- Script **không ghi đè**. Muốn dựng lại thì tự xoá thư mục `output_dir` ghi trong config.
+- Đồ thị dựng trước ngày 2026-11-10 (`contains_v1/`) không có `image_split`, nên không nạp được nữa. Dựng lại bằng hai lệnh trên (tên thư mục mới: `contains_clip_top16_v1/`, `contains_annotations_v2/`), rồi xoá `contains_v1/`.
 
 Output (gitignored, không commit):
 
 | File | Nội dung |
 |---|---|
-| `artifacts/graphs/visual_genome/contains_v1/graph.npz` | `image_ids`, `concept_keys` (synset), `concept_names` (chữ đưa vào CLIP), `concept_features` (số khái niệm × 512), `edge_image`, `edge_concept` |
-| `artifacts/graphs/visual_genome/contains_v1/meta.json` | Số đếm, sha256 của `objects.json` và split, commit git, config đã chạy |
+| `<output_dir>/graph.npz` | `image_ids`, `image_split` (`train`/`val`/`test` của từng ảnh), `concept_keys` (synset), `concept_names` (chữ đưa vào CLIP), `concept_features` (số khái niệm × 512), `edge_image`, `edge_concept` |
+| `<output_dir>/meta.json` | `edge_source`, `clip_topk_k`, số đếm, sha256 của `objects.json` và split, commit git, config đã chạy |
 
 Cạnh lưu dạng **số dòng**: cạnh thứ k nối `image_ids[edge_image[k]]` với `concept_keys[edge_concept[k]]`.
 
@@ -96,7 +107,7 @@ from mmxai.graph.contains import load_contains_graph
 from mmxai.graph.pyg import to_pyg_data
 
 graph, concept_names, concept_features, graph_meta = load_contains_graph(
-    "artifacts/graphs/visual_genome/contains_v1"
+    "artifacts/graphs/visual_genome/contains_clip_top16_v1"
 )
 features_dir = "artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k"
 image_features, feature_image_ids = load_image_features(features_dir)
@@ -116,17 +127,18 @@ data = to_pyg_data(
 ⚠️ **Hai điều bắt buộc cho người viết GNN** (chi tiết: ADR-0045, mục Hệ quả):
 
 1. `data` chứa **cả ảnh val và test**. Khi huấn luyện, chỉ được dùng đồ thị con gồm ảnh **train** và các khái niệm: gọi `train_subgraph(graph)` (`src/mmxai/graph/contains.py`) rồi mới `to_pyg_data`. Mỗi đỉnh ảnh ghi split của nó trong `graph.image_split` (`"train"`, `"val"`, `"test"`). Ảnh val/test chỉ được gắn vào lúc suy luận. Nếu không, GNN đã "nhìn" ảnh test trong lúc học (PDF §6).
-2. Cạnh `contains` của ảnh test lấy từ annotation, mà nhãn đúng của bộ truy vấn cũng lấy từ annotation đó. Vì vậy phần thực nghiệm phải có ablation thay/xáo/bỏ cạnh của ảnh test.
+2. Mô hình chính dùng đồ thị cạnh **CLIP top-k**. Đồ thị cạnh annotation chỉ dùng làm ablation cận trên và phải ghi rõ trong bảng kết quả, vì cạnh của ảnh test khi đó lấy từ chính annotation sinh ra đáp án (ADR-0046). Kiểm `meta["edge_source"]` trước khi dùng một đồ thị.
 
 ## 6. Code nằm ở đâu
 
 | File | Vai trò | Riêng / chung |
 |---|---|---|
 | `src/mmxai/graph/visual_genome.py` | `build_name_to_synset`: từ điển tên → synset học trên train; `image_concepts_from_scene_graphs`: ảnh → tập synset; `concept_text`: synset → chữ | **Riêng VG** |
-| `src/mmxai/graph/contains.py` | `select_concepts` (đếm trên train), `build_contains_graph`, lưu/nạp `graph.npz` | Chung |
+| `src/mmxai/graph/contains.py` | `select_concepts` (đếm trên train), `build_contains_graph`, `train_subgraph`, `check_same_clip_model`, lưu/nạp `graph.npz` | Chung |
+| `src/mmxai/graph/clip_edges.py` | `clip_topk_concepts`: mỗi ảnh → k khái niệm gần nhất theo cosine CLIP | Chung |
 | `src/mmxai/graph/pipeline.py` | `run_build_graph`: nối các bước, mã hoá khái niệm bằng CLIP, ghi `meta.json` | Chung |
 | `src/mmxai/graph/pyg.py` | `to_pyg_data`: đổi sang `torch_geometric.data.Data` | Chung |
-| `scripts/build_graph.py`, `configs/graph_vg.yaml` | CLI và cấu hình | |
+| `scripts/build_graph.py`, `configs/graph_vg_clip_topk.yaml`, `configs/graph_vg.yaml` | CLI và cấu hình | |
 | `tests/test_graph_*.py` | Test trên dữ liệu giả nhỏ, không cần `data/` | |
 
 Đọc dữ liệu thô dùng lại `build_scene_graphs` trong `src/mmxai/data/scene_graph.py` (ADR-0044), chỉ truyền `objects.json`.

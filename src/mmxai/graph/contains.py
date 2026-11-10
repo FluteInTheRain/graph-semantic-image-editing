@@ -122,18 +122,19 @@ def train_subgraph(graph: ContainsGraph) -> ContainsGraph:
     )
 
 
-def check_same_clip_model(graph_meta: dict, feature_meta: dict) -> None:
-    """Raise ValueError unless the image cache and the concept vectors share one CLIP model.
+def check_same_clip_model(model: str, pretrained: str, feature_meta: dict) -> None:
+    """Raise ValueError unless the image cache was made by this CLIP model.
 
-    Two CLIP models can have the same 512 dimensions but different spaces, so a
-    mismatch would run without any shape error and give meaningless similarities.
+    model / pretrained are the ones that encoded the concept vectors. Two CLIP models
+    can have the same 512 dimensions but different spaces, so a mismatch would run
+    without any shape error and give meaningless similarities.
     """
-    for field_name in ("model", "pretrained"):
-        graph_value = graph_meta["config"][field_name]
+    expected = {"model": model, "pretrained": pretrained}
+    for field_name, concept_value in expected.items():
         feature_value = feature_meta.get(field_name)
-        if graph_value != feature_value:
+        if concept_value != feature_value:
             raise ValueError(
-                f"concept vectors use {field_name}={graph_value!r} but the image cache "
+                f"concept vectors use {field_name}={concept_value!r} but the image cache "
                 f"uses {feature_value!r}; both must come from the same CLIP model"
             )
 

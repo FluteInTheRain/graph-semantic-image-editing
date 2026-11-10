@@ -1,7 +1,9 @@
-"""End-to-end graph build on tiny synthetic files, with a fake text encoder (ADR-0045).
+"""End-to-end graph build on tiny synthetic files, with a fake text encoder (ADR-0045, ADR-0046).
 
 Made-up data: images 1-2 train, 3 val, 4 test. "zebra" is only in the test image.
 The val image's "grass" has no synset and must get grass.n.01 from the train dictionary.
+The fake encoder makes "dog" the vector [1, 0, 0, 0] and "grass" [0, 1, 0, 0]; the
+fake image cache puts test image 4 next to "grass" although its annotation says dog.
 """
 
 import dataclasses
@@ -12,6 +14,8 @@ import numpy as np
 import pytest
 
 from mmxai.data.splits import save_split
+from mmxai.features.cache import IMAGE_FILE
+from mmxai.features.cache import META_FILE as FEATURE_META_FILE
 from mmxai.graph.contains import load_contains_graph
 from mmxai.graph.pipeline import GraphConfig, load_graph_config, run_build_graph
 
@@ -35,12 +39,26 @@ def make_config(tmp_path: Path) -> GraphConfig:
     (data_dir / "objects.json").write_text(json.dumps(objects), encoding="utf-8")
     split_file = tmp_path / "split.json"
     save_split({"train": ["1", "2"], "val": ["3"], "test": ["4"]}, split_file)
+    features_dir = tmp_path / "features"
+    features_dir.mkdir()
+    np.savez(
+        features_dir / IMAGE_FILE,
+        image_ids=np.array([1, 2, 3, 4]),
+        embeddings=np.array(
+            [[1, 0, 0, 0], [1, 0.5, 0, 0], [1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.float32
+        ),
+    )
+    feature_meta = {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}
+    (features_dir / FEATURE_META_FILE).write_text(json.dumps(feature_meta), encoding="utf-8")
     return GraphConfig(
         dataset="visual_genome",
         data_dir=str(data_dir),
         objects_file="objects.json",
         split_file=str(split_file),
         min_train_images=1,
+        edge_source="annotations",
+        clip_topk_k=1,
+        features_dir=str(features_dir),
         concept_prompt="a photo of a {}",
         model="ViT-B-32",
         pretrained="laion2b_s34b_b79k",
@@ -135,3 +153,76 @@ def test_no_concept_left_is_a_clear_error(tmp_path):
     with pytest.raises(ValueError, match="min_train_images"):
         run_build_graph(config, fake_encoder)
     assert not Path(config.output_dir).exists()
+
+
+def concepts_of(graph, image_id: int) -> set[str]:
+    image_row = graph.image_ids.tolist().index(image_id)
+    concepts = set()
+    for edge in range(len(graph.edge_image)):
+        if graph.edge_image[edge] == image_row:
+            concepts.add(str(graph.concept_keys[graph.edge_concept[edge]]))
+    return concepts
+
+
+def test_clip_topk_edges_ignore_the_annotations(tmp_path):
+    # Test image 4 is annotated "dog" but its CLIP vector is closest to "grass".
+    config = dataclasses.replace(make_config(tmp_path), edge_source="clip_topk")
+
+    run_build_graph(config, fake_encoder)
+    graph, _, _, _ = load_contains_graph(config.output_dir)
+
+    assert concepts_of(graph, 4) == {"grass.n.01"}
+
+
+def test_clip_topk_gives_every_image_k_edges(tmp_path):
+    config = dataclasses.replace(make_config(tmp_path), edge_source="clip_topk", clip_topk_k=2)
+
+    meta = run_build_graph(config, fake_encoder)
+
+    assert meta["num_edges"] == 4 * 2
+    assert meta["images_without_edges"] == {"train": 0, "val": 0, "test": 0}
+
+
+def test_meta_records_the_edge_source(tmp_path):
+    config = dataclasses.replace(make_config(tmp_path), edge_source="clip_topk", clip_topk_k=2)
+
+    meta = run_build_graph(config, fake_encoder)
+
+    assert meta["edge_source"] == "clip_topk"
+    assert meta["clip_topk_k"] == 2
+
+
+def test_annotation_graph_records_no_k(tmp_path):
+    config = make_config(tmp_path)
+
+    meta = run_build_graph(config, fake_encoder)
+
+    assert meta["edge_source"] == "annotations"
+    assert meta["clip_topk_k"] is None
+
+
+def test_clip_topk_rejects_an_image_cache_from_another_model(tmp_path):
+    config = dataclasses.replace(
+        make_config(tmp_path), edge_source="clip_topk", pretrained="openai"
+    )
+
+    with pytest.raises(ValueError, match="openai"):
+        run_build_graph(config, fake_encoder)
+
+
+def test_unknown_edge_source_is_rejected(tmp_path):
+    config_file = tmp_path / "graph.yaml"
+    text = (REPO_ROOT / "configs" / "graph_vg_clip_topk.yaml").read_text(encoding="utf-8")
+    config_file.write_text(
+        text.replace("edge_source: clip_topk", "edge_source: guess"), encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="edge_source"):
+        load_graph_config(config_file)
+
+
+def test_committed_clip_topk_config_loads():
+    config = load_graph_config(REPO_ROOT / "configs" / "graph_vg_clip_topk.yaml")
+
+    assert config.edge_source == "clip_topk"
+    assert config.clip_topk_k >= 1

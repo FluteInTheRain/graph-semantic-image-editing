@@ -31,7 +31,8 @@ def to_pyg_data(
     ordered by its own ids, so rows are looked up by id, never assumed to be in
     graph order.
     """
-    check_same_clip_model(graph_meta, feature_meta)
+    graph_config = graph_meta["config"]
+    check_same_clip_model(graph_config["model"], graph_config["pretrained"], feature_meta)
     row_of_id = {}
     for row, image_id in enumerate(feature_image_ids.tolist()):
         if image_id in row_of_id:

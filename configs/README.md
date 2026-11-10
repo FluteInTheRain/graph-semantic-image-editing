@@ -13,7 +13,8 @@
 | `configs/query_benchmark_vg.yaml` | Sinh cặp truy vấn trực tiếp/gián tiếp từ scene graph ảnh **test** và dựng bộ chính thức từ manifest đã kiểm tra (ADR-0044) |
 | `configs/query_benchmark_vg_pilot.yaml` | Pilot 5 cặp trên **val** để chốt quy tắc; ra `results/runs/` (ADR-0044) |
 | `configs/eval_query_benchmark_vg.yaml` | Đánh giá CLIP thuần trên bộ truy vấn đã kiểm tra, tách direct/indirect (ADR-0044) |
-| `configs/graph_vg.yaml` | Dựng đồ thị ảnh – khái niệm (cạnh `contains`) cho Visual Genome (ADR-0045) |
+| `configs/graph_vg_clip_topk.yaml` | Đồ thị ảnh – khái niệm của **mô hình chính**: cạnh `contains` lấy từ CLIP top-k cho mọi split (ADR-0046) |
+| `configs/graph_vg.yaml` | Đồ thị ảnh – khái niệm với cạnh `contains` lấy từ annotation (ADR-0045); chỉ làm ablation cận trên (ADR-0046) |
 
 Quy tắc (lý do: `docs/decisions/0007-cau-hinh-yaml-va-dataclass.md`):
 - YAML thuần. Code sau này sẽ đọc bằng `yaml.safe_load` rồi nạp vào `dataclass` (dự kiến đặt ở `src/mmxai/utils/`).
