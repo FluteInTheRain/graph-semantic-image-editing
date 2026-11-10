@@ -1,4 +1,4 @@
-# Visual Genome annotation files that scripts/setup_and_train.py downloads when missing.
+# Visual Genome annotation files that scripts/setup.py downloads when missing.
 # Source and hashes: data_cards/visual_genome.md. The CLIP features are not here: they come
 # from the Kaggle notebook (docs/guides/chuan-bi-embedding-clip.md, section 2).
 data_dir: data/visual_genome

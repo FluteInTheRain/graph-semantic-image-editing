@@ -39,7 +39,7 @@ Quyết định bởi: thiennp3 yêu cầu tích hợp W&B, 2026-11-10. Cách l�
 - **Rò rỉ dữ liệu (PDF §6):** không đổi. Chỉ log số liệu train và val đã có; không log gì của test.
 - **Tái lập (ADR-0010, ADR-0011):** không đổi; W&B không ảnh hưởng tới seed hay kết quả. Test `tests/test_utils_tracking.py` kiểm tra tắt được.
 - **Bảo mật:** API key nằm trong `~/.netrc` (do `wandb login` tạo) hoặc biến môi trường, không nằm trong repo. Thư mục log cục bộ `wandb/` đã được thêm vào `.gitignore`.
-- **Lệnh chạy:** train kèm log dùng `uv run --group ml --group graph --group tracking python scripts/setup_and_train.py` (xem `docs/guides/chay-pipeline.md`).
+- **Lệnh chạy:** train kèm log dùng `uv run --group ml --group graph --group tracking python scripts/train.py` (xem `docs/guides/chay-pipeline.md`).
 
 ## Nguồn tham khảo
 

@@ -10,7 +10,8 @@ What it does:
                  which concept -> image edges pushed it up or pulled it down.
 
 Before running (once):
-    uv run --group ml --group graph python scripts/setup_and_train.py
+    uv run --group ml --group graph python scripts/setup.py
+    uv run --group ml --group graph python scripts/train.py
 
 Run (from the repo root; a few seconds to a minute, mostly loading the features):
     5 random region descriptions of the test images, both modes:

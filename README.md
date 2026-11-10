@@ -579,7 +579,7 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 | [`docs/guides/chuan-bi-embedding-clip.md`](docs/guides/chuan-bi-embedding-clip.md) | Tải dữ liệu, dùng hoặc tạo lại embedding CLIP (Visual Genome, Flickr30k) |
 | [`docs/query_benchmark.md`](docs/query_benchmark.md) | Sinh và kiểm tra bộ truy vấn trực tiếp/gián tiếp từ scene graph Visual Genome (ADR-0044) |
 | [`docs/guides/xay-do-thi.md`](docs/guides/xay-do-thi.md) | Dựng đồ thị ảnh – khái niệm (cạnh `contains`) cho Visual Genome, cách dùng trong GNN, các điều bắt buộc chống rò rỉ (ADR-0045) |
-| [`docs/guides/chay-pipeline.md`](docs/guides/chay-pipeline.md) | **Chạy toàn bộ pipeline** (CLIP thuần và CLIP + Graph) kèm giải thích: `scripts/setup_and_train.py` (một lần) và `scripts/run_pipeline.py` (nhiều lần) |
+| [`docs/guides/chay-pipeline.md`](docs/guides/chay-pipeline.md) | **Chạy toàn bộ pipeline** (CLIP thuần và CLIP + Graph) kèm giải thích: `scripts/setup.py` + `scripts/train.py` (một lần) và `scripts/run_pipeline.py` (nhiều lần) |
 
 💡 Nhắc lại theo PDF §9: dùng công cụ AI phải **khai báo trong báo cáo**.
 

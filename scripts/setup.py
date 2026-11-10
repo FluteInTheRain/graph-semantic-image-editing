@@ -1,38 +1,28 @@
-"""One-time setup + training for the CLIP + Graph pipeline (ADR-0046). Slow; run once.
+"""One-time setup for the CLIP + Graph pipeline (ADR-0045, ADR-0046): data + graph.
 
 What it does (each step is skipped when its output already exists, so re-running is safe):
-    1. download the Visual Genome annotation files that are missing (configs/data_vg.yaml):
+    1. check the CLIP features are there (they come from the Kaggle notebook and are
+       NOT downloaded here: docs/guides/chuan-bi-embedding-clip.md, section 2)
+    2. download the Visual Genome annotation files that are missing (configs/data_vg.yaml):
        objects.json (required, sha256 checked) and region_descriptions.json (optional,
-       only to print query sentences); check the CLIP features are there (they come from
-       the Kaggle notebook and are NOT downloaded here)
-    2. build the CLIP top-k graph
-    3. train the GNN for every seed (train images only, early stopping on val)
-    4. re-rank val for every seed and choose alpha, stored next to each checkpoint
+       only to print query sentences)
+    3. build the CLIP top-k graph
 The environment itself is installed by `uv run --group ml --group graph` below.
 
-Run (from the repo root):
-    uv run --group ml --group graph python scripts/setup_and_train.py
-    uv run --group ml --group graph python scripts/setup_and_train.py --seeds 0   # one seed
+Run (from the repo root; a few minutes, CPU is enough):
+    uv run --group ml --group graph python scripts/setup.py
 Behind a proxy with its own certificate, prefix the command with UV_NATIVE_TLS=1.
 
 Then:
-    uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
+    uv run --group ml --group graph python scripts/train.py
 """
 
 import argparse
-import json
 from pathlib import Path
 
 from mmxai.data.download import download_file, load_data_config
 from mmxai.graph.pipeline import load_graph_config, run_build_graph
-from mmxai.models.training import (
-    ALPHA_FILE,
-    CHECKPOINT_FILE,
-    checkpoint_folder,
-    load_gnn_config,
-    train_gnn,
-)
-from mmxai.rerank.evaluate import run_rerank_evaluation
+from mmxai.models.training import load_gnn_config
 
 
 def main() -> None:
@@ -44,19 +34,21 @@ def main() -> None:
         "--graph-config", default="configs/graph_vg_clip_topk.yaml", help="graph config"
     )
     parser.add_argument("--data-config", default="configs/data_vg.yaml", help="files to download")
-    parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     args = parser.parse_args()
 
     config = load_gnn_config(args.config)
     graph_config = load_graph_config(args.graph_config)
     graph_ready = (Path(config.graph_dir) / "graph.npz").exists()
 
-    print("== 1. Download the data")
+    print("== 1. Check the CLIP features")
     if not (Path(config.features_dir) / "meta.json").exists():
         raise SystemExit(
             f"Missing CLIP features in {config.features_dir}. "
             "Download them: docs/guides/chuan-bi-embedding-clip.md, section 2."
         )
+    print(f"found: {config.features_dir}")
+
+    print("== 2. Download the Visual Genome annotations")
     data_dir, remote_files = load_data_config(args.data_config)
     if data_dir != Path(graph_config.data_dir):
         raise SystemExit(
@@ -74,7 +66,7 @@ def main() -> None:
             # An optional file only adds readable sentences; training does not need it.
             print(f"skipped optional {remote.name}: {error}")
 
-    print("== 2. Build the graph")
+    print("== 3. Build the graph")
     if graph_ready:
         print(f"already built: {config.graph_dir}")
     else:
@@ -85,23 +77,8 @@ def main() -> None:
             )
         run_build_graph(graph_config)
 
-    for seed in args.seeds:
-        folder = checkpoint_folder(config, seed)
-        print(f"== 3. Train seed {seed}")
-        if (folder / CHECKPOINT_FILE).exists():
-            print(f"already trained: {folder}")
-        else:
-            train_gnn(config, seed)
-
-        print(f"== 4. Choose alpha on val, seed {seed}")
-        if (folder / ALPHA_FILE).exists():
-            print(f"already chosen: {json.loads((folder / ALPHA_FILE).read_text())}")
-        else:
-            run_dir = run_rerank_evaluation(config, seed, "val")
-            print(f"val results: {run_dir}")
-
-    print("Done. Try:")
-    print("  uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph")
+    print("Done. Next:")
+    print("  uv run --group ml --group graph python scripts/train.py")
 
 
 if __name__ == "__main__":

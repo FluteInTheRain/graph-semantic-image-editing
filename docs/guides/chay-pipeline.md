@@ -13,18 +13,19 @@ câu truy vấn ─► CLIP text ─► FAISS top 100 ảnh ─┬─► clip:  
                                           ảnh top-1 + giải thích: cạnh khái niệm nào đẩy ảnh lên / kéo xuống
 ```
 
-Chỉ có **hai script**, chạy cùng một kiểu lệnh:
+Có **ba script**, chạy cùng một kiểu lệnh, theo thứ tự:
 
 | Script | Khi nào chạy | Làm gì | Thời gian |
 |---|---|---|---|
-| `scripts/setup_and_train.py` | **Một lần** | Kiểm tra dữ liệu → dựng đồ thị → huấn luyện GNN (mỗi seed) → chọn `alpha` trên val | Lâu (nên có GPU) |
+| `scripts/setup.py` | **Một lần** | Kiểm tra embedding → tải annotation Visual Genome còn thiếu → dựng đồ thị | Vài phút, CPU là đủ |
+| `scripts/train.py` | **Một lần** | Huấn luyện GNN (mỗi seed) → chọn `alpha` trên val | Lâu: khoảng 9 phút một epoch trên CPU |
 | `scripts/run_pipeline.py` | **Bao nhiêu lần cũng được** | Truy vấn vài câu, in ảnh tìm được + giải thích ảnh top-1, mode `clip` hoặc `clip_graph` | Vài giây tới một phút (chủ yếu là nạp đặc trưng) |
 
 `uv run --group ml --group graph` tự cài torch, open_clip, faiss, PyG ở lần đầu (đã khai báo trong `pyproject.toml`, ADR-0006). Sau lưng proxy có chứng chỉ riêng thì thêm `UV_NATIVE_TLS=1` ở đầu lệnh.
 
 ## 2. Chuẩn bị dữ liệu
 
-`scripts/setup_and_train.py` **tự tải** các file annotation Visual Genome còn thiếu (danh sách, URL và sha256 ở `configs/data_vg.yaml`, code ở `mmxai.data.download.download_file`). Chỉ embedding CLIP là phải tải tay.
+`scripts/setup.py` **tự tải** các file annotation Visual Genome còn thiếu (danh sách, URL và sha256 ở `configs/data_vg.yaml`, code ở `mmxai.data.download.download_file`). Chỉ embedding CLIP là phải tải tay.
 
 | Cần gì | Dùng cho | Ai tải | Đặt ở |
 |---|---|---|---|
@@ -34,29 +35,39 @@ Chỉ có **hai script**, chạy cùng một kiểu lệnh:
 
 File đã có thì không tải lại. Tải dở chừng không để lại file "trông như hoàn chỉnh" (tải vào tên tạm `*.part`).
 
-## 3. Bước 1 – cài, dựng đồ thị, huấn luyện (một lần)
+## 3. Bước 1 – tải dữ liệu, dựng đồ thị (một lần)
 
 ```bash
-uv run --group ml --group graph python scripts/setup_and_train.py              # seed 0, 1, 2
-uv run --group ml --group graph python scripts/setup_and_train.py --seeds 0    # chỉ 1 seed, nhanh hơn
+uv run --group ml --group graph python scripts/setup.py
+```
+
+| Bước | Làm gì | Code | Kết quả |
+|---|---|---|---|
+| 1 | Kiểm tra có embedding CLIP (thiếu thì dừng và chỉ tài liệu tải) | `scripts/setup.py` | – |
+| 2 | Tải `objects.json`, `region_descriptions.json` nếu thiếu | `mmxai.data.download.download_file` | `data/visual_genome/*.json` |
+| 3 | Dựng đồ thị cạnh CLIP top-16 (`configs/graph_vg_clip_topk.yaml`) | `mmxai.graph.pipeline.run_build_graph` | `artifacts/graphs/visual_genome/contains_clip_top16_v1/` |
+
+## 4. Bước 2 – huấn luyện và chọn `alpha` (một lần)
+
+```bash
+uv run --group ml --group graph python scripts/train.py              # seed 0, 1, 2
+uv run --group ml --group graph python scripts/train.py --seeds 0    # chỉ 1 seed, nhanh hơn
 ```
 
 **Thiết bị:** CPU là đủ. Đo trên CPU 14 core (không GPU): một bước train 0,14 giây, **khoảng 9 phút một epoch**, ước khoảng 45–90 phút một seed (early stopping thường dừng sau 5–10 epoch). Có GPU thì nhanh hơn nhiều; code tự chọn (`device: auto`). Lúc train cần khoảng **3–4 GB RAM** trống (riêng vector câu mô tả đã 1,1 GB).
 
-Script chạy lần lượt, bước nào đã có kết quả thì **bỏ qua**, nên chạy lại sau khi bị ngắt là an toàn:
-
 | Bước | Làm gì | Code | Kết quả |
 |---|---|---|---|
-| 1 | Tải `objects.json`, `region_descriptions.json` nếu thiếu; kiểm tra có embedding (thiếu thì dừng và chỉ tài liệu tải) | `mmxai.data.download.download_file` | `data/visual_genome/*.json` |
-| 2 | Dựng đồ thị cạnh CLIP top-16 (`configs/graph_vg_clip_topk.yaml`) | `mmxai.graph.pipeline.run_build_graph` | `artifacts/graphs/visual_genome/contains_clip_top16_v1/` |
-| 3 | Huấn luyện GNN **chỉ trên ảnh train**: mỗi câu mô tả so với ảnh đúng + 15 ảnh sai lấy từ top 100 của CLIP (InfoNCE), early stopping theo MRR@100 trên val | `mmxai.models.training.train_gnn` | `artifacts/checkpoints/gnn_vg_seed<k>/model.pt`, `meta.json` |
-| 4 | Xếp hạng lại val với mọi `alpha` trong `alpha_grid`, chọn `alpha` có MRR cao nhất | `mmxai.rerank.evaluate.run_rerank_evaluation` | `artifacts/checkpoints/gnn_vg_seed<k>/chosen_alpha.json`, `results/runs/<thời gian>_gnn_vg_seed<k>/` |
+| 1 | Huấn luyện GNN **chỉ trên ảnh train**: mỗi câu mô tả so với ảnh đúng + 15 ảnh sai lấy từ top 100 của CLIP (InfoNCE), early stopping theo MRR@100 trên val | `mmxai.models.training.train_gnn` | `artifacts/checkpoints/gnn_vg_seed<k>/model.pt`, `meta.json` |
+| 2 | Xếp hạng lại val với mọi `alpha` trong `alpha_grid`, chọn `alpha` có MRR cao nhất | `mmxai.rerank.evaluate.run_rerank_evaluation` | `artifacts/checkpoints/gnn_vg_seed<k>/chosen_alpha.json`, `results/runs/<thời gian>_gnn_vg_seed<k>/` |
+
+Cả hai script: bước nào đã có kết quả thì **bỏ qua**, nên chạy lại sau khi bị ngắt là an toàn.
 
 ### Xem log huấn luyện trên Weights & Biases (tuỳ chọn, ADR-0047)
 
 ```bash
 uv run --group tracking wandb login                     # một lần; hoặc đặt WANDB_API_KEY
-uv run --group ml --group graph --group tracking python scripts/setup_and_train.py
+uv run --group ml --group graph --group tracking python scripts/train.py
 ```
 
 - Mỗi seed là một run tên `gnn_vg_seed<k>` trong project `mmxai-gnn` (đổi ở `wandb_project` trong `configs/gnn_vg.yaml`; `WANDB_ENTITY` chọn team).
@@ -66,7 +77,7 @@ uv run --group ml --group graph --group tracking python scripts/setup_and_train.
 
 Siêu tham số (`n_hard`, `temperature`, `learning_rate`, ...) nằm ở `configs/gnn_vg.yaml`. Chỉ chỉnh dựa trên **val**.
 
-## 4. Bước 2 – chạy pipeline và xem giải thích (nhiều lần)
+## 5. Bước 3 – chạy pipeline và xem giải thích (nhiều lần)
 
 ```bash
 # 5 câu mô tả ngẫu nhiên của ảnh test, mỗi mode
@@ -128,19 +139,20 @@ uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
 - **Giải thích ở mode `clip`**: in `The graph was not used (alpha = 1)`. CLIP thuần không có đồ thị nên không có quan hệ nào để chỉ ra.
 - Đây là giải thích cấp độ 1–2. Fidelity (Fid+/Fid−) là cấp độ 3, chưa đưa vào script.
 
-## 5. Lưu ý chống rò rỉ (PDF §6, ADR-0009)
+## 6. Lưu ý chống rò rỉ (PDF §6, ADR-0009)
 
 - Mặc định `--split test` chỉ để **xem** kết quả cho báo cáo. Sau khi xem test thì **không đổi** config, `alpha` hay mô hình. Đang còn chỉnh thì dùng `--split val`.
 - Muốn có **số liệu** test (Recall/MRR, 3 seed) cho báo cáo thì chạy `scripts/evaluate_rerank.py --split test`, mỗi seed một lần (xem docstring của script).
 - Mô hình chỉ học trên ảnh train; test `test_training_graph_has_no_val_or_test_node` kiểm điều này.
 
-## 6. Lỗi thường gặp
+## 7. Lỗi thường gặp
 
 | Thông báo | Nguyên nhân | Cách sửa |
 |---|---|---|
 | `Missing CLIP features in ...` | Chưa tải embedding | Mục 2, dòng 1 |
 | `objects.json has sha256 ...` | File tải về khác bản đã ghi trong `data_cards/visual_genome.md` | Chạy lại; vẫn sai thì báo nhóm (nguồn có thể đã đổi) |
 | `URLError` / lỗi chứng chỉ khi tải | Mạng hoặc proxy | Thử lại; hoặc tải tay theo `docs/guides/xay-do-thi.md` §2 rồi chạy lại |
-| `... model.pt not found` | Chưa huấn luyện seed đó | Chạy bước 1 với `--seeds <k>` |
-| `... chosen_alpha.json not found` | Chưa chọn `alpha` trên val | Chạy lại bước 1 (bước 4 sẽ chạy bù) |
+| `No graph in ...; run scripts/setup.py first` | Chưa dựng đồ thị | Chạy `scripts/setup.py` (mục 3) |
+| `... model.pt not found` | Chưa huấn luyện seed đó | Chạy `scripts/train.py --seeds <k>` |
+| `... chosen_alpha.json not found` | Chưa chọn `alpha` trên val | Chạy lại `scripts/train.py` (bước chọn `alpha` sẽ chạy bù) |
 | `invalid peer certificate: UnknownIssuer` | Proxy có chứng chỉ riêng | Thêm `UV_NATIVE_TLS=1` trước lệnh |
