@@ -21,7 +21,9 @@ Khái niệm cho người mới:
 - **Học tương phản (contrastive, InfoNCE):** cho một câu, mô hình phải cho ảnh đúng điểm cao hơn các ảnh sai. Loss là cross-entropy trên danh sách {ảnh đúng, các ảnh sai}.
 - **Hard negative:** ảnh sai nhưng "trông giống" đúng. Ở đây là các ảnh sai mà CLIP xếp cao. Đây chính là lỗi mà bước xếp hạng lại cần sửa.
 - **Inductive:** mô hình học trên một đồ thị (chỉ train), rồi áp dụng cho đỉnh mới (val/test) mà không học lại.
-- **Tách được đóng góp (decomposable):** điểm là **tổng** của các phần, mỗi phần ứng với một cạnh. Giải thích là chính các phần đó, nên trung thực theo cấu tạo (ADR-0016).
+- **Tách được đóng góp (decomposable):** điểm là **tổng** của các phần, mỗi phần ứng với một cạnh. Với mô hình như vậy, phần của mỗi cạnh tính được bằng công thức, không cần đoán.
+
+Về giải thích, ADR-0016 (sửa ngày 2026-11-07) **không** bắt mô hình có dạng đặc biệt: `explain/` tính đóng góp của cạnh trên chính mô hình bằng explainer đã công bố (Occlusion, Integrated Gradients, GNNExplainer), và chọn explainer chính trên val bằng fidelity. Mô hình chỉ cần chạy lại được trên một `edge_index` đã sửa và có hàm tính điểm đồ thị (`docs/research/xai-method-proposal.md`, mục 6).
 
 Dữ liệu huấn luyện đã có sẵn, không cần gán nhãn thêm: mỗi ảnh **train** có 5 region description đã mã hoá bằng CLIP (ADR-0041), tức khoảng 500 nghìn cặp (câu, ảnh). Kiểm tra mô hình có học được hay không bằng giao thức ADR-0043 trên **val**; test chạy một lần ở cuối.
 
@@ -72,14 +74,23 @@ graph_score(q, i) = cos(q, h_i)
 
 ### 5. Giải thích (ADR-0016)
 
-Vì `h_i` là tổng, `graph_score` tách chính xác thành:
+Giải thích do `explain/` tính trên chính mô hình này, theo ADR-0016: explainer (Occlusion, Integrated Gradients, GNNExplainer) chạy lại mô hình trên `edge_index` đã sửa, explainer chính chọn trên **val** bằng fidelity. Mô hình cung cấp cho `explain/` (interface ở `docs/research/xai-method-proposal.md`, mục 6):
+
+| Cần cung cấp | Với mô hình này |
+|---|---|
+| Mô hình chạy lại được, cùng đồ thị cho cùng điểm | Không có dropout hay phần ngẫu nhiên lúc `eval()` |
+| Hàm tính điểm đồ thị | `graph_score(q, i) = cos(q, h_i)`, đúng hàm dùng khi xếp hạng |
+| Số lớp GNN | 1 |
+| Chiều cạnh | **Một chiều**, khái niệm → ảnh: xoá một cạnh `i – c` là xoá đúng một cạnh có hướng |
+
+Vì sao vẫn chọn một lớp dù ADR-0016 không bắt buộc: mô hình đơn giản, dễ giải thích khi vấn đáp, và có một **lời giải tham chiếu** để kiểm explainer. Vì `h_i` là tổng, `graph_score` tách chính xác thành:
 
 ```
 graph_score(q, i) = [q · (W_self x_i + b)] / (‖q‖‖h_i‖)            # phần của chính ảnh
                   + Σ_{c ∈ N(i)} [q · W_nb x_c / k] / (‖q‖‖h_i‖)    # phần của từng cạnh i–c
 ```
 
-Scorer trả về điểm kèm danh sách `(khái niệm c, đóng góp)`. `explain/` chỉ đọc danh sách này. Giải thích hiển thị là "ảnh được đẩy lên nhờ cạnh tới *dog*, *fire hydrant*". Fidelity đo bằng can thiệp thật: xoá các cạnh có đóng góp lớn nhất, tính lại `h_i` và thứ hạng, so với xoá cùng số cạnh ngẫu nhiên.
+Phân rã này **không** thay explainer. Xoá một cạnh còn làm đổi `k` (trung bình trên số cạnh còn lại) và `‖h_i‖`, nên mức điểm giảm mà Occlusion đo được không bằng đúng số hạng của cạnh đó. Phân rã chỉ dùng để kiểm chéo: explainer nào xếp các cạnh khác hẳn thứ tự của phân rã thì cần xem lại. Giải thích hiển thị có dạng "ảnh được đẩy lên nhờ cạnh tới *dog*, *fire hydrant*".
 
 ### 6. So sánh bắt buộc
 
@@ -93,7 +104,7 @@ Cùng split, cùng 100 ứng viên, 3 seed, báo cáo tách direct/indirect trê
 | Xáo cạnh giữ bậc, khái niệm ngẫu nhiên | Ablation đồ thị (PDF §7) |
 | Cạnh annotation trên val/test (cận trên, có ghi chú) | Cạnh tốt hơn giúp được bao nhiêu; ADR-0045 yêu cầu |
 
-Quyết định bởi: qphulong, 2026-11-10 (huấn luyện trực tiếp cho truy vấn ảnh; cạnh CLIP top-k cho mọi split; GNN một lớp tách được đóng góp). Các giá trị còn lại (`k = 16`, `n_hard = 15`, `τ = 0.05`, `lr = 1e-3`, cách khởi tạo) do Claude Code đề xuất, **nhóm chưa duyệt**.
+Quyết định bởi: qphulong, 2026-11-10 (huấn luyện trực tiếp cho truy vấn ảnh; cạnh CLIP top-k cho mọi split; GNN một lớp tách được đóng góp). Sau khi merge bản sửa ADR-0016 từ `main` (explainer tính trên chính mô hình, không bắt mô hình phân rã được), qphulong giữ mô hình một lớp vì đơn giản và có lời giải tham chiếu để kiểm explainer, 2026-11-10. Các giá trị còn lại (`k = 16`, `n_hard = 15`, `τ = 0.05`, `lr = 1e-3`, cách khởi tạo) do Claude Code đề xuất, **nhóm chưa duyệt**.
 
 ## Các phương án đã cân nhắc
 
@@ -104,8 +115,8 @@ Quyết định bởi: qphulong, 2026-11-10 (huấn luyện trực tiếp cho tr
 | Cạnh annotation cho mọi split (đồ thị ADR-0045 nguyên trạng) | Cạnh sạch nhất, không phải làm thêm | Ảnh test có cạnh lấy từ đáp án (A2), kết quả lạc quan theo cấu tạo | Chỉ giữ làm ablation cận trên |
 | Annotation cho train, CLIP top-k cho val/test | Huấn luyện trên cạnh sạch | Học trên một loại cạnh, kiểm tra trên loại khác (lệch phân bố) | Kết quả khó diễn giải |
 | Ảnh val/test không có cạnh | Không rò rỉ | Điểm đồ thị của ảnh test chỉ còn là phép chiếu của vector CLIP; đồ thị không đóng góp gì lúc kiểm tra | Mất ý nghĩa của đồ thị |
-| GraphSAGE/GAT hai lớp + attribution (masking, gradient) | Biểu diễn mạnh hơn, ảnh "nghe" được ảnh khác qua khái niệm chung | Đóng góp chỉ là xấp xỉ, phải chứng minh trung thực bằng fidelity; ảnh test ảnh hưởng lẫn nhau | Để làm mở rộng sau, so sánh với bản một lớp |
-| Dùng attention của GAT làm giải thích | Có sẵn | Attention không chắc phản ánh tầm quan trọng (ADR-0016) | Bị ADR-0016 loại |
+| GraphSAGE/GAT hai lớp, có hàm kích hoạt | Biểu diễn mạnh hơn, ảnh "nghe" được ảnh khác qua khái niệm chung. ADR-0016 cho phép | Không có lời giải tham chiếu để kiểm explainer; ảnh val/test ảnh hưởng lẫn nhau qua khái niệm chung; khó giải thích khi vấn đáp | Để làm mở rộng sau, giữ bản một lớp làm đối chứng |
+| GAT, dùng attention làm một ứng viên explainer | Có sẵn | Attention không chắc phản ánh tầm quan trọng; theo ADR-0016 chỉ là một ứng viên, phải qua so sánh fidelity | Không cần cho bản đầu: mô hình một lớp không có attention |
 | Loss chỉ dùng ảnh sai trong batch (in-batch negatives) | Đơn giản, nhanh | Ảnh sai ngẫu nhiên dễ phân biệt, không giống tình huống xếp hạng lại top 100 | Hard negative từ CLIP sát với bài toán hơn; có thể thêm in-batch sau nếu val cho thấy có ích |
 
 ## Hệ quả
@@ -114,15 +125,15 @@ Quyết định bởi: qphulong, 2026-11-10 (huấn luyện trực tiếp cho tr
   - Huấn luyện chỉ thấy ảnh train; hard negative chỉ tìm trong kho ảnh train. Cần test chứng minh `edge_index` lúc huấn luyện không chứa đỉnh val/test.
   - Cạnh CLIP top-k của một ảnh chỉ dùng vector của chính ảnh đó và CLIP đóng băng, không dùng nhãn hay thống kê trên test. Từ vựng khái niệm vẫn đếm trên train (ADR-0045).
   - Mọi siêu tham số chọn trên val. `queries/` chỉ để đánh giá.
-- **Giải thích:** trung thực theo cấu tạo, vì giải thích là chính các số hạng của điểm. Cần test chứng minh tổng các đóng góp bằng `graph_score`, và xoá cạnh có đóng góp dương làm điểm giảm.
+- **Giải thích (ADR-0016):** `explain/` tính giải thích trên chính mô hình này và chọn explainer trên val bằng fidelity. Phía mô hình cần test: tổng các số hạng của phân rã bằng `graph_score`; chạy lại trên cùng `edge_index` cho cùng điểm; xoá một cạnh chỉ đổi điểm của đúng ảnh đó.
 - **Hạn chế cần nói rõ khi báo cáo và vấn đáp:**
   - Cạnh và vector khái niệm đều đến từ CLIP, nên đồ thị không mang thông tin "mới" ngoài CLIP; nó chỉ tổ chức lại thông tin đó theo khái niệm. Lợi ích có thể nhỏ. Đối chứng không đồ thị cho biết đồ thị có thật sự giúp hay không, và kết quả âm cũng phải báo cáo.
   - Một lớp nên không có đường đi nhiều bước (ảnh – khái niệm – ảnh). Truy vấn gián tiếp chỉ được hỗ trợ qua vector khái niệm; kết quả nhóm indirect có thể không tốt hơn direct.
-- **Ảnh hưởng tới code của ADR-0045 (PR #6):** builder cần tuỳ chọn nguồn cạnh `edge_source: clip_topk | annotations` ghi trong config và `meta.json`, và lưu split của từng đỉnh ảnh. Hai việc này trùng với điểm A1, A2 của review.
+- **Ảnh hưởng tới code của ADR-0045:** builder có tuỳ chọn nguồn cạnh `edge_source: clip_topk | annotations` ghi trong config và `meta.json`, và lưu split của từng đỉnh ảnh. Đã làm trong PR #6 (điểm A1, A2 của review).
 - **Việc tiếp theo, mỗi việc một PR nhỏ có test:**
-  1. Hàm dựng cạnh CLIP top-k + lưu split của từng ảnh.
-  2. Hàm lấy đồ thị con chỉ gồm ảnh train.
-  3. Mô hình một lớp + hàm tách đóng góp.
+  1. ~~Hàm dựng cạnh CLIP top-k + lưu split của từng ảnh~~ (đã làm, PR #6).
+  2. ~~Hàm lấy đồ thị con chỉ gồm ảnh train~~ (đã làm, PR #6: `train_subgraph`).
+  3. Mô hình một lớp theo interface của `explain/`, kèm hàm phân rã tham chiếu.
   4. Vòng huấn luyện (hard negative từ CLIP top-k trên train), early stopping trên val.
   5. Xếp hạng lại + chọn `alpha` trên val.
   6. Fidelity và các ablation ở mục 6.
@@ -132,5 +143,6 @@ Quyết định bởi: qphulong, 2026-11-10 (huấn luyện trực tiếp cho tr
 
 - Đề bài, §2, §4.2, §5, §6, §7.
 - ADR-0009, ADR-0011, ADR-0016, ADR-0041, ADR-0043, ADR-0044, ADR-0045.
+- `docs/research/xai-method-proposal.md` (mục 6: interface module xAI cần nhận).
 - Review PR #6 (điểm A1, A2): https://github.com/FluteInTheRain/graph-semantic-image-editing/pull/6#issuecomment-6730701603
 - Tài liệu PyG về `SAGEConv` trên đồ thị hai phía (`in_channels` dạng tuple) và tham số `aggr`: https://github.com/pyg-team/pytorch_geometric/blob/master/docs/source/cheatsheet/gnn_cheatsheet.rst
