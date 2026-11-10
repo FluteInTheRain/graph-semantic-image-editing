@@ -42,7 +42,7 @@ Thư mục này chứa các **ADR** (Architecture Decision Record): mỗi file g
 | [0013](0013-demo-notebook-va-gradio.md) | Demo chính bằng notebook, giao diện Gradio là tuỳ chọn |
 | [0014](0014-quy-trinh-git-va-commit.md) | Git: nhánh ngắn, Conventional Commits, PR có review, không squash |
 | [0015](0015-mmkg-tieng-viet-va-data-card.md) | MMKG tiếng Việt lưu dạng CSV trong `mmkg/`, data card trong `data_cards/` |
-| [0016](0016-giai-thich-trung-thuc-tu-co-che-xep-hang.md) | Giải thích phải sinh ra từ chính graph scorer, không hợp lý hoá sau khi đã có kết quả |
+| [0016](0016-giai-thich-trung-thuc-tu-co-che-xep-hang.md) | Giải thích phải tính trên chính mô hình xếp hạng và được kiểm bằng fidelity, không hợp lý hoá sau khi đã có kết quả |
 
 ## Thiết lập công cụ AI (0020–0039)
 
