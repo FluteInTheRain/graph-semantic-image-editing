@@ -5,12 +5,14 @@ import pytest
 
 pytest.importorskip("torch_geometric")
 
-from mmxai.graph.contains import ContainsGraph  # noqa: E402
+from mmxai.graph.contains import ContainsGraph, train_subgraph  # noqa: E402
 from mmxai.graph.pyg import CONCEPT_NODE, IMAGE_NODE, to_pyg_data  # noqa: E402
 
-# Made-up graph: image 10 contains concept 0, image 20 contains concepts 0 and 1.
+# Made-up graph: image 10 (train) contains concept 0, image 20 (test) contains
+# concepts 0 and 1.
 GRAPH = ContainsGraph(
     image_ids=np.array([10, 20]),
+    image_split=np.array(["train", "test"]),
     concept_keys=np.array(["dog.n.01", "sofa.n.01"]),
     edge_image=np.array([0, 1, 1]),
     edge_concept=np.array([0, 0, 1]),
@@ -92,3 +94,20 @@ def test_image_cache_from_another_clip_model_is_an_error():
             GRAPH_META,
             other_model,
         )
+
+
+def test_training_data_has_no_val_or_test_image_in_edge_index():
+    # PDF section 6 / ADR-0045: the GNN must not pass messages through test images.
+    data = to_pyg_data(
+        train_subgraph(GRAPH),
+        CONCEPT_FEATURES,
+        IMAGE_FEATURES,
+        FEATURE_IMAGE_IDS,
+        GRAPH_META,
+        FEATURE_META,
+    )
+
+    assert data.node_type.tolist() == [IMAGE_NODE, CONCEPT_NODE, CONCEPT_NODE]
+    assert data.x[0].tolist() == [1, 1, 1]  # image 10, the only train image
+    pairs = set(zip(data.edge_index[0].tolist(), data.edge_index[1].tolist(), strict=True))
+    assert pairs == {(0, 1), (1, 0)}

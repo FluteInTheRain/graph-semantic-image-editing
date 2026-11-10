@@ -106,7 +106,7 @@ def run_build_graph(
             f"no concept appears in >= {config.min_train_images} train images; "
             "lower min_train_images"
         )
-    graph = build_contains_graph(image_concepts, all_ids, concepts)
+    graph = build_contains_graph(image_concepts, split, concepts)
 
     concept_names = [concept_text(key) for key in graph.concept_keys.tolist()]
     prompts = [config.concept_prompt.format(name) for name in concept_names]

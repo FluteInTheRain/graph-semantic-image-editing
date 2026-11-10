@@ -115,7 +115,7 @@ data = to_pyg_data(
 
 ⚠️ **Hai điều bắt buộc cho người viết GNN** (chi tiết: ADR-0045, mục Hệ quả):
 
-1. `data` chứa **cả ảnh val và test**. Khi huấn luyện, chỉ được dùng đồ thị con gồm ảnh **train** và các khái niệm. Ảnh val/test chỉ được gắn vào lúc suy luận. Nếu không, GNN đã "nhìn" ảnh test trong lúc học (PDF §6).
+1. `data` chứa **cả ảnh val và test**. Khi huấn luyện, chỉ được dùng đồ thị con gồm ảnh **train** và các khái niệm: gọi `train_subgraph(graph)` (`src/mmxai/graph/contains.py`) rồi mới `to_pyg_data`. Mỗi đỉnh ảnh ghi split của nó trong `graph.image_split` (`"train"`, `"val"`, `"test"`). Ảnh val/test chỉ được gắn vào lúc suy luận. Nếu không, GNN đã "nhìn" ảnh test trong lúc học (PDF §6).
 2. Cạnh `contains` của ảnh test lấy từ annotation, mà nhãn đúng của bộ truy vấn cũng lấy từ annotation đó. Vì vậy phần thực nghiệm phải có ablation thay/xáo/bỏ cạnh của ảnh test.
 
 ## 6. Code nằm ở đâu
