@@ -16,6 +16,8 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/evaluate_query_benchmark.py` (đã có) | CLIP thuần trên bộ truy vấn đã kiểm tra: Recall@1/5/10/100 + MRR@100 tách direct/indirect. Cần `uv sync --group ml` | `mmxai.eval.query_benchmark` |
 | `scripts/summarize_runs.py` (đã có) | Gom `results/runs/*` thành `results/tables/main.csv` (mean ± std, ≥3 seed, bỏ run có code chưa commit) | `mmxai.eval.summary` |
 | `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
-| `scripts/train_gnn.py` | Huấn luyện GNN graph scorer | `mmxai.models` |
-| `scripts/evaluate.py` | Re-rank, chọn `alpha` trên val, đo trên test, ≥3 seed | `mmxai.rerank`, `mmxai.eval` |
-| `scripts/explain.py` | Xuất đường đi giải thích + fidelity/validity/sparsity | `mmxai.explain` |
+| `scripts/train_gnn.py` (đã có) | Huấn luyện GNN một lớp, chỉ trên ảnh train, early stopping trên val (ADR-0046) | `mmxai.models.training` |
+| `scripts/evaluate_rerank.py` (đã có) | Xếp hạng lại top 100 của CLIP, chọn `alpha` trên val, đo trên test với `alpha` đã chốt, lưu `scores.npz` | `mmxai.rerank.evaluate` |
+| `scripts/setup_and_train.py` (đã có) | **Chạy một lần**: kiểm tra dữ liệu, dựng đồ thị, huấn luyện, chọn `alpha`. Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.graph.pipeline`, `mmxai.models.training`, `mmxai.rerank.evaluate` |
+| `scripts/run_pipeline.py` (đã có) | **Chạy nhiều lần**: truy vấn vài câu ở mode `clip` hoặc `clip_graph`, in kết quả + giải thích ảnh top-1 (Occlusion). Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.explain.demo` |
+| `scripts/explain.py` | Fidelity/validity/sparsity trên ≥ 10 truy vấn (cấp độ 3) | `mmxai.explain` |
