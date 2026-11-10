@@ -8,7 +8,7 @@ What it does:
     final = alpha * cos(q, image) + (1 - alpha) * cos(q, h_image).
 
 Before running:
-    scripts/train_gnn.py for the same config and seed.
+    scripts/train.py for the same config and seed.
 
 Run (from the repo root):
     Val, as often as you like:

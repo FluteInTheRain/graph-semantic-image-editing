@@ -16,7 +16,6 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/evaluate_query_benchmark.py` (đã có) | CLIP thuần trên bộ truy vấn đã kiểm tra: Recall@1/5/10/100 + MRR@100 tách direct/indirect. Cần `uv sync --group ml` | `mmxai.eval.query_benchmark` |
 | `scripts/summarize_runs.py` (đã có) | Gom `results/runs/*` thành `results/tables/main.csv` (mean ± std, ≥3 seed, bỏ run có code chưa commit) | `mmxai.eval.summary` |
 | `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
-| `scripts/train_gnn.py` (đã có) | Huấn luyện GNN một lớp, chỉ trên ảnh train, early stopping trên val (ADR-0046) | `mmxai.models.training` |
 | `scripts/evaluate_rerank.py` (đã có) | Xếp hạng lại top 100 của CLIP, chọn `alpha` trên val, đo trên test với `alpha` đã chốt, lưu `scores.npz` | `mmxai.rerank.evaluate` |
 | `scripts/setup.py` (đã có) | **Chạy một lần**: kiểm tra embedding, tự tải annotation Visual Genome còn thiếu (`configs/data_vg.yaml`), dựng đồ thị. Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.data.download`, `mmxai.graph.pipeline` |
 | `scripts/train.py` (đã có) | **Chạy một lần**: huấn luyện GNN cho mọi seed và chọn `alpha` trên val (bỏ qua seed đã xong). Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.models.training`, `mmxai.rerank.evaluate` |

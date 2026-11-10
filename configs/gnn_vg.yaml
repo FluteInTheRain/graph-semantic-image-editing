@@ -1,5 +1,5 @@
 # One-layer GNN re-ranking CLIP's top 100 on Visual Genome (ADR-0046, status: Proposed).
-# How to run: see the docstrings of scripts/train_gnn.py and scripts/evaluate_rerank.py.
+# How to run: docs/guides/chay-pipeline.md (scripts/train.py, scripts/evaluate_rerank.py).
 experiment: gnn_vg
 dataset: visual_genome
 features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k

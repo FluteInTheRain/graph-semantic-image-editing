@@ -399,7 +399,7 @@ def load_trained_model(
     """Load the weights saved by train_gnn for this experiment and seed, in eval mode."""
     path = checkpoint_folder(config, seed) / CHECKPOINT_FILE
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found; run scripts/train_gnn.py with --seed {seed}")
+        raise FileNotFoundError(f"{path} not found; run scripts/train.py --seeds {seed}")
     model = OneLayerSage(dim).to(device)
     model.load_state_dict(torch.load(path, map_location=device))
     model.eval()
