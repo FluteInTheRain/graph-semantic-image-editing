@@ -21,7 +21,7 @@ Có **ba script**, chạy cùng một kiểu lệnh, theo thứ tự:
 | `scripts/train.py` | **Một lần** | Huấn luyện GNN (mỗi seed) → chọn `alpha` trên val | Lâu: khoảng 9 phút một epoch trên CPU |
 | `scripts/run_pipeline.py` | **Bao nhiêu lần cũng được** | Truy vấn vài câu, in ảnh tìm được + giải thích ảnh top-1, mode `clip` hoặc `clip_graph` | Vài giây tới một phút (chủ yếu là nạp đặc trưng) |
 
-`uv run --group ml --group graph` tự cài torch, open_clip, faiss, PyG ở lần đầu (đã khai báo trong `pyproject.toml`, ADR-0006). Sau lưng proxy có chứng chỉ riêng thì thêm `UV_NATIVE_TLS=1` ở đầu lệnh.
+**Cài môi trường:** cần `uv` (cách cài, các nhóm thư viện, lỗi thường gặp: `CONTRIBUTING.md` mục 1). `uv run --group ml --group graph` tự cài torch, open_clip, faiss, PyG ở lần đầu (đã khai báo trong `pyproject.toml`, ADR-0006). Sau lưng proxy có chứng chỉ riêng thì thêm `UV_NATIVE_TLS=1` ở đầu lệnh.
 
 ## 2. Chuẩn bị dữ liệu
 
