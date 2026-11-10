@@ -1,12 +1,13 @@
 """Retrieval + explanation of the top image, on the tiny dataset of test_models_training."""
 
+import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch")
 pytest.importorskip("torch_geometric")
 pytest.importorskip("faiss")
 
-from mmxai.explain.demo import explain_image, run_demo  # noqa: E402
+from mmxai.explain.demo import explain_image, pick_fixed_cases, run_demo  # noqa: E402
 from mmxai.models.one_layer_sage import OneLayerSage, graph_scores  # noqa: E402
 from mmxai.models.training import (  # noqa: E402
     load_bipartite,
@@ -64,3 +65,28 @@ def test_clip_graph_mode_explains_the_top_image(tmp_path):
     for result in results:
         assert result.explanation.graph_used
         assert result.first_relevant_rank is not None
+
+
+def test_fixed_cases_follow_the_rule_in_text_id_order():
+    # Positions 0..5 with text ids out of order; ranks: 1 = success, None or > 10 = failure.
+    text_ids = np.array([50, 10, 40, 20, 30, 60])
+    ranks = [1, None, 3, 1, 12, 1]
+    success, failure = pick_fixed_cases(text_ids, ranks, num_cases=2, failure_after=10)
+    assert success == [3, 0]  # text ids 20, 50 (the first two successes by id)
+    assert failure == [1, 4]  # text ids 10 (no correct image), 30 (rank 12 > 10)
+
+
+def test_fixed_cases_never_count_a_near_miss_as_failure():
+    success, failure = pick_fixed_cases(np.array([1, 2]), [10, 2], num_cases=5, failure_after=10)
+    assert success == []
+    assert failure == []
+
+
+def test_fixed_pick_returns_labelled_cases(tmp_path):
+    config = make_dataset(tmp_path)
+    results = run_demo(config, "clip", 0, "test", 2, [], 0, 3, 3, 0.0, None, pick="fixed")
+    assert results
+    assert {result.case for result in results} <= {"success", "failure"}
+    for result in results:
+        if result.case == "success":
+            assert result.first_relevant_rank == 1

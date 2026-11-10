@@ -32,6 +32,11 @@ from mmxai.models.training import (
 from mmxai.rerank.combine import final_scores
 
 MODES = ("clip", "clip_graph")
+# How queries are picked from the split (typed --text queries ignore this):
+#   random  num_queries region descriptions sampled with sample_seed
+#   fixed   every region description is ranked, then the first num_queries successes and
+#           the first num_queries failures by text id are kept (see pick_fixed_cases)
+PICKS = ("random", "fixed")
 # The one-layer GNN of ADR-0046: an image's score depends on its own edges only.
 NUM_LAYERS = 1
 
@@ -46,6 +51,7 @@ class QueryResult:
     top_scores: list[float]
     first_relevant_rank: int | None  # among all top_k candidates, 1 = first
     explanation: Explanation
+    case: str | None = None  # "success" / "failure" in fixed mode
 
 
 def explain_image(
@@ -89,25 +95,51 @@ def explain_image(
     )
 
 
-def pick_split_queries(
-    config: GnnConfig, graph: BipartiteGraph, split_name: str, num_queries: int, sample_seed: int
-) -> tuple[np.ndarray, np.ndarray, list[set[int]]]:
-    """Sample region descriptions of the split as queries.
+def relevant_rows(
+    text_x: np.ndarray,
+    text_image_rows: np.ndarray,
+    query_rows: np.ndarray,
+    split_rows: np.ndarray,
+    threshold: float,
+    chunk_size: int = 1024,
+) -> list[set[int]]:
+    """For each query text, its own image plus every split image owning the same sentence.
 
-    Returns (query vectors, text ids, relevant image rows). Relevant = the source image
-    plus every split image owning the same sentence (ADR-0043).
+    Same rule as the evaluation (ADR-0043): same sentence = text cosine >= threshold.
     """
-    text_x, text_image_rows, text_ids = load_texts(config, graph)
-    in_split = np.flatnonzero(graph.image_split[text_image_rows] == split_name)
-    rng = np.random.default_rng(sample_seed)
-    chosen = np.sort(rng.choice(in_split, size=num_queries, replace=False))
-
     relevant = []
-    for text_row in chosen.tolist():
-        similarity = text_x[in_split] @ text_x[text_row]
-        same = in_split[similarity >= config.same_text_threshold]
-        relevant.append({int(text_image_rows[text_row])} | set(text_image_rows[same].tolist()))
-    return text_x[chosen], text_ids[chosen], relevant
+    # Chunks keep memory at chunk_size x split texts.
+    for start in range(0, len(query_rows), chunk_size):
+        chunk = query_rows[start : start + chunk_size]
+        similarity = text_x[chunk] @ text_x[split_rows].T
+        for row, same in zip(chunk.tolist(), similarity >= threshold, strict=True):
+            relevant.append(
+                {int(text_image_rows[row])} | set(text_image_rows[split_rows[same]].tolist())
+            )
+    return relevant
+
+
+def pick_fixed_cases(
+    text_ids: np.ndarray, first_ranks: list[int | None], num_cases: int, failure_after: int
+) -> tuple[list[int], list[int]]:
+    """Return (success positions, failure positions) chosen by a rule fixed in advance.
+
+    Decision: success = the first correct image is ranked 1; failure = no correct image
+    in the top failure_after (a miss for Recall@failure_after). Ties are broken by text id,
+    ascending, and the first num_cases of each kind are kept.
+      Why: the cases for the report must not be hand-picked after looking at the results
+      (PDF section 6); text id order has nothing to do with how good a case looks.
+      Proposed by Claude Code, 2026-11-10, at thiennp3's request; not yet decided by the team.
+    """
+    success = []
+    failure = []
+    for position in np.argsort(text_ids, kind="stable").tolist():
+        rank = first_ranks[position]
+        if rank == 1 and len(success) < num_cases:
+            success.append(position)
+        if (rank is None or rank > failure_after) and len(failure) < num_cases:
+            failure.append(position)
+    return success, failure
 
 
 def encode_typed_queries(config: GnnConfig, texts: list[str]) -> np.ndarray:
@@ -152,24 +184,36 @@ def run_demo(
     top_m: int,
     min_contribution: float,
     data_dir: str | None,
+    pick: str = "random",
 ) -> list[QueryResult]:
     """Run retrieval (and re-ranking) for the queries and explain each top result."""
     if mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
+    if pick not in PICKS:
+        raise ValueError(f"pick must be one of {PICKS}, got {pick!r}")
     device = resolve_device(config.device)
     graph = load_bipartite(config, train_only=False, device=device)
     gallery_rows = np.flatnonzero(graph.image_split == split_name)
 
+    text_ids = None
     if typed_texts:
         query_x = encode_typed_queries(config, typed_texts)
-        sentences = list(typed_texts)
         relevant: list[set[int] | None] = [None] * len(typed_texts)
     else:
-        query_x, text_ids, relevant_rows = pick_split_queries(
-            config, graph, split_name, num_queries, sample_seed
+        text_x, text_image_rows, all_text_ids = load_texts(config, graph)
+        split_rows = np.flatnonzero(graph.image_split[text_image_rows] == split_name)
+        if pick == "random":
+            rng = np.random.default_rng(sample_seed)
+            query_rows = np.sort(rng.choice(split_rows, size=num_queries, replace=False))
+        else:
+            query_rows = split_rows  # every query: the cases are chosen after ranking
+        query_x = text_x[query_rows]
+        text_ids = all_text_ids[query_rows]
+        relevant = list(
+            relevant_rows(
+                text_x, text_image_rows, query_rows, split_rows, config.same_text_threshold
+            )
         )
-        sentences = sentences_of(text_ids, data_dir)
-        relevant = list(relevant_rows)
 
     if mode == "clip":
         model = None
@@ -190,15 +234,34 @@ def run_demo(
     ranked_rows = np.take_along_axis(candidates, order, axis=1)
     ranked_scores = np.take_along_axis(scores, order, axis=1)
 
-    results = []
+    first_ranks: list[int | None] = []
     for q in range(len(query_x)):
-        rows = ranked_rows[q]
         first_rank = None
         if relevant[q] is not None:
-            for position, row in enumerate(rows.tolist(), start=1):
+            for position, row in enumerate(ranked_rows[q].tolist(), start=1):
                 if row in relevant[q]:
                     first_rank = position
                     break
+        first_ranks.append(first_rank)
+
+    if pick == "fixed" and text_ids is not None:
+        success, failure = pick_fixed_cases(
+            text_ids, first_ranks, num_queries, failure_after=max(config.recall_ks)
+        )
+        chosen = success + failure
+        cases: list[str | None] = ["success"] * len(success) + ["failure"] * len(failure)
+    else:
+        chosen = list(range(len(query_x)))
+        cases = [None] * len(chosen)
+
+    sentences = list(typed_texts)
+    if text_ids is not None:
+        # Looked up only for the kept queries: the regions file is large.
+        sentences = sentences_of(text_ids[chosen], data_dir)
+
+    results = []
+    for q, case, sentence in zip(chosen, cases, sentences, strict=True):
+        rows = ranked_rows[q]
         if model is None:
             explanation = build_explanation([], top_m, {}, {}, alpha, min_contribution)
         else:
@@ -208,14 +271,15 @@ def run_demo(
             )
         results.append(
             QueryResult(
-                query=sentences[q],
+                query=sentence,
                 relevant_image_ids=None
                 if relevant[q] is None
                 else {int(graph.image_ids[row]) for row in relevant[q]},
                 top_image_ids=[int(graph.image_ids[row]) for row in rows[:show_top]],
                 top_scores=[float(value) for value in ranked_scores[q, :show_top]],
-                first_relevant_rank=first_rank,
+                first_relevant_rank=first_ranks[q],
                 explanation=explanation,
+                case=case,
             )
         )
     return results

@@ -73,6 +73,10 @@ Siêu tham số (`n_hard`, `temperature`, `learning_rate`, ...) nằm ở `confi
 uv run --group ml --group graph python scripts/run_pipeline.py --mode clip
 uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
 
+# 5 ca thành công + 5 ca thất bại, chọn theo quy tắc cố định (dùng cho báo cáo, slide)
+uv run --group ml --group graph python scripts/run_pipeline.py --mode clip --pick fixed
+uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph --pick fixed
+
 # Nhiều câu hơn, mẫu khác
 uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph --num-queries 10 --sample-seed 1
 
@@ -83,13 +87,25 @@ uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
 | Tham số | Mặc định | Ý nghĩa |
 |---|---|---|
 | `--mode` | (bắt buộc) | `clip`: chỉ cosine. `clip_graph`: cosine + điểm đồ thị với `alpha` đã chọn trên val |
-| `--num-queries` | `5` | Số câu mô tả lấy ngẫu nhiên từ split làm truy vấn |
+| `--pick` | `random` | `random`: lấy ngẫu nhiên `--num-queries` câu. `fixed`: chọn ca thành công / thất bại theo quy tắc cố định (xem dưới) |
+| `--num-queries` | `5` | `random`: số câu truy vấn. `fixed`: số ca **mỗi loại** (mặc định 5 thành công + 5 thất bại) |
 | `--sample-seed` | `0` | Đổi số này để lấy mẫu câu khác |
 | `--text` | – | Câu tự gõ; lặp lại để truyền nhiều câu. Có `--text` thì không lấy mẫu từ split |
 | `--split` | `test` | `val` hoặc `test`: kho ảnh để tìm |
 | `--seed` | `0` | Dùng mô hình đã huấn luyện với seed nào |
 | `--show-top` | `5` | Số ảnh in ra cho mỗi truy vấn |
 | `--top-m` | `3` | Số quan hệ tối đa mỗi phía (đẩy lên / kéo xuống) trong giải thích |
+
+**Quy tắc của `--pick fixed`** (`mmxai.explain.demo.pick_fixed_cases`), đặt trước khi xem kết quả để không chọn ca "đẹp" bằng tay (PDF §6):
+
+| Loại ca | Điều kiện |
+|---|---|
+| Thành công | Ảnh đúng đầu tiên đứng **hạng 1** |
+| Thất bại | **Không** có ảnh đúng trong **top 10** (trượt Recall@10; 10 = phần tử lớn nhất của `recall_ks`) |
+
+- Xếp hạng **mọi** câu mô tả của split, rồi lấy `--num-queries` ca đầu tiên mỗi loại theo `text_id` tăng dần. Cùng mô hình, cùng split thì luôn ra cùng các ca.
+- Mỗi mode (`clip`, `clip_graph`) có ca riêng của nó, vì thứ hạng khác nhau.
+- Chậm hơn `random` một chút vì phải xếp hạng khoảng 25 nghìn câu (vẫn là FAISS trên 5.000 ảnh).
 
 **Đọc kết quả** (ví dụ dạng in ra, số chỉ minh hoạ):
 

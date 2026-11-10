@@ -16,6 +16,11 @@ Run (from the repo root; a few seconds to a minute, mostly loading the features)
     5 random region descriptions of the test images, both modes:
         uv run --group ml --group graph python scripts/run_pipeline.py --mode clip
         uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
+    5 successes + 5 failures chosen by a fixed rule (for the report):
+        uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph \
+            --pick fixed
+        success = correct image at rank 1; failure = no correct image in the top 10;
+        the first --num-queries of each by text id (no hand-picking, PDF section 6).
     More queries, another sample:
         uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph \
             --num-queries 10 --sample-seed 1
@@ -33,7 +38,7 @@ Output:
 
 import argparse
 
-from mmxai.explain.demo import MODES, run_demo
+from mmxai.explain.demo import MODES, PICKS, run_demo
 from mmxai.explain.presentation import format_explanation
 from mmxai.models.training import load_gnn_config
 
@@ -46,7 +51,12 @@ def main() -> None:
     parser.add_argument("--config", default="configs/gnn_vg.yaml", help="YAML file in configs/")
     parser.add_argument("--seed", type=int, default=0, help="seed of the trained model")
     parser.add_argument("--split", choices=["val", "test"], default="test")
-    parser.add_argument("--num-queries", type=int, default=5, help="queries sampled from the split")
+    parser.add_argument(
+        "--pick", choices=PICKS, default="random", help="random sample or fixed success/failure"
+    )
+    parser.add_argument(
+        "--num-queries", type=int, default=5, help="random: queries; fixed: cases of each kind"
+    )
     parser.add_argument("--sample-seed", type=int, default=0, help="which queries are sampled")
     parser.add_argument("--text", action="append", default=[], help="your own query; repeatable")
     parser.add_argument("--show-top", type=int, default=5, help="images listed per query")
@@ -69,9 +79,11 @@ def main() -> None:
         args.top_m,
         args.min_contribution,
         args.data_dir,
+        args.pick,
     )
     for number, result in enumerate(results, start=1):
-        print(f"\n=== Query {number} ({args.mode}): {result.query}")
+        case = "" if result.case is None else f", {result.case}"
+        print(f"\n=== Query {number} ({args.mode}{case}): {result.query}")
         for rank, (image_id, score) in enumerate(
             zip(result.top_image_ids, result.top_scores, strict=True), start=1
         ):
