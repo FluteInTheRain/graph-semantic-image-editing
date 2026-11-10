@@ -32,3 +32,7 @@ alpha: null
 device: auto
 checkpoint_dir: artifacts/checkpoints
 output_dir: results/runs
+# Decision (ADR-0047): training curves go to this Weights & Biases project; null = off.
+#   Needs `--group tracking` and `uv run wandb login` (or WANDB_API_KEY). WANDB_MODE=disabled also turns it off.
+#   Proposed by Claude Code, 2026-11-10, at thiennp3's request; not yet decided by the team.
+wandb_project: mmxai-gnn

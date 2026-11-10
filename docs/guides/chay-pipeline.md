@@ -37,6 +37,8 @@ uv run --group ml --group graph python scripts/setup_and_train.py              #
 uv run --group ml --group graph python scripts/setup_and_train.py --seeds 0    # chỉ 1 seed, nhanh hơn
 ```
 
+**Thiết bị:** CPU là đủ. Đo trên CPU 14 core (không GPU): một bước train 0,14 giây, **khoảng 9 phút một epoch**, ước khoảng 45–90 phút một seed (early stopping thường dừng sau 5–10 epoch). Có GPU thì nhanh hơn nhiều; code tự chọn (`device: auto`). Lúc train cần khoảng **3–4 GB RAM** trống (riêng vector câu mô tả đã 1,1 GB).
+
 Script chạy lần lượt, bước nào đã có kết quả thì **bỏ qua**, nên chạy lại sau khi bị ngắt là an toàn:
 
 | Bước | Làm gì | Code | Kết quả |
@@ -45,6 +47,18 @@ Script chạy lần lượt, bước nào đã có kết quả thì **bỏ qua**
 | 2 | Dựng đồ thị cạnh CLIP top-16 (`configs/graph_vg_clip_topk.yaml`) | `mmxai.graph.pipeline.run_build_graph` | `artifacts/graphs/visual_genome/contains_clip_top16_v1/` |
 | 3 | Huấn luyện GNN **chỉ trên ảnh train**: mỗi câu mô tả so với ảnh đúng + 15 ảnh sai lấy từ top 100 của CLIP (InfoNCE), early stopping theo MRR@100 trên val | `mmxai.models.training.train_gnn` | `artifacts/checkpoints/gnn_vg_seed<k>/model.pt`, `meta.json` |
 | 4 | Xếp hạng lại val với mọi `alpha` trong `alpha_grid`, chọn `alpha` có MRR cao nhất | `mmxai.rerank.evaluate.run_rerank_evaluation` | `artifacts/checkpoints/gnn_vg_seed<k>/chosen_alpha.json`, `results/runs/<thời gian>_gnn_vg_seed<k>/` |
+
+### Xem log huấn luyện trên Weights & Biases (tuỳ chọn, ADR-0047)
+
+```bash
+uv run --group tracking wandb login                     # một lần; hoặc đặt WANDB_API_KEY
+uv run --group ml --group graph --group tracking python scripts/setup_and_train.py
+```
+
+- Mỗi seed là một run tên `gnn_vg_seed<k>` trong project `mmxai-gnn` (đổi ở `wandb_project` trong `configs/gnn_vg.yaml`; `WANDB_ENTITY` chọn team).
+- Log: `train/loss` và `val/MRR@100` mỗi epoch, `train/batch_loss` mỗi 50 bước, `best_epoch` ở cuối.
+- Không thêm `--group tracking`, đặt `WANDB_MODE=disabled`, hoặc mất mạng: train vẫn chạy bình thường, chỉ in một dòng cảnh báo.
+- Số trong báo cáo vẫn lấy từ `results/` và `meta.json`, không lấy từ W&B.
 
 Siêu tham số (`n_hard`, `temperature`, `learning_rate`, ...) nằm ở `configs/gnn_vg.yaml`. Chỉ chỉnh dựa trên **val**.
 

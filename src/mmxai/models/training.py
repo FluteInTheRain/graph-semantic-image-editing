@@ -24,10 +24,13 @@ from mmxai.index.image_index import build_image_index, search_images
 from mmxai.models.one_layer_sage import OneLayerSage, graph_scores
 from mmxai.rerank.combine import rerank_metrics
 from mmxai.utils.runs import git_state
+from mmxai.utils.tracking import start_run
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 CHECKPOINT_FILE = "model.pt"
 CHECKPOINT_META = "meta.json"
+# Batch loss goes to W&B every this many steps; one value per step would flood the chart.
+LOG_EVERY_STEPS = 50
 # The alpha chosen on val for this model, written by the val re-ranking run.
 ALPHA_FILE = "chosen_alpha.json"
 
@@ -55,6 +58,8 @@ class GnnConfig:
     device: str
     checkpoint_dir: str
     output_dir: str
+    # W&B project for the training logs (ADR-0047); null = no logging.
+    wandb_project: str | None = None
 
 
 def load_gnn_config(path: str | Path) -> GnnConfig:
@@ -313,6 +318,11 @@ def train_gnn(config: GnnConfig, seed: int) -> Path:
     best_epoch = 0
     history = [{"epoch": 0, "train_loss": None, f"val_{mrr_name}": best_mrr}]
     epochs_without_gain = 0
+    run = start_run(
+        config.wandb_project, f"{config.experiment}_seed{seed}", asdict(config) | {"seed": seed}
+    )
+    run.log({"epoch": 0, f"val/{mrr_name}": best_mrr})
+    step = 0
     for epoch in range(1, config.max_epochs + 1):
         model.train()
         order = torch.randperm(len(text_x), generator=generator, device=device)
@@ -345,12 +355,16 @@ def train_gnn(config: GnnConfig, seed: int) -> Path:
             loss.backward()
             optimizer.step()
             losses.append(loss.item())
+            step += 1
+            if step % LOG_EVERY_STEPS == 0:
+                run.log({"train/batch_loss": loss.item(), "step": step})
 
         mrr = val_mrr()
         history.append(
             {"epoch": epoch, "train_loss": float(np.mean(losses)), f"val_{mrr_name}": mrr}
         )
         print(f"epoch {epoch}: train loss {np.mean(losses):.4f}, val {mrr_name} {mrr:.4f}")
+        run.log({"epoch": epoch, "train/loss": float(np.mean(losses)), f"val/{mrr_name}": mrr})
         if mrr > best_mrr:
             best_mrr, best_epoch, epochs_without_gain = mrr, epoch, 0
             best_state = copy.deepcopy(model.state_dict())
@@ -373,6 +387,9 @@ def train_gnn(config: GnnConfig, seed: int) -> Path:
     }
     with open(output_dir / CHECKPOINT_META, "w", encoding="utf-8") as file:
         json.dump(meta, file, indent=2)
+    run.summary["best_epoch"] = best_epoch
+    run.summary[f"best_val/{mrr_name}"] = best_mrr
+    run.finish()
     return output_dir
 
 
