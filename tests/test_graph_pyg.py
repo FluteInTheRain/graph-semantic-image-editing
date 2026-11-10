@@ -19,10 +19,14 @@ CONCEPT_FEATURES = np.array([[0, 0, 1], [0, 1, 0]], dtype=np.float32)
 # Feature cache rows are in a different order than the graph's images on purpose.
 FEATURE_IMAGE_IDS = np.array([20, 10, 30])
 IMAGE_FEATURES = np.array([[2, 2, 2], [1, 1, 1], [3, 3, 3]], dtype=np.float32)
+GRAPH_META = {"config": {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}}
+FEATURE_META = {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}
 
 
 def make_data():
-    return to_pyg_data(GRAPH, CONCEPT_FEATURES, IMAGE_FEATURES, FEATURE_IMAGE_IDS)
+    return to_pyg_data(
+        GRAPH, CONCEPT_FEATURES, IMAGE_FEATURES, FEATURE_IMAGE_IDS, GRAPH_META, FEATURE_META
+    )
 
 
 def test_images_come_first_then_concepts():
@@ -51,4 +55,40 @@ def test_every_contains_edge_is_stored_in_both_directions():
 
 def test_missing_image_feature_is_an_error():
     with pytest.raises(ValueError, match="20"):
-        to_pyg_data(GRAPH, CONCEPT_FEATURES, IMAGE_FEATURES[1:], FEATURE_IMAGE_IDS[1:])
+        to_pyg_data(
+            GRAPH,
+            CONCEPT_FEATURES,
+            IMAGE_FEATURES[1:],
+            FEATURE_IMAGE_IDS[1:],
+            GRAPH_META,
+            FEATURE_META,
+        )
+
+
+def test_duplicate_image_id_in_the_cache_is_an_error():
+    # Without this check the second row would silently replace the first.
+    duplicate_ids = np.array([20, 10, 20])
+
+    with pytest.raises(ValueError, match="20"):
+        to_pyg_data(
+            GRAPH,
+            CONCEPT_FEATURES,
+            IMAGE_FEATURES,
+            duplicate_ids,
+            GRAPH_META,
+            FEATURE_META,
+        )
+
+
+def test_image_cache_from_another_clip_model_is_an_error():
+    other_model = {"model": "ViT-B-32", "pretrained": "openai"}
+
+    with pytest.raises(ValueError, match="openai"):
+        to_pyg_data(
+            GRAPH,
+            CONCEPT_FEATURES,
+            IMAGE_FEATURES,
+            FEATURE_IMAGE_IDS,
+            GRAPH_META,
+            other_model,
+        )

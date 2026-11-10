@@ -87,6 +87,22 @@ def build_contains_graph(
     )
 
 
+def check_same_clip_model(graph_meta: dict, feature_meta: dict) -> None:
+    """Raise ValueError unless the image cache and the concept vectors share one CLIP model.
+
+    Two CLIP models can have the same 512 dimensions but different spaces, so a
+    mismatch would run without any shape error and give meaningless similarities.
+    """
+    for field_name in ("model", "pretrained"):
+        graph_value = graph_meta["config"][field_name]
+        feature_value = feature_meta.get(field_name)
+        if graph_value != feature_value:
+            raise ValueError(
+                f"concept vectors use {field_name}={graph_value!r} but the image cache "
+                f"uses {feature_value!r}; both must come from the same CLIP model"
+            )
+
+
 def save_contains_graph(
     output_dir: str | Path,
     graph: ContainsGraph,

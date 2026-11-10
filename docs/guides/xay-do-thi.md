@@ -91,23 +91,27 @@ Lưu ý nhỏ: 134 khái niệm có tên trùng với khái niệm khác (ví d�
 ## 5. Dùng đồ thị trong code (cho người viết GNN)
 
 ```python
-from mmxai.features.cache import load_image_features
+from mmxai.features.cache import load_image_features, load_meta
 from mmxai.graph.contains import load_contains_graph
 from mmxai.graph.pyg import to_pyg_data
 
-graph, concept_names, concept_features, meta = load_contains_graph(
+graph, concept_names, concept_features, graph_meta = load_contains_graph(
     "artifacts/graphs/visual_genome/contains_v1"
 )
-image_features, feature_image_ids = load_image_features(
-    "artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k"
+features_dir = "artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k"
+image_features, feature_image_ids = load_image_features(features_dir)
+data = to_pyg_data(
+    graph, concept_features, image_features, feature_image_ids,
+    graph_meta, load_meta(features_dir),
 )
-data = to_pyg_data(graph, concept_features, image_features, feature_image_ids)
 # data.x          (108077 + 3880) × 512: ảnh trước, khái niệm sau
 # data.edge_index 2 × (2 × 1719645): mỗi cạnh contains lưu cả hai chiều
 # data.node_type  0 = ảnh, 1 = khái niệm
 ```
 
 Đỉnh ảnh thứ i trong `data` ứng với ảnh `graph.image_ids[i]`. Đỉnh khái niệm thứ j ứng với dòng `num_images + j`.
+
+`to_pyg_data` bắt buộc nhận hai `meta.json` (của đồ thị và của cache ảnh) để kiểm hai bên dùng **cùng một model CLIP**. Hai model khác nhau có thể cùng 512 chiều nhưng khác không gian, nên nếu không kiểm thì code vẫn chạy mà kết quả vô nghĩa. Id ảnh bị trùng trong cache cũng báo lỗi.
 
 ⚠️ **Hai điều bắt buộc cho người viết GNN** (chi tiết: ADR-0045, mục Hệ quả):
 

@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from mmxai.graph.contains import ContainsGraph
+from mmxai.graph.contains import ContainsGraph, check_same_clip_model
 
 IMAGE_NODE = 0
 CONCEPT_NODE = 1
@@ -21,14 +21,21 @@ def to_pyg_data(
     concept_features: np.ndarray,
     image_features: np.ndarray,
     feature_image_ids: np.ndarray,
+    graph_meta: dict,
+    feature_meta: dict,
 ) -> Data:
     """Build Data from the graph, its concept vectors and the cached CLIP image vectors.
 
-    The image cache is ordered by its own ids, so rows are looked up by id, never
-    assumed to be in graph order.
+    graph_meta / feature_meta are the meta.json of the graph and of the image cache;
+    they are required so the same-model check cannot be skipped. The image cache is
+    ordered by its own ids, so rows are looked up by id, never assumed to be in
+    graph order.
     """
+    check_same_clip_model(graph_meta, feature_meta)
     row_of_id = {}
     for row, image_id in enumerate(feature_image_ids.tolist()):
+        if image_id in row_of_id:
+            raise ValueError(f"image id {image_id} appears twice in the feature cache")
         row_of_id[image_id] = row
     missing = [image_id for image_id in graph.image_ids.tolist() if image_id not in row_of_id]
     if missing:

@@ -13,6 +13,7 @@ import pytest
 
 from mmxai.graph.contains import (
     build_contains_graph,
+    check_same_clip_model,
     load_contains_graph,
     save_contains_graph,
     select_concepts,
@@ -120,3 +121,20 @@ def test_save_rejects_one_feature_row_per_concept_mismatch(tmp_path):
             np.ones((1, 2), dtype=np.float32),
             meta={},
         )
+
+
+GRAPH_META = {"config": {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}}
+
+
+def test_same_clip_model_passes():
+    feature_meta = {"model": "ViT-B-32", "pretrained": "laion2b_s34b_b79k"}
+
+    check_same_clip_model(GRAPH_META, feature_meta)
+
+
+def test_a_different_clip_model_is_an_error():
+    # Same 512 dimensions, different space: nothing else would catch this.
+    feature_meta = {"model": "ViT-B-32", "pretrained": "openai"}
+
+    with pytest.raises(ValueError, match="openai"):
+        check_same_clip_model(GRAPH_META, feature_meta)
