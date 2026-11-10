@@ -1,7 +1,10 @@
 """One-time setup + training for the CLIP + Graph pipeline (ADR-0046). Slow; run once.
 
 What it does (each step is skipped when its output already exists, so re-running is safe):
-    1. check the CLIP features and objects.json are there (both are downloaded by hand)
+    1. download the Visual Genome annotation files that are missing (configs/data_vg.yaml):
+       objects.json (required, sha256 checked) and region_descriptions.json (optional,
+       only to print query sentences); check the CLIP features are there (they come from
+       the Kaggle notebook and are NOT downloaded here)
     2. build the CLIP top-k graph
     3. train the GNN for every seed (train images only, early stopping on val)
     4. re-rank val for every seed and choose alpha, stored next to each checkpoint
@@ -20,6 +23,7 @@ import argparse
 import json
 from pathlib import Path
 
+from mmxai.data.download import download_file, load_data_config
 from mmxai.graph.pipeline import load_graph_config, run_build_graph
 from mmxai.models.training import (
     ALPHA_FILE,
@@ -39,6 +43,7 @@ def main() -> None:
     parser.add_argument(
         "--graph-config", default="configs/graph_vg_clip_topk.yaml", help="graph config"
     )
+    parser.add_argument("--data-config", default="configs/data_vg.yaml", help="files to download")
     parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     args = parser.parse_args()
 
@@ -46,18 +51,28 @@ def main() -> None:
     graph_config = load_graph_config(args.graph_config)
     graph_ready = (Path(config.graph_dir) / "graph.npz").exists()
 
-    print("== 1. Check the downloaded data")
+    print("== 1. Download the data")
     if not (Path(config.features_dir) / "meta.json").exists():
         raise SystemExit(
             f"Missing CLIP features in {config.features_dir}. "
             "Download them: docs/guides/chuan-bi-embedding-clip.md, section 2."
         )
-    objects = Path(graph_config.data_dir) / graph_config.objects_file
-    if not graph_ready and not objects.exists():
+    data_dir, remote_files = load_data_config(args.data_config)
+    if data_dir != Path(graph_config.data_dir):
         raise SystemExit(
-            f"Missing {objects} (needed to build the graph). "
-            "Download it: docs/guides/xay-do-thi.md, section 2."
+            f"{args.data_config} downloads into {data_dir} "
+            f"but {args.graph_config} reads {graph_config.data_dir}"
         )
+    for remote in remote_files:
+        if graph_ready and remote.name == graph_config.objects_file:
+            continue  # only the graph build reads it
+        try:
+            download_file(remote, data_dir)
+        except Exception as error:
+            if remote.required:
+                raise
+            # An optional file only adds readable sentences; training does not need it.
+            print(f"skipped optional {remote.name}: {error}")
 
     print("== 2. Build the graph")
     if graph_ready:

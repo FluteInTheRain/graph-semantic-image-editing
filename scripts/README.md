@@ -18,6 +18,6 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
 | `scripts/train_gnn.py` (đã có) | Huấn luyện GNN một lớp, chỉ trên ảnh train, early stopping trên val (ADR-0046) | `mmxai.models.training` |
 | `scripts/evaluate_rerank.py` (đã có) | Xếp hạng lại top 100 của CLIP, chọn `alpha` trên val, đo trên test với `alpha` đã chốt, lưu `scores.npz` | `mmxai.rerank.evaluate` |
-| `scripts/setup_and_train.py` (đã có) | **Chạy một lần**: kiểm tra dữ liệu, dựng đồ thị, huấn luyện, chọn `alpha`. Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.graph.pipeline`, `mmxai.models.training`, `mmxai.rerank.evaluate` |
+| `scripts/setup_and_train.py` (đã có) | **Chạy một lần**: tự tải annotation Visual Genome còn thiếu (`configs/data_vg.yaml`), dựng đồ thị, huấn luyện, chọn `alpha`. Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.graph.pipeline`, `mmxai.models.training`, `mmxai.rerank.evaluate` |
 | `scripts/run_pipeline.py` (đã có) | **Chạy nhiều lần**: truy vấn vài câu ở mode `clip` hoặc `clip_graph`, in kết quả + giải thích ảnh top-1 (Occlusion). Hướng dẫn: `docs/guides/chay-pipeline.md` | `mmxai.explain.demo` |
 | `scripts/explain.py` | Fidelity/validity/sparsity trên ≥ 10 truy vấn (cấp độ 3) | `mmxai.explain` |

@@ -22,13 +22,17 @@ Chỉ có **hai script**, chạy cùng một kiểu lệnh:
 
 `uv run --group ml --group graph` tự cài torch, open_clip, faiss, PyG ở lần đầu (đã khai báo trong `pyproject.toml`, ADR-0006). Sau lưng proxy có chứng chỉ riêng thì thêm `UV_NATIVE_TLS=1` ở đầu lệnh.
 
-## 2. Chuẩn bị dữ liệu (tải tay, một lần)
+## 2. Chuẩn bị dữ liệu
 
-| Cần gì | Dùng cho | Hướng dẫn tải | Đặt ở |
+`scripts/setup_and_train.py` **tự tải** các file annotation Visual Genome còn thiếu (danh sách, URL và sha256 ở `configs/data_vg.yaml`, code ở `mmxai.data.download.download_file`). Chỉ embedding CLIP là phải tải tay.
+
+| Cần gì | Dùng cho | Ai tải | Đặt ở |
 |---|---|---|---|
-| Embedding CLIP của Visual Genome | Cả hai mode | `docs/guides/chuan-bi-embedding-clip.md` §2 | `artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/` |
-| `objects.json` | Dựng đồ thị (từ vựng khái niệm đếm trên train) | `docs/guides/xay-do-thi.md` §2 | `data/visual_genome/objects.json` |
-| `region_descriptions.json` (không bắt buộc) | Để `run_pipeline.py` in **nội dung câu** truy vấn; thiếu thì chỉ in mã region | Trang tải Visual Genome (cùng chỗ với `objects.json`) | `data/visual_genome/region_descriptions.json` |
+| Embedding CLIP của Visual Genome | Cả hai mode | **Tải tay**: `docs/guides/chuan-bi-embedding-clip.md` §2 (Kaggle) | `artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/` |
+| `objects.json` (khoảng 55 MB zip, 349 MB sau giải nén) | Dựng đồ thị (từ vựng khái niệm đếm trên train) | **Script tự tải**, kiểm sha256; sai hash thì xoá và dừng | `data/visual_genome/objects.json` |
+| `region_descriptions.json` (khoảng 127 MB zip) | Để `run_pipeline.py` in **nội dung câu** truy vấn | **Script tự tải**; tải lỗi thì chỉ cảnh báo, vẫn train tiếp | `data/visual_genome/region_descriptions.json` |
+
+File đã có thì không tải lại. Tải dở chừng không để lại file "trông như hoàn chỉnh" (tải vào tên tạm `*.part`).
 
 ## 3. Bước 1 – cài, dựng đồ thị, huấn luyện (một lần)
 
@@ -43,7 +47,7 @@ Script chạy lần lượt, bước nào đã có kết quả thì **bỏ qua**
 
 | Bước | Làm gì | Code | Kết quả |
 |---|---|---|---|
-| 1 | Kiểm tra embedding và `objects.json`; thiếu thì dừng và chỉ tài liệu tải | `scripts/setup_and_train.py` | – |
+| 1 | Tải `objects.json`, `region_descriptions.json` nếu thiếu; kiểm tra có embedding (thiếu thì dừng và chỉ tài liệu tải) | `mmxai.data.download.download_file` | `data/visual_genome/*.json` |
 | 2 | Dựng đồ thị cạnh CLIP top-16 (`configs/graph_vg_clip_topk.yaml`) | `mmxai.graph.pipeline.run_build_graph` | `artifacts/graphs/visual_genome/contains_clip_top16_v1/` |
 | 3 | Huấn luyện GNN **chỉ trên ảnh train**: mỗi câu mô tả so với ảnh đúng + 15 ảnh sai lấy từ top 100 của CLIP (InfoNCE), early stopping theo MRR@100 trên val | `mmxai.models.training.train_gnn` | `artifacts/checkpoints/gnn_vg_seed<k>/model.pt`, `meta.json` |
 | 4 | Xếp hạng lại val với mọi `alpha` trong `alpha_grid`, chọn `alpha` có MRR cao nhất | `mmxai.rerank.evaluate.run_rerank_evaluation` | `artifacts/checkpoints/gnn_vg_seed<k>/chosen_alpha.json`, `results/runs/<thời gian>_gnn_vg_seed<k>/` |
@@ -119,7 +123,8 @@ uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
 | Thông báo | Nguyên nhân | Cách sửa |
 |---|---|---|
 | `Missing CLIP features in ...` | Chưa tải embedding | Mục 2, dòng 1 |
-| `Missing data/visual_genome/objects.json` | Chưa tải để dựng đồ thị | Mục 2, dòng 2 |
+| `objects.json has sha256 ...` | File tải về khác bản đã ghi trong `data_cards/visual_genome.md` | Chạy lại; vẫn sai thì báo nhóm (nguồn có thể đã đổi) |
+| `URLError` / lỗi chứng chỉ khi tải | Mạng hoặc proxy | Thử lại; hoặc tải tay theo `docs/guides/xay-do-thi.md` §2 rồi chạy lại |
 | `... model.pt not found` | Chưa huấn luyện seed đó | Chạy bước 1 với `--seeds <k>` |
 | `... chosen_alpha.json not found` | Chưa chọn `alpha` trên val | Chạy lại bước 1 (bước 4 sẽ chạy bù) |
 | `invalid peer certificate: UnknownIssuer` | Proxy có chứng chỉ riêng | Thêm `UV_NATIVE_TLS=1` trước lệnh |
