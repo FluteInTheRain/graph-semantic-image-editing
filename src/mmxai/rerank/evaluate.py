@@ -1,6 +1,7 @@
 """Re-rank CLIP's top 100 with the trained GNN and score it (ADR-0046 section 4, ADR-0043).
 
-val:  try every alpha of alpha_grid and pick the best (by MRR); report all of them.
+val:  try every alpha of alpha_grid and pick the best (by MRR); report all of them,
+      and store the chosen alpha next to the checkpoint for scripts/run_pipeline.py.
 test: use the alpha written in the config, which must be the one chosen on val
       (ADR-0009: nothing is chosen on test).
 Each run also saves scores.npz (candidates, cosine, graph score per query), from which
@@ -19,6 +20,7 @@ from mmxai.models.training import (
     load_bipartite,
     load_trained_model,
     resolve_device,
+    save_chosen_alpha,
     score_candidates,
     split_queries,
 )
@@ -49,6 +51,7 @@ def run_rerank_evaluation(config: GnnConfig, seed: int, split_name: str) -> Path
             candidates, cosine, graph_score, relevant, config.alpha_grid, config.recall_ks
         )
         metrics["chosen_alpha"] = alpha
+        save_chosen_alpha(config, seed, alpha)
         metrics["by_alpha"] = {str(value): result for value, result in by_alpha.items()}
     else:
         alpha = config.alpha

@@ -152,7 +152,10 @@ def test_train_then_rerank_val_and_test(tmp_path):
 
     with pytest.raises(ValueError, match="alpha"):
         run_rerank_evaluation(config, seed=0, split_name="test")
-    test_config = replace(config, alpha=val_metrics["chosen_alpha"])
+    # Run folders are named by the minute (ADR-0010), so the test run gets its own root.
+    test_config = replace(
+        config, alpha=val_metrics["chosen_alpha"], output_dir=str(tmp_path / "test_runs")
+    )
     test_run = run_rerank_evaluation(test_config, seed=0, split_name="test")
     assert "metrics" in json.loads((test_run / "metrics.json").read_text())
 

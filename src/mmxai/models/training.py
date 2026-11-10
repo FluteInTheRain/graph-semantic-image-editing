@@ -28,6 +28,8 @@ from mmxai.utils.yaml_config import load_yaml_dataclass
 
 CHECKPOINT_FILE = "model.pt"
 CHECKPOINT_META = "meta.json"
+# The alpha chosen on val for this model, written by the val re-ranking run.
+ALPHA_FILE = "chosen_alpha.json"
 
 
 @dataclass(frozen=True)
@@ -244,9 +246,29 @@ def split_queries(
     return gallery_rows, query_x, relevant, text_ids[in_split]
 
 
+def checkpoint_folder(config: GnnConfig, seed: int) -> Path:
+    return Path(config.checkpoint_dir) / f"{config.experiment}_seed{seed}"
+
+
+def save_chosen_alpha(config: GnnConfig, seed: int, alpha: float) -> None:
+    """Store the alpha chosen on val next to the model it was chosen for."""
+    with open(checkpoint_folder(config, seed) / ALPHA_FILE, "w", encoding="utf-8") as file:
+        json.dump({"alpha": alpha, "chosen_on": "val"}, file, indent=2)
+
+
+def load_chosen_alpha(config: GnnConfig, seed: int) -> float:
+    path = checkpoint_folder(config, seed) / ALPHA_FILE
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found; run scripts/evaluate_rerank.py --split val --seed {seed} first"
+        )
+    with open(path, encoding="utf-8") as file:
+        return float(json.load(file)["alpha"])
+
+
 def train_gnn(config: GnnConfig, seed: int) -> Path:
     """Train with early stopping on val, save the best weights, return the checkpoint folder."""
-    output_dir = Path(config.checkpoint_dir) / f"{config.experiment}_seed{seed}"
+    output_dir = checkpoint_folder(config, seed)
     if output_dir.exists():
         raise FileExistsError(f"{output_dir} already exists; delete it to train again")
     torch.manual_seed(seed)
@@ -358,7 +380,7 @@ def load_trained_model(
     config: GnnConfig, seed: int, dim: int, device: torch.device
 ) -> OneLayerSage:
     """Load the weights saved by train_gnn for this experiment and seed, in eval mode."""
-    path = Path(config.checkpoint_dir) / f"{config.experiment}_seed{seed}" / CHECKPOINT_FILE
+    path = checkpoint_folder(config, seed) / CHECKPOINT_FILE
     if not path.exists():
         raise FileNotFoundError(f"{path} not found; run scripts/train_gnn.py with --seed {seed}")
     model = OneLayerSage(dim).to(device)

@@ -1,0 +1,66 @@
+"""Retrieval + explanation of the top image, on the tiny dataset of test_models_training."""
+
+import pytest
+
+torch = pytest.importorskip("torch")
+pytest.importorskip("torch_geometric")
+pytest.importorskip("faiss")
+
+from mmxai.explain.demo import explain_image, run_demo  # noqa: E402
+from mmxai.models.one_layer_sage import OneLayerSage, graph_scores  # noqa: E402
+from mmxai.models.training import (  # noqa: E402
+    load_bipartite,
+    save_chosen_alpha,
+    train_gnn,
+)
+from test_models_training import make_dataset  # noqa: E402
+
+CPU = torch.device("cpu")
+
+
+def test_explanation_names_the_concepts_of_the_image(tmp_path):
+    graph = load_bipartite(make_dataset(tmp_path), train_only=False, device=CPU)
+    model = OneLayerSage(graph.image_x.shape[1]).eval()
+    with torch.no_grad():
+        model.conv.lin_l.weight.copy_(torch.eye(graph.image_x.shape[1]))
+    query = graph.concept_x[0]  # a query equal to concept "a": its edge must push up
+    # Image row 0 has edges to concepts 0 ("a") and 1 ("b").
+    explanation = explain_image(model, graph, query, 0, alpha=0.0, top_m=3, min_contribution=0.0)
+    assert explanation.graph_used
+    assert explanation.supporting[0].source == "a"
+    assert explanation.supporting[0].target == "image 100"
+
+
+@torch.no_grad()
+def test_removing_the_top_supporting_edge_lowers_the_score(tmp_path):
+    graph = load_bipartite(make_dataset(tmp_path), train_only=False, device=CPU)
+    model = OneLayerSage(graph.image_x.shape[1]).eval()
+    with torch.no_grad():
+        model.conv.lin_l.weight.copy_(torch.eye(graph.image_x.shape[1]))
+    query = graph.concept_x[0]
+    full = graph_scores(
+        query, model(graph.concept_x, graph.image_x[:1], torch.tensor([[0, 1], [0, 0]]))
+    )
+    without_a = graph_scores(
+        query, model(graph.concept_x, graph.image_x[:1], torch.tensor([[1], [0]]))
+    )
+    assert float(without_a[0]) < float(full[0])
+
+
+def test_clip_mode_says_the_graph_was_not_used(tmp_path):
+    config = make_dataset(tmp_path)
+    results = run_demo(config, "clip", 0, "test", 2, [], 0, 3, 3, 0.0, None)
+    assert len(results) == 2
+    assert all(not result.explanation.graph_used for result in results)
+    assert all(set(result.top_image_ids) <= {109, 110, 111} for result in results)
+
+
+def test_clip_graph_mode_explains_the_top_image(tmp_path):
+    config = make_dataset(tmp_path)
+    train_gnn(config, seed=0)
+    save_chosen_alpha(config, 0, 0.5)
+    results = run_demo(config, "clip_graph", 0, "test", 3, [], 0, 3, 3, 0.0, None)
+    assert len(results) == 3
+    for result in results:
+        assert result.explanation.graph_used
+        assert result.first_relevant_rank is not None
