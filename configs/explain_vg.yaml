@@ -1,0 +1,31 @@
+# Explanation evaluation (xAI, level 3) on Visual Genome (ADR-0016).
+# Every value below is chosen on val only; test is run once with the final values (ADR-0009).
+experiment: explain_vg
+eval_split: val
+seeds: [0, 1, 2]
+# Explainers compared on val; the one with the best characterization becomes the main one.
+explainers: [occlusion, integrated_gradients, gnn_explainer]
+# Must match the Graph module's model (number of GNN layers) and how it stores relations.
+# TODO: confirm both values with the Graph team before the first real run.
+num_layers: 2
+both_directions: true
+# Relations shown per side, and effects too small to show (float noise).
+top_m: 5
+min_contribution: 1.0e-6
+# Characterization weighs fidelity+ and 1 - fidelity- equally (GraphFramEx default).
+plus_weight: 0.5
+# Random control: same number of relations removed at random near the image.
+random_repeats: 20
+# Robust fidelity defaults from Zheng et al. (ICLR 2024): remove 10% of the explanation,
+# add back 90% of the other relations. Check against the paper before reporting.
+robust_remove_prob: 0.1
+robust_add_back_prob: 0.9
+robust_repeats: 20
+# Integrated Gradients: steps along the path from no relations to all relations.
+ig_steps: 50
+# GNNExplainer: size and entropy weights are PyG's defaults; plain gradient steps.
+gnn_explainer_epochs: 200
+gnn_explainer_learning_rate: 1.0
+gnn_explainer_size_weight: 0.005
+gnn_explainer_entropy_weight: 1.0
+output_dir: results/runs

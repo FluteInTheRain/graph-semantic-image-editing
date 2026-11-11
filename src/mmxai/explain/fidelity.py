@@ -5,7 +5,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from mmxai.explain.config import ExplainConfig
 from mmxai.explain.intervention import mark_remaining_edges
+from mmxai.explain.quality import sparsity, validity
 from mmxai.explain.subgraph import relations_in_reach
 
 
@@ -200,3 +202,85 @@ def characterization(fid_plus: float, fid_minus: float, plus_weight: float) -> f
         return 0.0
     minus_weight = 1.0 - plus_weight
     return 1.0 / (plus_weight / fid_plus + minus_weight / sufficiency)
+
+
+@dataclass(frozen=True)
+class ExplanationReport:
+    """Every level-3 measure of one explanation for one image (PDF section 5)."""
+
+    fidelity_plus: float
+    fidelity_minus: float
+    normalized_plus: float | None
+    normalized_minus: float | None
+    characterization: float | None
+    robust_plus: float
+    robust_minus: float
+    random_plus_mean: float
+    sparsity: float
+    all_in_reach: bool
+    connected_share: float
+
+
+def evaluate_explanation(
+    edge_index: np.ndarray,
+    image_node: int,
+    explanation: list[tuple[int, int]],
+    score_image: Callable[[np.ndarray], float],
+    config: ExplainConfig,
+    seed: int,
+) -> ExplanationReport:
+    """Measure fidelity, robust fidelity, the random control, sparsity and validity."""
+    layers = config.num_layers
+    both = config.both_directions
+
+    full = score_image(np.ones(edge_index.shape[1], dtype=bool))
+    without_mask = mark_remaining_edges(edge_index, explanation, both)
+    without = score_image(without_mask)
+    only = score_image(~without_mask)
+    empty = score_image(np.zeros(edge_index.shape[1], dtype=bool))
+
+    normalized = normalized_fidelity(full, without, only, empty)
+    if normalized is None:
+        normalized_plus, normalized_minus, charact = None, None, None
+    else:
+        normalized_plus, normalized_minus = normalized
+        charact = characterization(normalized_plus, normalized_minus, config.plus_weight)
+
+    robust_plus, robust_minus = robust_fidelity(
+        edge_index,
+        image_node,
+        layers,
+        explanation,
+        both,
+        score_image,
+        config.robust_remove_prob,
+        config.robust_add_back_prob,
+        config.robust_repeats,
+        seed,
+    )
+    control = random_control(
+        edge_index,
+        image_node,
+        layers,
+        both,
+        len(explanation),
+        score_image,
+        config.random_repeats,
+        seed,
+    )
+    nearby = relations_in_reach(edge_index, image_node, layers, both)
+    checked = validity(edge_index, explanation, image_node, layers, both)
+
+    return ExplanationReport(
+        fidelity_plus=fidelity_plus(full, without),
+        fidelity_minus=fidelity_minus(full, only),
+        normalized_plus=normalized_plus,
+        normalized_minus=normalized_minus,
+        characterization=charact,
+        robust_plus=robust_plus,
+        robust_minus=robust_minus,
+        random_plus_mean=float(control.mean()),
+        sparsity=sparsity(len(explanation), len(nearby)),
+        all_in_reach=checked.all_in_reach,
+        connected_share=checked.connected_share,
+    )

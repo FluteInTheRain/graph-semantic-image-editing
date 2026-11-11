@@ -1,8 +1,12 @@
+import dataclasses
+
 import numpy as np
 import pytest
 
+from mmxai.explain.config import load_explain_config
 from mmxai.explain.fidelity import (
     characterization,
+    evaluate_explanation,
     evaluate_fidelity,
     fidelity_minus,
     fidelity_plus,
@@ -284,3 +288,21 @@ def test_characterization_on_a_hand_computed_example():
 
 def test_characterization_is_zero_when_the_explanation_is_not_necessary():
     assert characterization(fid_plus=0.0, fid_minus=0.0, plus_weight=0.5) == 0.0
+
+
+def test_evaluate_explanation_on_the_star_graph():
+    config = dataclasses.replace(
+        load_explain_config("configs/explain_vg.yaml"), num_layers=1, both_directions=False
+    )
+
+    report = evaluate_explanation(STAR, 0, [(1, 0)], star_score, config, seed=0)
+
+    # Full 1.0, without (1, 0): 0.6, only (1, 0): 0.4, no edges: 0.0.
+    assert report.fidelity_plus == pytest.approx(0.4)
+    assert report.fidelity_minus == pytest.approx(0.6)
+    assert report.normalized_plus == pytest.approx(0.4)
+    assert report.characterization == pytest.approx(0.4)
+    assert report.random_plus_mean == pytest.approx(0.25, abs=0.1)
+    assert report.sparsity == pytest.approx(0.75)
+    assert report.all_in_reach
+    assert report.connected_share == pytest.approx(1.0)
