@@ -16,12 +16,13 @@ import numpy as np
 import torch
 
 from mmxai.explain.occlusion import occlusion
-from mmxai.explain.presentation import Explanation, build_explanation
+from mmxai.explain.presentation import Explanation, build_explanation, format_explanation
 from mmxai.index.image_index import build_image_index, search_images
 from mmxai.models.one_layer_sage import OneLayerSage, graph_scores
 from mmxai.models.training import (
     BipartiteGraph,
     GnnConfig,
+    embed_images,
     load_bipartite,
     load_chosen_alpha,
     load_texts,
@@ -50,8 +51,17 @@ class QueryResult:
     top_image_ids: list[int]
     top_scores: list[float]
     first_relevant_rank: int | None  # among all top_k candidates, 1 = first
-    explanation: Explanation
+    explanation: Explanation  # why the top image got its graph score
     case: str | None = None  # "success" / "failure" in fixed mode
+    # For the failure analysis: the same query ranked by CLIP alone, so one sees whether
+    # the graph moved the correct image up or down.
+    clip_rank: int | None = None
+    # The image the region description was written for (None for a typed query), its
+    # rank after re-ranking, and why it got its graph score (None if it is the top image,
+    # whose explanation is `explanation`, or in clip mode).
+    source_image_id: int | None = None
+    source_rank: int | None = None
+    source_explanation: Explanation | None = None
 
 
 def explain_image(
@@ -59,6 +69,7 @@ def explain_image(
     graph: BipartiteGraph,
     query: torch.Tensor,
     image_row: int,
+    ranked_graph_score: float,
     alpha: float,
     top_m: int,
     min_contribution: float,
@@ -67,7 +78,7 @@ def explain_image(
 
     Local numbering for explain/: node 0 is the image, node 1 + j its j-th concept.
     The model only reads edges into this image, so this small graph gives exactly
-    the score used for ranking.
+    the score used for ranking; occlusion checks it against ranked_graph_score.
     """
     concept_rows = graph.edge_index[0, graph.edge_index[1] == image_row]
     num_edges = len(concept_rows)
@@ -83,7 +94,12 @@ def explain_image(
         return float(graph_scores(query, h[0]))
 
     contributions = occlusion(
-        edge_index, 0, NUM_LAYERS, both_directions=False, score_image=score_image
+        edge_index,
+        0,
+        NUM_LAYERS,
+        both_directions=False,
+        score_image=score_image,
+        ranked_graph_score=ranked_graph_score,
     )
     node_names = {0: f"image {int(graph.image_ids[image_row])}"}
     relation_names = {}
@@ -196,6 +212,7 @@ def run_demo(
     gallery_rows = np.flatnonzero(graph.image_split == split_name)
 
     text_ids = None
+    source_rows: np.ndarray | None = None
     if typed_texts:
         query_x = encode_typed_queries(config, typed_texts)
         relevant: list[set[int] | None] = [None] * len(typed_texts)
@@ -209,6 +226,7 @@ def run_demo(
             query_rows = split_rows  # every query: the cases are chosen after ranking
         query_x = text_x[query_rows]
         text_ids = all_text_ids[query_rows]
+        source_rows = text_image_rows[query_rows]
         relevant = list(
             relevant_rows(
                 text_x, text_image_rows, query_rows, split_rows, config.same_text_threshold
@@ -233,16 +251,18 @@ def run_demo(
     order = np.argsort(-scores, axis=1, kind="stable")
     ranked_rows = np.take_along_axis(candidates, order, axis=1)
     ranked_scores = np.take_along_axis(scores, order, axis=1)
+    ranked_graph = np.take_along_axis(graph_score, order, axis=1)
 
     first_ranks: list[int | None] = []
+    clip_ranks: list[int | None] = []
     for q in range(len(query_x)):
-        first_rank = None
-        if relevant[q] is not None:
-            for position, row in enumerate(ranked_rows[q].tolist(), start=1):
-                if row in relevant[q]:
-                    first_rank = position
-                    break
-        first_ranks.append(first_rank)
+        if relevant[q] is None:
+            first_ranks.append(None)
+            clip_ranks.append(None)
+        else:
+            first_ranks.append(rank_of_first(ranked_rows[q], relevant[q]))
+            # FAISS returns the candidates in CLIP order, so their order is CLIP's ranking.
+            clip_ranks.append(rank_of_first(candidates[q], relevant[q]))
 
     if pick == "fixed" and text_ids is not None:
         success, failure = pick_fixed_cases(
@@ -267,8 +287,36 @@ def run_demo(
         else:
             query = torch.from_numpy(query_x[q]).to(device)
             explanation = explain_image(
-                model, graph, query, int(rows[0]), alpha, top_m, min_contribution
+                model,
+                graph,
+                query,
+                int(rows[0]),
+                float(ranked_graph[q, 0]),
+                alpha,
+                top_m,
+                min_contribution,
             )
+        source_id = source_rank = source_explanation = None
+        if source_rows is not None:
+            source_row = int(source_rows[q])
+            source_id = int(graph.image_ids[source_row])
+            source_rank = rank_of_first(rows, {source_row})
+            if model is not None and source_row != int(rows[0]):
+                if source_rank is not None:
+                    source_graph = float(ranked_graph[q, source_rank - 1])
+                else:
+                    # Not among the candidates: score it the way the candidates were scored.
+                    source_graph = graph_score_of(model, graph, query, source_row)
+                source_explanation = explain_image(
+                    model,
+                    graph,
+                    query,
+                    source_row,
+                    source_graph,
+                    alpha,
+                    top_m,
+                    min_contribution,
+                )
         results.append(
             QueryResult(
                 query=sentence,
@@ -280,6 +328,109 @@ def run_demo(
                 first_relevant_rank=first_ranks[q],
                 explanation=explanation,
                 case=case,
+                clip_rank=clip_ranks[q],
+                source_image_id=source_id,
+                source_rank=source_rank,
+                source_explanation=source_explanation,
             )
         )
     return results
+
+
+@torch.no_grad()
+def graph_score_of(
+    model: OneLayerSage, graph: BipartiteGraph, query: torch.Tensor, image_row: int
+) -> float:
+    """cos(q, h_i) through embed_images, the path score_candidates uses for ranking."""
+    rows = torch.tensor([image_row], device=graph.image_x.device)
+    return float(graph_scores(query, embed_images(model, graph, rows)[0]))
+
+
+def rank_of_first(ranked_rows: np.ndarray, wanted: set[int]) -> int | None:
+    """1-based position of the first row in `wanted`, or None if none is in the list."""
+    for position, row in enumerate(ranked_rows.tolist(), start=1):
+        if row in wanted:
+            return position
+    return None
+
+
+def format_result(result: QueryResult, number: int, mode: str) -> str:
+    """One query as plain text: top images, correct rank, explanations of top and source."""
+    case = "" if result.case is None else f", {result.case}"
+    lines = [f"=== Query {number} ({mode}{case}): {result.query}"]
+    for rank, (image_id, score) in enumerate(
+        zip(result.top_image_ids, result.top_scores, strict=True), start=1
+    ):
+        mark = ""
+        if result.relevant_image_ids is not None and image_id in result.relevant_image_ids:
+            mark = "  <- correct"
+        lines.append(f"  {rank}. image {image_id}  score {score:.4f}{mark}")
+    if result.relevant_image_ids is not None:
+        lines.append(
+            f"  First correct image: rank {_rank_text(result.first_relevant_rank)} "
+            f"(CLIP alone: rank {_rank_text(result.clip_rank)})"
+        )
+    lines.append(f"  Why image {result.top_image_ids[0]} is first:")
+    lines += [f"    {line}" for line in format_explanation(result.explanation).splitlines()]
+    if result.source_explanation is not None:
+        lines.append(
+            f"  Source image {result.source_image_id} "
+            f"(rank {_rank_text(result.source_rank)}), its graph score comes from:"
+        )
+        lines += [
+            f"    {line}" for line in format_explanation(result.source_explanation).splitlines()
+        ]
+    return "\n".join(lines)
+
+
+def cases_table(results: list[QueryResult]) -> list[dict]:
+    """One row per query for a summary table (e.g. pandas.DataFrame(cases_table(...)))."""
+    rows = []
+    for result in results:
+        supporting = ", ".join(item.source for item in result.explanation.supporting)
+        opposing = ", ".join(item.source for item in result.explanation.opposing)
+        rows.append(
+            {
+                "case": result.case,
+                "query": result.query,
+                "rank": _rank_text(result.first_relevant_rank),
+                "rank_clip_only": _rank_text(result.clip_rank),
+                "top_image": result.top_image_ids[0],
+                "pushed_up_by": supporting,
+                "pulled_down_by": opposing,
+            }
+        )
+    return rows
+
+
+def cases_to_markdown(results: list[QueryResult], mode: str) -> str:
+    """The cases as a Markdown section for the report: query, ranks, explanations."""
+    lines = [f"## Cases ({mode})", ""]
+    for number, result in enumerate(results, start=1):
+        case = "" if result.case is None else f" ({result.case})"
+        lines.append(f"### {number}. {result.query}{case}")
+        lines.append("")
+        lines.append(f"- First correct image: rank {_rank_text(result.first_relevant_rank)}")
+        lines.append(f"- With CLIP alone: rank {_rank_text(result.clip_rank)}")
+        lines.append(f"- Top images: {', '.join(str(i) for i in result.top_image_ids)}")
+        lines.append(f"- Why image {result.top_image_ids[0]} is first:")
+        lines.append("")
+        lines.append("```")
+        lines.append(format_explanation(result.explanation))
+        lines.append("```")
+        if result.source_explanation is not None:
+            lines.append("")
+            lines.append(
+                f"- Source image {result.source_image_id} "
+                f"(rank {_rank_text(result.source_rank)}): its graph score comes from"
+            )
+            lines.append("")
+            lines.append("```")
+            lines.append(format_explanation(result.source_explanation))
+            lines.append("```")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _rank_text(rank: int | None) -> str:
+    return "not in the top 100" if rank is None else str(rank)

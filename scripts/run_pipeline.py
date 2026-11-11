@@ -39,8 +39,7 @@ Output:
 
 import argparse
 
-from mmxai.explain.demo import MODES, PICKS, run_demo
-from mmxai.explain.presentation import format_explanation
+from mmxai.explain.demo import MODES, PICKS, format_result, run_demo
 from mmxai.models.training import load_gnn_config
 
 
@@ -83,23 +82,8 @@ def main() -> None:
         args.pick,
     )
     for number, result in enumerate(results, start=1):
-        case = "" if result.case is None else f", {result.case}"
-        print(f"\n=== Query {number} ({args.mode}{case}): {result.query}")
-        for rank, (image_id, score) in enumerate(
-            zip(result.top_image_ids, result.top_scores, strict=True), start=1
-        ):
-            mark = ""
-            if result.relevant_image_ids is not None and image_id in result.relevant_image_ids:
-                mark = "  <- correct"
-            print(f"  {rank}. image {image_id}  score {score:.4f}{mark}")
-        if result.relevant_image_ids is not None:
-            if result.first_relevant_rank is None:
-                print("  First correct image: not in the top 100 (FAILED)")
-            else:
-                print(f"  First correct image at rank {result.first_relevant_rank}")
-        print(f"  Why image {result.top_image_ids[0]} is first:")
-        for line in format_explanation(result.explanation).splitlines():
-            print(f"    {line}")
+        print()
+        print(format_result(result, number, args.mode))
 
 
 if __name__ == "__main__":
