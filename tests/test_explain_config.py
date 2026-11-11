@@ -49,3 +49,28 @@ def test_config_is_frozen():
 
     with pytest.raises(dataclasses.FrozenInstanceError):
         config.top_m = 3
+
+
+def test_test_split_needs_the_choices_made_on_val(tmp_path):
+    with pytest.raises(ValueError, match="on val before running test"):
+        load_explain_config(write_config(tmp_path, eval_split="test"))
+
+
+def test_test_split_runs_with_choices_made_on_val(tmp_path):
+    config = load_explain_config(
+        write_config(tmp_path, eval_split="test", main_explainer="occlusion", top_m=5)
+    )
+
+    assert config.main_explainer == "occlusion"
+
+
+def test_rejects_a_top_m_not_among_the_options(tmp_path):
+    with pytest.raises(ValueError, match="top_m_options"):
+        load_explain_config(write_config(tmp_path, top_m=7))
+
+
+def test_rejects_a_main_explainer_not_compared(tmp_path):
+    with pytest.raises(ValueError, match="not among explainers"):
+        load_explain_config(
+            write_config(tmp_path, explainers=["occlusion"], main_explainer="gnn_explainer")
+        )

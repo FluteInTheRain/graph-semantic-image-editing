@@ -2,7 +2,7 @@ import pytest
 
 from mmxai.explain.statistics import (
     average_ranks,
-    choose_explainer,
+    choose_on_validation,
     mean_and_std,
     spearman,
     wilcoxon_greater,
@@ -63,13 +63,33 @@ def test_mean_and_std_need_two_values():
         mean_and_std([1.0])
 
 
-def test_choose_explainer_picks_the_highest_mean():
+def test_choose_on_validation_picks_the_highest_mean():
     scores = {"occlusion": [0.6, 0.7], "integrated_gradients": [0.8, 0.9]}
 
-    assert choose_explainer(scores) == "integrated_gradients"
+    assert choose_on_validation(scores, split="val") == "integrated_gradients"
 
 
-def test_choose_explainer_breaks_ties_alphabetically():
+def test_choose_on_validation_breaks_ties_in_sorted_order():
     scores = {"occlusion": [0.5], "gnn_explainer": [0.5]}
 
-    assert choose_explainer(scores) == "gnn_explainer"
+    assert choose_on_validation(scores, split="val") == "gnn_explainer"
+
+
+def test_choose_on_validation_refuses_test_scores():
+    with pytest.raises(ValueError, match="val only"):
+        choose_on_validation({"occlusion": [0.5]}, split="test")
+
+
+def test_choose_on_validation_skips_missing_scores():
+    scores = {("occlusion", 3): [0.2, None], ("occlusion", 5): [0.4, None]}
+
+    assert choose_on_validation(scores, split="val") == ("occlusion", 5)
+
+
+def test_choose_on_validation_rejects_an_option_without_scores():
+    with pytest.raises(ValueError, match="no scores"):
+        choose_on_validation({"occlusion": [None]}, split="val")
+
+
+def test_wilcoxon_treats_float_noise_as_zero():
+    assert wilcoxon_greater([1e-17, 1.0]) == pytest.approx(1 / 2)

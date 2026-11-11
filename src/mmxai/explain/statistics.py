@@ -1,6 +1,6 @@
 """Statistics for comparing explanations, in plain numpy (no extra dependency)."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Hashable, Mapping, Sequence
 
 import numpy as np
 
@@ -31,14 +31,15 @@ def spearman(first: Sequence[float], second: Sequence[float]) -> float:
     return float(np.corrcoef(first_ranks, second_ranks)[0, 1])
 
 
-def wilcoxon_greater(differences: Sequence[float]) -> float:
+def wilcoxon_greater(differences: Sequence[float], zero_tolerance: float = 1e-12) -> float:
     """One-sided Wilcoxon signed-rank p-value for "the differences tend to be positive".
 
-    Zero differences are dropped. The p-value is exact: it counts, over every way of
-    flipping signs, how often the positive rank sum is at least the observed one.
+    Differences within zero_tolerance of 0 are dropped (float noise counts as no change).
+    The p-value is exact: it counts, over every way of flipping signs, how often the
+    positive rank sum is at least the observed one.
     """
     differences = np.asarray(differences, dtype=float)
-    differences = differences[differences != 0]
+    differences = differences[np.abs(differences) > zero_tolerance]
     if len(differences) == 0:
         return 1.0
 
@@ -63,18 +64,27 @@ def mean_and_std(values: Sequence[float]) -> tuple[float, float]:
     return float(values.mean()), float(values.std(ddof=1))
 
 
-def choose_explainer(validation_scores: Mapping[str, Sequence[float]]) -> str:
-    """Pick the explainer with the highest mean score on validation queries.
+def choose_on_validation(
+    validation_scores: Mapping[Hashable, Sequence[float | None]], split: str
+) -> Hashable:
+    """Pick the option (e.g. an explainer, or an explainer and top_m) with the best mean.
 
-    Only validation scores may be passed here (PDF section 6): the choice is then run once
-    on test. Ties go to the first name in alphabetical order, so the choice is repeatable.
+    Refuses any split but val (PDF section 6): the choice is then written to the config
+    and run once on test. Missing scores (None, e.g. no graph effect) are skipped. Ties go
+    to the option that sorts first, so the choice is repeatable.
     """
+    if split != "val":
+        raise ValueError(f"choices are made on val only, got {split!r}")
     if not validation_scores:
-        raise ValueError("no explainers to choose from")
-    best_name = None
+        raise ValueError("no options to choose from")
+
+    best_option = None
     best_mean = -np.inf
-    for name in sorted(validation_scores):
-        mean = float(np.mean(validation_scores[name]))
+    for option in sorted(validation_scores, key=str):
+        values = [value for value in validation_scores[option] if value is not None]
+        if not values:
+            raise ValueError(f"option {option!r} has no scores")
+        mean = float(np.mean(values))
         if mean > best_mean:
-            best_name, best_mean = name, mean
-    return best_name
+            best_option, best_mean = option, mean
+    return best_option

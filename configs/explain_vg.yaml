@@ -9,8 +9,13 @@ explainers: [occlusion, integrated_gradients, gnn_explainer]
 # TODO: confirm both values with the Graph team before the first real run.
 num_layers: 2
 both_directions: true
-# Relations shown per side, and effects too small to show (float noise).
-top_m: 5
+# Explanation sizes compared on val.
+top_m_options: [3, 5, 10]
+# Chosen on val (statistics.choose_on_validation) and written here before test; test
+# refuses to run while these are null.
+main_explainer: null
+top_m: null
+# Effects too small to show (float noise).
 min_contribution: 1.0e-6
 # Characterization weighs fidelity+ and 1 - fidelity- equally (GraphFramEx default).
 plus_weight: 0.5

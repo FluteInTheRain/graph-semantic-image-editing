@@ -18,7 +18,9 @@ class ExplainConfig:
     explainers: list[str]
     num_layers: int
     both_directions: bool
-    top_m: int
+    top_m_options: list[int]
+    main_explainer: str | None
+    top_m: int | None
     min_contribution: float
     plus_weight: float
     random_repeats: int
@@ -46,4 +48,12 @@ def load_explain_config(path: str | Path) -> ExplainConfig:
     for name in ("robust_remove_prob", "robust_add_back_prob", "plus_weight"):
         if not 0.0 <= getattr(config, name) <= 1.0:
             raise ValueError(f"{name} must be in [0, 1]")
+
+    # main_explainer and top_m are chosen on val; test may only reuse that choice.
+    if config.eval_split == "test" and (config.main_explainer is None or config.top_m is None):
+        raise ValueError("choose main_explainer and top_m on val before running test")
+    if config.main_explainer is not None and config.main_explainer not in config.explainers:
+        raise ValueError(f"main_explainer {config.main_explainer!r} is not among explainers")
+    if config.top_m is not None and config.top_m not in config.top_m_options:
+        raise ValueError(f"top_m {config.top_m} is not among top_m_options")
     return config
