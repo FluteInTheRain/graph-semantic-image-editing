@@ -139,6 +139,20 @@ uv run --group ml --group graph python scripts/run_pipeline.py --mode clip_graph
 - **Giải thích ở mode `clip`**: in `The graph was not used (alpha = 1)`. CLIP thuần không có đồ thị nên không có quan hệ nào để chỉ ra.
 - Đây là giải thích cấp độ 1–2. Fidelity (Fid+/Fid−) là cấp độ 3, chưa đưa vào script.
 
+### Chạy bằng notebook (Kaggle / Colab): xAI cấp độ 1
+
+`notebooks/20_xai_level1_kaggle.ipynb` làm trọn mục 3–5 trong một notebook và in đúng thứ đề yêu cầu ở cấp độ 1: quan hệ được dùng khi xếp hạng cho vài truy vấn, và phân tích 5 ca thành công + 5 ca thất bại (`--pick fixed`), kèm ảnh nếu có.
+
+| Bước | Kaggle |
+|---|---|
+| 1 | Tải notebook lên Kaggle; **Settings**: bật Internet, chọn GPU |
+| 2 | **Add Input**: output của notebook `qphulong/prepare-clip-embeddings-for-mmkg-xai` (bản `visual_genome`). Notebook tự tìm và nối vào `artifacts/features/...` |
+| 3 | *(Tuỳ chọn)* **Add Input** `lyte69/visualgenome-part1-part2` để vẽ ảnh; **Secrets** `WANDB_API_KEY` để log W&B |
+| 4 | Sửa ô cấu hình nếu cần (`SEEDS`, `SPLIT`, `TYPED_QUERIES`), rồi **Save Version → Save & Run All** |
+| 5 | Tab **Output**: `graph-semantic-image-editing/results/runs/<thời gian>_xai_level1_seed<k>/cases.md`, `cases.csv` cho báo cáo; `artifacts/checkpoints/` nếu muốn chạy tiếp ở máy local |
+
+Notebook clone nhánh `feat/gnn-rerank` từ GitHub, nên code phải được **push** trước. Nếu repo private thì cần thêm token GitHub vào lệnh clone. Trên Kaggle/Colab dùng `pip` thay `uv`, vì torch có sẵn.
+
 ## 6. Lưu ý chống rò rỉ (PDF §6, ADR-0009)
 
 - Mặc định `--split test` chỉ để **xem** kết quả cho báo cáo. Sau khi xem test thì **không đổi** config, `alpha` hay mô hình. Đang còn chỉnh thì dùng `--split val`.
