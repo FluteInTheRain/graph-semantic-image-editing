@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from mmxai.explain.intervention import mark_remaining_edges
+from mmxai.explain.subgraph import relations_in_reach
 
 
 def fidelity_plus(full_score: float, score_without_explanation: float) -> float:
@@ -86,3 +87,116 @@ def evaluate_fidelity(
         fidelity_minus=fidelity_minus(full[candidate], only[candidate]),
         rank_drop=rank_drop(rank_of(final_before, candidate), rank_of(final_after, candidate)),
     )
+
+
+def random_control(
+    edge_index: np.ndarray,
+    image_node: int,
+    num_layers: int,
+    both_directions: bool,
+    num_removed: int,
+    score_image: Callable[[np.ndarray], float],
+    repeats: int,
+    seed: int,
+) -> np.ndarray:
+    """Fidelity+ of removing num_removed random relations near the image, repeated.
+
+    The relations are drawn from those that can change the image's score, so the control
+    touches the same neighbourhood as the explanation. Returns one value per repeat.
+    """
+    relations = relations_in_reach(edge_index, image_node, num_layers, both_directions)
+    if not 0 <= num_removed <= len(relations):
+        raise ValueError(f"cannot remove {num_removed} of {len(relations)} relations")
+
+    rng = np.random.default_rng(seed)
+    full = score_image(np.ones(edge_index.shape[1], dtype=bool))
+    values = np.empty(repeats)
+    for repeat in range(repeats):
+        picked = rng.choice(len(relations), size=num_removed, replace=False)
+        removed = [relations[index] for index in picked]
+        remaining = mark_remaining_edges(edge_index, removed, both_directions)
+        values[repeat] = full - score_image(remaining)
+    return values
+
+
+def robust_fidelity(
+    edge_index: np.ndarray,
+    image_node: int,
+    num_layers: int,
+    explanation: list[tuple[int, int]],
+    both_directions: bool,
+    score_image: Callable[[np.ndarray], float],
+    remove_prob: float,
+    add_back_prob: float,
+    repeats: int,
+    seed: int,
+) -> tuple[float, float]:
+    """Robust fidelity+ and fidelity- (Zheng et al., ICLR 2024), averaged over repeats.
+
+    Fidelity+ removes each explanation relation only with probability remove_prob;
+    fidelity- keeps the explanation and adds back each other nearby relation with
+    probability add_back_prob. Both keep the changed graph close to the original one,
+    so the model is not judged on graphs unlike those it was trained on.
+    """
+    for name, value in (("remove_prob", remove_prob), ("add_back_prob", add_back_prob)):
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"{name} must be in [0, 1], got {value}")
+
+    explained = {_relation_key(edge, both_directions) for edge in explanation}
+    others = [
+        relation
+        for relation in relations_in_reach(edge_index, image_node, num_layers, both_directions)
+        if _relation_key(relation, both_directions) not in explained
+    ]
+
+    rng = np.random.default_rng(seed)
+    full = score_image(np.ones(edge_index.shape[1], dtype=bool))
+    plus_values = np.empty(repeats)
+    minus_values = np.empty(repeats)
+    for repeat in range(repeats):
+        removed = [edge for edge in explanation if rng.random() < remove_prob]
+        without = mark_remaining_edges(edge_index, removed, both_directions)
+        plus_values[repeat] = full - score_image(without)
+
+        kept = ~mark_remaining_edges(edge_index, explanation, both_directions)
+        for relation in others:
+            if rng.random() < add_back_prob:
+                kept |= ~mark_remaining_edges(edge_index, [relation], both_directions)
+        minus_values[repeat] = full - score_image(kept)
+
+    return float(plus_values.mean()), float(minus_values.mean())
+
+
+def _relation_key(edge: tuple[int, int], both_directions: bool):
+    return frozenset(edge) if both_directions else edge
+
+
+def normalized_fidelity(
+    full: float, without: float, only: float, empty: float
+) -> tuple[float, float] | None:
+    """Fidelity+ and fidelity- as shares of everything the graph adds to the score, in [0, 1].
+
+    empty is the score with no edges at all. Returns None when the edges do not change
+    the score, because then no explanation can be measured.
+    """
+    graph_effect = full - empty
+    if np.isclose(graph_effect, 0.0):
+        return None
+    plus = float(np.clip((full - without) / graph_effect, 0.0, 1.0))
+    minus = float(np.clip((full - only) / graph_effect, 0.0, 1.0))
+    return plus, minus
+
+
+def characterization(fid_plus: float, fid_minus: float, plus_weight: float) -> float:
+    """One score from normalized fidelity+ and fidelity- (GraphFramEx, Amara et al. 2022).
+
+    Weighted harmonic mean of fidelity+ (higher is better) and 1 - fidelity- (higher is
+    better), so it is high only when the explanation is both necessary and sufficient.
+    """
+    if not 0.0 <= plus_weight <= 1.0:
+        raise ValueError(f"plus_weight must be in [0, 1], got {plus_weight}")
+    sufficiency = 1.0 - fid_minus
+    if fid_plus == 0.0 or sufficiency == 0.0:
+        return 0.0
+    minus_weight = 1.0 - plus_weight
+    return 1.0 / (plus_weight / fid_plus + minus_weight / sufficiency)
