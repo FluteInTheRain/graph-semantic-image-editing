@@ -44,7 +44,21 @@ Kết quả: `splits/visual_genome/split_seed0.json` (đã commit, đóng băng)
 
 Dùng đối tượng và quan hệ có sẵn trong dữ liệu. Phần dựng đồ thị thuộc task sau.
 
-Bộ truy vấn đánh giá Nhiệm vụ 2 đọc `objects.json` + `relationships.json` (ADR-0044, `docs/query_benchmark.md`). Chưa tải hai file này; khi tải cần ghi bản (v1.4 hay v1.2) và ngày tải vào đây.
+Bộ truy vấn đánh giá Nhiệm vụ 2 đọc `objects.json` + `relationships.json` (ADR-0044, `docs/query_benchmark.md`).
+
+Đồ thị ảnh – khái niệm (ADR-0045, `docs/guides/xay-do-thi.md`) chỉ đọc `objects.json`:
+
+| Mục | Giá trị |
+|---|---|
+| Bản | `objects.json.zip` (v1.4) từ https://homes.cs.washington.edu/~ranjay/visualgenome/data/dataset/objects.json.zip |
+| Ngày tải | 2026-11-07 (qphulong), file ghi `Last-Modified: 2023-06-28` |
+| sha256 `objects.json.zip` | `efa456069aedb420b7dabf54f4608c89c78a00de550f1433066e9b6f84fb629c` |
+| sha256 `objects.json` | `94238b6187c0ea1f97acc1fdaec106bd3dee12bb0f81b23dc8b07e9173514985` |
+| Thống kê | 108.077 ảnh (khớp split), 2.516.939 đồ vật, 19,6% không có synset; 1.793 ảnh không có đồ vật; 13.320 ảnh có đồ vật nhưng không đồ vật nào có synset |
+
+Đồ vật thiếu synset được tra synset theo tên bằng từ điển học trên train (ADR-0045). Sau bước này, chỉ còn 1.805 ảnh không có cạnh (1.793 ảnh không có đồ vật nào + 12 ảnh train).
+
+`relationships.json` chưa tải.
 
 ## Embedding
 

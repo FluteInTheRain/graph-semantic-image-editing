@@ -1,0 +1,30 @@
+# Image-concept graph of Visual Genome, contains edges from CLIP top-k (ADR-0046, status: Proposed).
+# This is the graph of the main model. configs/graph_vg.yaml (annotation edges) is the
+# upper-bound ablation only.
+# How to run: see the docstring of scripts/build_graph.py and docs/guides/xay-do-thi.md.
+dataset: visual_genome
+# objects.json v1.4: still read, because the concept vocabulary is counted on the
+# annotations of TRAIN images (ADR-0045). Edges do not use the annotations.
+data_dir: data/visual_genome
+objects_file: objects.json
+split_file: splits/visual_genome/split_seed0.json
+# Decision (ADR-0045): keep a synset seen in >= 5 train images.
+#   Proposed by Claude Code, 2026-11-07; not yet decided by the team.
+min_train_images: 5
+# Decision (ADR-0046): every image (train, val, test) links to its k nearest concepts by CLIP cosine.
+#   Why: no labels and no statistic over test images, so test edges cannot read the answers.
+#   Decided by: qphulong, 2026-11-10.
+edge_source: clip_topk
+# Decision (ADR-0046): k = 16, close to the mean degree of the annotation graph (~15.9).
+#   Proposed by Claude Code, 2026-11-10; not yet decided by the team. Tune on val only.
+clip_topk_k: 16
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0045): concept node vector = CLIP text embedding of this sentence.
+#   Proposed by Claude Code, 2026-11-07; not yet decided by the team.
+concept_prompt: "a photo of a {}"
+# Must equal the model of the cached image embeddings (checked when the graph is built).
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto
+text_batch_size: 256
+output_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1

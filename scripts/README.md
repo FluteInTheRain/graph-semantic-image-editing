@@ -15,7 +15,7 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/build_query_benchmark.py` (đã có) | Dựng `queries/visual_genome_test.jsonl` chỉ từ các cặp đã `verified` trong manifest | `mmxai.queries.validator` |
 | `scripts/evaluate_query_benchmark.py` (đã có) | CLIP thuần trên bộ truy vấn đã kiểm tra: Recall@1/5/10/100 + MRR@100 tách direct/indirect. Cần `uv sync --group ml` | `mmxai.eval.query_benchmark` |
 | `scripts/summarize_runs.py` (đã có) | Gom `results/runs/*` thành `results/tables/main.csv` (mean ± std, ≥3 seed, bỏ run có code chưa commit) | `mmxai.eval.summary` |
-| `scripts/build_graph.py` | Dựng đồ thị ảnh - đối tượng - khái niệm (cạnh thống kê chỉ từ train) | `mmxai.graph` |
+| `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
 | `scripts/train_gnn.py` | Huấn luyện GNN graph scorer | `mmxai.models` |
 | `scripts/evaluate.py` | Re-rank, chọn `alpha` trên val, đo trên test, ≥3 seed | `mmxai.rerank`, `mmxai.eval` |
 | `scripts/explain.py` | Xuất đường đi giải thích + fidelity/validity/sparsity | `mmxai.explain` |
