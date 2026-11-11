@@ -21,14 +21,16 @@ min_contribution: 1.0e-6
 plus_weight: 0.5
 # Random control: same number of relations removed at random near the image.
 random_repeats: 20
-# Robust fidelity defaults from Zheng et al. (ICLR 2024): remove 10% of the explanation,
-# add back 90% of the other relations. Check against the paper before reporting.
+# Robust fidelity, Zheng et al. (ICLR 2024, arXiv 2310.01820): the paper uses
+# "alpha1 = 1 - alpha2 = 0.1", i.e. remove each explanation relation with probability 0.1
+# and add back each other relation with probability 0.9.
 robust_remove_prob: 0.1
 robust_add_back_prob: 0.9
 robust_repeats: 20
 # Integrated Gradients: steps along the path from no relations to all relations.
 ig_steps: 50
-# GNNExplainer: size and entropy weights are PyG's defaults; plain gradient steps.
+# GNNExplainer: size and entropy weights are PyG's defaults. Unlike PyG (Adam, lr 0.01,
+# 100 epochs), we take plain gradient steps with a larger rate and a start of N(1, 0.1).
 gnn_explainer_epochs: 200
 gnn_explainer_learning_rate: 1.0
 gnn_explainer_size_weight: 0.005

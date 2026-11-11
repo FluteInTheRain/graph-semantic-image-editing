@@ -120,15 +120,17 @@ Ký hiệu: `i*` là ảnh đang giải thích, `E_x` là tập cạnh giải th
 | Characterization | `Fid+·(1−Fid−) / (0.5·(1−Fid−) + 0.5·Fid+)`, tính trên **Fid chuẩn hoá** (xem dưới bảng) | Gộp Fid+ và Fid− thành một số |
 | Robust Fid+ / Fid− | Fid+: mỗi quan hệ của `E_x` chỉ bị xoá với xác suất `robust_remove_prob` (mặc định 0.1). Fid−: giữ `E_x` và thêm lại mỗi quan hệ khác với xác suất `robust_add_back_prob` (mặc định 0.9). Lấy trung bình nhiều lần. Xác suất 1 và 0 cho lại Fid thường | Đồ thị sau can thiệp vẫn gần đồ thị gốc, giảm ảnh hưởng của OOD |
 | Sparsity | `1 − |E_x| / |E(S(q,i*))|` | Giải thích càng gọn càng tốt |
-| Validity | (i) mọi cạnh của `E_x` có thật trong đồ thị train và nằm trong `S(q,i*)`; (ii) `E_x` nối được tới `i*` thành ít nhất một đường đi. `networkx` chỉ dùng ở bước kiểm này | Không có cạnh "ảo", giải thích đọc được thành đường đi |
+| Validity | (i) `all_in_reach`: mọi quan hệ của `E_x` có thật trong đồ thị đã chấm và nằm trong `S(q,i*)`; (ii) `connected_share`: tỉ lệ quan hệ của `E_x` nối được tới `i*` **chỉ qua các quan hệ của chính `E_x`** (tìm kiếm đơn giản trên `E_x`, không dùng networkx, không tìm đường trên toàn đồ thị) | Không có cạnh "ảo"; giải thích đọc được thành các đường đi kết thúc ở ảnh |
 
-Fid+ và Fid− dùng **hiệu chưa chia**, đúng định nghĩa gốc của Zheng et al. (ICLR 2024). Không chia cho `g(q,i*)` vì điểm đồ thị có thể bằng 0 hoặc âm (ví dụ điểm kiểu cosine). Code: `src/mmxai/explain/fidelity.py`.
+Fid+ và Fid− dùng **hiệu điểm chưa chia**. Bài gốc (Zheng et al., ICLR 2024; GraphFramEx) đo hiệu **xác suất của nhãn dự đoán** vì làm bài toán phân loại; bài của nhóm là xếp hạng nên dùng hiệu điểm đồ thị, đây là **điều chỉnh của nhóm**. Không chia cho `g(q,i*)` vì điểm đồ thị có thể bằng 0 hoặc âm (ví dụ điểm kiểu cosine). Code: `src/mmxai/explain/fidelity.py`.
 
-**Fid chuẩn hoá (cho characterization):** chia cho **toàn bộ phần điểm mà cạnh đồ thị tạo ra**, `g(đủ cạnh) − g(không cạnh nào)`, rồi kẹp về [0, 1]. Ví dụ Fid+ chuẩn hoá = 0.5 nghĩa là bỏ giải thích làm mất một nửa phần điểm do đồ thị tạo ra. Mẫu số này khác 0 kể cả khi điểm âm. Nếu cạnh không làm đổi điểm (mẫu số = 0) thì không có gì để giải thích, và metric để trống (`None`).
+**Fid chuẩn hoá (cho characterization):** chia cho **toàn bộ phần điểm mà cạnh đồ thị tạo ra**, `g(đủ cạnh) − g(không cạnh nào)`, rồi kẹp về [0, 1]. Ví dụ Fid+ chuẩn hoá = 0.5 nghĩa là bỏ giải thích làm mất một nửa phần điểm do đồ thị tạo ra. Mẫu số này khác 0 kể cả khi điểm âm. Nếu cạnh không làm đổi điểm (mẫu số = 0) thì không có gì để giải thích, và metric để trống (`None`). Phép chuẩn hoá này cũng là **điều chỉnh của nhóm** (GraphFramEx dùng xác suất, vốn đã nằm trong [0, 1]). Báo cáo phải ghi số lần bị kẹp (`normalized_clipped`), vì kẹp che mất trường hợp tác động không cộng tính hoặc Fid+ âm.
 
-**Lưu ý về robust fidelity:** bản trước của tài liệu ghi ngược ("xoá với xác suất 0.9"). Code dùng cách hiểu xoá **ít** (0.1) và thêm lại **nhiều** (0.9), để đồ thị sau can thiệp gần đồ thị gốc, đúng mục đích chống OOD của bài báo. **Cần đọc lại bài gốc để xác nhận** trước khi báo cáo; hai giá trị nằm trong `configs/explain_vg.yaml`.
+**Robust fidelity, đã đối chiếu bài gốc** (arXiv 2310.01820, §4): `E_α` lấy mẫu đồ thị sao cho *"each edge is included with probability α"*; Fid₊ dùng `G − E_α1(Ψ)`, Fid₋ dùng `E_α2(G − Ψ) + Ψ`; *"if α1 = 1 and α2 = 0, we recover the original fidelity measures"*; thực nghiệm dùng *"α1 = 1 − α2 = 0.1"*. Vậy: xoá mỗi quan hệ giải thích với xác suất 0.1 (`robust_remove_prob`), thêm lại mỗi quan hệ khác với xác suất 0.9 (`robust_add_back_prob`), đúng như code. Khác bài gốc: code chỉ lấy mẫu các quan hệ trong `S(q,i*)` thay vì toàn bộ `G − Ψ`; hai cách cho cùng điểm vì cạnh ngoài vùng không ảnh hưởng điểm (được kiểm bởi `check_score_function`).
 
-**Đối chứng:** xoá cùng `|E_x|` cạnh chọn ngẫu nhiên **trong `S(q,i*)`** (không lấy từ toàn đồ thị, vì như vậy gần như không chạm cạnh nào liên quan), lặp R ≥ 20 lần. Kiểm định bằng Wilcoxon signed-rank ghép cặp theo truy vấn.
+**Đối chứng:** xoá cùng `|E_x|` quan hệ chọn ngẫu nhiên **trong `S(q,i*)`** (không lấy từ toàn đồ thị, vì như vậy gần như không chạm cạnh nào liên quan), lặp R ≥ 20 lần; đo cả điểm giảm lẫn **hạng tụt**. Tập ngẫu nhiên có thể trùng một phần với `E_x` (đối chứng cùng kích thước thông thường). Vì `S(q,i*)` có thêm một bước cho chuẩn hoá theo bậc (GCN), chứa nhiều cạnh gần như vô hại, báo cáo kèm biến thể "vùng hẹp" chỉ gồm đường truyền tin (`random_plus_mean_near`, `sparsity_near`). Kiểm định bằng Wilcoxon signed-rank một phía, ghép cặp theo truy vấn (`statistics.wilcoxon_greater`).
+
+**Vì sao `connected_share` là validity hợp lý:** điểm đồ thị `g(q, i)` được tính từ embedding của ảnh `i`; truy vấn không phải một node trong đồ thị. Vì vậy "nối truy vấn với ứng viên" (ADR-0016) quy về "nối tới `i*`". Nếu nhóm Graph đưa truy vấn vào đồ thị thành node, định nghĩa này phải mở rộng.
 
 - **Luồng:**
   ```
@@ -161,7 +163,7 @@ Fid+ và Fid− dùng **hiệu chưa chia**, đúng định nghĩa gốc của Z
 
 | RQ | Câu hỏi | Giả thuyết (bác bỏ được) |
 |---|---|---|
-| RQ1 | Giải thích có thật sự ảnh hưởng tới xếp hạng không? | Fid+ (thứ hạng) của `E_x` lớn hơn xoá ngẫu nhiên cùng kích thước (Wilcoxon, p < 0.05) |
+| RQ1 | Giải thích có thật sự ảnh hưởng tới xếp hạng không? | Hạng tụt (`rank_drop`) và Fid+ của `E_x` lớn hơn trung bình của xoá ngẫu nhiên cùng kích thước (`random_rank_drop_mean`, `random_plus_mean`), Wilcoxon một phía, p < 0.05 |
 | RQ2 | Explainer nào trung thực nhất trên mô hình của nhóm? | Ở cùng sparsity, có ít nhất một explainer có characterization cao hơn hẳn baseline ngẫu nhiên; thứ tự giữa Occlusion, IG và GNNExplainer được báo cáo kèm p-value |
 | RQ3 | Các explainer có đồng ý với nhau không? | Thứ tự cạnh theo IG và theo Occlusion tương quan Spearman ≥ 0.5. Nếu thấp, đó là bằng chứng các cạnh tương tác mạnh (mục 2.2) |
 | RQ4 | Truy vấn gián tiếp có khó giải thích hơn không? | Với truy vấn gián tiếp, khoảng cách giữa Fid+ thường và robust Fid+ lớn hơn truy vấn trực tiếp |
@@ -174,13 +176,13 @@ Nếu mô hình là GAT, thêm RQ5: attention có khớp với Occlusion không 
 
 | Cần nhận | Từ module | Vì sao xAI cần |
 |---|---|---|
-| Mô hình đồ thị đã huấn luyện, **chạy lại được** trên một `edge_index` đã sửa, ở chế độ `eval()` (cùng đồ thị cho cùng điểm) | Graph | Phần 1, 2, 3. Cần mô hình, không chỉ embedding đã cache. Mô hình còn ngẫu nhiên (dropout) thì mức điểm giảm chỉ là nhiễu; `occlusion` báo lỗi nếu gọi hai lần ra hai điểm khác nhau |
+| Mô hình đồ thị đã huấn luyện, **chạy lại được** trên một `edge_index` đã sửa, ở chế độ `eval()` (cùng đồ thị cho cùng điểm) | Graph | Phần 1, 2, 3. Cần mô hình, không chỉ embedding đã cache. Mô hình còn ngẫu nhiên (dropout) thì mức điểm giảm chỉ là nhiễu. `checks.check_score_function` báo lỗi nếu gọi hai lần ra hai điểm khác nhau, hoặc điểm khác **điểm đồ thị mà rerank đã dùng** (nhầm checkpoint/đồ thị) |
 | Hàm tính điểm đồ thị `g(q, i)` từ embedding | Graph / Rerank | Explainer và fidelity đều phải gọi đúng hàm đã dùng khi xếp hạng |
 | `x`, `edge_index`, loại cạnh, ánh xạ id ↔ tên node/quan hệ | Graph | Hiển thị, validity, đối chứng ngẫu nhiên |
 | Số lớp GNN (để biết k-hop) | Graph | Giới hạn đồ thị con cần giải thích. `edges_reaching_node` lấy thêm 1 bước vì GCN chuẩn hoá theo bậc của node gửi; `occlusion` báo lỗi nếu cạnh ngoài vùng này vẫn làm đổi điểm (số lớp khai báo sai) |
 | Kết quả rerank: `cosine`, `graph`, `final`, thứ hạng; `α` đã chốt trên val | Rerank | Tính thứ hạng sau can thiệp |
 
-IG và GNNExplainer được cài trực tiếp trong `src/mmxai/explain/` (không dùng bản của PyG), nên không phụ thuộc cách nhóm Graph xây mô hình. Hai explainer này cần một hàm **`score_and_gradient(weights)`**: nhận trọng số 0..1 cho từng cạnh, trả về điểm đồ thị của ảnh và gradient theo từng trọng số. Phía Graph tạo hàm này bằng autograd của torch, đại ý:
+IG và GNNExplainer được cài trực tiếp trong `src/mmxai/explain/` (không dùng bản của PyG), nên không phụ thuộc cách nhóm Graph xây mô hình. Hai explainer này cần một hàm **`score_and_gradient(weights)`**: nhận trọng số 0..1 cho từng cạnh, trả về điểm đồ thị của ảnh và gradient theo từng trọng số. **Điều kiện:** trọng số 1 phải tương đương giữ cạnh, trọng số 0 tương đương **xoá** cạnh (kể cả trong chuẩn hoá theo bậc). `checks.check_gradient_function` kiểm điều này; với GAT hoặc GCN tính bậc không theo `edge_weight`, điều kiện có thể không thoả và hàm sẽ báo lỗi. Phía Graph tạo hàm này bằng autograd của torch, đại ý:
 
 ```python
 def score_and_gradient(weights):
@@ -215,13 +217,14 @@ Bản đầu của ADR-0016 (2026-11-01) chọn cách hiểu **chặt hơn đề
 |---|---|---|
 | `src/mmxai/explain/intervention.py` | `mark_remaining_edges` | Xoá cạnh rồi chấm lại; dùng chung cho Occlusion, fidelity, ablation |
 | `src/mmxai/explain/subgraph.py` | `edges_reaching_node`, `relations_in_reach` | Các cạnh/quan hệ có thể làm đổi điểm của ảnh |
-| `src/mmxai/explain/occlusion.py` | `occlusion` | Explainer 1: xoá từng quan hệ (cấp độ 1) |
+| `src/mmxai/explain/checks.py` | `check_score_function`, `check_gradient_function` | Kiểm hàm được giải thích đúng là hàm đã xếp hạng |
+| `src/mmxai/explain/occlusion.py` | `occlusion`, `measure_drops` | Explainer 1: xoá từng quan hệ (cấp độ 1); đo tác động thật của các quan hệ đã chọn |
 | `src/mmxai/explain/integrated_gradients.py` | `integrated_gradients` | Explainer 2: IG, kèm sai lệch completeness |
-| `src/mmxai/explain/gnn_explainer.py` | `gnn_explainer` | Explainer 3: mask học được |
+| `src/mmxai/explain/gnn_explainer.py` | `gnn_explainer`, `mask_loss`, `strongest_relations` | Explainer 3: mask học được (`EdgeMask`). Mask chỉ dùng để **chọn** quan hệ; con số hiển thị lấy từ `measure_drops`, không phải giá trị mask |
 | `src/mmxai/explain/presentation.py` | `build_explanation`, `format_explanation` | Trình bày giải thích bằng tên (cấp độ 1) |
-| `src/mmxai/explain/fidelity.py` | `fidelity_plus/minus`, `rank_drop`, `evaluate_fidelity`, `random_control`, `robust_fidelity`, `normalized_fidelity`, `characterization`, `evaluate_explanation` | Metric cấp độ 3 cho một giải thích |
+| `src/mmxai/explain/fidelity.py` | `fidelity_plus/minus`, `rank_drop`, `final_scores`, `sample_relation_sets`, `robust_fidelity`, `normalized_fidelity`, `characterization`, `evaluate_explanation` | Metric cấp độ 3 cho một giải thích |
 | `src/mmxai/explain/quality.py` | `sparsity`, `validity` | Độ gọn, tính hợp lệ |
-| `src/mmxai/explain/statistics.py` | `spearman`, `wilcoxon_greater`, `mean_and_std`, `choose_explainer` | So sánh explainer, kiểm định, chọn explainer trên val |
+| `src/mmxai/explain/statistics.py` | `spearman`, `wilcoxon_greater`, `mean_and_std`, `choose_on_validation` | So sánh explainer, kiểm định, chọn explainer trên val |
 | `src/mmxai/explain/config.py`, `configs/explain_vg.yaml` | `load_explain_config` | Mọi siêu tham số của module xAI |
 
 **Còn thiếu (bị chặn bởi module Graph):** script chạy trên mô hình thật cho ≥ 10 truy vấn × 3 seed và ghi `results/runs/` (ADR-0010), bảng tổng hợp, phân tích 5 thành công + 5 thất bại. Attention của GAT chỉ thêm nếu nhóm Graph chọn GAT.
