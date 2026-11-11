@@ -112,3 +112,9 @@ def test_relations_in_reach_keeps_directed_edges_as_they_are():
     relations = relations_in_reach(DIRECTED, node=0, num_layers=1, both_directions=False)
 
     assert relations == [(2, 1), (1, 0)]
+
+
+def test_without_the_extra_hop_only_message_paths_count():
+    reach = edges_reaching_node(DIRECTED, node=0, num_layers=1, extra_hop=False)
+
+    assert reach.tolist() == [False, False, True, False, False]

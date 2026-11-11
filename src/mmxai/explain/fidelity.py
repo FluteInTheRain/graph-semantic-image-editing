@@ -1,10 +1,11 @@
 """Fidelity: does removing or keeping only the explanation change the score as expected?"""
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
 
+from mmxai.explain.checks import check_score_function
 from mmxai.explain.config import ExplainConfig
 from mmxai.explain.intervention import mark_remaining_edges
 from mmxai.explain.quality import sparsity, validity
@@ -45,80 +46,28 @@ def rank_of(scores: np.ndarray, candidate: int) -> int:
     return 1 + int((scores > scores[candidate]).sum())
 
 
-@dataclass(frozen=True)
-class FidelityResult:
-    """Fidelity of one explanation for one candidate."""
-
-    fidelity_plus: float
-    fidelity_minus: float
-    rank_drop: int
-
-
-def evaluate_fidelity(
-    edge_index: np.ndarray,
-    explanation_edges: Iterable[tuple[int, int]],
-    both_directions: bool,
-    graph_scores: Callable[[np.ndarray], np.ndarray],
-    cosine: np.ndarray,
-    alpha: float,
-    candidate: int,
-) -> FidelityResult:
-    """Score the graph three times (full, without the explanation, only the explanation)
-    and report how the candidate's graph score and rank change.
-
-    graph_scores takes the edges that remain and returns one graph score per candidate.
-    The rank uses the final score alpha * cosine + (1 - alpha) * graph (ADR-0016).
-    """
+def final_scores(cosine: np.ndarray, graph: np.ndarray, alpha: float) -> np.ndarray:
+    """The score used for ranking: alpha * cosine + (1 - alpha) * graph (ADR-0016)."""
     if not 0.0 <= alpha <= 1.0:
         raise ValueError(f"alpha must be in [0, 1], got {alpha}")
-
-    all_edges = np.ones(edge_index.shape[1], dtype=bool)
-    without_explanation = mark_remaining_edges(edge_index, explanation_edges, both_directions)
-    # Keeping only the explanation is exactly the set of edges the removal took away.
-    only_explanation = ~without_explanation
-
-    full = graph_scores(all_edges)
-    without = graph_scores(without_explanation)
-    only = graph_scores(only_explanation)
-
-    final_before = alpha * cosine + (1 - alpha) * full
-    final_after = alpha * cosine + (1 - alpha) * without
-
-    return FidelityResult(
-        fidelity_plus=fidelity_plus(full[candidate], without[candidate]),
-        fidelity_minus=fidelity_minus(full[candidate], only[candidate]),
-        rank_drop=rank_drop(rank_of(final_before, candidate), rank_of(final_after, candidate)),
-    )
+    return alpha * cosine + (1 - alpha) * graph
 
 
-def random_control(
-    edge_index: np.ndarray,
-    image_node: int,
-    num_layers: int,
-    both_directions: bool,
-    num_removed: int,
-    score_image: Callable[[np.ndarray], float],
-    repeats: int,
-    seed: int,
-) -> np.ndarray:
-    """Fidelity+ of removing num_removed random relations near the image, repeated.
+def sample_relation_sets(
+    relations: list[tuple[int, int]], size: int, repeats: int, seed: int
+) -> list[list[tuple[int, int]]]:
+    """Draw `repeats` random sets of `size` different relations, for the random control.
 
-    The relations are drawn from those that can change the image's score, so the control
-    touches the same neighbourhood as the explanation. Returns one value per repeat.
+    A random set may include explanation relations; it is a plain same-size baseline.
     """
-    relations = relations_in_reach(edge_index, image_node, num_layers, both_directions)
-    if not 0 <= num_removed <= len(relations):
-        raise ValueError(f"cannot remove {num_removed} of {len(relations)} relations")
-
+    if not 0 <= size <= len(relations):
+        raise ValueError(f"cannot pick {size} of {len(relations)} relations")
     rng = np.random.default_rng(seed)
-    full = score_image(np.ones(edge_index.shape[1], dtype=bool))
-    values = np.empty(repeats)
-    for repeat in range(repeats):
-        picked = rng.choice(len(relations), size=num_removed, replace=False)
-        removed = [relations[index] for index in picked]
-        remaining = mark_remaining_edges(edge_index, removed, both_directions)
-        values[repeat] = full - score_image(remaining)
-    return values
+    sets = []
+    for _ in range(repeats):
+        picked = rng.choice(len(relations), size=size, replace=False)
+        sets.append([relations[index] for index in picked])
+    return sets
 
 
 def robust_fidelity(
@@ -173,20 +122,33 @@ def _relation_key(edge: tuple[int, int], both_directions: bool):
     return frozenset(edge) if both_directions else edge
 
 
+@dataclass(frozen=True)
+class NormalizedFidelity:
+    """Fidelity+ and fidelity- as shares of the graph's effect, in [0, 1]."""
+
+    plus: float
+    minus: float
+    clipped: bool
+
+
 def normalized_fidelity(
     full: float, without: float, only: float, empty: float
-) -> tuple[float, float] | None:
-    """Fidelity+ and fidelity- as shares of everything the graph adds to the score, in [0, 1].
+) -> NormalizedFidelity | None:
+    """Fidelity+ and fidelity- as shares of everything the graph adds to the score.
 
-    empty is the score with no edges at all. Returns None when the edges do not change
-    the score, because then no explanation can be measured.
+    empty is the score with no edges at all. Values are clipped to [0, 1]; clipped says
+    whether that happened (the graph's effects were not simply additive). Returns None
+    when the edges do not change the score, because then nothing can be explained.
+    This share is the team's adaptation: GraphFramEx uses class probabilities instead.
     """
     graph_effect = full - empty
     if np.isclose(graph_effect, 0.0):
         return None
-    plus = float(np.clip((full - without) / graph_effect, 0.0, 1.0))
-    minus = float(np.clip((full - only) / graph_effect, 0.0, 1.0))
-    return plus, minus
+    raw_plus = (full - without) / graph_effect
+    raw_minus = (full - only) / graph_effect
+    plus = float(np.clip(raw_plus, 0.0, 1.0))
+    minus = float(np.clip(raw_minus, 0.0, 1.0))
+    return NormalizedFidelity(plus, minus, clipped=(plus != raw_plus or minus != raw_minus))
 
 
 def characterization(fid_plus: float, fid_minus: float, plus_weight: float) -> float:
@@ -206,17 +168,22 @@ def characterization(fid_plus: float, fid_minus: float, plus_weight: float) -> f
 
 @dataclass(frozen=True)
 class ExplanationReport:
-    """Every level-3 measure of one explanation for one image (PDF section 5)."""
+    """Every level-3 measure of one explanation for one candidate (PDF section 5)."""
 
     fidelity_plus: float
     fidelity_minus: float
+    rank_drop: int
     normalized_plus: float | None
     normalized_minus: float | None
+    normalized_clipped: bool
     characterization: float | None
     robust_plus: float
     robust_minus: float
     random_plus_mean: float
+    random_rank_drop_mean: float
+    random_plus_mean_near: float | None
     sparsity: float
+    sparsity_near: float | None
     all_in_reach: bool
     connected_share: float
 
@@ -224,27 +191,54 @@ class ExplanationReport:
 def evaluate_explanation(
     edge_index: np.ndarray,
     image_node: int,
+    candidate: int,
     explanation: list[tuple[int, int]],
-    score_image: Callable[[np.ndarray], float],
+    graph_scores: Callable[[np.ndarray], np.ndarray],
+    ranked_graph_scores: np.ndarray,
+    cosine: np.ndarray,
+    alpha: float,
     config: ExplainConfig,
     seed: int,
-) -> ExplanationReport:
-    """Measure fidelity, robust fidelity, the random control, sparsity and validity."""
+) -> ExplanationReport | None:
+    """Measure one explanation of one candidate: score and rank changes, the random
+    control, robust fidelity, sparsity and validity.
+
+    graph_scores takes the edges that remain and returns one graph score per candidate;
+    ranked_graph_scores and cosine are the scores the ranking used. Returns None when
+    alpha = 1, because then the graph plays no part in the ranking.
+    Raises ValueError if graph_scores does not reproduce the ranking.
+    """
+    if alpha == 1.0:
+        return None
     layers = config.num_layers
     both = config.both_directions
 
-    full = score_image(np.ones(edge_index.shape[1], dtype=bool))
+    def score_image(remaining: np.ndarray) -> float:
+        return float(graph_scores(remaining)[candidate])
+
+    all_edges = np.ones(edge_index.shape[1], dtype=bool)
+    if not np.allclose(graph_scores(all_edges), ranked_graph_scores):
+        raise ValueError("graph_scores does not reproduce the graph scores used for ranking")
+    full = check_score_function(
+        edge_index, image_node, layers, score_image, ranked_graph_scores[candidate]
+    )
+    rank_before = rank_of(final_scores(cosine, ranked_graph_scores, alpha), candidate)
+
+    def drops(removed: list[tuple[int, int]]) -> tuple[float, int]:
+        remaining = mark_remaining_edges(edge_index, removed, both)
+        scores = graph_scores(remaining)
+        rank_after = rank_of(final_scores(cosine, scores, alpha), candidate)
+        return full - float(scores[candidate]), rank_drop(rank_before, rank_after)
+
+    plus, explanation_rank_drop = drops(explanation)
     without_mask = mark_remaining_edges(edge_index, explanation, both)
-    without = score_image(without_mask)
     only = score_image(~without_mask)
     empty = score_image(np.zeros(edge_index.shape[1], dtype=bool))
 
-    normalized = normalized_fidelity(full, without, only, empty)
-    if normalized is None:
-        normalized_plus, normalized_minus, charact = None, None, None
-    else:
-        normalized_plus, normalized_minus = normalized
-        charact = characterization(normalized_plus, normalized_minus, config.plus_weight)
+    normalized = normalized_fidelity(full, full - plus, only, empty)
+    charact = None
+    if normalized is not None:
+        charact = characterization(normalized.plus, normalized.minus, config.plus_weight)
 
     robust_plus, robust_minus = robust_fidelity(
         edge_index,
@@ -258,29 +252,38 @@ def evaluate_explanation(
         config.robust_repeats,
         seed,
     )
-    control = random_control(
-        edge_index,
-        image_node,
-        layers,
-        both,
-        len(explanation),
-        score_image,
-        config.random_repeats,
-        seed,
-    )
-    nearby = relations_in_reach(edge_index, image_node, layers, both)
-    checked = validity(edge_index, explanation, image_node, layers, both)
 
+    nearby = relations_in_reach(edge_index, image_node, layers, both)
+    random_results = [
+        drops(removed)
+        for removed in sample_relation_sets(nearby, len(explanation), config.random_repeats, seed)
+    ]
+
+    # The neighbourhood without the extra hop added for degree-normalised models (GCN).
+    near = relations_in_reach(edge_index, image_node, layers, both, extra_hop=False)
+    random_plus_near = None
+    sparsity_near = None
+    if len(explanation) <= len(near) and near:
+        near_sets = sample_relation_sets(near, len(explanation), config.random_repeats, seed)
+        random_plus_near = float(np.mean([drops(removed)[0] for removed in near_sets]))
+        sparsity_near = sparsity(len(explanation), len(near))
+
+    checked = validity(edge_index, explanation, image_node, layers, both)
     return ExplanationReport(
-        fidelity_plus=fidelity_plus(full, without),
+        fidelity_plus=plus,
         fidelity_minus=fidelity_minus(full, only),
-        normalized_plus=normalized_plus,
-        normalized_minus=normalized_minus,
+        rank_drop=explanation_rank_drop,
+        normalized_plus=None if normalized is None else normalized.plus,
+        normalized_minus=None if normalized is None else normalized.minus,
+        normalized_clipped=False if normalized is None else normalized.clipped,
         characterization=charact,
         robust_plus=robust_plus,
         robust_minus=robust_minus,
-        random_plus_mean=float(control.mean()),
+        random_plus_mean=float(np.mean([result[0] for result in random_results])),
+        random_rank_drop_mean=float(np.mean([result[1] for result in random_results])),
+        random_plus_mean_near=random_plus_near,
         sparsity=sparsity(len(explanation), len(nearby)),
+        sparsity_near=sparsity_near,
         all_in_reach=checked.all_in_reach,
         connected_share=checked.connected_share,
     )
