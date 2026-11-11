@@ -29,3 +29,39 @@ def edges_reaching_node(edge_index: np.ndarray, node: int, num_layers: int) -> n
         frontier = new_nodes
 
     return np.isin(targets, list(reached))
+
+
+def relations_in_reach(
+    edge_index: np.ndarray, node: int, num_layers: int, both_directions: bool
+) -> list[tuple[int, int]]:
+    """List the relations that can change the node's score, each once.
+
+    With both_directions, the two opposite copies of a relation count as one and are
+    reported in a fixed direction: the copy pointing at the node if there is one,
+    otherwise the smaller pair. The result does not depend on the order of the edges.
+    """
+    reach = edges_reaching_node(edge_index, node, num_layers)
+    existing = set(zip(edge_index[0].tolist(), edge_index[1].tolist(), strict=True))
+
+    relations = []
+    seen = set()
+    for column in np.flatnonzero(reach):
+        source = int(edge_index[0, column])
+        target = int(edge_index[1, column])
+        if both_directions:
+            if frozenset((source, target)) in seen:
+                continue
+            seen.add(frozenset((source, target)))
+            source, target = _reported_direction(source, target, node, existing)
+        relations.append((source, target))
+    return relations
+
+
+def _reported_direction(
+    source: int, target: int, node: int, existing: set[tuple[int, int]]
+) -> tuple[int, int]:
+    copies = [pair for pair in ((source, target), (target, source)) if pair in existing]
+    for pair in copies:
+        if pair[1] == node:
+            return pair
+    return min(copies)

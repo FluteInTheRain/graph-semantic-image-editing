@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from mmxai.explain.intervention import mark_remaining_edges
-from mmxai.explain.subgraph import edges_reaching_node
+from mmxai.explain.subgraph import edges_reaching_node, relations_in_reach
 from toy_gnn import toy_gcn, toy_sum_model
 
 # Chain 3 -> 2 -> 1 -> 0, plus an edge leaving node 0 and an edge into an unrelated node.
@@ -98,3 +98,17 @@ def test_keeping_only_edges_in_reach_keeps_the_score(model):
     only_reach = model(GRAPH[:, reach], features, 2)[0]
 
     assert only_reach == pytest.approx(full)
+
+
+def test_relations_in_reach_lists_each_undirected_relation_once():
+    undirected = np.array([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    relations = relations_in_reach(undirected, node=0, num_layers=2, both_directions=True)
+
+    assert sorted(relations) == [(1, 0), (1, 2)]
+
+
+def test_relations_in_reach_keeps_directed_edges_as_they_are():
+    relations = relations_in_reach(DIRECTED, node=0, num_layers=1, both_directions=False)
+
+    assert relations == [(2, 1), (1, 0)]
