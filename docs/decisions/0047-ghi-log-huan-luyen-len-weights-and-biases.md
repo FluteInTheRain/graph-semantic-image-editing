@@ -19,6 +19,7 @@ Thêm dependency là quyết định cần ADR (`CLAUDE.md`, ADR-0006).
 | Bật / tắt | Bật khi config có `wandb_project` (mặc định `mmxai-gnn` trong `configs/gnn_vg.yaml`). Tắt khi `wandb_project: null`, khi `WANDB_MODE=disabled`, khi chưa cài `wandb`, hoặc khi không kết nối được |
 | Không bao giờ làm hỏng lần chạy | Mọi lỗi của W&B chỉ in một dòng cảnh báo. Lần train vẫn chạy y hệt và vẫn lưu checkpoint (`src/mmxai/utils/tracking.py`, `start_run` trả về `NoRun`) |
 | Log gì | Mỗi epoch: `train/loss`, `val/MRR@100`; mỗi 50 bước: `train/batch_loss`; cuối lần chạy: `best_epoch`, `best_val/MRR@100`; toàn bộ config + seed. Tên run: `<experiment>_seed<k>` |
+| Log gì (xAI cấp độ 1, notebook `20_xai_level1_kaggle.ipynb`) | Run `xai_level1_seed<k>` (job type `xai_level1`): bảng `cases` (5 ca thành công + 5 ca thất bại) và `typed_queries`; artifact `cases.md` + `cases.csv`; artifact checkpoint (`model.pt`, `chosen_alpha.json`, `meta.json`) để máy khác dùng lại mà không train lại. Thêm ngày 2026-11-12 theo yêu cầu của thiennp3 (đưa kết quả lên W&B thay vì tải về) |
 | Đăng nhập | `uv run --group tracking wandb login` một lần, hoặc biến môi trường `WANDB_API_KEY`. `WANDB_ENTITY` chọn team. **Không** ghi key vào repo |
 | Nguồn sự thật | Vẫn là `meta.json` của checkpoint và `results/runs/` (ADR-0010). W&B chỉ để theo dõi; số trong báo cáo **không** lấy từ W&B |
 
