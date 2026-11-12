@@ -17,6 +17,7 @@ from mmxai.graph.contains import (
     load_contains_graph,
     save_contains_graph,
     select_concepts,
+    split_subgraph,
     train_subgraph,
 )
 
@@ -175,6 +176,27 @@ def test_train_subgraph_keeps_every_concept():
     train_graph = train_subgraph(graph)
 
     assert train_graph.concept_keys.tolist() == graph.concept_keys.tolist()
+
+
+def test_split_subgraph_keeps_only_images_of_that_split():
+    graph = build_contains_graph(IMAGE_CONCEPTS, SPLIT, ["dog.n.01", "zebra.n.01"])
+
+    test_graph = split_subgraph(graph, "test")
+
+    assert test_graph.image_ids.tolist() == [4, 5]
+    edge_ids = test_graph.image_ids[test_graph.edge_image].tolist()
+    edge_concepts = test_graph.concept_keys[test_graph.edge_concept].tolist()
+    assert sorted(zip(edge_ids, edge_concepts, strict=True)) == [
+        (4, "dog.n.01"),
+        (4, "zebra.n.01"),
+    ]
+
+
+def test_split_subgraph_of_a_missing_split_is_an_error():
+    graph = build_contains_graph(IMAGE_CONCEPTS, {"train": np.array([1])}, ["dog.n.01"])
+
+    with pytest.raises(ValueError, match="test"):
+        split_subgraph(graph, "test")
 
 
 def test_graph_saved_without_splits_asks_for_a_rebuild(tmp_path):

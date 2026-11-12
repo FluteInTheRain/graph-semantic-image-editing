@@ -16,6 +16,7 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/evaluate_query_benchmark.py` (đã có) | CLIP thuần trên bộ truy vấn đã kiểm tra: Recall@1/5/10/100 + MRR@100 tách direct/indirect. Cần `uv sync --group ml` | `mmxai.eval.query_benchmark` |
 | `scripts/summarize_runs.py` (đã có) | Gom `results/runs/*` thành `results/tables/main.csv` (mean ± std, ≥3 seed, bỏ run có code chưa commit) | `mmxai.eval.summary` |
 | `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
-| `scripts/train_gnn.py` | Huấn luyện GNN graph scorer | `mmxai.models` |
-| `scripts/evaluate.py` | Re-rank, chọn `alpha` trên val, đo trên test, ≥3 seed | `mmxai.rerank`, `mmxai.eval` |
+| `scripts/build_concept_edges.py` | Dựng cạnh khái niệm → khái niệm từ đồng xuất hiện (PMI) trên annotation **train**, dùng khái niệm của đồ thị `contains` (ADR-0048) | `mmxai.graph.cooccurrence` |
+| `scripts/train_graph_rerank.py` (đã có) | Huấn luyện GraphSAGE (một lớp, hoặc hai lớp có cạnh đồng xuất hiện) trên train, early stopping và chọn `alpha` trên **val**, lưu mô hình (ADR-0046, ADR-0047). Hướng dẫn: `docs/guides/huan-luyen-va-xep-hang-lai.md` | `mmxai.eval.graph_rerank`, `mmxai.models`, `mmxai.rerank` |
+| `scripts/evaluate_graph_rerank.py` (đã có) | Chấm **test một lần** mỗi seed bằng mô hình và `alpha` đã lưu; không chọn gì, từ chối chạy lại cùng seed (ADR-0047) | `mmxai.eval.graph_rerank` |
 | `scripts/explain.py` | Xuất đường đi giải thích + fidelity/validity/sparsity | `mmxai.explain` |

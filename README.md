@@ -384,9 +384,9 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 - [ ] Trên **ít nhất 1 tập công khai**.
 - [ ] Baseline **CLIP đóng băng**.
 - [ ] Dựng đồ thị từ dữ liệu có sẵn (scene graph Visual Genome, FB15k-237-IMG, hoặc từ nhãn).
-- [ ] Áp dụng **ít nhất 1** thuật toán đã học: GCN / GAT / GraphSAGE.
-- [ ] Xếp hạng lại bằng cách kết hợp điểm CLIP và điểm đồ thị.
-- [ ] So sánh **CLIP** với **CLIP + Graph** trên **cùng cách chia**.
+- [x] Áp dụng **ít nhất 1** thuật toán đã học: GCN / GAT / GraphSAGE. → GraphSAGE một lớp (ADR-0046), `src/mmxai/models/sage.py`
+- [x] Xếp hạng lại bằng cách kết hợp điểm CLIP và điểm đồ thị. → `alpha` chọn trên val (ADR-0047), `src/mmxai/rerank/fusion.py`
+- [x] So sánh **CLIP** với **CLIP + Graph** trên **cùng cách chia**. → `results/tables/main.csv`, có đối chứng không đồ thị; xem `docs/guides/huan-luyen-va-xep-hang-lai.md` §6
 - [ ] **Ablation cơ bản**: bỏ cạnh hoặc thay bằng cạnh ngẫu nhiên, để chứng minh cải thiện đến từ cấu trúc quan hệ.
 - [ ] **Giải thích cơ bản**: hiển thị quan hệ/đường đi dùng khi xếp hạng cho một số truy vấn.
 - [ ] Phân tích **5 truy vấn thành công** và **5 truy vấn thất bại**.
@@ -579,6 +579,7 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 | [`docs/guides/chuan-bi-embedding-clip.md`](docs/guides/chuan-bi-embedding-clip.md) | Tải dữ liệu, dùng hoặc tạo lại embedding CLIP (Visual Genome, Flickr30k) |
 | [`docs/query_benchmark.md`](docs/query_benchmark.md) | Sinh và kiểm tra bộ truy vấn trực tiếp/gián tiếp từ scene graph Visual Genome (ADR-0044) |
 | [`docs/guides/xay-do-thi.md`](docs/guides/xay-do-thi.md) | Dựng đồ thị ảnh – khái niệm (cạnh `contains`) cho Visual Genome, cách dùng trong GNN, các điều bắt buộc chống rò rỉ (ADR-0045) |
+| [`docs/guides/huan-luyen-va-xep-hang-lai.md`](docs/guides/huan-luyen-va-xep-hang-lai.md) | Huấn luyện GraphSAGE, kết hợp điểm, chọn `alpha` trên val, chạy test một lần, so CLIP với CLIP + Graph (ADR-0046, ADR-0047) |
 
 💡 Nhắc lại theo PDF §9: dùng công cụ AI phải **khai báo trong báo cáo**.
 

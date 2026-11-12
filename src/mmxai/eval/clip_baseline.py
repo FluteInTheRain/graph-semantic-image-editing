@@ -27,9 +27,8 @@ import numpy as np
 
 from mmxai.data.splits import load_split
 from mmxai.eval.metrics import compute_metrics, first_relevant_rank
-from mmxai.eval.relevance import same_text_relevant_images
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
-from mmxai.index.image_index import build_image_index, search_images
+from mmxai.rerank.fusion import retrieve_candidates
 from mmxai.utils.runs import collect_env, file_sha256, make_run_dir, write_run_files
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
@@ -73,30 +72,26 @@ def evaluate_clip(
     same_text_threshold: float,
 ) -> dict:
     """Return the metrics of plain CLIP on the images listed in eval_image_ids."""
-    missing = np.setdiff1d(eval_image_ids, image_ids)
-    if len(missing) > 0:
-        raise ValueError(f"{len(missing)} split images have no embedding, e.g. {missing[0]}")
-
-    # Both the gallery and the queries come from the evaluated split only.
-    image_rows = np.isin(image_ids, eval_image_ids)
-    text_rows = np.isin(text_image_ids, eval_image_ids)
-    gallery_embeddings = image_embeddings[image_rows]
-    gallery_ids = image_ids[image_rows]
-    query_embeddings = text_embeddings[text_rows]
-    query_image_ids = text_image_ids[text_rows]
-
-    index = build_image_index(gallery_embeddings, gallery_ids)
-    _, retrieved_ids = search_images(index, query_embeddings, top_k)
-    relevant = same_text_relevant_images(query_embeddings, query_image_ids, same_text_threshold)
+    # The same function CLIP + Graph uses, so both re-rank the same candidates.
+    candidates = retrieve_candidates(
+        image_embeddings,
+        image_ids,
+        text_embeddings,
+        text_image_ids,
+        eval_image_ids,
+        top_k,
+        same_text_threshold,
+    )
 
     ranks = []
-    for query in range(len(query_embeddings)):
-        ranks.append(first_relevant_rank(retrieved_ids[query].tolist(), relevant[query]))
+    for query in range(len(candidates.candidate_ids)):
+        retrieved = candidates.candidate_ids[query].tolist()
+        ranks.append(first_relevant_rank(retrieved, candidates.relevant[query]))
 
     metrics = compute_metrics(ranks, recall_ks, top_k)
-    metrics["num_images"] = len(gallery_ids)
-    several = sum(1 for images in relevant if len(images) > 1)
-    metrics["fraction_queries_with_several_relevant"] = several / len(relevant)
+    metrics["num_images"] = int(np.isin(image_ids, eval_image_ids).sum())
+    several = sum(1 for images in candidates.relevant if len(images) > 1)
+    metrics["fraction_queries_with_several_relevant"] = several / len(candidates.relevant)
     return metrics
 
 
