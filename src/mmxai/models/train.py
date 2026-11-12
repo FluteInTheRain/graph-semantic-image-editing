@@ -17,7 +17,7 @@ import torch
 from torch.nn import functional
 
 from mmxai.index.image_index import build_image_index, search_images
-from mmxai.models.sage import ConceptToImageSage
+from mmxai.models.sage import ConceptToImageSage, CooccurrenceSage
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,8 @@ class TrainingData:
     text_image_row: torch.Tensor  # (num_texts,) row of the image each text describes
     candidate_rows: torch.Tensor  # (num_texts, top_k) CLIP's top-k image rows per text
     is_negative: torch.Tensor  # (num_texts, top_k) False for the text's own image and duplicates
+    # (num_images, dim) for CooccurrenceSage (ADR-0048), None for the one-layer model.
+    second_hop_mean: torch.Tensor | None = None
 
 
 def same_text_mask(
@@ -122,7 +124,7 @@ def sample_negatives(
 
 
 def batch_loss(
-    model: ConceptToImageSage,
+    model: ConceptToImageSage | CooccurrenceSage,
     data: TrainingData,
     text_rows: torch.Tensor,
     num_negatives: int,
@@ -134,7 +136,16 @@ def batch_loss(
     negative_rows = torch.gather(data.candidate_rows[text_rows], 1, columns)
     image_rows = torch.cat([data.text_image_row[text_rows, None], negative_rows], dim=1)
 
-    h = model.forward_from_neighbor_mean(data.image_x[image_rows], data.neighbor_mean[image_rows])
+    if data.second_hop_mean is None:
+        h = model.forward_from_neighbor_mean(
+            data.image_x[image_rows], data.neighbor_mean[image_rows]
+        )
+    else:
+        h = model.forward_from_means(
+            data.image_x[image_rows],
+            data.neighbor_mean[image_rows],
+            data.second_hop_mean[image_rows],
+        )
     query = functional.normalize(data.text_x[text_rows], dim=-1)
     cosine = (functional.normalize(h, dim=-1) * query[:, None, :]).sum(dim=-1)
 
@@ -146,7 +157,7 @@ def batch_loss(
 
 
 def train_one_epoch(
-    model: ConceptToImageSage,
+    model: ConceptToImageSage | CooccurrenceSage,
     data: TrainingData,
     optimizer: torch.optim.Optimizer,
     batch_size: int,
@@ -176,9 +187,9 @@ class FitResult:
 
 
 def fit(
-    model: ConceptToImageSage,
+    model: ConceptToImageSage | CooccurrenceSage,
     data: TrainingData,
-    validate: Callable[[ConceptToImageSage], float],
+    validate: Callable[[ConceptToImageSage | CooccurrenceSage], float],
     learning_rate: float,
     batch_size: int,
     num_negatives: int,

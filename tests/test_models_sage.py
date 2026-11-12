@@ -18,9 +18,11 @@ from torch_geometric.data import Data  # noqa: E402
 from mmxai.graph.pyg import CONCEPT_NODE, IMAGE_NODE  # noqa: E402
 from mmxai.models.sage import (  # noqa: E402
     ConceptToImageSage,
+    CooccurrenceSage,
     concept_to_image_edges,
     graph_scores,
     neighbor_mean,
+    second_hop_mean,
 )
 
 NUM_IMAGES = 3
@@ -134,3 +136,64 @@ def test_graph_scores_are_cosines():
 
     expected = torch.tensor([[1.0, 2**-0.5], [0.0, 2**-0.5]])
     assert torch.allclose(scores, expected)
+
+
+# CooccurrenceSage (ADR-0048) on the same graph, plus concept -> concept edges in
+# concept rows (0 = "dog" = node 3, 1 = "sofa" = node 4): dog hears sofa.
+CONCEPT_EDGE_INDEX = torch.tensor([[1], [0]])
+
+
+def trained_like_cooccurrence_model() -> CooccurrenceSage:
+    torch.manual_seed(0)
+    model = CooccurrenceSage(DIM)
+    with torch.no_grad():
+        for parameter in model.parameters():
+            parameter.normal_()
+    return model.eval()
+
+
+def test_untrained_cooccurrence_model_scores_exactly_like_clip():
+    x = make_x()
+
+    h = CooccurrenceSage(DIM)(x, EDGE_INDEX, CONCEPT_EDGE_INDEX, NUM_IMAGES)
+
+    assert torch.allclose(h[:NUM_IMAGES], x[:NUM_IMAGES])
+
+
+def test_cooccurrence_shortcut_gives_the_same_vectors_as_sageconv():
+    x = make_x()
+    model = trained_like_cooccurrence_model()
+
+    full = model(x, EDGE_INDEX, CONCEPT_EDGE_INDEX, NUM_IMAGES)[:NUM_IMAGES]
+    shortcut = model.forward_from_means(
+        x[:NUM_IMAGES],
+        neighbor_mean(x, EDGE_INDEX, NUM_IMAGES),
+        second_hop_mean(x, EDGE_INDEX, CONCEPT_EDGE_INDEX, NUM_IMAGES),
+    )
+
+    assert torch.allclose(full, shortcut, atol=1e-5)
+
+
+def test_second_hop_mean_averages_the_partners_of_each_images_concepts():
+    x = make_x()
+
+    second = second_hop_mean(x, EDGE_INDEX, CONCEPT_EDGE_INDEX, NUM_IMAGES)
+
+    # Image A has dog (hears sofa) and sofa (hears nobody, 0): mean = x_sofa / 2.
+    assert torch.allclose(second[0], x[4] / 2)
+    assert torch.allclose(second[1], torch.zeros(DIM))  # B has sofa only
+    assert torch.allclose(second[2], torch.zeros(DIM))  # C has no concept
+
+
+def test_removing_a_concept_edge_changes_only_images_with_that_concept():
+    # Only image A has dog, so removing sofa -> dog changes A and nothing else.
+    x = make_x()
+    model = trained_like_cooccurrence_model()
+    no_concept_edges = CONCEPT_EDGE_INDEX[:, :0]
+
+    before = model(x, EDGE_INDEX, CONCEPT_EDGE_INDEX, NUM_IMAGES)
+    after = model(x, EDGE_INDEX, no_concept_edges, NUM_IMAGES)
+
+    assert not torch.allclose(before[0], after[0])
+    assert torch.allclose(before[1], after[1])
+    assert torch.allclose(before[2], after[2])
