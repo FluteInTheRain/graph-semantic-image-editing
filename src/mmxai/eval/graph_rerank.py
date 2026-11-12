@@ -24,7 +24,12 @@ from mmxai.features.cache import load_image_features, load_meta, load_text_featu
 from mmxai.graph.contains import ContainsGraph, load_contains_graph, split_subgraph
 from mmxai.graph.pyg import to_pyg_data
 from mmxai.models.sage import ConceptToImageSage, concept_to_image_edges, neighbor_mean
-from mmxai.models.train import TrainingData, fit, hard_negative_pool
+from mmxai.models.train import (
+    TrainingData,
+    fit,
+    hard_negative_pool,
+    texts_with_positive_in_candidates,
+)
 from mmxai.rerank.fusion import (
     Candidates,
     candidate_graph_scores,
@@ -143,7 +148,7 @@ def image_vectors(model: ConceptToImageSage, split_graph: SplitGraph) -> np.ndar
 
 
 def build_training_data(
-    config: GraphRerankConfig, inputs: Inputs, train_graph: SplitGraph
+    config: GraphRerankConfig, inputs: Inputs, train_graph: SplitGraph, log=print
 ) -> TrainingData:
     """Train images, their concept means, train texts and their hard negatives."""
     num_images = len(train_graph.image_ids)
@@ -160,13 +165,16 @@ def build_training_data(
     candidate_rows, is_negative = hard_negative_pool(
         image_x.numpy(), text_x, text_image_row, config.top_k, config.same_text_threshold
     )
+    keep = texts_with_positive_in_candidates(text_image_row, candidate_rows)
+    num_kept = int(keep.sum())
+    log(f"{num_kept} of {len(keep)} train texts have their image in CLIP's top {config.top_k}")
     return TrainingData(
         image_x=image_x,
         neighbor_mean=mean,
-        text_x=torch.from_numpy(text_x),
-        text_image_row=torch.from_numpy(text_image_row),
-        candidate_rows=torch.from_numpy(candidate_rows),
-        is_negative=torch.from_numpy(is_negative),
+        text_x=torch.from_numpy(text_x[keep]),
+        text_image_row=torch.from_numpy(text_image_row[keep]),
+        candidate_rows=torch.from_numpy(candidate_rows[keep]),
+        is_negative=torch.from_numpy(is_negative[keep]),
     )
 
 
@@ -200,7 +208,7 @@ def prepare(config: GraphRerankConfig, log=print) -> Prepared:
     log(
         f"train graph: {len(train_graph.image_ids)} images, {train_graph.edge_index.shape[1]} edges"
     )
-    training_data = build_training_data(config, inputs, train_graph)
+    training_data = build_training_data(config, inputs, train_graph, log)
     log(
         f"hard negatives for {len(training_data.text_x)} train texts ({time.time() - started:.0f}s)"
     )

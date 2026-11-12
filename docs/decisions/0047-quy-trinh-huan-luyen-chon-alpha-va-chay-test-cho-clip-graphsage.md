@@ -21,6 +21,7 @@ Khái niệm cho người mới:
 
 | Việc | Quy định | Code |
 |---|---|---|
+| Câu dùng để huấn luyện | **Chỉ** các câu train mà ảnh gốc nằm trong top 100 của CLIP (tìm trong ảnh train). Lý do ở mục "Lần chạy đầu" bên dưới | `texts_with_positive_in_candidates` |
 | Tín hiệu early stopping | MRR@100 trên **val** của điểm đồ thị **một mình** (`alpha = 0`). Epoch 0 (chưa học, bằng CLIP) cũng được chấm; nếu không epoch nào hơn thì giữ mô hình chưa học | `graph_only_val_score`, `fit` |
 | Giới hạn | `max_epochs = 10`, `patience = 2`, `batch_size = 512` | `configs/clip_graph_vg.yaml` |
 | Chọn `alpha` | Sau khi có trọng số tốt nhất: thử lưới `0.0 … 1.0` trên **val**, chọn MRR@100 cao nhất. **Hoà thì chọn `alpha` lớn hơn** (gần CLIP hơn) | `sweep_alpha`, `choose_alpha` |
@@ -32,12 +33,21 @@ Khái niệm cho người mới:
 | Seed | `[0, 1, 2]`, một hàm `set_seed` (ADR-0011). Seed đổi thứ tự batch và hard negative được lấy mẫu | `utils/seed.py` |
 | Máy | CPU laptop. Phần tìm hard negative (khoảng 10 phút) làm một lần cho mọi seed | `prepare` |
 
+### Lần chạy đầu: vì sao phải lọc câu huấn luyện
+
+Bản đầu lấy **mọi** câu train. Ảnh đúng luôn có mặt trong danh sách ứng viên, kể cả khi CLIP xếp nó ngoài top 100; còn 15 ảnh sai thì luôn nằm trong top 100. Mô hình học được một "mẹo": ứng viên mà CLIP thích **ít nhất** thường là ảnh đúng, tức là đảo ngược CLIP. Trên val, cả 100 ứng viên đều từ top 100 của CLIP, nên mẹo này phá thứ hạng: MRR@100 của điểm đồ thị trên val tụt từ 0,106 (epoch 0, bằng CLIP) xuống **0,038** sau một epoch, trong khi loss train giảm còn 1,23 (2026-11-12, run bị dừng, không lưu kết quả).
+
+Lọc như trên làm ảnh đúng và ảnh sai đến từ **cùng một tập**: đúng bài toán xếp hạng lại. Ảnh đúng nằm ngoài top 100 thì đằng nào cũng không thể được đẩy lên.
+
 Quyết định bởi: Claude Code đề xuất ngày 2026-11-12, **nhóm chưa duyệt**. Các giá trị lấy từ ADR-0046 (`k = 16`, `n_hard = 15`, `τ = 0.05`, `lr = 1e-3`) vẫn là đề xuất của ADR-0046.
 
 ## Các phương án đã cân nhắc
 
 | Phương án | Ưu | Nhược | Lý do không chọn |
 |---|---|---|---|
+| Huấn luyện trên mọi câu train, ảnh đúng có thể ngoài top 100 | Nhiều dữ liệu hơn | Mô hình học đảo ngược CLIP (đã thấy ở lần chạy đầu) | Sai bài toán |
+| Chỉ câu có ảnh đúng trong top 100 | Đúng bài toán xếp hạng lại; ảnh đúng và ảnh sai cùng một tập | Bỏ bớt câu khó | **Được chọn** |
+| Thêm ảnh sai ngẫu nhiên ngoài top 100 | Giữ mọi câu | Vẫn lệch với lúc chấm (chỉ có top 100); thêm một siêu tham số | Phức tạp hơn |
 | Early stop bằng MRR của điểm đồ thị một mình | Đúng thứ loss đang học; tách lựa chọn epoch khỏi lựa chọn `alpha` | Epoch tốt nhất cho điểm đồ thị chưa chắc tốt nhất cho điểm kết hợp | **Được chọn** |
 | Early stop bằng MRR tốt nhất qua mọi `alpha` | Nhắm thẳng vào kết quả cuối | Hai lựa chọn trộn vào nhau, khó giải thích khi vấn đáp | Phức tạp hơn mà lợi ích không rõ |
 | Early stop bằng loss trên val | Không cần xếp hạng | Loss không phải metric được báo cáo | Lệch với mục tiêu |

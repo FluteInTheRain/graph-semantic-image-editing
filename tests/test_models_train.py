@@ -15,6 +15,7 @@ from mmxai.models.train import (  # noqa: E402
     hard_negative_pool,
     same_text_mask,
     sample_negatives,
+    texts_with_positive_in_candidates,
 )
 
 
@@ -196,3 +197,14 @@ def test_same_seed_gives_the_same_trained_weights():
 
     for name in first:
         assert torch.equal(first[name], second[name])
+
+
+def test_only_texts_with_their_image_among_the_candidates_are_kept():
+    # Text 1's image (row 1) is not in its CLIP candidates: it is left out, otherwise
+    # "the candidate CLIP likes least is correct" becomes a shortcut (ADR-0047).
+    text_image_row = np.array([0, 1, 2])
+    candidate_rows = np.array([[0, 3], [2, 3], [3, 2]])
+
+    keep = texts_with_positive_in_candidates(text_image_row, candidate_rows)
+
+    assert keep.tolist() == [True, False, True]

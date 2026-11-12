@@ -126,8 +126,18 @@ def test_training_never_sees_val_or_test_images(tmp_path, monkeypatch):
 
     data = prepared.training_data
     assert len(data.image_x) == 6  # train images only
-    assert len(data.text_x) == 12  # 2 texts per train image
+    # At most the 2 texts of each train image (some are left out by the ADR-0047 filter).
+    assert 0 < len(data.text_x) <= 12
     assert int(data.candidate_rows.max()) < 6  # hard negatives are train rows
+
+
+def test_every_training_text_has_its_image_among_its_candidates(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+
+    data = prepare(config, log=str).training_data
+
+    in_candidates = (data.candidate_rows == data.text_image_row[:, None]).any(dim=1)
+    assert in_candidates.all()
 
 
 def test_split_graph_holds_only_concept_to_image_edges_of_that_split(tmp_path, monkeypatch):

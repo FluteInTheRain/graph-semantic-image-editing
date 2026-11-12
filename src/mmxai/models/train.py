@@ -8,6 +8,7 @@ Everything here sees train images and train texts only (PDF section 6, ADR-0046)
 """
 
 import copy
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -82,6 +83,24 @@ def hard_negative_pool(
     is_own_image = candidate_rows == text_image_row[:, None]
     is_duplicate = same_text_mask(text_x, text_image_row, candidate_rows, same_text_threshold)
     return candidate_rows, ~(is_own_image | is_duplicate)
+
+
+def texts_with_positive_in_candidates(
+    text_image_row: np.ndarray, candidate_rows: np.ndarray
+) -> np.ndarray:
+    """Mark the texts whose own image is among their CLIP candidates.
+
+    Decision (ADR-0047): train only on these texts.
+      Why: if the correct image may come from outside CLIP's top-k while every
+      negative comes from inside it, "the candidate CLIP likes least is correct" is a
+      shortcut the model learns. It then inverts CLIP and ruins re-ranking (first run,
+      2026-11-12: val MRR@100 of the graph score fell from 0.106 to 0.038 after one
+      epoch). With this filter, positives and negatives come from the same pool, which
+      is exactly the re-ranking task: a correct image outside the top-k can never be
+      re-ranked up anyway.
+      Decided by: Claude Code, 2026-11-12, after that run; not yet approved by the team.
+    """
+    return (candidate_rows == text_image_row[:, None]).any(axis=1)
 
 
 def sample_negatives(
@@ -184,12 +203,14 @@ def fit(
     log(f"epoch 0 (untrained): val {best_score:.4f}")
 
     for epoch in range(1, max_epochs + 1):
+        started = time.time()
         loss = train_one_epoch(
             model, data, optimizer, batch_size, num_negatives, temperature, generator
         )
         score = validate(model)
         history.append({"epoch": epoch, "train_loss": loss, "val_score": score})
-        log(f"epoch {epoch}: train loss {loss:.4f}, val {score:.4f}")
+        seconds = time.time() - started
+        log(f"epoch {epoch}: train loss {loss:.4f}, val {score:.4f} ({seconds:.0f}s)")
         if score > best_score:
             best_score = score
             best_epoch = epoch
