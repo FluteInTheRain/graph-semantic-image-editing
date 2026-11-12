@@ -169,6 +169,8 @@ So sánh cần đọc: `clip_cooc_graph_vg − clip_graph_vg` = đóng góp củ
 
 Nguồn: `artifacts/models/visual_genome/*_lr1e4/seed*/selection.json`, `results/runs/*_lr1e4_seed*/`.
 
+**Quy tắc chọn trước khi chạy test** (qphulong chốt 2026-11-12, trước khi xem số test): mỗi mô hình dùng `lr` có điểm kết hợp val cao nhất. Đối chứng: `clip_nograph_vg` (1e-3, đã test). Một lớp: `clip_graph_vg_lr1e4`. Đồng xuất hiện: `clip_cooc_graph_vg_lr1e4`. Các bản khác không chạy test.
+
 ## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.
