@@ -148,6 +148,27 @@ So sánh cần đọc: `clip_cooc_graph_vg − clip_graph_vg` = đóng góp củ
 
 Đọc: cạnh đồng xuất hiện **không giúp** trên val (chênh +0,0002, nhỏ hơn nhiều so với độ lệch chuẩn). Cả 3 seed lại tốt nhất ở epoch 1, rồi val giảm trong khi loss train vẫn giảm: mô hình học quá khớp rất nhanh. `alpha` chọn được dao động mạnh (0,4 / 0,1 / 0,3). Nguồn: `artifacts/models/visual_genome/clip_cooc_graph_vg/seed*/selection.json` và `results/runs/20261112-140*_clip_cooc_graph_vg_seed*/`.
 
+**Thử `lr = 1e-4`** (commit `ed5873c`, configs `*_lr1e4.yaml`, cả ba mô hình; **chỉ val, chưa chạy test**):
+
+| Mô hình (val MRR@100, 3 seed) | `lr` | Điểm kết hợp | Điểm đồ thị một mình | Epoch tốt nhất | `alpha` |
+|---|---|---|---|---|---|
+| Đối chứng không đồ thị | 1e-3 | 0,1262 ± 0,0017 | 0,1240 ± 0,0021 | 1 / 1 / 1 | 0,3 / 0,4 / 0,2 |
+| Đối chứng không đồ thị | 1e-4 | 0,1246 ± 0,0003 | 0,1241 ± 0,0002 | 7 / 7 / 8 | 0,2 / 0,2 / 0,1 |
+| CLIP + Graph một lớp | 1e-3 | 0,1277 ± 0,0022 | 0,1243 ± 0,0004 | 1 / 1 / 1 | 0,2 / 0,4 / 0,3 |
+| CLIP + Graph một lớp | 1e-4 | 0,1281 ± 0,0008 | 0,1276 ± 0,0016 | 6 / 8 / 6 | 0,0 / 0,0 / 0,1 |
+| CLIP + Graph đồng xuất hiện | 1e-3 | 0,1279 ± 0,0024 | 0,1237 ± 0,0006 | 1 / 1 / 1 | 0,4 / 0,1 / 0,3 |
+| CLIP + Graph đồng xuất hiện | 1e-4 | 0,1282 ± 0,0010 | 0,1278 ± 0,0005 | 5 / 5 / 6 | 0,0 / 0,1 / 0,0 |
+
+Đọc:
+
+- Với `lr = 1e-4`, huấn luyện ổn định hơn: val tăng dần trong 5–8 epoch, std nhỏ hơn.
+- Ở cùng `lr = 1e-4`, hai mô hình có đồ thị hơn đối chứng khoảng **+0,0035** (vài lần std). Nhưng nếu lấy `lr` tốt nhất trên val của **từng** mô hình (đối chứng: 1e-3, 0,1262), chênh lệch chỉ còn khoảng +0,002, cỡ một std của đối chứng.
+- Cạnh đồng xuất hiện vẫn **không thêm gì** so với đồ thị một lớp (+0,0001).
+- `alpha` gần 0: điểm cuối gần như chỉ là điểm đồ thị.
+- Đường val dao động giữa các epoch (ví dụ 0,1244 → 0,1285), nên chọn epoch trên val rồi báo cáo chính val thì hơi lạc quan. Con số chính vẫn phải là test.
+
+Nguồn: `artifacts/models/visual_genome/*_lr1e4/seed*/selection.json`, `results/runs/*_lr1e4_seed*/`.
+
 ## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.
