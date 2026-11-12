@@ -1,0 +1,17 @@
+# Concept -> concept "co-occurs with" edges for Visual Genome (ADR-0048, status: Proposed).
+# Counted on the annotations of TRAIN images only; val/test annotations are never read.
+# How to run: see the docstring of scripts/build_concept_edges.py.
+dataset: visual_genome
+data_dir: data/visual_genome
+objects_file: objects.json
+split_file: splits/visual_genome/split_seed0.json
+# The contains graph whose concepts get linked; edge rows are its concept rows.
+graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Decision (ADR-0048): keep a pair seen together in >= 10 train images, PMI > 0,
+# and each concept's 10 partners with the highest PMI.
+#   Why: PMI favours specific partners (dog -> leash) over everywhere-concepts (man,
+#   window); the minimum stops a pair seen in 1-2 images from getting a huge PMI.
+#   Proposed by Claude Code, 2026-11-12; not yet approved by the team. Tune on val only.
+min_pair_images: 10
+top_m: 10
+output_dir: artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1
