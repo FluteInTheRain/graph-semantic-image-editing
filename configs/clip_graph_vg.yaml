@@ -1,25 +1,39 @@
-# Example experiment config (plain YAML, read into dataclasses by mmxai.utils.config).
-# One file = one experiment. Copy and edit; never select values on the test split.
+# CLIP + Graph on Visual Genome: one-layer GraphSAGE re-ranks CLIP's top 100 (ADR-0046, ADR-0047).
+# How to run: see the docstrings of scripts/train_graph_rerank.py and scripts/evaluate_graph_rerank.py.
+# One file = one experiment. Every value below is chosen on val only, never on test or queries/.
 experiment: clip_graph_vg
 dataset: visual_genome
 split_file: splits/visual_genome/split_seed0.json
-seeds: [0, 1, 2]
-
-features:
-  model: ViT-B-32
-  pretrained: laion2b_s34b_b79k
-  cache_dir: artifacts/features
-
-retrieval:
-  top_k: 100
-
-graph:
-  edges: [contains, scene_relation]   # add conceptnet later; statistical edges from train only
-  gnn: gcn                            # gcn | gat | sage
-  hidden_dim: 256
-  num_layers: 2
-
-rerank:
-  alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # chosen on val only
-
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0046): contains edges from CLIP top-k for every split (built by configs/graph_vg_clip_topk.yaml).
+#   Decided by: qphulong, 2026-11-10.
+graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Trained weights and the alpha chosen on val, one folder per seed.
+model_dir: artifacts/models/visual_genome/clip_graph_vg
+# false = the no-graph control of ADR-0046 section 6 (configs/clip_nograph_vg.yaml).
+use_graph: true
+# Decision (ADR-0043): re-rank the same 100 candidates as plain CLIP.
+#   Decided by: FluteInTheRain, ADR-0043.
+top_k: 100
+recall_ks: [1, 5, 10]
+# Decision (ADR-0043): equal sentences are relevant; also never used as hard negatives.
+#   Decided by: FluteInTheRain, 2026-11-05.
+same_text_threshold: 0.9999
+# Decision (ADR-0046): 15 hard negatives from CLIP's top 100, temperature 0.05, Adam lr 1e-3.
+#   Proposed by Claude Code, 2026-11-10; not yet approved by the team. Tune on val only.
+num_hard_negatives: 15
+temperature: 0.05
+learning_rate: 0.001
+# Proposed by Claude Code, 2026-11-12 (ADR-0047): fits the laptop's memory easily.
+batch_size: 512
+# Decision (ADR-0047): early stopping on val; stop after 2 epochs without gain, at most 10.
+#   Proposed by Claude Code, 2026-11-12; not yet approved by the team.
+max_epochs: 10
+patience: 2
+# Decision (ADR-0016, PDF section 4.2): alpha chosen on val from this grid.
+#   Decided by: FluteInTheRain, template of this file.
+alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# Decision (ADR-0047): choose alpha (and early-stop) on val MRR@100; ties go to the larger alpha.
+#   Proposed by Claude Code, 2026-11-12; not yet approved by the team.
+selection_metric: MRR@100
 output_dir: results/runs
