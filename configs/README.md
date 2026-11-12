@@ -6,6 +6,8 @@
 |---|---|
 | `configs/clip_graph_vg.yaml` | **CLIP + Graph**: GraphSAGE một lớp xếp hạng lại top 100 của CLIP; `alpha` và số epoch chọn trên `val` (ADR-0046, ADR-0047) |
 | `configs/clip_nograph_vg.yaml` | Đối chứng **không đồ thị**: huấn luyện y hệt nhưng cố định `W_nb = 0` (ADR-0046 mục 6) |
+| `configs/clip_cooc_graph_vg.yaml` | CLIP + Graph **có cạnh đồng xuất hiện**: GraphSAGE hai lớp, khái niệm nghe khái niệm đi cùng nó trong annotation train (ADR-0048) |
+| `configs/concept_edges_vg_cooccurrence.yaml` | Dựng cạnh khái niệm → khái niệm bằng PMI trên annotation **train** (ADR-0048) |
 | `configs/features_visual_genome.yaml` | Trích embedding CLIP cho Visual Genome (5 region mỗi ảnh) |
 | `configs/features_flickr30k.yaml` | Trích embedding CLIP cho Flickr30k |
 | `configs/clip_vg.yaml` | Baseline CLIP thuần trên Visual Genome; mặc định chạy `val`, `test` chỉ chạy một lần (ADR-0043) |

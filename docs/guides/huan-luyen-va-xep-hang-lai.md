@@ -116,7 +116,28 @@ Commit `8ac8e63`, laptop CPU 4 luồng. Mỗi seed: chuẩn bị dữ liệu kho
 
 **Lưu ý tái lập:** đồ thị `contains_clip_top16_v1` được dựng lúc cây làm việc có một thay đổi chưa commit (`git_dirty: true` trong `meta.json`). Thay đổi đó chỉ thêm `split_subgraph`, hàm mà việc dựng đồ thị không gọi, nên nội dung đồ thị không bị ảnh hưởng. Dựng lại từ commit sạch thì xoá thư mục rồi chạy lại `build_graph.py`.
 
-## 7. Câu hỏi hay gặp khi vấn đáp
+## 7. Mô hình hai lớp với cạnh đồng xuất hiện (ADR-0048)
+
+Mục 6 cho thấy đồ thị một lớp gần như không giúp, vì mọi thứ trong nó đều lấy từ CLIP. ADR-0048 thêm thông tin CLIP không có: hai khái niệm thường được **người gán nhãn** cùng trong một ảnh train (đo bằng PMI).
+
+```
+ leash.n.01 ──► dog.n.01 ──┐
+ collar.n.01 ─┘            ├──► [ảnh i]      lớp 1: z_c = W_cself·x_c + trung bình_c'(W_co·x_c')
+               sofa.n.01 ──┘                 lớp 2: h_i = W_self·x_i + b + trung bình_c(W_nb·z_c)
+```
+
+- Cạnh `contains` không đổi (CLIP top-16). Chỉ thêm cạnh khái niệm → khái niệm, đếm trên **train**.
+- Code: `src/mmxai/graph/cooccurrence.py` (dựng cạnh), `CooccurrenceSage` trong `src/mmxai/models/sage.py`.
+- Huấn luyện, chọn `alpha`, chạy test: y hệt mục 2–4, chỉ đổi config.
+
+```bash
+uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml
+uv run python scripts/train_graph_rerank.py --config configs/clip_cooc_graph_vg.yaml --seeds 0 1 2 --threads 4
+```
+
+So sánh cần đọc: `clip_cooc_graph_vg − clip_graph_vg` = đóng góp của cạnh đồng xuất hiện.
+
+## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.
 - **Vì sao hard negative lấy từ top 100 của CLIP?** Đó đúng là những ảnh mà bước xếp hạng lại phải đẩy xuống.
