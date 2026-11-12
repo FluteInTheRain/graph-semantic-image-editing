@@ -62,6 +62,37 @@ done
 uv run python scripts/summarize_runs.py
 ```
 
+### Chạy lại trên CPU (cho thành viên khác)
+
+Không cần GPU: mô hình chỉ khoảng 0,5–1 triệu tham số. Các bước, theo thứ tự:
+
+```bash
+uv sync --group ml --group graph
+nproc                                   # số luồng CPU; dùng cho --threads
+# Cần sẵn: artifacts/features/... (chuan-bi-embedding-clip.md §2), data/visual_genome/objects.json (xay-do-thi.md §2)
+uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml
+uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml   # chỉ cho mô hình đồng xuất hiện
+
+# Cấu hình chính (results/tables/README.md); --threads = kết quả của nproc
+uv run python scripts/train_graph_rerank.py --config configs/clip_graph_vg_lr1e4.yaml --seeds 0 1 2 --threads 4
+```
+
+| Bước | Thời gian đo được (laptop i5-1135G7, 4 luồng, WSL) | RAM |
+|---|---|---|
+| `build_graph.py` | vài phút | chưa đo |
+| `build_concept_edges.py` | khoảng 1 phút (đọc `objects.json`) | chưa đo |
+| `train_graph_rerank.py`, phần chuẩn bị (một lần cho cả 3 seed) | khoảng 8 phút (tìm hard negative) | khoảng 4–5 GB |
+| Mỗi epoch: một lớp / đồng xuất hiện / đối chứng | khoảng 25 / 42 / 19 giây | |
+| Cả 3 seed với `lr = 1e-4` (dừng ở epoch 7–10) | khoảng 20–30 phút | |
+| `evaluate_graph_rerank.py`, mỗi seed | khoảng 15 giây | |
+
+Lưu ý:
+
+- Cảnh báo `CUDA initialization ... driver is too old` khi chạy là **vô hại**: code chạy trên CPU.
+- Thiếu RAM: đóng bớt chương trình. Không giảm `batch_size` trong config đã commit; muốn đổi thì tạo config với tên experiment mới.
+- Số val có thể lệch rất nhỏ so với bảng ở mục 6–7 nếu khác phiên bản thư viện hoặc số luồng.
+- **Không chạy lại test** cho experiment đã có trong `results/tables/main.csv`. Script chỉ chặn khi tìm thấy run test trong `results/runs/` **trên chính máy đó** (thư mục này gitignored), nên trên máy khác nó không chặn được. Muốn kiểm tái lập, chỉ chạy train + val rồi so với `selection.json` / số val ở mục 7.
+
 Kết quả ra đâu:
 
 | File | Nội dung |
