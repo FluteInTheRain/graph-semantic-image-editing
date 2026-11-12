@@ -180,7 +180,22 @@ Nguồn: `artifacts/models/visual_genome/*_lr1e4/seed*/selection.json`, `results
 | CLIP + Graph một lớp (`clip_graph_vg_lr1e4`) | 0,0705 ± 0,0014 | 0,1765 ± 0,0037 | 0,2492 ± 0,0015 | **0,1284** ± 0,0006 |
 | CLIP + Graph đồng xuất hiện (`clip_cooc_graph_vg_lr1e4`) | 0,0709 ± 0,0009 | 0,1792 ± 0,0012 | 0,2469 ± 0,0006 | 0,1280 ± 0,0006 |
 
-Đọc: đồ thị một lớp hơn đối chứng **+0,0018** MRR@100 (khoảng 3 lần std): đồ thị có đóng góp, nhưng nhỏ so với phần do học phép chiếu (+0,019 so với CLIP). Cạnh đồng xuất hiện **không** giúp thêm (−0,0004 MRR@100; R@5 nhỉnh hơn, R@10 kém hơn): kết quả âm của ADR-0048, phải báo cáo như vậy.
+MRR@100 test theo từng seed (từ `results/runs/*/metrics.json`):
+
+| Seed | Đối chứng (1e-3) | Một lớp (1e-3) | Một lớp (1e-4) | Đồng xuất hiện (1e-4) | Một lớp 1e-4 − đối chứng |
+|---|---|---|---|---|---|
+| 0 | 0,1259 | 0,1258 | 0,1279 | 0,1273 | +0,0020 |
+| 1 | 0,1269 | 0,1286 | 0,1283 | 0,1284 | +0,0014 |
+| 2 | 0,1271 | 0,1283 | 0,1291 | 0,1282 | +0,0020 |
+
+Đọc (đã sửa theo review `experiment-reviewer` và `leakage-auditor`):
+
+- **Đồ thị đóng góp nhỏ, nhất quán ở cả 3 seed khi `lr = 1e-4`** (+0,0014 đến +0,0020), nhưng **không ổn định theo `lr`**: ở `lr = 1e-3`, mô hình một lớp chỉ hơn đối chứng +0,0010 và còn thua ở seed 0. Std của hiệu khoảng 0,0009, nên +0,0018 chỉ cỡ 2 std. Với 3 seed và khởi tạo cố định (std đánh giá thấp dao động thật), đây là **dấu hiệu**, chưa phải bằng chứng chắc. Cần thêm ablation xáo cạnh/đồ thị ngẫu nhiên.
+- Phần lớn cải thiện so với CLIP (+0,019) vẫn đến từ phép chiếu học được, không phải đồ thị.
+- `alpha` chọn được gần 0 ở `lr = 1e-4`: điểm cuối gần như chỉ còn điểm đồ thị. Vì vậy so sánh chính là với **đối chứng**, không phải với CLIP thuần.
+- Cạnh đồng xuất hiện: **không có bằng chứng cải thiện** (−0,0004 MRR@100, chênh R@5/R@10 cũng nằm trong nhiễu). Chưa chứng minh được là nó kém hơn.
+
+**Giới hạn về quy trình (phải ghi trong báo cáo):** ý định thử `lr = 1e-4` có **sau khi** đã xem test của `clip_graph_vg` và `clip_nograph_vg` ở `lr = 1e-3` (test lúc 11:06, config `lr = 1e-4` commit `ed5873c` lúc 14:10). Lý do thử là quan sát trên val (val tốt nhất ngay epoch 1), và quy tắc chọn được commit trước khi chạy test mới (`6c97c4c`), nhưng họ mô hình một lớp vì vậy đã được xem test hai lần. Trên val, hai `lr` của mô hình một lớp chênh rất ít (0,1281 so với 0,1277, std 0,0022). Giữ **cả hai** dòng test trong `results/tables/main.csv`, không bỏ dòng nào. Bảng nào là cấu hình chính: xem `results/tables/README.md`.
 
 ## 8. Câu hỏi hay gặp khi vấn đáp
 

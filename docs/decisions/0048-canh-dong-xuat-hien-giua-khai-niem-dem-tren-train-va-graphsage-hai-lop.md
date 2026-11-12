@@ -107,3 +107,9 @@ Quyết định bởi: qphulong, 2026-11-12 (chọn hướng 1: đồng xuất h
 - ADR-0009, ADR-0016, ADR-0045, ADR-0046, ADR-0047.
 - `results/tables/main.csv` (kết quả 2026-11-12) và `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 6.
 - Mã nguồn `SAGEConv` của PyTorch Geometric 2.8.1 đã cài: tham số `bias` áp cho `lin_l`; `lin_r` không có bias; gọi với `x` dạng tuple `(x_nguồn, x_đích)` cho đồ thị hai phía.
+
+## Kết quả và giới hạn quy trình (bổ sung 2026-11-12, khi ADR còn Đề xuất)
+
+- Test (`results/tables/main.csv`): `clip_cooc_graph_vg_lr1e4` 0,1280 ± 0,0006 so với `clip_graph_vg_lr1e4` 0,1284 ± 0,0006 (MRR@100). **Không có bằng chứng** cạnh đồng xuất hiện giúp thêm.
+- `lr = 1e-4` được thử sau khi đã xem test ở `lr = 1e-3` của mô hình một lớp và đối chứng. Quy tắc chọn theo val ("mỗi mô hình dùng `lr` tốt nhất trên val") được commit trước khi chạy test mới (`6c97c4c`). Cả hai dòng test của mô hình một lớp được giữ. Chi tiết: `results/tables/README.md`, `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 7.
+- Đề nghị nhóm: từ nay, mỗi biến thể mới của một họ mô hình đã chạy test cần một quy tắc chọn đã commit **trước** khi chạy test (ghi vào ADR-0047 khi duyệt).
