@@ -1,7 +1,9 @@
 """CLIP + Graph end to end on tiny files: train on train, choose on val, test once."""
 
+import dataclasses
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,14 +17,17 @@ from mmxai.eval.graph_rerank import (  # noqa: E402
     GraphRerankConfig,
     build_split_graph,
     evaluate_test,
+    graph_only_val_score,
     load_graph_rerank_config,
     load_inputs,
+    make_model,
     prepare,
     train_and_select,
 )
 from mmxai.features.cache import save_features  # noqa: E402
 from mmxai.graph.clip_edges import clip_topk_concepts  # noqa: E402
 from mmxai.graph.contains import build_contains_graph, save_contains_graph  # noqa: E402
+from mmxai.graph.cooccurrence import ConceptEdges, save_concept_edges  # noqa: E402
 from mmxai.utils.runs import file_sha256  # noqa: E402
 
 DIM = 8
@@ -97,6 +102,7 @@ def write_inputs(tmp_path, monkeypatch) -> GraphRerankConfig:
         split_file=str(split_file),
         features_dir=str(features_dir),
         graph_dir=str(graph_dir),
+        concept_edges_dir=None,
         model_dir=str(tmp_path / "models"),
         use_graph=True,
         top_k=3,
@@ -208,3 +214,71 @@ def test_committed_configs_load_and_differ_only_in_the_graph_switch():
         name for name in graph.__dict__ if graph.__dict__[name] != no_graph.__dict__[name]
     }
     assert differences == {"experiment", "model_dir", "use_graph"}
+
+
+def with_concept_edges(config: GraphRerankConfig, tmp_path, concept_keys=CONCEPTS):
+    """The same experiment with co-occurrence edges (ADR-0048): dog <-> sofa, cat -> tree."""
+    edges = ConceptEdges(
+        concept_keys=np.array(concept_keys),
+        edge_source=np.array([1, 2, 0]),
+        edge_target=np.array([2, 1, 3]),
+        edge_pmi=np.array([1.0, 1.0, 0.5]),
+    )
+    edges_dir = tmp_path / "concept_edges"
+    save_concept_edges(edges_dir, edges, {"split_sha256": file_sha256(config.split_file)})
+    return dataclasses.replace(
+        config,
+        experiment="clip_cooc_tiny",
+        concept_edges_dir=str(edges_dir),
+        model_dir=str(tmp_path / "cooc_models"),
+    )
+
+
+def test_cooccurrence_model_trains_on_val_and_tests_once(tmp_path, monkeypatch):
+    config = with_concept_edges(write_inputs(tmp_path, monkeypatch), tmp_path)
+    prepared = prepare(config, log=str)
+
+    assert prepared.training_data.second_hop_mean is not None
+    val_metrics = read_metrics(train_and_select(config, prepared, seed=0, log=str))
+    test_metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    assert test_metrics["alpha"] == val_metrics["alpha"]
+    assert test_metrics["concept_edges_dir"] == config.concept_edges_dir
+
+
+def test_untrained_cooccurrence_model_gives_the_plain_clip_val_score(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    cooc_config = with_concept_edges(config, tmp_path)
+
+    plain = graph_only_val_score(config, make_model(config, DIM), prepare(config, log=str))
+    cooc = graph_only_val_score(
+        cooc_config, make_model(cooc_config, DIM), prepare(cooc_config, log=str)
+    )
+
+    assert cooc == plain
+
+
+def test_concept_edges_of_other_concepts_are_rejected(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    renamed = ["a.n.01", "b.n.01", "c.n.01", "d.n.01"]
+    config = with_concept_edges(config, tmp_path, concept_keys=renamed)
+
+    with pytest.raises(ValueError, match="concepts of the graph"):
+        load_inputs(config)
+
+
+def test_concept_edges_without_the_graph_are_rejected(tmp_path):
+    config_file = tmp_path / "config.yaml"
+    text = Path("configs/clip_cooc_graph_vg.yaml").read_text(encoding="utf-8")
+    config_file.write_text(text.replace("use_graph: true", "use_graph: false"), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="use_graph"):
+        load_graph_rerank_config(config_file)
+
+
+def test_cooccurrence_config_differs_from_clip_graph_only_in_the_concept_edges():
+    graph = load_graph_rerank_config("configs/clip_graph_vg.yaml")
+    cooc = load_graph_rerank_config("configs/clip_cooc_graph_vg.yaml")
+
+    differences = {name for name in graph.__dict__ if graph.__dict__[name] != cooc.__dict__[name]}
+    assert differences == {"experiment", "model_dir", "concept_edges_dir"}

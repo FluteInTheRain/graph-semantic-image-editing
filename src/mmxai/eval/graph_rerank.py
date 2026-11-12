@@ -4,8 +4,9 @@ Two separate steps, so test can never feed back into a choice:
     train_and_select  train each seed, early-stop and choose alpha on VAL, save the model
     evaluate_test     load a saved model and its alpha, score TEST once, choose nothing
 
-Every split is scored on its own subgraph (split_subgraph). This is exact for the
-one-layer concept -> image model: an image's score depends only on its own edges.
+Every split is scored on its own subgraph (split_subgraph). This is exact for both
+models: an image's score depends only on its own contains edges and, for the ADR-0048
+model, on the concept -> concept edges, which are counted on train and shared by all.
 """
 
 import json
@@ -22,8 +23,15 @@ from mmxai.data.splits import load_split
 from mmxai.eval.metrics import compute_metrics
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.graph.contains import ContainsGraph, load_contains_graph, split_subgraph
+from mmxai.graph.cooccurrence import ConceptEdges, load_concept_edges
 from mmxai.graph.pyg import to_pyg_data
-from mmxai.models.sage import ConceptToImageSage, concept_to_image_edges, neighbor_mean
+from mmxai.models.sage import (
+    ConceptToImageSage,
+    CooccurrenceSage,
+    concept_to_image_edges,
+    neighbor_mean,
+    second_hop_mean,
+)
 from mmxai.models.train import (
     TrainingData,
     fit,
@@ -56,6 +64,8 @@ class GraphRerankConfig:
     split_file: str
     features_dir: str
     graph_dir: str
+    # Concept -> concept co-occurrence edges (ADR-0048); null = the one-layer ADR-0046 model.
+    concept_edges_dir: str | None
     model_dir: str
     use_graph: bool
     top_k: int
@@ -77,7 +87,20 @@ def load_graph_rerank_config(path: str | Path) -> GraphRerankConfig:
     config = load_yaml_dataclass(path, GraphRerankConfig)
     if config.selection_metric != f"MRR@{config.top_k}":
         raise ValueError(f"selection_metric must be MRR@{config.top_k}")
+    if config.concept_edges_dir is not None and not config.use_graph:
+        # The no-graph control has no concept messages, so concept edges would do nothing.
+        raise ValueError("concept_edges_dir needs use_graph: true")
     return config
+
+
+Model = ConceptToImageSage | CooccurrenceSage
+
+
+def make_model(config: GraphRerankConfig, dim: int) -> Model:
+    """The model the config asks for, untrained (it scores exactly like CLIP)."""
+    if config.concept_edges_dir is None:
+        return ConceptToImageSage(dim, use_graph=config.use_graph)
+    return CooccurrenceSage(dim)
 
 
 @dataclass(frozen=True)
@@ -87,6 +110,8 @@ class SplitGraph:
     image_ids: np.ndarray
     x: torch.Tensor  # images first, then concepts
     edge_index: torch.Tensor
+    # Concept -> concept edges in concept rows (ADR-0048), or None for the one-layer model.
+    concept_edge_index: torch.Tensor | None
 
 
 @dataclass(frozen=True)
@@ -101,6 +126,20 @@ class Inputs:
     texts: dict[str, np.ndarray]
     feature_meta: dict
     split: dict[str, np.ndarray]
+    concept_edges: ConceptEdges | None
+
+
+def load_concept_edges_for(config: GraphRerankConfig, graph: ContainsGraph) -> ConceptEdges | None:
+    """Load the co-occurrence edges and check they belong to this graph and split."""
+    if config.concept_edges_dir is None:
+        return None
+    edges, meta = load_concept_edges(config.concept_edges_dir)
+    if meta["split_sha256"] != file_sha256(config.split_file):
+        raise ValueError(f"{config.concept_edges_dir} was counted on a different split file")
+    # Edge rows are concept rows, so both files must list the same concepts in the same order.
+    if not np.array_equal(edges.concept_keys, graph.concept_keys):
+        raise ValueError(f"{config.concept_edges_dir} does not use the concepts of the graph")
+    return edges
 
 
 def load_inputs(config: GraphRerankConfig) -> Inputs:
@@ -122,6 +161,7 @@ def load_inputs(config: GraphRerankConfig) -> Inputs:
         texts=load_text_features(config.features_dir),
         feature_meta=feature_meta,
         split=load_split(config.split_file),
+        concept_edges=load_concept_edges_for(config, graph),
     )
 
 
@@ -136,15 +176,25 @@ def build_split_graph(inputs: Inputs, split_name: str) -> SplitGraph:
         inputs.graph_meta,
         inputs.feature_meta,
     )
-    return SplitGraph(subgraph.image_ids, data.x, concept_to_image_edges(data))
+    concept_edge_index = None
+    if inputs.concept_edges is not None:
+        edges = inputs.concept_edges
+        concept_edge_index = torch.from_numpy(np.stack([edges.edge_source, edges.edge_target]))
+    return SplitGraph(subgraph.image_ids, data.x, concept_to_image_edges(data), concept_edge_index)
 
 
-def image_vectors(model: ConceptToImageSage, split_graph: SplitGraph) -> np.ndarray:
+def image_vectors(model: Model, split_graph: SplitGraph) -> np.ndarray:
     """h of every image of the split, with the full SAGEConv (the path explain/ uses)."""
+    num_images = len(split_graph.image_ids)
     model.eval()
     with torch.no_grad():
-        h = model(split_graph.x, split_graph.edge_index)
-    return h[: len(split_graph.image_ids)].numpy()
+        if split_graph.concept_edge_index is None:
+            h = model(split_graph.x, split_graph.edge_index)
+        else:
+            h = model(
+                split_graph.x, split_graph.edge_index, split_graph.concept_edge_index, num_images
+            )
+    return h[:num_images].numpy()
 
 
 def build_training_data(
@@ -154,6 +204,11 @@ def build_training_data(
     num_images = len(train_graph.image_ids)
     image_x = train_graph.x[:num_images]
     mean = neighbor_mean(train_graph.x, train_graph.edge_index, num_images)
+    second_mean = None
+    if train_graph.concept_edge_index is not None:
+        second_mean = second_hop_mean(
+            train_graph.x, train_graph.edge_index, train_graph.concept_edge_index, num_images
+        )
 
     # Only texts of train images; graph image ids are sorted, so searchsorted gives rows.
     is_train_text = np.isin(inputs.texts["image_ids"], train_graph.image_ids)
@@ -175,6 +230,7 @@ def build_training_data(
         text_image_row=torch.from_numpy(text_image_row[keep]),
         candidate_rows=torch.from_numpy(candidate_rows[keep]),
         is_negative=torch.from_numpy(is_negative[keep]),
+        second_hop_mean=second_mean,
     )
 
 
@@ -218,9 +274,7 @@ def prepare(config: GraphRerankConfig, log=print) -> Prepared:
     return Prepared(inputs, training_data, val_graph, val_candidates)
 
 
-def graph_only_val_score(
-    config: GraphRerankConfig, model: ConceptToImageSage, prepared: Prepared
-) -> float:
+def graph_only_val_score(config: GraphRerankConfig, model: Model, prepared: Prepared) -> float:
     """Val MRR of the graph score alone (alpha = 0), the early-stopping signal.
 
     Decision (ADR-0047): early-stop on the graph score alone, then choose alpha.
@@ -256,7 +310,7 @@ def train_and_select(config: GraphRerankConfig, prepared: Prepared, seed: int, l
         raise FileExistsError(f"{model_dir} exists; delete it to train this seed again")
 
     set_seed(seed)
-    model = ConceptToImageSage(prepared.training_data.text_x.shape[1], use_graph=config.use_graph)
+    model = make_model(config, prepared.training_data.text_x.shape[1])
     result = fit(
         model,
         prepared.training_data,
@@ -310,6 +364,7 @@ def run_facts(
         "best_epoch": epoch,
         "use_graph": config.use_graph,
         "graph_dir": config.graph_dir,
+        "concept_edges_dir": config.concept_edges_dir,
         "graph_edge_source": inputs.graph_meta["edge_source"],
         "graph_git_commit": inputs.graph_meta["git"]["git_commit"],
         "features_code_hash": inputs.feature_meta["code_hash"],
@@ -349,7 +404,7 @@ def evaluate_test(config: GraphRerankConfig, seed: int, log=print) -> Path:
 
     inputs = load_inputs(config)
     test_graph = build_split_graph(inputs, "test")
-    model = ConceptToImageSage(test_graph.x.shape[1], use_graph=config.use_graph)
+    model = make_model(config, test_graph.x.shape[1])
     model.load_state_dict(torch.load(model_dir / MODEL_FILE, weights_only=True))
 
     candidates = split_candidates(config, inputs, "test")

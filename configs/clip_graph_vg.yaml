@@ -8,6 +8,8 @@ features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
 # Decision (ADR-0046): contains edges from CLIP top-k for every split (built by configs/graph_vg_clip_topk.yaml).
 #   Decided by: qphulong, 2026-11-10.
 graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Concept -> concept co-occurrence edges (ADR-0048); null = the one-layer ADR-0046 model.
+concept_edges_dir: null
 # Trained weights and the alpha chosen on val, one folder per seed.
 model_dir: artifacts/models/visual_genome/clip_graph_vg
 # false = the no-graph control of ADR-0046 section 6 (configs/clip_nograph_vg.yaml).
