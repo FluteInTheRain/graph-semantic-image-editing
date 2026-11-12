@@ -106,19 +106,31 @@ def train_subgraph(graph: ContainsGraph) -> ContainsGraph:
     must not be used to train the GNN). Every concept is kept, so concept rows, and
     the concept vectors stored in that order, still line up.
     """
-    is_train = graph.image_split == "train"
+    return split_subgraph(graph, "train")
+
+
+def split_subgraph(graph: ContainsGraph, split_name: str) -> ContainsGraph:
+    """Return the graph with the images of one split only, and every concept.
+
+    Used for training (train) and for scoring val/test candidates. Scoring a split on
+    its own subgraph is exact for the one-layer concept -> image model of ADR-0046,
+    because an image's score depends only on its own edges.
+    """
+    is_kept = graph.image_split == split_name
+    if not is_kept.any():
+        raise ValueError(f"the graph has no {split_name!r} image")
 
     # Image rows change because rows of removed images disappear: old row -> new row.
     new_image_row = np.full(len(graph.image_ids), -1, dtype=np.int64)
-    new_image_row[is_train] = np.arange(int(is_train.sum()), dtype=np.int64)
+    new_image_row[is_kept] = np.arange(int(is_kept.sum()), dtype=np.int64)
 
-    edge_is_train = is_train[graph.edge_image]
+    edge_is_kept = is_kept[graph.edge_image]
     return ContainsGraph(
-        image_ids=graph.image_ids[is_train],
-        image_split=graph.image_split[is_train],
+        image_ids=graph.image_ids[is_kept],
+        image_split=graph.image_split[is_kept],
         concept_keys=graph.concept_keys,
-        edge_image=new_image_row[graph.edge_image[edge_is_train]],
-        edge_concept=graph.edge_concept[edge_is_train],
+        edge_image=new_image_row[graph.edge_image[edge_is_kept]],
+        edge_concept=graph.edge_concept[edge_is_kept],
     )
 
 
