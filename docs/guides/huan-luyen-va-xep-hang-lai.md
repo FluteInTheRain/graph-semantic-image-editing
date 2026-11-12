@@ -171,6 +171,17 @@ Nguồn: `artifacts/models/visual_genome/*_lr1e4/seed*/selection.json`, `results
 
 **Quy tắc chọn trước khi chạy test** (qphulong chốt 2026-11-12, trước khi xem số test): mỗi mô hình dùng `lr` có điểm kết hợp val cao nhất. Đối chứng: `clip_nograph_vg` (1e-3, đã test). Một lớp: `clip_graph_vg_lr1e4`. Đồng xuất hiện: `clip_cooc_graph_vg_lr1e4`. Các bản khác không chạy test.
 
+**Test** (mỗi seed đúng một lần, commit `6c97c4c`; nguồn `results/tables/main.csv`):
+
+| Mô hình | R@1 | R@5 | R@10 | MRR@100 |
+|---|---|---|---|---|
+| CLIP thuần | 0,0584 | 0,1422 | 0,2018 | 0,1076 |
+| Đối chứng không đồ thị (`clip_nograph_vg`) | 0,0689 ± 0,0006 | 0,1741 ± 0,0056 | 0,2457 ± 0,0043 | 0,1266 ± 0,0006 |
+| CLIP + Graph một lớp (`clip_graph_vg_lr1e4`) | 0,0705 ± 0,0014 | 0,1765 ± 0,0037 | 0,2492 ± 0,0015 | **0,1284** ± 0,0006 |
+| CLIP + Graph đồng xuất hiện (`clip_cooc_graph_vg_lr1e4`) | 0,0709 ± 0,0009 | 0,1792 ± 0,0012 | 0,2469 ± 0,0006 | 0,1280 ± 0,0006 |
+
+Đọc: đồ thị một lớp hơn đối chứng **+0,0018** MRR@100 (khoảng 3 lần std): đồ thị có đóng góp, nhưng nhỏ so với phần do học phép chiếu (+0,019 so với CLIP). Cạnh đồng xuất hiện **không** giúp thêm (−0,0004 MRR@100; R@5 nhỉnh hơn, R@10 kém hơn): kết quả âm của ADR-0048, phải báo cáo như vậy.
+
 ## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.
