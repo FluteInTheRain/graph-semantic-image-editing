@@ -65,7 +65,7 @@ def count_cooccurrence(
     train_list = np.asarray(train_ids, dtype=np.int64).tolist()
 
     # One 0/1 row per image; A^T A counts, for each pair, the images that have both.
-    # Chunks keep memory small: all ~76k train images at once would need ~1.2 GB.
+    # Chunks keep memory small: all ~98k train images at once would need ~1.5 GB.
     for start in range(0, len(train_list), chunk_size):
         chunk = train_list[start : start + chunk_size]
         has_concept = np.zeros((len(chunk), num_concepts), dtype=np.float32)

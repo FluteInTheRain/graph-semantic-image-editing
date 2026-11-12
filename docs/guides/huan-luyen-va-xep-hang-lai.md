@@ -137,6 +137,17 @@ uv run python scripts/train_graph_rerank.py --config configs/clip_cooc_graph_vg.
 
 So sánh cần đọc: `clip_cooc_graph_vg − clip_graph_vg` = đóng góp của cạnh đồng xuất hiện.
 
+**Kết quả val 2026-11-12** (commit `203f97f`; 20.639 cạnh, 1.370 khái niệm không có cạnh; **chưa chạy test**):
+
+| Mô hình (val MRR@100, 3 seed) | Điểm kết hợp | Điểm đồ thị một mình (`alpha = 0`) |
+|---|---|---|
+| CLIP thuần | 0,1061 | – |
+| Đối chứng không đồ thị | 0,1262 ± 0,0017 | 0,1240 ± 0,0021 |
+| CLIP + Graph một lớp | 0,1277 ± 0,0022 | 0,1243 ± 0,0004 |
+| CLIP + Graph đồng xuất hiện (`clip_cooc_graph_vg`) | 0,1279 ± 0,0024 | 0,1237 ± 0,0006 |
+
+Đọc: cạnh đồng xuất hiện **không giúp** trên val (chênh +0,0002, nhỏ hơn nhiều so với độ lệch chuẩn). Cả 3 seed lại tốt nhất ở epoch 1, rồi val giảm trong khi loss train vẫn giảm: mô hình học quá khớp rất nhanh. `alpha` chọn được dao động mạnh (0,4 / 0,1 / 0,3). Nguồn: `artifacts/models/visual_genome/clip_cooc_graph_vg/seed*/selection.json` và `results/runs/20261112-140*_clip_cooc_graph_vg_seed*/`.
+
 ## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.
