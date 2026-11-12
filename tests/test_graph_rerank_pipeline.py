@@ -282,3 +282,15 @@ def test_cooccurrence_config_differs_from_clip_graph_only_in_the_concept_edges()
 
     differences = {name for name in graph.__dict__ if graph.__dict__[name] != cooc.__dict__[name]}
     assert differences == {"experiment", "model_dir", "concept_edges_dir"}
+
+
+@pytest.mark.parametrize("base", ["clip_graph_vg", "clip_nograph_vg", "clip_cooc_graph_vg"])
+def test_lower_lr_configs_differ_only_in_the_learning_rate(base):
+    original = load_graph_rerank_config(f"configs/{base}.yaml")
+    lower = load_graph_rerank_config(f"configs/{base}_lr1e4.yaml")
+
+    differences = {
+        name for name in original.__dict__ if original.__dict__[name] != lower.__dict__[name]
+    }
+    assert differences == {"experiment", "model_dir", "learning_rate"}
+    assert lower.learning_rate == original.learning_rate / 10
