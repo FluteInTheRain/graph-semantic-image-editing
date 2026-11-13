@@ -98,6 +98,19 @@ def test_unchanged_queries_and_queries_without_rank_are_never_picked():
     assert failure == []
 
 
+def test_queries_with_the_same_text_are_picked_once():
+    # Visual Genome repeats region descriptions; equal sentences get equal ranks, so
+    # without this rule "part of a trouser" could fill several of the 5 slots.
+    clip = [10, 10, 9, 1, 1]
+    fused = [1, 1, 3, 9, 9]  # changes: +9, +9, +6, -8, -8
+    keys = ["part of a trouser", "part of a trouser", "a red car", "wheel", "wheel"]
+
+    success, failure = select_queries(clip, fused, count=2, query_keys=keys)
+
+    assert success == [0, 2]
+    assert failure == [3]
+
+
 def test_fewer_than_count_are_returned_when_not_enough_exist():
     clip = [3, 1]
     fused = [1, 2]

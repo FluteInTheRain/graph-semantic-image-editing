@@ -122,6 +122,9 @@ def test_query_text_is_read_from_the_region_file(tmp_path, monkeypatch):
 
     for item in analysis["queries"]:
         assert item["text"] == f"phrase {item['text_id']}"
+        # The text and the image come from the same query row: the region's own image
+        # is always one of the relevant images (ADR-0043).
+        assert item["source_image_id"] in item["relevant_image_ids"]
 
 
 def test_run_folder_has_the_analysis_but_no_metrics_file(tmp_path, monkeypatch):

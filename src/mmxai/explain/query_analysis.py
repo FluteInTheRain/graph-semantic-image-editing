@@ -103,20 +103,28 @@ def analyse_split(
     graph_scores = candidate_graph_scores(candidates, h, split_graph.image_ids)
     final_scores = fuse_scores(candidates.clip_scores, graph_scores, alpha)
 
-    # 3. and 4. Per-query ranks and the pre-declared pick.
-    clip = clip_ranks(candidates)
-    fused = fused_ranks(candidates, graph_scores, alpha)
-    success, failure = select_queries(clip, fused, QUERIES_PER_GROUP)
-    for group, picked in (("success", success), ("failure", failure)):
-        if len(picked) < QUERIES_PER_GROUP:
-            log(f"warning: only {len(picked)} {group} queries exist (wanted {QUERIES_PER_GROUP})")
-
     if "text_ids" not in inputs.texts:
         raise ValueError(f"{config.features_dir} has no text_ids (Visual Genome region ids)")
     # Query rows: the same mask retrieve_candidates uses, so row k is query k.
     is_split_text = np.isin(inputs.texts["image_ids"], inputs.split[split])
     query_text_ids = inputs.texts["text_ids"][is_split_text]
     query_image_ids = inputs.texts["image_ids"][is_split_text]
+
+    # 3. and 4. Per-query ranks and the pre-declared pick.
+    clip = clip_ranks(candidates)
+    fused = fused_ranks(candidates, graph_scores, alpha)
+    query_keys = None
+    if query_texts is None:
+        log("warning: query text not loaded, so repeated sentences cannot be picked once")
+    else:
+        query_keys = [
+            sentence_key(query_text(query_texts, int(text_id)), int(text_id))
+            for text_id in query_text_ids
+        ]
+    success, failure = select_queries(clip, fused, QUERIES_PER_GROUP, query_keys)
+    for group, picked in (("success", success), ("failure", failure)):
+        if len(picked) < QUERIES_PER_GROUP:
+            log(f"warning: only {len(picked)} {group} queries exist (wanted {QUERIES_PER_GROUP})")
 
     row_of_id = {}
     for row, image_id in enumerate(split_graph.image_ids.tolist()):
@@ -194,6 +202,13 @@ def query_text(query_texts: dict[int, str] | None, text_id: int) -> str | None:
     if query_texts is None:
         return None
     return query_texts.get(text_id)
+
+
+def sentence_key(text: str | None, text_id: int) -> str:
+    """Key for "the same sentence": lower case, single spaces. A missing text is its own key."""
+    if text is None:
+        return f"region {text_id}"
+    return " ".join(text.lower().split())
 
 
 def first_relevant_column(order: np.ndarray, candidates: Candidates, query: int) -> int:
@@ -298,6 +313,7 @@ def selection_rule_text() -> str:
         "Only queries whose relevant image is in CLIP's top-k. change = CLIP rank - "
         "CLIP+Graph rank of the first relevant image. Success: change > 0, largest first; "
         "failure: change < 0, most negative first; ties: smaller query index first. "
+        "A sentence already picked (same text, ignoring case and spaces) is skipped. "
         f"{QUERIES_PER_GROUP} of each, fewer if not enough exist."
     )
 
@@ -317,8 +333,9 @@ def format_markdown(analysis: dict) -> str:
         f"worsened {summary['worsened']}, unchanged {summary['unchanged']}, "
         f"relevant image not in candidates {summary['relevant_not_in_candidates']}",
         "",
-        "Contributions are the change of the final score when one edge is removed",
-        "((1 - alpha) x drop of cos(q, h_i)). The deletion check removes the top supporting",
+        "A contribution is how much the final score drops when that one edge is removed",
+        "((1 - alpha) x drop of cos(q, h_i)): + means the edge pushed the image up, - means",
+        "it pulled the image down. The deletion check removes the top supporting",
         "edges together and re-ranks the query's candidates.",
     ]
     if settings["alpha"] == 1.0:

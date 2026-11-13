@@ -12,6 +12,9 @@ and 5 failure queries):
     3. Success: change > 0, largest change first. Failure: change < 0, most negative first.
     4. Ties: the smaller query index (the query's row in the split) first.
     5. Take `count` of each; fewer if not enough exist. Unchanged queries are never picked.
+    6. Queries with the same key (the same sentence) count once: only the first in the
+       order above is kept. Visual Genome repeats region descriptions, and equal sentences
+       get equal ranks, so without this rule one sentence could fill several slots.
 """
 
 import numpy as np
@@ -51,14 +54,21 @@ def rank_of_column(final_scores: np.ndarray, column: int) -> int:
 
 
 def select_queries(
-    clip: list[int | None], fused: list[int | None], count: int
+    clip: list[int | None],
+    fused: list[int | None],
+    count: int,
+    query_keys: list[str] | None = None,
 ) -> tuple[list[int], list[int]]:
     """Return (success, failure) query indices by the rule in the module docstring.
 
-    Each list has at most `count` indices; the caller warns when one has fewer.
+    query_keys: one key per query for rule 6 (e.g. the normalised sentence); None means
+    every query is distinct. Each list has at most `count` indices; the caller warns
+    when one has fewer.
     """
     if len(clip) != len(fused):
         raise ValueError(f"{len(clip)} CLIP ranks but {len(fused)} CLIP+Graph ranks")
+    if query_keys is not None and len(query_keys) != len(clip):
+        raise ValueError(f"{len(query_keys)} query keys but {len(clip)} queries")
     if count < 1:
         raise ValueError(f"count must be at least 1, got {count}")
 
@@ -80,6 +90,23 @@ def select_queries(
     # Largest loss (most negative change) first, then smaller query index.
     worsened.sort(key=lambda item: (item[0], item[1]))
 
-    success = [query for _, query in improved[:count]]
-    failure = [query for _, query in worsened[:count]]
+    success = first_distinct(improved, count, query_keys)
+    failure = first_distinct(worsened, count, query_keys)
     return success, failure
+
+
+def first_distinct(
+    ordered: list[tuple[int, int]], count: int, query_keys: list[str] | None
+) -> list[int]:
+    """The first `count` query indices of `ordered`, skipping a key already taken (rule 6)."""
+    picked = []
+    taken_keys = set()
+    for _, query in ordered:
+        if len(picked) == count:
+            break
+        key = str(query) if query_keys is None else query_keys[query]
+        if key in taken_keys:
+            continue
+        taken_keys.add(key)
+        picked.append(query)
+    return picked
