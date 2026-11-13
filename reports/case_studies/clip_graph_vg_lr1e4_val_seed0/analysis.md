@@ -8,7 +8,8 @@
 A contribution is how much the final score drops when that one edge is removed
 ((1 - alpha) x drop of cos(q, h_i)): + means the edge pushed the image up, - means
 it pulled the image down. The deletion check removes the top supporting
-edges together and re-ranks the query's candidates.
+edges together and re-ranks the query's candidates. 'Without any edge' removes
+every edge into the image: what is left is the image's own vector (W_self x_i + b).
 
 ## Success queries
 
@@ -27,6 +28,7 @@ Pulled the image down:
 - seesaw.n.01 -[in]-> image 2398911 (-0.0021)
 - trick.n.01 -[in]-> image 2398911 (-0.0017)
 Deletion check (remove 3 supporting edges): graph score 0.2046 -> 0.1962, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.2046 -> 0.1679, CLIP+Graph rank 1 -> 7.
 
 ### Query 4623: "Blue jacket with orange stripes"
 
@@ -43,6 +45,7 @@ Pulled the image down:
 - ski_pole.n.01 -[in]-> image 2326205 (-0.0018)
 - snowshoe.n.01 -[in]-> image 2326205 (-0.0016)
 Deletion check (remove 3 supporting edges): graph score 0.1771 -> 0.1717, CLIP+Graph rank 3 -> 5.
+Without any edge (16 removed): graph score 0.1771 -> 0.1658, CLIP+Graph rank 3 -> 5.
 
 ### Query 4715: "part of a trouser"
 
@@ -59,6 +62,7 @@ Pulled the image down:
 - one-third.n.01 -[in]-> image 2387245 (-0.0008)
 - pitch.n.01 -[in]-> image 2387245 (-0.0006)
 Deletion check (remove 3 supporting edges): graph score 0.0727 -> 0.0693, CLIP+Graph rank 3 -> 4.
+Without any edge (16 removed): graph score 0.0727 -> 0.0987, CLIP+Graph rank 3 -> 1.
 
 ### Query 7996: "a girl wearing blue jeans."
 
@@ -75,6 +79,7 @@ Pulled the image down:
 - student.n.01 -[in]-> image 2341744 (-0.0018)
 - friend.n.01 -[in]-> image 2341744 (-0.0014)
 Deletion check (remove 3 supporting edges): graph score 0.1428 -> 0.1357, CLIP+Graph rank 3 -> 3.
+Without any edge (16 removed): graph score 0.1428 -> 0.1369, CLIP+Graph rank 3 -> 3.
 
 ### Query 14193: "the grass beside the car"
 
@@ -91,6 +96,7 @@ Pulled the image down:
 - police.n.01 -[in]-> image 2368850 (-0.0017)
 - policeman.n.01 -[in]-> image 2368850 (-0.0017)
 Deletion check (remove 3 supporting edges): graph score 0.1761 -> 0.1722, CLIP+Graph rank 3 -> 3.
+Without any edge (16 removed): graph score 0.1761 -> 0.1603, CLIP+Graph rank 3 -> 8.
 
 
 ## Failure queries
@@ -110,6 +116,7 @@ Pulled the image down:
 - marsh.n.01 -[in]-> image 2798 (-0.0016)
 - sky.n.01 -[in]-> image 2798 (-0.0014)
 Deletion check (remove 3 supporting edges): graph score 0.0930 -> 0.0868, CLIP+Graph rank 100 -> 100.
+Without any edge (16 removed): graph score 0.0930 -> 0.1043, CLIP+Graph rank 100 -> 96.
 
 **rank 1 under CLIP+Graph: image 2353055** (CLIP rank 4, CLIP+Graph rank 1; clip 0.2452, graph 0.2300, final 0.2300; 16 edges)
 
@@ -122,6 +129,7 @@ Pulled the image down:
 - surf.n.01 -[in]-> image 2353055 (-0.0021)
 - surfboard.n.01 -[in]-> image 2353055 (-0.0013)
 Deletion check (remove 3 supporting edges): graph score 0.2300 -> 0.2230, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.2300 -> 0.2297, CLIP+Graph rank 1 -> 1.
 
 ### Query 22323: "tall green and tan grass"
 
@@ -138,6 +146,7 @@ Pulled the image down:
 - ditch.n.01 -[in]-> image 2405444 (-0.0014)
 - grave.n.01 -[in]-> image 2405444 (-0.0013)
 Deletion check (remove 3 supporting edges): graph score 0.0306 -> 0.0257, CLIP+Graph rank 96 -> 96.
+Without any edge (16 removed): graph score 0.0306 -> 0.0518, CLIP+Graph rank 96 -> 94.
 
 **rank 1 under CLIP+Graph: image 2410837** (CLIP rank 3, CLIP+Graph rank 1; clip 0.2519, graph 0.2051, final 0.2051; 16 edges)
 
@@ -150,6 +159,7 @@ Pulled the image down:
 - savanna.n.01 -[in]-> image 2410837 (-0.0016)
 - graze.n.02 -[in]-> image 2410837 (-0.0016)
 Deletion check (remove 3 supporting edges): graph score 0.2051 -> 0.1994, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.2051 -> 0.2031, CLIP+Graph rank 1 -> 1.
 
 ### Query 22494: "wheel of car"
 
@@ -166,6 +176,7 @@ Pulled the image down:
 - fireplug.n.01 -[in]-> image 2406229 (-0.0020)
 - spout.n.01 -[in]-> image 2406229 (-0.0010)
 Deletion check (remove 3 supporting edges): graph score 0.0020 -> -0.0041, CLIP+Graph rank 96 -> 97.
+Without any edge (16 removed): graph score 0.0020 -> 0.0331, CLIP+Graph rank 96 -> 82.
 
 **rank 1 under CLIP+Graph: image 2363372** (CLIP rank 1, CLIP+Graph rank 1; clip 0.3083, graph 0.2078, final 0.2078; 16 edges)
 
@@ -178,6 +189,7 @@ Pulled the image down:
 - car_tire.n.01 -[in]-> image 2363372 (-0.0015)
 - tire.n.01 -[in]-> image 2363372 (-0.0014)
 Deletion check (remove 3 supporting edges): graph score 0.2078 -> 0.2003, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.2078 -> 0.2068, CLIP+Graph rank 1 -> 1.
 
 ### Query 13958: "a wooden sign"
 
@@ -194,6 +206,7 @@ Pulled the image down:
 - bollard.n.01 -[in]-> image 2367684 (-0.0023)
 - stopping_point.n.01 -[in]-> image 2367684 (-0.0018)
 Deletion check (remove 3 supporting edges): graph score 0.0014 -> -0.0081, CLIP+Graph rank 92 -> 95.
+Without any edge (16 removed): graph score 0.0014 -> 0.0721, CLIP+Graph rank 92 -> 34.
 
 **rank 1 under CLIP+Graph: image 2363366** (CLIP rank 1, CLIP+Graph rank 1; clip 0.3078, graph 0.1511, final 0.1511; 16 edges)
 
@@ -206,6 +219,7 @@ Pulled the image down:
 - signpost.n.01 -[in]-> image 2363366 (-0.0038)
 - street_name.n.01 -[in]-> image 2363366 (-0.0032)
 Deletion check (remove 3 supporting edges): graph score 0.1511 -> 0.1382, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.1511 -> 0.2044, CLIP+Graph rank 1 -> 1.
 
 ### Query 18381: "handicap parking sign on metal post"
 
@@ -222,6 +236,7 @@ Pulled the image down:
 - bollard.n.01 -[in]-> image 2388012 (-0.0023)
 - drinking_fountain.n.01 -[in]-> image 2388012 (-0.0019)
 Deletion check (remove 3 supporting edges): graph score 0.0325 -> 0.0223, CLIP+Graph rank 95 -> 98.
+Without any edge (16 removed): graph score 0.0325 -> 0.0724, CLIP+Graph rank 95 -> 75.
 
 **rank 1 under CLIP+Graph: image 2393216** (CLIP rank 3, CLIP+Graph rank 1; clip 0.2760, graph 0.2141, final 0.2141; 16 edges)
 
@@ -234,4 +249,5 @@ Pulled the image down:
 - parking_space.n.01 -[in]-> image 2393216 (-0.0040)
 - parking_lot.n.01 -[in]-> image 2393216 (-0.0029)
 Deletion check (remove 3 supporting edges): graph score 0.2141 -> 0.2012, CLIP+Graph rank 1 -> 1.
+Without any edge (16 removed): graph score 0.2141 -> 0.2056, CLIP+Graph rank 1 -> 1.
 

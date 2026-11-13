@@ -196,6 +196,80 @@
             "final_score_after": 0.19624558091163635,
             "graph_rank_before": 1,
             "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5856,
+                "target": 4162
+              },
+              {
+                "source": 5017,
+                "target": 4162
+              },
+              {
+                "source": 7896,
+                "target": 4162
+              },
+              {
+                "source": 6516,
+                "target": 4162
+              },
+              {
+                "source": 6737,
+                "target": 4162
+              },
+              {
+                "source": 7562,
+                "target": 4162
+              },
+              {
+                "source": 5934,
+                "target": 4162
+              },
+              {
+                "source": 8002,
+                "target": 4162
+              },
+              {
+                "source": 6506,
+                "target": 4162
+              },
+              {
+                "source": 8327,
+                "target": 4162
+              },
+              {
+                "source": 8565,
+                "target": 4162
+              },
+              {
+                "source": 8453,
+                "target": 4162
+              },
+              {
+                "source": 7950,
+                "target": 4162
+              },
+              {
+                "source": 8579,
+                "target": 4162
+              },
+              {
+                "source": 7942,
+                "target": 4162
+              },
+              {
+                "source": 8450,
+                "target": 4162
+              }
+            ],
+            "graph_score_before": 0.20457473397254944,
+            "graph_score_after": 0.16793406009674072,
+            "final_score_before": 0.20457473397254944,
+            "final_score_after": 0.16793406009674072,
+            "graph_rank_before": 1,
+            "graph_rank_after": 7
           }
         }
       ]
@@ -363,6 +437,80 @@
             "graph_score_after": 0.1717148721218109,
             "final_score_before": 0.17707769572734833,
             "final_score_after": 0.1717148721218109,
+            "graph_rank_before": 3,
+            "graph_rank_after": 5
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 8090,
+                "target": 924
+              },
+              {
+                "source": 8089,
+                "target": 924
+              },
+              {
+                "source": 6152,
+                "target": 924
+              },
+              {
+                "source": 8092,
+                "target": 924
+              },
+              {
+                "source": 8096,
+                "target": 924
+              },
+              {
+                "source": 8095,
+                "target": 924
+              },
+              {
+                "source": 5514,
+                "target": 924
+              },
+              {
+                "source": 8138,
+                "target": 924
+              },
+              {
+                "source": 8091,
+                "target": 924
+              },
+              {
+                "source": 8139,
+                "target": 924
+              },
+              {
+                "source": 8075,
+                "target": 924
+              },
+              {
+                "source": 8081,
+                "target": 924
+              },
+              {
+                "source": 8137,
+                "target": 924
+              },
+              {
+                "source": 8143,
+                "target": 924
+              },
+              {
+                "source": 8087,
+                "target": 924
+              },
+              {
+                "source": 8083,
+                "target": 924
+              }
+            ],
+            "graph_score_before": 0.17707769572734833,
+            "graph_score_after": 0.16577258706092834,
+            "final_score_before": 0.17707769572734833,
+            "final_score_after": 0.16577258706092834,
             "graph_rank_before": 3,
             "graph_rank_after": 5
           }
@@ -536,6 +684,80 @@
             "final_score_after": 0.06933349370956421,
             "graph_rank_before": 3,
             "graph_rank_after": 4
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5646,
+                "target": 3645
+              },
+              {
+                "source": 7560,
+                "target": 3645
+              },
+              {
+                "source": 7338,
+                "target": 3645
+              },
+              {
+                "source": 6346,
+                "target": 3645
+              },
+              {
+                "source": 5203,
+                "target": 3645
+              },
+              {
+                "source": 5264,
+                "target": 3645
+              },
+              {
+                "source": 8632,
+                "target": 3645
+              },
+              {
+                "source": 6813,
+                "target": 3645
+              },
+              {
+                "source": 5499,
+                "target": 3645
+              },
+              {
+                "source": 8244,
+                "target": 3645
+              },
+              {
+                "source": 5233,
+                "target": 3645
+              },
+              {
+                "source": 5317,
+                "target": 3645
+              },
+              {
+                "source": 7533,
+                "target": 3645
+              },
+              {
+                "source": 7534,
+                "target": 3645
+              },
+              {
+                "source": 7316,
+                "target": 3645
+              },
+              {
+                "source": 7535,
+                "target": 3645
+              }
+            ],
+            "graph_score_before": 0.07272665202617645,
+            "graph_score_after": 0.09874402731657028,
+            "final_score_before": 0.07272665202617645,
+            "final_score_after": 0.09874402731657028,
+            "graph_rank_before": 3,
+            "graph_rank_after": 1
           }
         }
       ]
@@ -703,6 +925,80 @@
             "graph_score_after": 0.1357475370168686,
             "final_score_before": 0.14282621443271637,
             "final_score_after": 0.1357475370168686,
+            "graph_rank_before": 3,
+            "graph_rank_after": 3
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 8152,
+                "target": 1599
+              },
+              {
+                "source": 7082,
+                "target": 1599
+              },
+              {
+                "source": 5934,
+                "target": 1599
+              },
+              {
+                "source": 6832,
+                "target": 1599
+              },
+              {
+                "source": 8646,
+                "target": 1599
+              },
+              {
+                "source": 7725,
+                "target": 1599
+              },
+              {
+                "source": 8429,
+                "target": 1599
+              },
+              {
+                "source": 7541,
+                "target": 1599
+              },
+              {
+                "source": 5569,
+                "target": 1599
+              },
+              {
+                "source": 6637,
+                "target": 1599
+              },
+              {
+                "source": 7399,
+                "target": 1599
+              },
+              {
+                "source": 7724,
+                "target": 1599
+              },
+              {
+                "source": 8409,
+                "target": 1599
+              },
+              {
+                "source": 6490,
+                "target": 1599
+              },
+              {
+                "source": 8323,
+                "target": 1599
+              },
+              {
+                "source": 5023,
+                "target": 1599
+              }
+            ],
+            "graph_score_before": 0.14282621443271637,
+            "graph_score_after": 0.1368909329175949,
+            "final_score_before": 0.14282621443271637,
+            "final_score_after": 0.1368909329175949,
             "graph_rank_before": 3,
             "graph_rank_after": 3
           }
@@ -874,6 +1170,80 @@
             "final_score_after": 0.1722089946269989,
             "graph_rank_before": 3,
             "graph_rank_after": 3
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 7940,
+                "target": 2838
+              },
+              {
+                "source": 5594,
+                "target": 2838
+              },
+              {
+                "source": 7727,
+                "target": 2838
+              },
+              {
+                "source": 6457,
+                "target": 2838
+              },
+              {
+                "source": 5596,
+                "target": 2838
+              },
+              {
+                "source": 5597,
+                "target": 2838
+              },
+              {
+                "source": 7490,
+                "target": 2838
+              },
+              {
+                "source": 6133,
+                "target": 2838
+              },
+              {
+                "source": 8675,
+                "target": 2838
+              },
+              {
+                "source": 7590,
+                "target": 2838
+              },
+              {
+                "source": 7230,
+                "target": 2838
+              },
+              {
+                "source": 6882,
+                "target": 2838
+              },
+              {
+                "source": 5376,
+                "target": 2838
+              },
+              {
+                "source": 7585,
+                "target": 2838
+              },
+              {
+                "source": 7584,
+                "target": 2838
+              },
+              {
+                "source": 7674,
+                "target": 2838
+              }
+            ],
+            "graph_score_before": 0.17614953219890594,
+            "graph_score_after": 0.1603260338306427,
+            "final_score_before": 0.17614953219890594,
+            "final_score_after": 0.1603260338306427,
+            "graph_rank_before": 3,
+            "graph_rank_after": 8
           }
         }
       ]
@@ -1043,6 +1413,80 @@
             "final_score_after": 0.08684413135051727,
             "graph_rank_before": 100,
             "graph_rank_after": 100
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 6002,
+                "target": 125
+              },
+              {
+                "source": 8690,
+                "target": 125
+              },
+              {
+                "source": 7911,
+                "target": 125
+              },
+              {
+                "source": 6055,
+                "target": 125
+              },
+              {
+                "source": 6846,
+                "target": 125
+              },
+              {
+                "source": 7747,
+                "target": 125
+              },
+              {
+                "source": 5687,
+                "target": 125
+              },
+              {
+                "source": 5270,
+                "target": 125
+              },
+              {
+                "source": 6821,
+                "target": 125
+              },
+              {
+                "source": 6930,
+                "target": 125
+              },
+              {
+                "source": 5890,
+                "target": 125
+              },
+              {
+                "source": 7466,
+                "target": 125
+              },
+              {
+                "source": 6755,
+                "target": 125
+              },
+              {
+                "source": 8100,
+                "target": 125
+              },
+              {
+                "source": 7113,
+                "target": 125
+              },
+              {
+                "source": 5378,
+                "target": 125
+              }
+            ],
+            "graph_score_before": 0.09296335279941559,
+            "graph_score_after": 0.10428455471992493,
+            "final_score_before": 0.09296335279941559,
+            "final_score_after": 0.10428455471992493,
+            "graph_rank_before": 100,
+            "graph_rank_after": 96
           }
         },
         {
@@ -1195,6 +1639,80 @@
             "graph_score_after": 0.22303247451782227,
             "final_score_before": 0.2299838364124298,
             "final_score_after": 0.22303247451782227,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5856,
+                "target": 2129
+              },
+              {
+                "source": 5017,
+                "target": 2129
+              },
+              {
+                "source": 6506,
+                "target": 2129
+              },
+              {
+                "source": 8341,
+                "target": 2129
+              },
+              {
+                "source": 7896,
+                "target": 2129
+              },
+              {
+                "source": 5934,
+                "target": 2129
+              },
+              {
+                "source": 8363,
+                "target": 2129
+              },
+              {
+                "source": 8715,
+                "target": 2129
+              },
+              {
+                "source": 7700,
+                "target": 2129
+              },
+              {
+                "source": 7868,
+                "target": 2129
+              },
+              {
+                "source": 5382,
+                "target": 2129
+              },
+              {
+                "source": 8364,
+                "target": 2129
+              },
+              {
+                "source": 7920,
+                "target": 2129
+              },
+              {
+                "source": 8362,
+                "target": 2129
+              },
+              {
+                "source": 8360,
+                "target": 2129
+              },
+              {
+                "source": 8379,
+                "target": 2129
+              }
+            ],
+            "graph_score_before": 0.2299838364124298,
+            "graph_score_after": 0.22967644035816193,
+            "final_score_before": 0.2299838364124298,
+            "final_score_after": 0.22967644035816193,
             "graph_rank_before": 1,
             "graph_rank_after": 1
           }
@@ -1366,6 +1884,80 @@
             "final_score_after": 0.02565087005496025,
             "graph_rank_before": 96,
             "graph_rank_after": 96
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5392,
+                "target": 4464
+              },
+              {
+                "source": 7906,
+                "target": 4464
+              },
+              {
+                "source": 7568,
+                "target": 4464
+              },
+              {
+                "source": 8737,
+                "target": 4464
+              },
+              {
+                "source": 7033,
+                "target": 4464
+              },
+              {
+                "source": 7827,
+                "target": 4464
+              },
+              {
+                "source": 5952,
+                "target": 4464
+              },
+              {
+                "source": 6973,
+                "target": 4464
+              },
+              {
+                "source": 8743,
+                "target": 4464
+              },
+              {
+                "source": 6039,
+                "target": 4464
+              },
+              {
+                "source": 6519,
+                "target": 4464
+              },
+              {
+                "source": 7554,
+                "target": 4464
+              },
+              {
+                "source": 6038,
+                "target": 4464
+              },
+              {
+                "source": 6607,
+                "target": 4464
+              },
+              {
+                "source": 6118,
+                "target": 4464
+              },
+              {
+                "source": 6602,
+                "target": 4464
+              }
+            ],
+            "graph_score_before": 0.030573951080441475,
+            "graph_score_after": 0.051769010722637177,
+            "final_score_before": 0.030573951080441475,
+            "final_score_after": 0.051769010722637177,
+            "graph_rank_before": 96,
+            "graph_rank_after": 94
           }
         },
         {
@@ -1518,6 +2110,80 @@
             "graph_score_after": 0.1993733048439026,
             "final_score_before": 0.20507694780826569,
             "final_score_after": 0.1993733048439026,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5934,
+                "target": 4694
+              },
+              {
+                "source": 6542,
+                "target": 4694
+              },
+              {
+                "source": 5089,
+                "target": 4694
+              },
+              {
+                "source": 6714,
+                "target": 4694
+              },
+              {
+                "source": 6459,
+                "target": 4694
+              },
+              {
+                "source": 5028,
+                "target": 4694
+              },
+              {
+                "source": 6559,
+                "target": 4694
+              },
+              {
+                "source": 6648,
+                "target": 4694
+              },
+              {
+                "source": 8808,
+                "target": 4694
+              },
+              {
+                "source": 6937,
+                "target": 4694
+              },
+              {
+                "source": 5113,
+                "target": 4694
+              },
+              {
+                "source": 8748,
+                "target": 4694
+              },
+              {
+                "source": 7882,
+                "target": 4694
+              },
+              {
+                "source": 6612,
+                "target": 4694
+              },
+              {
+                "source": 7881,
+                "target": 4694
+              },
+              {
+                "source": 6603,
+                "target": 4694
+              }
+            ],
+            "graph_score_before": 0.20507694780826569,
+            "graph_score_after": 0.20310603082180023,
+            "final_score_before": 0.20507694780826569,
+            "final_score_after": 0.20310603082180023,
             "graph_rank_before": 1,
             "graph_rank_after": 1
           }
@@ -1689,6 +2355,80 @@
             "final_score_after": -0.004067162983119488,
             "graph_rank_before": 96,
             "graph_rank_after": 97
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 8659,
+                "target": 4498
+              },
+              {
+                "source": 8665,
+                "target": 4498
+              },
+              {
+                "source": 6155,
+                "target": 4498
+              },
+              {
+                "source": 5733,
+                "target": 4498
+              },
+              {
+                "source": 5932,
+                "target": 4498
+              },
+              {
+                "source": 7670,
+                "target": 4498
+              },
+              {
+                "source": 6507,
+                "target": 4498
+              },
+              {
+                "source": 8407,
+                "target": 4498
+              },
+              {
+                "source": 7528,
+                "target": 4498
+              },
+              {
+                "source": 7529,
+                "target": 4498
+              },
+              {
+                "source": 6374,
+                "target": 4498
+              },
+              {
+                "source": 8746,
+                "target": 4498
+              },
+              {
+                "source": 5394,
+                "target": 4498
+              },
+              {
+                "source": 8220,
+                "target": 4498
+              },
+              {
+                "source": 6380,
+                "target": 4498
+              },
+              {
+                "source": 6169,
+                "target": 4498
+              }
+            ],
+            "graph_score_before": 0.0020276037976145744,
+            "graph_score_after": 0.03311179578304291,
+            "final_score_before": 0.0020276037976145744,
+            "final_score_after": 0.03311179578304291,
+            "graph_rank_before": 96,
+            "graph_rank_after": 82
           }
         },
         {
@@ -1841,6 +2581,80 @@
             "graph_score_after": 0.2003222554922104,
             "final_score_before": 0.2077806293964386,
             "final_score_after": 0.2003222554922104,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 7940,
+                "target": 2593
+              },
+              {
+                "source": 5596,
+                "target": 2593
+              },
+              {
+                "source": 5597,
+                "target": 2593
+              },
+              {
+                "source": 8216,
+                "target": 2593
+              },
+              {
+                "source": 8675,
+                "target": 2593
+              },
+              {
+                "source": 8244,
+                "target": 2593
+              },
+              {
+                "source": 5437,
+                "target": 2593
+              },
+              {
+                "source": 7501,
+                "target": 2593
+              },
+              {
+                "source": 7780,
+                "target": 2593
+              },
+              {
+                "source": 8785,
+                "target": 2593
+              },
+              {
+                "source": 8407,
+                "target": 2593
+              },
+              {
+                "source": 5602,
+                "target": 2593
+              },
+              {
+                "source": 5500,
+                "target": 2593
+              },
+              {
+                "source": 8505,
+                "target": 2593
+              },
+              {
+                "source": 5601,
+                "target": 2593
+              },
+              {
+                "source": 6777,
+                "target": 2593
+              }
+            ],
+            "graph_score_before": 0.2077806293964386,
+            "graph_score_after": 0.2067916989326477,
+            "final_score_before": 0.2077806293964386,
+            "final_score_after": 0.2067916989326477,
             "graph_rank_before": 1,
             "graph_rank_after": 1
           }
@@ -2012,6 +2826,80 @@
             "final_score_after": -0.008088907226920128,
             "graph_rank_before": 92,
             "graph_rank_after": 95
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 7836,
+                "target": 2791
+              },
+              {
+                "source": 8526,
+                "target": 2791
+              },
+              {
+                "source": 6891,
+                "target": 2791
+              },
+              {
+                "source": 5330,
+                "target": 2791
+              },
+              {
+                "source": 5974,
+                "target": 2791
+              },
+              {
+                "source": 5975,
+                "target": 2791
+              },
+              {
+                "source": 8245,
+                "target": 2791
+              },
+              {
+                "source": 6095,
+                "target": 2791
+              },
+              {
+                "source": 6096,
+                "target": 2791
+              },
+              {
+                "source": 5227,
+                "target": 2791
+              },
+              {
+                "source": 7870,
+                "target": 2791
+              },
+              {
+                "source": 6836,
+                "target": 2791
+              },
+              {
+                "source": 6837,
+                "target": 2791
+              },
+              {
+                "source": 8290,
+                "target": 2791
+              },
+              {
+                "source": 5394,
+                "target": 2791
+              },
+              {
+                "source": 5518,
+                "target": 2791
+              }
+            ],
+            "graph_score_before": 0.0014263167977333069,
+            "graph_score_after": 0.07213351875543594,
+            "final_score_before": 0.0014263167977333069,
+            "final_score_after": 0.07213351875543594,
+            "graph_rank_before": 92,
+            "graph_rank_after": 34
           }
         },
         {
@@ -2164,6 +3052,80 @@
             "graph_score_after": 0.13819213211536407,
             "final_score_before": 0.15114621818065643,
             "final_score_after": 0.13819213211536407,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 5020,
+                "target": 2592
+              },
+              {
+                "source": 5451,
+                "target": 2592
+              },
+              {
+                "source": 5075,
+                "target": 2592
+              },
+              {
+                "source": 5244,
+                "target": 2592
+              },
+              {
+                "source": 6261,
+                "target": 2592
+              },
+              {
+                "source": 5352,
+                "target": 2592
+              },
+              {
+                "source": 5342,
+                "target": 2592
+              },
+              {
+                "source": 5345,
+                "target": 2592
+              },
+              {
+                "source": 7240,
+                "target": 2592
+              },
+              {
+                "source": 7870,
+                "target": 2592
+              },
+              {
+                "source": 8045,
+                "target": 2592
+              },
+              {
+                "source": 8047,
+                "target": 2592
+              },
+              {
+                "source": 8052,
+                "target": 2592
+              },
+              {
+                "source": 8306,
+                "target": 2592
+              },
+              {
+                "source": 8053,
+                "target": 2592
+              },
+              {
+                "source": 8307,
+                "target": 2592
+              }
+            ],
+            "graph_score_before": 0.15114621818065643,
+            "graph_score_after": 0.20438790321350098,
+            "final_score_before": 0.15114621818065643,
+            "final_score_after": 0.20438790321350098,
             "graph_rank_before": 1,
             "graph_rank_after": 1
           }
@@ -2335,6 +3297,80 @@
             "final_score_after": 0.022305069491267204,
             "graph_rank_before": 95,
             "graph_rank_after": 98
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 7423,
+                "target": 3676
+              },
+              {
+                "source": 8659,
+                "target": 3676
+              },
+              {
+                "source": 7618,
+                "target": 3676
+              },
+              {
+                "source": 8218,
+                "target": 3676
+              },
+              {
+                "source": 8219,
+                "target": 3676
+              },
+              {
+                "source": 7732,
+                "target": 3676
+              },
+              {
+                "source": 7453,
+                "target": 3676
+              },
+              {
+                "source": 7109,
+                "target": 3676
+              },
+              {
+                "source": 7110,
+                "target": 3676
+              },
+              {
+                "source": 7081,
+                "target": 3676
+              },
+              {
+                "source": 8534,
+                "target": 3676
+              },
+              {
+                "source": 6935,
+                "target": 3676
+              },
+              {
+                "source": 8220,
+                "target": 3676
+              },
+              {
+                "source": 6169,
+                "target": 3676
+              },
+              {
+                "source": 5394,
+                "target": 3676
+              },
+              {
+                "source": 7406,
+                "target": 3676
+              }
+            ],
+            "graph_score_before": 0.03251834213733673,
+            "graph_score_after": 0.07241839170455933,
+            "final_score_before": 0.03251834213733673,
+            "final_score_after": 0.07241839170455933,
+            "graph_rank_before": 95,
+            "graph_rank_after": 75
           }
         },
         {
@@ -2487,6 +3523,80 @@
             "graph_score_after": 0.201200470328331,
             "final_score_before": 0.21413105726242065,
             "final_score_after": 0.201200470328331,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          },
+          "without_edges": {
+            "removed": [
+              {
+                "source": 7944,
+                "target": 3922
+              },
+              {
+                "source": 6005,
+                "target": 3922
+              },
+              {
+                "source": 5565,
+                "target": 3922
+              },
+              {
+                "source": 8707,
+                "target": 3922
+              },
+              {
+                "source": 6710,
+                "target": 3922
+              },
+              {
+                "source": 7588,
+                "target": 3922
+              },
+              {
+                "source": 7646,
+                "target": 3922
+              },
+              {
+                "source": 7429,
+                "target": 3922
+              },
+              {
+                "source": 6322,
+                "target": 3922
+              },
+              {
+                "source": 7358,
+                "target": 3922
+              },
+              {
+                "source": 7417,
+                "target": 3922
+              },
+              {
+                "source": 7135,
+                "target": 3922
+              },
+              {
+                "source": 7404,
+                "target": 3922
+              },
+              {
+                "source": 7405,
+                "target": 3922
+              },
+              {
+                "source": 7407,
+                "target": 3922
+              },
+              {
+                "source": 7406,
+                "target": 3922
+              }
+            ],
+            "graph_score_before": 0.21413105726242065,
+            "graph_score_after": 0.20560601353645325,
+            "final_score_before": 0.21413105726242065,
+            "final_score_after": 0.20560601353645325,
             "graph_rank_before": 1,
             "graph_rank_after": 1
           }

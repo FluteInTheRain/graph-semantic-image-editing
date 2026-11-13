@@ -91,12 +91,17 @@ Lưu ý:
 - Cảnh báo `CUDA initialization ... driver is too old` khi chạy là **vô hại**: code chạy trên CPU.
 - **macOS:** chương trình dừng với lỗi `OMP: Error #15 ... libomp.dylib already initialized` (hoặc `Fatal Python error: Aborted` trong FAISS).
   Nguyên nhân: wheel `faiss-cpu` và `torch` mỗi bên mang một bản `libomp.dylib`. Cách sửa trên máy mình: trỏ bản
-  của faiss sang bản của torch. Phải làm lại sau mỗi lần `uv sync` cài lại faiss. Không dùng `KMP_DUPLICATE_LIB_OK=TRUE`:
-  cách đó làm test bị treo.
+  của faiss sang bản của torch. Đây là sửa **môi trường cục bộ** trong `.venv`, không phải sửa repo; trên macOS,
+  `uv run pytest` chỉ chạy hết khi đã sửa. Phải làm lại sau mỗi lần `uv sync` cài lại faiss. Không dùng
+  `KMP_DUPLICATE_LIB_OK=TRUE`: cách đó làm test bị treo.
 
   ```bash
+  # sao lưu bản của faiss, rồi trỏ nó sang bản của torch
+  cp .venv/lib/python3.11/site-packages/faiss/.dylibs/libomp.dylib /tmp/faiss_libomp.dylib.bak
   ln -sf "$PWD/.venv/lib/python3.11/site-packages/torch/lib/libomp.dylib" \
          .venv/lib/python3.11/site-packages/faiss/.dylibs/libomp.dylib
+  # hoàn tác: cài lại faiss
+  uv sync --group ml --group graph --reinstall-package faiss-cpu
   ```
 - Thiếu RAM: đóng bớt chương trình. Không giảm `batch_size` trong config đã commit; muốn đổi thì tạo config với tên experiment mới.
 - Số val có thể lệch rất nhỏ so với bảng ở mục 6–7 nếu khác phiên bản thư viện hoặc số luồng.
@@ -263,10 +268,13 @@ Thời gian trên MacBook (8 luồng): xáo đồ thị vài giây; huấn luy�
 
 | Seed | Đồ thị thật (`clip_graph_vg_lr1e4`) | Đồ thị xáo (`_shuffled`) | Đối chứng không đồ thị (`clip_nograph_vg`) | Thật − xáo |
 |---|---|---|---|---|
-| 0 | 0,1279 | 0,1268 | 0,1259 | +0,0011 |
-| 1 | 0,1283 | 0,1274 | 0,1269 | +0,0009 |
-| 2 | 0,1291 | 0,1274 | 0,1271 | +0,0017 |
-| mean ± std | 0,1284 ± 0,0006 | 0,1272 ± 0,0003 | 0,1266 ± 0,0006 | **+0,0013 ± 0,0004** |
+| 0 | 0,1279 | 0,12681 | 0,1259 | +0,00109 |
+| 1 | 0,1283 | 0,12735 | 0,1269 | +0,00095 |
+| 2 | 0,1291 | 0,12736 | 0,1271 | +0,00174 |
+| mean ± std | 0,1284 ± 0,0006 | 0,12718 ± 0,00031 | 0,1266 ± 0,0006 | **+0,00126 ± 0,00042** |
+
+Mean, std và hiệu tính trên số chưa làm tròn của bản xáo (`metrics.json`). Số của mô hình thật và đối chứng chỉ có
+4 chữ số (mục 7 ở trên).
 
 Trên val, đồ thị xáo được 0,1240 (3 seed gần như bằng nhau). Con số này **thấp hơn** cả đối chứng không đồ thị cùng
 `lr = 1e-4` (0,1246) và thấp hơn đồ thị thật (0,1281). `alpha` chọn được là 0,1 / 0,2 / 0,1, tức mô hình tin CLIP
@@ -274,13 +282,19 @@ hơn so với khi dùng đồ thị thật (0 / 0 / 0,1).
 
 **Đọc** (theo review `experiment-reviewer`, 2026-11-13):
 
-- Đồ thị thật hơn đồ thị xáo ở **cả 3 seed** (+0,0009 đến +0,0017 MRR@100). Xáo cạnh làm mất khoảng 70% phần chênh
-  +0,0018 so với đối chứng. Kết quả **phù hợp** với giả thuyết rằng một phần nhỏ cải thiện đến từ quan hệ ảnh –
-  khái niệm thật. Không được viết là "chứng minh": chỉ có 3 seed, 1 bản xáo, và hiệu ứng tuyệt đối khoảng 1% MRR.
-- R@5 và R@10 chênh nhỏ hơn std, nên không kết luận được từ hai chỉ số này.
-- Không được viết "đồ thị xáo tốt hơn không đồ thị": chênh chỉ +0,0005, và hai mô hình dùng `lr` khác nhau.
+- Đồ thị thật hơn đồ thị xáo ở **cả 3 seed** (+0,00095 đến +0,00174 MRR@100). Kết quả **phù hợp** với giả thuyết
+  rằng một phần nhỏ cải thiện đến từ quan hệ ảnh – khái niệm thật. Không được viết là "chứng minh": chỉ có 3 seed,
+  1 bản xáo, và hiệu ứng tuyệt đối khoảng 1% MRR. t ghép cặp = 5,16 (p ≈ 0,04, df = 2) chỉ là số mô tả: nó không tính
+  dao động do cách xáo hay do mẫu truy vấn.
+- So với đối chứng `lr = 1e-3` (cấu hình chính của đối chứng), xáo cạnh làm mất khoảng 70% phần chênh +0,0018. Vì
+  đối chứng khác `lr`, 70% chỉ là ước lượng thô. Trên val, so với đối chứng **cùng** `lr = 1e-4` (0,1246), đồ thị xáo
+  (0,1240) còn thấp hơn.
+- R@1: +0,0019 (0,0705 so với 0,0686), lớn hơn std của mô hình chính (0,0014) nhưng sát nhiễu. R@5 (+0,0006) và
+  R@10 (+0,0003) chênh nhỏ hơn std, không kết luận được.
+- Không được viết "đồ thị xáo tốt hơn không đồ thị": chênh chỉ +0,00054, và hai mô hình dùng `lr` khác nhau.
 - Bất thường cần ghi trong báo cáo: trên val, đồ thị xáo mất **toàn bộ** phần chênh (+0,0040 so với đồ thị thật),
-  còn trên test chỉ mất +0,0013. Với 1 bản xáo thì không tách được dao động do cách xáo.
+  còn trên test chỉ mất +0,0013. Tỉ lệ cạnh xáo trùng cạnh gốc gần như bằng nhau ở val và test (1,78% và 1,89%), nên
+  điều đó không giải thích được. Với 1 bản xáo thì không tách được dao động do cách xáo.
 
 **Giới hạn:**
 - Chỉ một `shuffle_seed` (0), như quy tắc đã chốt. FluteInTheRain quyết định (2026-11-13) **không** thêm bản xáo
@@ -290,7 +304,7 @@ hơn so với khi dùng đồ thị thật (0 / 0 / 0,1).
   phụ thuộc vào *số cạnh* của test. Phần này không mang nhãn hay nội dung test, và không cạnh nào vượt split
   (`leakage-auditor`: không phải rò rỉ). Không sửa code, vì đồ thị đã chốt trước khi chạy.
 - Dòng mô hình chính trong `main.csv` chạy trên máy khác (commit `6c97c4c`). Dòng ablation chạy trên MacBook
-  (commit `ea7068f`). Mô hình chính huấn luyện lại trên MacBook cho kết quả val khớp hoàn toàn (0,1281 ± 0,0008,
+  (commit `ea7068f`). Mô hình chính huấn luyện lại trên MacBook cho kết quả val khớp tới 4 chữ số (0,1281 ± 0,0008,
   epoch 6/8/6, `alpha` 0/0/0,1), nhưng chưa đối chiếu `model_sha256` của run test cũ.
 
 ## 8. Câu hỏi hay gặp khi vấn đáp
