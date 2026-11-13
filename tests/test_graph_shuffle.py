@@ -5,6 +5,7 @@ linked to a few distinct concepts drawn with a fixed seed.
 """
 
 from collections import Counter
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,7 +16,15 @@ from mmxai.graph.contains import (
     save_contains_graph,
     split_subgraph,
 )
-from mmxai.graph.shuffle import ShuffleGraphConfig, run_shuffle_graph, shuffle_contains_edges
+from mmxai.graph.pipeline import load_graph_config
+from mmxai.graph.shuffle import (
+    ShuffleGraphConfig,
+    load_shuffle_graph_config,
+    run_shuffle_graph,
+    shuffle_contains_edges,
+)
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def make_graph(images_per_split: int, num_concepts: int, degree: int, seed: int) -> ContainsGraph:
@@ -177,3 +186,11 @@ def test_shuffle_refuses_to_overwrite_an_existing_folder(tmp_path):
 
     with pytest.raises(FileExistsError):
         run_shuffle_graph(config)
+
+
+def test_committed_config_shuffles_the_graph_of_the_main_model():
+    main_graph = load_graph_config(REPO_ROOT / "configs" / "graph_vg_clip_topk.yaml")
+    config = load_shuffle_graph_config(REPO_ROOT / "configs" / "graph_vg_clip_topk_shuffled.yaml")
+
+    assert config.graph_dir == main_graph.output_dir
+    assert config.output_dir != config.graph_dir
