@@ -28,6 +28,7 @@ from mmxai.features.cache import save_features  # noqa: E402
 from mmxai.graph.clip_edges import clip_topk_concepts  # noqa: E402
 from mmxai.graph.contains import build_contains_graph, save_contains_graph  # noqa: E402
 from mmxai.graph.cooccurrence import ConceptEdges, save_concept_edges  # noqa: E402
+from mmxai.graph.shuffle import ShuffleGraphConfig, run_shuffle_graph  # noqa: E402
 from mmxai.utils.runs import file_sha256  # noqa: E402
 
 DIM = 8
@@ -294,3 +295,30 @@ def test_lower_lr_configs_differ_only_in_the_learning_rate(base):
     }
     assert differences == {"experiment", "model_dir", "learning_rate"}
     assert lower.learning_rate == original.learning_rate / 10
+
+
+def test_shuffled_graph_ablation_trains_on_val_and_tests_once(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    shuffled_dir = tmp_path / "graph_shuffled"
+    run_shuffle_graph(ShuffleGraphConfig(config.graph_dir, 0, str(shuffled_dir)))
+    config = dataclasses.replace(
+        config,
+        experiment="clip_graph_shuffled_tiny",
+        graph_dir=str(shuffled_dir),
+        model_dir=str(tmp_path / "shuffled_models"),
+    )
+
+    prepared = prepare(config, log=str)
+    val_metrics = read_metrics(train_and_select(config, prepared, seed=0, log=str))
+    test_metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    assert test_metrics["alpha"] == val_metrics["alpha"]
+    assert test_metrics["graph_edge_source"] == "clip_topk_shuffled"
+
+
+def test_shuffled_ablation_config_differs_from_the_main_config_only_in_the_graph():
+    main = load_graph_rerank_config("configs/clip_graph_vg_lr1e4.yaml")
+    shuffled = load_graph_rerank_config("configs/clip_graph_vg_lr1e4_shuffled.yaml")
+
+    differences = {name for name in main.__dict__ if main.__dict__[name] != shuffled.__dict__[name]}
+    assert differences == {"experiment", "graph_dir", "model_dir"}
