@@ -27,6 +27,7 @@ import numpy as np
 
 from mmxai.data.splits import load_split
 from mmxai.eval.extended import (
+    check_extension_settings,
     image_to_text_report,
     query_groupings,
     text_to_image_report,
@@ -150,15 +151,6 @@ def evaluate_clip(
     return metrics
 
 
-def check_extension_settings(config: ClipEvalConfig) -> None:
-    """Reject settings that ask for a report part whose inputs are missing."""
-    wants_groups = config.vg_data_dir is not None or config.predicates_file is not None
-    if wants_groups and (config.vg_data_dir is None or config.predicates_file is None):
-        raise ValueError("groups need both vg_data_dir and predicates_file")
-    if (wants_groups or config.image_to_text) and config.ndcg_k is None:
-        raise ValueError("groups and image_to_text need ndcg_k")
-
-
 def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
     """Evaluate, write the run folder and return its path.
 
@@ -177,7 +169,9 @@ def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
     #   Decided by: FluteInTheRain, ADR-0009; this check proposed by Claude Code, 2026-11-13.
     if config.eval_split == "test" and test_run_exists(config.output_dir, config.experiment, seed):
         raise FileExistsError(f"test of {config.experiment} seed {seed} was already run")
-    check_extension_settings(config)
+    check_extension_settings(
+        config.ndcg_k, config.image_to_text, config.vg_data_dir, config.predicates_file
+    )
 
     meta = load_meta(config.features_dir)
     if meta["dataset"] != config.dataset or meta["is_partial"]:

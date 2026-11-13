@@ -20,7 +20,16 @@ import torch
 import torch_geometric
 
 from mmxai.data.splits import load_split
+from mmxai.eval.extended import (
+    check_extension_settings,
+    image_to_text_report,
+    query_groupings,
+    sweep_alpha_image_to_text,
+    text_to_image_report,
+)
+from mmxai.eval.image_to_text import TextCandidates, retrieve_text_candidates, text_graph_scores
 from mmxai.eval.metrics import compute_metrics
+from mmxai.eval.query_groups import load_predicates
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.graph.contains import ContainsGraph, load_contains_graph, split_subgraph
 from mmxai.graph.cooccurrence import ConceptEdges, load_concept_edges
@@ -86,6 +95,14 @@ class GraphRerankConfig:
     alpha_grid: list[float]
     selection_metric: str
     output_dir: str
+    # Optional extensions (spec 2026-11-13), as in ClipEvalConfig. All None = today's runs.
+    ndcg_k: int | None = None
+    image_to_text: bool | None = None
+    vg_data_dir: str | None = None
+    predicates_file: str | None = None
+    extra_action_predicates: list[str] | None = None
+    extra_spatial_predicates: list[str] | None = None
+    excluded_predicates: list[str] | None = None
 
 
 def load_graph_rerank_config(path: str | Path) -> GraphRerankConfig:
@@ -96,6 +113,9 @@ def load_graph_rerank_config(path: str | Path) -> GraphRerankConfig:
     if config.concept_edges_dir is not None and not config.use_graph:
         # The no-graph control has no concept messages, so concept edges would do nothing.
         raise ValueError("concept_edges_dir needs use_graph: true")
+    check_extension_settings(
+        config.ndcg_k, config.image_to_text, config.vg_data_dir, config.predicates_file
+    )
     return config
 
 
@@ -253,6 +273,21 @@ def split_candidates(config: GraphRerankConfig, inputs: Inputs, split_name: str)
     )
 
 
+def split_text_candidates(
+    config: GraphRerankConfig, inputs: Inputs, split_name: str
+) -> TextCandidates:
+    """CLIP's top-k texts for every image of the split (image -> text, spec 5.2)."""
+    return retrieve_text_candidates(
+        inputs.image_embeddings,
+        inputs.image_ids,
+        inputs.texts["embeddings"],
+        inputs.texts["image_ids"],
+        inputs.split[split_name],
+        config.top_k,
+        config.same_text_threshold,
+    )
+
+
 @dataclass(frozen=True)
 class Prepared:
     """The slow, seed-independent part: computed once, then reused for every seed."""
@@ -261,6 +296,7 @@ class Prepared:
     training_data: TrainingData
     val_graph: SplitGraph
     val_candidates: Candidates
+    val_text_candidates: TextCandidates | None  # only when the config asks for image -> text
 
 
 def prepare(config: GraphRerankConfig, log=print) -> Prepared:
@@ -277,7 +313,10 @@ def prepare(config: GraphRerankConfig, log=print) -> Prepared:
     val_graph = build_split_graph(inputs, "val")
     val_candidates = split_candidates(config, inputs, "val")
     log(f"val: {len(val_candidates.candidate_ids)} queries ({time.time() - started:.0f}s)")
-    return Prepared(inputs, training_data, val_graph, val_candidates)
+    val_text_candidates = None
+    if config.image_to_text:
+        val_text_candidates = split_text_candidates(config, inputs, "val")
+    return Prepared(inputs, training_data, val_graph, val_candidates, val_text_candidates)
 
 
 def graph_only_val_score(config: GraphRerankConfig, model: Model, prepared: Prepared) -> float:
@@ -337,6 +376,11 @@ def train_and_select(config: GraphRerankConfig, prepared: Prepared, seed: int, l
     sweep = sweep_alpha(prepared.val_candidates, scores, config.alpha_grid, config.recall_ks)
     alpha = choose_alpha(sweep, config.selection_metric)
     log(f"seed {seed}: best epoch {result.best_epoch}, alpha {alpha}")
+    # Image -> text gets its own alpha, chosen on val after epoch and text -> image alpha.
+    image_to_text_choice = {}
+    if config.image_to_text:
+        image_to_text_choice = choose_image_to_text_alpha(config, prepared, h)
+        log(f"seed {seed}: image -> text alpha {image_to_text_choice['alpha_image_to_text']}")
 
     model_dir.mkdir(parents=True)
     torch.save(result.best_state, model_dir / MODEL_FILE)
@@ -347,14 +391,83 @@ def train_and_select(config: GraphRerankConfig, prepared: Prepared, seed: int, l
         "alpha_sweep": {str(key): value for key, value in sweep.items()},
         "git": collect_env({})["git_commit"],
     }
+    selection.update(image_to_text_choice)
     with open(model_dir / SELECTION_FILE, "w", encoding="utf-8") as file:
         json.dump(selection, file, indent=2)
 
-    metrics = dict(sweep[alpha])
+    if config.ndcg_k is None:
+        metrics = dict(sweep[alpha])
+    else:
+        final = fuse_scores(prepared.val_candidates.clip_scores, scores, alpha)
+        metrics = extended_metrics(
+            config,
+            prepared.inputs,
+            "val",
+            prepared.val_candidates,
+            final,
+            prepared.val_text_candidates,
+            h,
+            prepared.val_graph.image_ids,
+            selection,
+        )
     metrics.update(run_facts(config, prepared.inputs, "val", seed, alpha, result.best_epoch))
     metrics["alpha_sweep"] = selection["alpha_sweep"]
     metrics["history"] = result.history
     return write_run(config, metrics, seed)
+
+
+def choose_image_to_text_alpha(
+    config: GraphRerankConfig, prepared: Prepared, h: np.ndarray
+) -> dict:
+    """Sweep alpha_grid on val image -> text; keep the best alpha (the text -> image rule)."""
+    candidates = prepared.val_text_candidates
+    scores = text_graph_scores(candidates, h, prepared.val_graph.image_ids)
+    sweep = sweep_alpha_image_to_text(
+        candidates, scores, config.alpha_grid, config.recall_ks, config.top_k, config.ndcg_k
+    )
+    return {
+        "alpha_image_to_text": choose_alpha(sweep, config.selection_metric),
+        "alpha_sweep_image_to_text": {str(key): value for key, value in sweep.items()},
+    }
+
+
+def extended_metrics(
+    config: GraphRerankConfig,
+    inputs: Inputs,
+    split_name: str,
+    candidates: Candidates,
+    final_scores: np.ndarray,
+    text_candidates: TextCandidates | None,
+    h: np.ndarray,
+    h_image_ids: np.ndarray,
+    selection: dict,
+) -> dict:
+    """The extended report of one split, with the alphas already chosen on val."""
+    groupings = None
+    if config.vg_data_dir is not None:
+        predicates = load_predicates(
+            config.predicates_file,
+            config.extra_action_predicates,
+            config.extra_spatial_predicates,
+            config.excluded_predicates,
+        )
+        # The same mask retrieve_candidates uses, so ids line up with the queries.
+        query_rows = np.isin(inputs.texts["image_ids"], inputs.split[split_name])
+        text_ids = inputs.texts["text_ids"][query_rows]
+        groupings = query_groupings(candidates, text_ids, config.vg_data_dir, predicates)
+    metrics = text_to_image_report(
+        candidates, final_scores, groupings, config.recall_ks, config.top_k, config.ndcg_k
+    )
+
+    if config.image_to_text:
+        alpha = selection["alpha_image_to_text"]
+        text_scores = text_graph_scores(text_candidates, h, h_image_ids)
+        text_final = fuse_scores(text_candidates.clip_scores, text_scores, alpha)
+        metrics["image_to_text"] = image_to_text_report(
+            text_candidates, text_final, config.recall_ks, config.top_k, config.ndcg_k
+        )
+        metrics["image_to_text"]["alpha"] = alpha
+    return metrics
 
 
 def run_facts(
@@ -410,7 +523,23 @@ def evaluate_test(config: GraphRerankConfig, seed: int, log=print) -> Path:
     h = image_vectors(model, test_graph)
     scores = candidate_graph_scores(candidates, h, test_graph.image_ids)
     final = fuse_scores(candidates.clip_scores, scores, selection["alpha"])
-    metrics = compute_metrics(rerank_ranks(candidates, final), config.recall_ks, config.top_k)
+    if config.ndcg_k is None:
+        metrics = compute_metrics(rerank_ranks(candidates, final), config.recall_ks, config.top_k)
+    else:
+        text_candidates = None
+        if config.image_to_text:
+            text_candidates = split_text_candidates(config, inputs, "test")
+        metrics = extended_metrics(
+            config,
+            inputs,
+            "test",
+            candidates,
+            final,
+            text_candidates,
+            h,
+            test_graph.image_ids,
+            selection,
+        )
     metrics.update(
         run_facts(config, inputs, "test", seed, selection["alpha"], selection["best_epoch"])
     )
