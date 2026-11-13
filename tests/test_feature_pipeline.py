@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import mmxai.features
 from mmxai.data.records import ImageRecord, TextRecord
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.features.pipeline import (
@@ -101,6 +102,10 @@ def fake_encoder(monkeypatch):
     module.encode_images = encode_images
     module.encode_texts = encode_texts
     monkeypatch.setitem(sys.modules, "mmxai.features.clip_encoder", module)
+    # `from mmxai.features import clip_encoder` reads the package attribute first. If another
+    # test already imported the real module (needs torch), that attribute would win over
+    # sys.modules, so replace it too.
+    monkeypatch.setattr(mmxai.features, "clip_encoder", module, raising=False)
     return module
 
 
