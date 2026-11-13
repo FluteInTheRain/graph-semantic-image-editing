@@ -23,13 +23,13 @@ from mmxai.data.splits import load_split
 from mmxai.eval.extended import (
     check_extension_settings,
     image_to_text_report,
+    query_group_inputs,
     query_groupings,
     sweep_alpha_image_to_text,
     text_to_image_report,
 )
 from mmxai.eval.image_to_text import TextCandidates, retrieve_text_candidates, text_graph_scores
 from mmxai.eval.metrics import compute_metrics
-from mmxai.eval.query_groups import load_predicates
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.graph.contains import ContainsGraph, load_contains_graph, split_subgraph
 from mmxai.graph.cooccurrence import ConceptEdges, load_concept_edges
@@ -445,15 +445,14 @@ def extended_metrics(
     """The extended report of one split, with the alphas already chosen on val."""
     groupings = None
     if config.vg_data_dir is not None:
-        predicates = load_predicates(
+        text_ids, predicates = query_group_inputs(
+            inputs.texts,
+            inputs.split[split_name],
             config.predicates_file,
             config.extra_action_predicates,
             config.extra_spatial_predicates,
             config.excluded_predicates,
         )
-        # The same mask retrieve_candidates uses, so ids line up with the queries.
-        query_rows = np.isin(inputs.texts["image_ids"], inputs.split[split_name])
-        text_ids = inputs.texts["text_ids"][query_rows]
         groupings = query_groupings(candidates, text_ids, config.vg_data_dir, predicates)
     metrics = text_to_image_report(
         candidates, final_scores, groupings, config.recall_ks, config.top_k, config.ndcg_k

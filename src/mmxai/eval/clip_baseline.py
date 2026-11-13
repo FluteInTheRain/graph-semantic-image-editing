@@ -29,12 +29,13 @@ from mmxai.data.splits import load_split
 from mmxai.eval.extended import (
     check_extension_settings,
     image_to_text_report,
+    query_group_inputs,
     query_groupings,
     text_to_image_report,
 )
 from mmxai.eval.image_to_text import retrieve_text_candidates
 from mmxai.eval.metrics import compute_metrics, first_relevant_rank
-from mmxai.eval.query_groups import Predicates, load_predicates
+from mmxai.eval.query_groups import Predicates
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.rerank.fusion import retrieve_candidates
 from mmxai.utils.runs import (
@@ -183,15 +184,15 @@ def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
 
     group_inputs = None
     if config.vg_data_dir is not None:
-        predicates = load_predicates(
+        query_text_ids, predicates = query_group_inputs(
+            texts,
+            split[config.eval_split],
             config.predicates_file,
             config.extra_action_predicates,
             config.extra_spatial_predicates,
             config.excluded_predicates,
         )
-        # The same mask retrieve_candidates uses, so ids line up with the queries.
-        query_rows = np.isin(texts["image_ids"], split[config.eval_split])
-        group_inputs = (texts["text_ids"][query_rows], config.vg_data_dir, predicates)
+        group_inputs = (query_text_ids, config.vg_data_dir, predicates)
 
     metrics = evaluate_clip(
         image_embeddings,

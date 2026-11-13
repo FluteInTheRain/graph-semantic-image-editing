@@ -14,6 +14,7 @@ from mmxai.eval.image_to_text import TextCandidates, ranked_text_rows
 from mmxai.eval.metrics import compute_metrics, ranked_metrics
 from mmxai.eval.query_groups import (
     Predicates,
+    load_predicates,
     metrics_by_group,
     relation_groups,
     specificity_groups,
@@ -100,6 +101,24 @@ def sweep_alpha_image_to_text(
         final = fuse_scores(candidates.clip_scores, graph_scores, float(alpha))
         results[float(alpha)] = image_to_text_report(candidates, final, recall_ks, top_k, ndcg_k)
     return results
+
+
+def query_group_inputs(
+    texts: dict[str, np.ndarray],
+    split_image_ids: np.ndarray,
+    predicates_file: str,
+    extra_action: list[str] | None,
+    extra_spatial: list[str] | None,
+    excluded: list[str] | None,
+) -> tuple[np.ndarray, Predicates]:
+    """Region ids of the split's text -> image queries, and the predicate lists.
+
+    The ids are in the query order of retrieve_candidates: the mask below is the one it
+    uses, kept here once so plain CLIP and CLIP + Graph label queries the same way.
+    """
+    query_rows = np.isin(texts["image_ids"], split_image_ids)
+    predicates = load_predicates(predicates_file, extra_action, extra_spatial, excluded)
+    return texts["text_ids"][query_rows], predicates
 
 
 def query_groupings(

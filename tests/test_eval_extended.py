@@ -8,6 +8,7 @@ import pytest
 import mmxai.eval.extended
 from mmxai.eval.extended import (
     image_to_text_report,
+    query_group_inputs,
     query_groupings,
     ranked_image_ids,
     text_to_image_report,
@@ -15,7 +16,7 @@ from mmxai.eval.extended import (
 from mmxai.eval.image_to_text import TextCandidates
 from mmxai.eval.metrics import compute_metrics
 from mmxai.eval.query_groups import load_predicates
-from mmxai.rerank.fusion import Candidates, rerank_ranks
+from mmxai.rerank.fusion import Candidates, rerank_ranks, retrieve_candidates
 
 PREDICATE_YAML = """
 predicate_templates:
@@ -109,3 +110,36 @@ def test_query_groupings_label_each_query_by_specificity_and_relation(tmp_path):
 
     assert groupings["specificity"] == ["specific", "generic"]
     assert groupings["relation"] == ["action", "none"]
+
+
+def test_query_group_inputs_follow_the_query_rows_of_retrieve_candidates(tmp_path):
+    pytest.importorskip("faiss")
+    predicates_file = tmp_path / "predicates.yaml"
+    predicates_file.write_text(PREDICATE_YAML, encoding="utf-8")
+    # Texts of the split's images (1 and 3) are interleaved with a text of image 2.
+    text_embeddings = np.eye(5, dtype=np.float32)
+    texts = {
+        "embeddings": text_embeddings,
+        "image_ids": np.array([3, 1, 2, 3, 1]),
+        "text_ids": np.array([10, 11, 12, 13, 14]),
+    }
+    split_image_ids = np.array([1, 3])
+    candidates = retrieve_candidates(
+        np.eye(5, dtype=np.float32)[:3],
+        np.array([1, 2, 3]),
+        texts["embeddings"],
+        texts["image_ids"],
+        split_image_ids,
+        2,
+        0.9999,
+    )
+
+    text_ids, predicates = query_group_inputs(
+        texts, split_image_ids, str(predicates_file), None, None, None
+    )
+
+    assert text_ids.tolist() == [10, 11, 13, 14]
+    # Query q of retrieve_candidates is the text whose id is text_ids[q].
+    rows = [texts["text_ids"].tolist().index(text_id) for text_id in text_ids.tolist()]
+    np.testing.assert_array_equal(candidates.query_embeddings, text_embeddings[rows])
+    assert predicates == load_predicates(predicates_file, None, None, None)
