@@ -41,13 +41,22 @@ def rank_drop(rank_before: int, rank_after: int) -> int:
 def rank_of(scores: np.ndarray, candidate: int) -> int:
     """Rank of one candidate among all candidates (1 = highest score).
 
-    Ties share the better rank, so a tie never makes a candidate look like it fell.
+    Same order as the pipeline's stable sort (mmxai.eval.query_ranks.rank_of_column):
+    on a tie, the candidate in the earlier column (CLIP's order) ranks first. Kept here
+    without that import so this module needs numpy only.
     """
-    return 1 + int((scores > scores[candidate]).sum())
+    score = scores[candidate]
+    higher = int((scores > score).sum())
+    tied_before = int((scores[:candidate] == score).sum())
+    return 1 + higher + tied_before
 
 
 def final_scores(cosine: np.ndarray, graph: np.ndarray, alpha: float) -> np.ndarray:
-    """The score used for ranking: alpha * cosine + (1 - alpha) * graph (ADR-0016)."""
+    """The score used for ranking: alpha * cosine + (1 - alpha) * graph (ADR-0016).
+
+    The same formula as mmxai.rerank.fusion.fuse_scores, kept here so this module needs
+    numpy only.
+    """
     if not 0.0 <= alpha <= 1.0:
         raise ValueError(f"alpha must be in [0, 1], got {alpha}")
     return alpha * cosine + (1 - alpha) * graph

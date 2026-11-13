@@ -51,8 +51,10 @@ def test_rank_of_counts_strictly_higher_scores():
     assert rank_of(np.array([0.5, 0.9, 0.1]), candidate=0) == 2
 
 
-def test_rank_of_gives_tied_candidates_the_better_rank():
-    assert rank_of(np.array([0.5, 0.5, 0.1]), candidate=1) == 1
+def test_rank_of_breaks_ties_by_column_like_the_pipeline_sort():
+    # The pipeline sorts stably, so a tied candidate in an earlier column ranks first.
+    assert rank_of(np.array([0.5, 0.5, 0.1]), candidate=0) == 1
+    assert rank_of(np.array([0.5, 0.5, 0.1]), candidate=1) == 2
 
 
 def test_final_scores_mix_cosine_and_graph():
