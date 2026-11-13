@@ -463,3 +463,39 @@ def test_graph_config_with_image_to_text_needs_ndcg(tmp_path):
 
     with pytest.raises(ValueError, match="ndcg_k"):
         load_graph_rerank_config(config_file)
+
+
+GRAPH_EVAL2_SOURCES = [
+    "clip_nograph_vg",
+    "clip_graph_vg_lr1e4",
+    "clip_cooc_graph_vg_lr1e4",
+    "clip_graph_vg_lr1e4_shuffled",
+]
+EXTENSION_FIELDS = {
+    "ndcg_k": 10,
+    "image_to_text": True,
+    "vg_data_dir": "data/visual_genome",
+    "predicates_file": "configs/query_benchmark_vg.yaml",
+    "extra_action_predicates": None,
+    "extra_spatial_predicates": None,
+    "excluded_predicates": None,
+}
+
+
+@pytest.mark.parametrize("source_name", GRAPH_EVAL2_SOURCES)
+def test_graph_eval2_config_differs_from_its_source_only_in_name_model_dir_and_extensions(
+    source_name,
+):
+    source = load_graph_rerank_config(f"configs/{source_name}.yaml")
+    eval2 = load_graph_rerank_config(f"configs/{source_name}_eval2.yaml")
+
+    differences = {
+        name for name in source.__dict__ if source.__dict__[name] != eval2.__dict__[name]
+    }
+    assert differences == {"experiment", "model_dir"} | {
+        name for name in EXTENSION_FIELDS if EXTENSION_FIELDS[name] is not None
+    }
+    assert eval2.experiment == f"{source_name}_eval2"
+    assert eval2.model_dir == f"artifacts/models/visual_genome/{source_name}_eval2"
+    for name, value in EXTENSION_FIELDS.items():
+        assert getattr(eval2, name) == value

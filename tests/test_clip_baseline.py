@@ -271,3 +271,20 @@ def test_second_clip_test_run_is_refused(tmp_path):
 
     with pytest.raises(FileExistsError, match="already run"):
         run_clip_evaluation(config, seed=0)
+
+
+def test_clip_eval2_config_differs_from_its_source_only_in_name_and_extension_fields():
+    source = load_clip_eval_config(REPO_ROOT / "configs" / "clip_vg.yaml")
+    eval2 = load_clip_eval_config(REPO_ROOT / "configs" / "clip_vg_eval2.yaml")
+
+    changed = {name for name in source.__dict__ if source.__dict__[name] != eval2.__dict__[name]}
+    assert changed == {"experiment", "ndcg_k", "image_to_text", "vg_data_dir", "predicates_file"}
+    assert eval2.experiment == "clip_vg_eval2"
+    assert eval2.eval_split == "val"
+    assert eval2.ndcg_k == 10
+    assert eval2.image_to_text is True
+    assert eval2.vg_data_dir == "data/visual_genome"
+    assert eval2.predicates_file == "configs/query_benchmark_vg.yaml"
+    assert eval2.extra_action_predicates is None
+    assert eval2.extra_spatial_predicates is None
+    assert eval2.excluded_predicates is None
