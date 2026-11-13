@@ -130,6 +130,19 @@ def test_deletion_check_matches_removing_the_edges_directly():
     assert result.deletion.graph_score_after == pytest.approx(expected, abs=1e-6)
 
 
+def test_without_edges_removes_every_edge_into_the_image():
+    model = random_model()
+    result = explain(model, num_edges=1, column=0)
+    image_row = int(CANDIDATE_ROWS[0])
+
+    removed = {(edge.source, edge.target) for edge in result.without_edges.removed}
+    keep = EDGE_INDEX[1] != image_row
+    expected = direct_score(model, EDGE_INDEX[:, keep], image_row)
+
+    assert removed == {(4, 1), (5, 1)}  # both concept edges of image 101
+    assert result.without_edges.graph_score_after == pytest.approx(expected, abs=1e-6)
+
+
 def test_deletion_check_removes_only_supporting_edges():
     result = explain(identity_model(), num_edges=3)
 

@@ -314,6 +314,8 @@ def test_shuffled_graph_ablation_trains_on_val_and_tests_once(tmp_path, monkeypa
 
     assert test_metrics["alpha"] == val_metrics["alpha"]
     assert test_metrics["graph_edge_source"] == "clip_topk_shuffled"
+    with pytest.raises(FileExistsError, match="already run"):
+        evaluate_test(config, seed=0, log=str)
 
 
 def test_shuffled_ablation_config_differs_from_the_main_config_only_in_the_graph():

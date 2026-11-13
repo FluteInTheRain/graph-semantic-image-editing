@@ -16,12 +16,14 @@ from mmxai.eval.graph_rerank import (  # noqa: E402
     MODEL_FILE,
     SELECTION_FILE,
     graph_only_val_score,
+    image_vectors,
     make_model,
     prepare,
     seed_model_dir,
     train_and_select,
 )
 from mmxai.explain.query_analysis import analyse_split, write_analysis  # noqa: E402
+from mmxai.rerank.fusion import candidate_graph_scores, sweep_alpha  # noqa: E402
 from test_graph_rerank_pipeline import write_inputs  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +46,15 @@ def saved_model_with_graph(config, alpha: float):
     with open(model_dir / SELECTION_FILE, encoding="utf-8") as file:
         selection = json.load(file)
     selection["alpha"] = alpha
+    # Save the val metrics of the new weights, as training does, so the analysis can
+    # check it reproduces them.
+    val_scores = candidate_graph_scores(
+        prepared.val_candidates,
+        image_vectors(model, prepared.val_graph),
+        prepared.val_graph.image_ids,
+    )
+    sweep = sweep_alpha(prepared.val_candidates, val_scores, [alpha], config.recall_ks)
+    selection["alpha_sweep"] = {str(key): value for key, value in sweep.items()}
     with open(model_dir / SELECTION_FILE, "w", encoding="utf-8") as file:
         json.dump(selection, file)
     return model, prepared
@@ -113,6 +124,19 @@ def test_failures_also_explain_the_image_ranked_first(tmp_path, monkeypatch):
             ]
 
 
+def test_without_edges_removes_every_edge_into_each_explained_image(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    saved_model_with_graph(config, alpha=0.0)
+
+    analysis = analyse_split(config, 0, "val", 1, None, log=str)
+
+    explained = [candidate for item in analysis["queries"] for candidate in item["explained"]]
+    assert explained
+    for candidate in explained:
+        removed = candidate["without_edges"]["removed"]
+        assert len(removed) == candidate["num_edges_into_image"]
+
+
 def test_query_text_is_read_from_the_region_file(tmp_path, monkeypatch):
     config = write_inputs(tmp_path, monkeypatch)
     saved_model_with_graph(config, alpha=0.0)
@@ -162,3 +186,19 @@ def test_cli_refuses_the_test_split():
 
     assert result.returncode != 0
     assert "only val" in result.stderr
+
+
+def test_analysis_stops_when_it_does_not_reproduce_the_saved_val_metric(tmp_path, monkeypatch):
+    # The explanation must belong to the ranking training reported. A rebuilt graph or
+    # another checkpoint would rank differently; here the saved val metric is altered.
+    config = write_inputs(tmp_path, monkeypatch)
+    saved_model_with_graph(config, alpha=0.0)
+    selection_path = seed_model_dir(config, 0) / SELECTION_FILE
+    with open(selection_path, encoding="utf-8") as file:
+        selection = json.load(file)
+    selection["alpha_sweep"]["0.0"][config.selection_metric] += 0.01
+    with open(selection_path, "w", encoding="utf-8") as file:
+        json.dump(selection, file)
+
+    with pytest.raises(ValueError, match="does not reproduce"):
+        analyse_split(config, 0, "val", 1, None, log=str)

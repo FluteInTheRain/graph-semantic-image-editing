@@ -41,7 +41,7 @@ from mmxai.eval.metrics import compute_metrics
 from mmxai.eval.query_ranks import clip_ranks, fused_ranks, ranked_columns, select_queries
 from mmxai.explain.occlusion import EdgeContribution
 from mmxai.explain.presentation import Explanation, Relation, build_explanation
-from mmxai.explain.ranking_model import CandidateExplanation, explain_candidate
+from mmxai.explain.ranking_model import CandidateExplanation, DeletionCheck, explain_candidate
 from mmxai.rerank.fusion import Candidates, candidate_graph_scores, fuse_scores
 from mmxai.utils.runs import collect_env, make_run_dir
 
@@ -91,7 +91,8 @@ def analyse_split(
     # 1. What training saved: weights and alpha. Nothing is chosen here.
     model_dir = seed_model_dir(config, seed)
     with open(model_dir / SELECTION_FILE, encoding="utf-8") as file:
-        alpha = float(json.load(file)["alpha"])
+        selection = json.load(file)
+    alpha = float(selection["alpha"])
     inputs = load_inputs(config)
     split_graph = build_split_graph(inputs, split)
     model = make_model(config, split_graph.x.shape[1])
@@ -113,6 +114,7 @@ def analyse_split(
     # 3. and 4. Per-query ranks and the pre-declared pick.
     clip = clip_ranks(candidates)
     fused = fused_ranks(candidates, graph_scores, alpha)
+    check_reproduces_training(config, selection, alpha, fused)
     query_keys = None
     if query_texts is None:
         log("warning: query text not loaded, so repeated sentences cannot be picked once")
@@ -197,6 +199,24 @@ def analyse_split(
     }
 
 
+def check_reproduces_training(
+    config: GraphRerankConfig, selection: dict, alpha: float, fused: list[int | None]
+) -> None:
+    """Stop unless these val ranks give exactly the val metric training saved for alpha.
+
+    This ties the explanation to the ranking that was reported: a rebuilt graph, another
+    checkpoint or another alpha would rank differently.
+    """
+    metric = config.selection_metric
+    saved = selection["alpha_sweep"][str(alpha)][metric]
+    now = compute_metrics(fused, config.recall_ks, config.top_k)[metric]
+    if now != saved:
+        raise ValueError(
+            f"the analysis does not reproduce training: val {metric} is {now}, but "
+            f"selection.json saved {saved} for alpha {alpha} (graph or checkpoint changed?)"
+        )
+
+
 def query_text(query_texts: dict[int, str] | None, text_id: int) -> str | None:
     """The region phrase, or None when the raw text was not loaded."""
     if query_texts is None:
@@ -268,17 +288,21 @@ def candidate_record(role: str, result: CandidateExplanation, explanation: Expla
         ],
         "supporting": [relation_record(item) for item in explanation.supporting],
         "opposing": [relation_record(item) for item in explanation.opposing],
-        "deletion_check": {
-            "removed": [
-                {"source": edge.source, "target": edge.target} for edge in result.deletion.removed
-            ],
-            "graph_score_before": result.graph_score,
-            "graph_score_after": result.deletion.graph_score_after,
-            "final_score_before": result.final_score,
-            "final_score_after": result.deletion.final_score_after,
-            "graph_rank_before": result.rank,
-            "graph_rank_after": result.deletion.rank_after,
-        },
+        "deletion_check": deletion_record(result, result.deletion),
+        "without_edges": deletion_record(result, result.without_edges),
+    }
+
+
+def deletion_record(result: CandidateExplanation, check: DeletionCheck) -> dict:
+    """Score and rank of the image before and after removing check.removed together."""
+    return {
+        "removed": [{"source": edge.source, "target": edge.target} for edge in check.removed],
+        "graph_score_before": result.graph_score,
+        "graph_score_after": check.graph_score_after,
+        "final_score_before": result.final_score,
+        "final_score_after": check.final_score_after,
+        "graph_rank_before": result.rank,
+        "graph_rank_after": check.rank_after,
     }
 
 
@@ -336,7 +360,8 @@ def format_markdown(analysis: dict) -> str:
         "A contribution is how much the final score drops when that one edge is removed",
         "((1 - alpha) x drop of cos(q, h_i)): + means the edge pushed the image up, - means",
         "it pulled the image down. The deletion check removes the top supporting",
-        "edges together and re-ranks the query's candidates.",
+        "edges together and re-ranks the query's candidates. 'Without any edge' removes",
+        "every edge into the image: what is left is the image's own vector (W_self x_i + b).",
     ]
     if settings["alpha"] == 1.0:
         lines += ["", "alpha = 1: the graph plays no part, so no relation explains the ranking."]
@@ -379,6 +404,12 @@ def format_query(item: dict) -> list[str]:
             f"Deletion check (remove {len(deletion['removed'])} supporting edges): graph score "
             f"{deletion['graph_score_before']:.4f} -> {deletion['graph_score_after']:.4f}, "
             f"CLIP+Graph rank {deletion['graph_rank_before']} -> {deletion['graph_rank_after']}."
+        )
+        without = candidate["without_edges"]
+        lines.append(
+            f"Without any edge ({len(without['removed'])} removed): graph score "
+            f"{without['graph_score_before']:.4f} -> {without['graph_score_after']:.4f}, "
+            f"CLIP+Graph rank {without['graph_rank_before']} -> {without['graph_rank_after']}."
         )
     lines.append("")
     return lines

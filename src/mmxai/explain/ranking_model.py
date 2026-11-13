@@ -8,6 +8,9 @@ Faithful by construction of the score, not of the explanation:
       graph scores the ranking used; then Occlusion removes one edge at a time.
     - The deletion check removes the top supporting edges together and re-ranks the
       query's candidates with the saved alpha: the intervention of fidelity (ADR-0016 §4).
+    - without_edges removes every edge into the image the same way. It shows how much
+      of the image's rank comes from its edges at all, as opposed to its own vector
+      (W_self x_i + b), which removing one or three of ~16 averaged edges cannot show.
 
 Only the one-layer ADR-0046 model is supported: its edges are concept -> image only
 (one direction, ADR-0046 §5), so an image's score depends on its own edges alone.
@@ -32,7 +35,7 @@ SCORE_TOLERANCE = 1e-5
 
 @dataclass(frozen=True)
 class DeletionCheck:
-    """The candidate after removing its top supporting edges together."""
+    """The candidate after removing some of its edges together (the intervention)."""
 
     removed: list[EdgeContribution]
     graph_score_after: float
@@ -51,7 +54,8 @@ class CandidateExplanation:
     graph_score: float
     final_score: float
     contributions: list[EdgeContribution]  # every edge into the image, largest drop first
-    deletion: DeletionCheck
+    deletion: DeletionCheck  # without the top supporting edges
+    without_edges: DeletionCheck  # without every edge into the image
 
 
 def graph_scores_with_edges(
@@ -118,22 +122,25 @@ def explain_candidate(
         edge_index, image_row, model.num_layers, both_directions=False, score_image=score_image
     )
 
+    def remove_and_rerank(removed: list[EdgeContribution]) -> DeletionCheck:
+        removed_pairs = [(edge.source, edge.target) for edge in removed]
+        remaining = mark_remaining_edges(edge_index, removed_pairs, both_directions=False)
+        # Re-score every candidate of the query, not only this one, and re-rank with the
+        # saved alpha.
+        graph_after = graph_scores_with_edges(model, split_graph, remaining, query, candidate_rows)
+        final_after = fuse_scores(clip_scores, graph_after, alpha)
+        return DeletionCheck(
+            removed=removed,
+            graph_score_after=float(graph_after[column]),
+            final_score_after=float(final_after[column]),
+            rank_after=rank_of_column(final_after, column),
+        )
+
     supporting = []
     for edge in contributions:
         if edge.contribution > 0 and len(supporting) < num_edges:
             supporting.append(edge)
-    removed_pairs = [(edge.source, edge.target) for edge in supporting]
-    remaining = mark_remaining_edges(edge_index, removed_pairs, both_directions=False)
-    # Re-score every candidate of the query, not only this one, and re-rank with the saved alpha.
-    graph_after = graph_scores_with_edges(model, split_graph, remaining, query, candidate_rows)
-    final_after = fuse_scores(clip_scores, graph_after, alpha)
 
-    deletion = DeletionCheck(
-        removed=supporting,
-        graph_score_after=float(graph_after[column]),
-        final_score_after=float(final_after[column]),
-        rank_after=rank_of_column(final_after, column),
-    )
     return CandidateExplanation(
         image_id=int(split_graph.image_ids[image_row]),
         clip_rank=column + 1,  # candidates are stored in CLIP's order
@@ -142,5 +149,8 @@ def explain_candidate(
         graph_score=float(graph_before[column]),
         final_score=float(final_before[column]),
         contributions=contributions,
-        deletion=deletion,
+        deletion=remove_and_rerank(supporting),
+        without_edges=remove_and_rerank(
+            [edge for edge in contributions if edge.target == image_row]
+        ),
     )

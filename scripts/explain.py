@@ -7,11 +7,13 @@ What it does:
        this seed, and scores every val text exactly as training did.
     2. Per query: rank of the first relevant image under plain CLIP and under CLIP + Graph.
     3. Picks 5 success (largest rank gain) and 5 failure (largest rank loss) queries,
-       by the rule in mmxai.eval.query_ranks (fixed before any result).
+       by the rule in mmxai.eval.query_ranks (see its docstring for when each rule was fixed).
     4. Explains the relevant image (and, for a failure, the image CLIP + Graph put first)
        with Occlusion on the trained model: the concept -> image edges whose removal
        changes the graph score most. Then removes the top --num-edges supporting edges
-       together and reports graph score and rank before and after (deletion check).
+       together and reports graph score and rank before and after (deletion check),
+       and the same without any edge into the image (what its own vector gives).
+    Stops if the val ranks do not give exactly the val metric saved by training.
 
 Before running:
     uv sync --group ml --group graph

@@ -5,8 +5,9 @@ None when no relevant image is among CLIP's top-k candidates. CLIP + Graph only
 re-orders those candidates, so a query has a CLIP + Graph rank exactly when it has
 a CLIP rank.
 
-Selection rule, fixed before looking at any result (PDF section 7 asks for 5 success
-and 5 failure queries):
+Selection rule (PDF section 7 asks for 5 success and 5 failure queries). Rules 1-5 were
+fixed before looking at any result; rule 6 was added after the first val run showed
+repeated sentences (commit fc26470, results/records/20261113_cap-do-1/README.md):
     1. Keep only queries whose relevant image is in CLIP's top-k (CLIP rank not None).
     2. change = CLIP rank - CLIP+Graph rank (positive = the graph moved it up).
     3. Success: change > 0, largest change first. Failure: change < 0, most negative first.
