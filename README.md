@@ -381,15 +381,15 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 1 – trần 7.0
 
-- [ ] Trên **ít nhất 1 tập công khai**.
-- [ ] Baseline **CLIP đóng băng**.
-- [ ] Dựng đồ thị từ dữ liệu có sẵn (scene graph Visual Genome, FB15k-237-IMG, hoặc từ nhãn).
+- [x] Trên **ít nhất 1 tập công khai**. → Visual Genome, split cố định `splits/visual_genome/split_seed0.json` (ADR-0042)
+- [x] Baseline **CLIP đóng băng**. → dòng `clip_vg` trong `results/tables/main.csv` (ADR-0043)
+- [x] Dựng đồ thị từ dữ liệu có sẵn (scene graph Visual Genome, FB15k-237-IMG, hoặc từ nhãn). → đỉnh khái niệm là synset Visual Genome, cạnh `contains` từ CLIP top-16 (ADR-0045, ADR-0046), `docs/guides/xay-do-thi.md`
 - [x] Áp dụng **ít nhất 1** thuật toán đã học: GCN / GAT / GraphSAGE. → GraphSAGE một lớp (ADR-0046), `src/mmxai/models/sage.py`
 - [x] Xếp hạng lại bằng cách kết hợp điểm CLIP và điểm đồ thị. → `alpha` chọn trên val (ADR-0047), `src/mmxai/rerank/fusion.py`
 - [x] So sánh **CLIP** với **CLIP + Graph** trên **cùng cách chia**. → `results/tables/main.csv`, có đối chứng không đồ thị; xem `docs/guides/huan-luyen-va-xep-hang-lai.md` §6
-- [ ] **Ablation cơ bản**: bỏ cạnh hoặc thay bằng cạnh ngẫu nhiên, để chứng minh cải thiện đến từ cấu trúc quan hệ.
-- [ ] **Giải thích cơ bản**: hiển thị quan hệ/đường đi dùng khi xếp hạng cho một số truy vấn.
-- [ ] Phân tích **5 truy vấn thành công** và **5 truy vấn thất bại**.
+- [x] **Ablation cơ bản**: bỏ cạnh hoặc thay bằng cạnh ngẫu nhiên, để chứng minh cải thiện đến từ cấu trúc quan hệ. → bỏ cạnh: `clip_nograph_vg`; cạnh xáo giữ bậc: `clip_graph_vg_lr1e4_shuffled`; xem `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 7, "Ablation"
+- [x] **Giải thích cơ bản**: hiển thị quan hệ/đường đi dùng khi xếp hạng cho một số truy vấn. → `scripts/explain.py` (Occlusion trên chính mô hình đã xếp hạng, ADR-0016)
+- [x] Phân tích **5 truy vấn thành công** và **5 truy vấn thất bại**. → bản nháp trên val: `reports/case_studies/5-thanh-cong-5-that-bai.md` (nhóm cần viết lại cho báo cáo)
 
 ### Cấp độ 2 – trần 8.5
 
