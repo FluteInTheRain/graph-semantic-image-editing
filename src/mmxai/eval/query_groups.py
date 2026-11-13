@@ -22,6 +22,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from mmxai.eval.metrics import ranked_metrics
@@ -140,3 +141,27 @@ def metrics_by_group(
         group_metrics["fraction_queries"] = len(rows) / len(labels)
         result[group] = group_metrics
     return result
+
+
+def group_sizes(labels: Sequence[str]) -> dict[str, tuple[int, float]]:
+    """Return (count, fraction of all queries) of every label that occurs."""
+    counts = {}
+    for label in labels:
+        counts[label] = counts.get(label, 0) + 1
+    return {label: (count, count / len(labels)) for label, count in counts.items()}
+
+
+def group_samples(
+    labels: Sequence[str], sentences: Sequence[str], per_group: int, seed: int
+) -> dict[str, list[str]]:
+    """Pick up to per_group random sentences of each label, to read them by eye.
+
+    labels[i] belongs to sentences[i]. A fixed seed makes the check repeatable.
+    """
+    rng = np.random.default_rng(seed)
+    samples = {}
+    for label in sorted(set(labels)):
+        rows = [row for row in range(len(labels)) if labels[row] == label]
+        chosen = rng.choice(rows, size=min(per_group, len(rows)), replace=False)
+        samples[label] = [sentences[row] for row in chosen]
+    return samples
