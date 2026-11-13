@@ -8,6 +8,7 @@
 | `configs/clip_nograph_vg.yaml` | Đối chứng **không đồ thị**: huấn luyện y hệt nhưng cố định `W_nb = 0` (ADR-0046 mục 6) |
 | `configs/clip_cooc_graph_vg.yaml` | CLIP + Graph **có cạnh đồng xuất hiện**: GraphSAGE hai lớp, khái niệm nghe khái niệm đi cùng nó trong annotation train (ADR-0048) |
 | `configs/concept_edges_vg_cooccurrence.yaml` | Dựng cạnh khái niệm → khái niệm bằng PMI trên annotation **train** (ADR-0048) |
+| `configs/clip_graph_vg_lr1e4_shuffled.yaml` | Ablation **xáo cạnh giữ bậc** (ADR-0046 mục 6): mô hình chính `clip_graph_vg_lr1e4` huấn luyện y hệt trên đồ thị đã xáo cạnh; chỉ khác `experiment`, `graph_dir`, `model_dir` (có test kiểm) |
 | `configs/*_lr1e4.yaml` | Ba thí nghiệm trên với `lr = 1e-4` thay vì `1e-3` (val tốt nhất ngay epoch 1 rồi giảm); so với bản `1e-3` **chỉ trên val** |
 | `configs/features_visual_genome.yaml` | Trích embedding CLIP cho Visual Genome (5 region mỗi ảnh) |
 | `configs/features_flickr30k.yaml` | Trích embedding CLIP cho Flickr30k |
@@ -18,6 +19,7 @@
 | `configs/query_benchmark_vg_pilot.yaml` | Pilot 5 cặp trên **val** để chốt quy tắc; ra `results/runs/` (ADR-0044) |
 | `configs/eval_query_benchmark_vg.yaml` | Đánh giá CLIP thuần trên bộ truy vấn đã kiểm tra, tách direct/indirect (ADR-0044) |
 | `configs/graph_vg_clip_topk.yaml` | Đồ thị ảnh – khái niệm của **mô hình chính**: cạnh `contains` lấy từ CLIP top-k cho mọi split (ADR-0046) |
+| `configs/graph_vg_clip_topk_shuffled.yaml` | Xáo cạnh `contains` của đồ thị mô hình chính **trong từng split**, giữ số cạnh của mỗi ảnh và mỗi khái niệm (seed 0); dùng cho ablation ở trên |
 | `configs/graph_vg.yaml` | Đồ thị ảnh – khái niệm với cạnh `contains` lấy từ annotation (ADR-0045); chỉ làm ablation cận trên (ADR-0046) |
 
 Quy tắc (lý do: `docs/decisions/0007-cau-hinh-yaml-va-dataclass.md`):
