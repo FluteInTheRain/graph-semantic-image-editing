@@ -7,6 +7,7 @@ import pytest
 
 import mmxai.eval.extended
 from mmxai.eval.extended import (
+    check_extension_settings,
     image_to_text_report,
     query_group_inputs,
     query_groupings,
@@ -143,3 +144,22 @@ def test_query_group_inputs_follow_the_query_rows_of_retrieve_candidates(tmp_pat
     rows = [texts["text_ids"].tolist().index(text_id) for text_id in text_ids.tolist()]
     np.testing.assert_array_equal(candidates.query_embeddings, text_embeddings[rows])
     assert predicates == load_predicates(predicates_file, None, None, None)
+
+
+def test_check_extension_settings_rejects_partial_group_inputs():
+    with pytest.raises(ValueError, match="both vg_data_dir and predicates_file"):
+        check_extension_settings(10, False, "data/vg", None)
+    with pytest.raises(ValueError, match="both vg_data_dir and predicates_file"):
+        check_extension_settings(10, False, None, "configs/preds.yaml")
+
+
+def test_check_extension_settings_rejects_groups_or_image_to_text_without_ndcg():
+    with pytest.raises(ValueError, match="ndcg_k"):
+        check_extension_settings(None, False, "data/vg", "configs/preds.yaml")
+    with pytest.raises(ValueError, match="ndcg_k"):
+        check_extension_settings(None, True, None, None)
+
+
+def test_check_extension_settings_accepts_disabled_and_complete_settings():
+    check_extension_settings(None, False, None, None)
+    check_extension_settings(10, True, "data/vg", "configs/preds.yaml")

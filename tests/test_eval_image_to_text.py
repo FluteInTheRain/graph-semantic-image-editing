@@ -88,3 +88,32 @@ def test_gallery_holds_only_texts_of_the_evaluated_images():
     assert candidates.query_image_ids.tolist() == [10, 11]
     assert candidates.candidate_rows.max() <= 3
     assert candidates.relevant[0] == {0, 1, 3}
+
+
+def test_retrieve_text_candidates_rejects_missing_eval_image_id():
+    with pytest.raises(ValueError, match="99"):
+        retrieve_text_candidates(
+            np.eye(3, dtype=np.float32),
+            IMAGE_IDS,
+            TEXTS,
+            TEXT_IMAGE_IDS,
+            np.array([10, 99]),
+            top_k=2,
+            same_text_threshold=0.9999,
+        )
+
+
+def test_text_graph_scores_rejects_missing_query_image_id():
+    candidates = make_candidates(top_k=1)
+    image_h = np.eye(3, 5, dtype=np.float32)
+    with pytest.raises(ValueError, match="12"):
+        text_graph_scores(candidates, image_h, np.array([10, 11]))
+
+
+def test_text_graph_scores_works_across_multiple_chunks():
+    candidates = make_candidates(top_k=2)
+    image_h = np.array([[3.0, 4.0, 0, 0, 0], [0, 0, 2.0, 0, 0], [0, 0, 0, 0, 5.0]])
+    scores = text_graph_scores(candidates, image_h, IMAGE_IDS, chunk_size=2)
+    full = text_graph_scores(candidates, image_h, IMAGE_IDS, chunk_size=100)
+    assert scores.shape == (3, 2)
+    np.testing.assert_allclose(scores, full)

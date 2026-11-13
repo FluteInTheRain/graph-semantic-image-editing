@@ -288,3 +288,25 @@ def test_clip_eval2_config_differs_from_its_source_only_in_name_and_extension_fi
     assert eval2.extra_action_predicates is None
     assert eval2.extra_spatial_predicates is None
     assert eval2.excluded_predicates is None
+
+
+def test_old_clip_config_values_match_extended_run(tmp_path):
+    old_metrics = read_metrics(run_clip_evaluation(make_config(tmp_path), seed=0))
+    assert old_metrics["R@1"] == 1.0
+    assert old_metrics["MRR@2"] == 1.0
+    assert old_metrics["num_queries"] == 4
+
+
+def test_evaluate_clip_rejects_image_to_text_without_ndcg(tmp_path):
+    with pytest.raises(ValueError, match="ndcg_k"):
+        evaluate_clip(
+            image_embeddings=np.eye(2, dtype=np.float32),
+            image_ids=np.array([1, 2]),
+            text_embeddings=np.eye(2, dtype=np.float32),
+            text_image_ids=np.array([1, 2]),
+            eval_image_ids=np.array([1, 2]),
+            recall_ks=[1],
+            top_k=1,
+            same_text_threshold=0.9999,
+            image_to_text=True,
+        )

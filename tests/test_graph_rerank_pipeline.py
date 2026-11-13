@@ -499,3 +499,38 @@ def test_graph_eval2_config_differs_from_its_source_only_in_name_model_dir_and_e
     assert eval2.model_dir == f"artifacts/models/visual_genome/{source_name}_eval2"
     for name, value in EXTENSION_FIELDS.items():
         assert getattr(eval2, name) == value
+
+
+def test_val_metrics_match_selection_image_to_text_and_old_values(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    extended = with_extensions(config, tmp_path)
+
+    old_val = read_metrics(train_and_select(config, prepare(config, log=str), seed=0, log=str))
+    new_val = read_metrics(train_and_select(extended, prepare(extended, log=str), seed=0, log=str))
+
+    for key in ("R@1", "R@3", "MRR@3", "num_queries"):
+        assert new_val[key] == old_val[key]
+
+    selection = read_selection(extended, 0)
+    alpha_i2t = selection["alpha_image_to_text"]
+    assert set(new_val["groups"]) == {"specificity", "relation"}
+    assert new_val["image_to_text"]["alpha"] == alpha_i2t
+    assert (
+        new_val["image_to_text"]["MRR@3"]
+        == selection["alpha_sweep_image_to_text"][str(alpha_i2t)]["MRR@3"]
+    )
+
+
+def test_evaluate_test_raises_when_selection_lacks_alpha_image_to_text(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    train_and_select(config, prepare(config, log=str), seed=0, log=str)
+    extended = with_extensions(config, tmp_path)
+    # Reuse the model/selection trained without image_to_text by copying artifacts.
+    old_seed_dir = Path(config.model_dir) / "seed0"
+    new_seed_dir = Path(extended.model_dir) / "seed0"
+    new_seed_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("model.pt", "selection.json"):
+        (new_seed_dir / name).write_bytes((old_seed_dir / name).read_bytes())
+
+    with pytest.raises(ValueError, match="alpha_image_to_text"):
+        evaluate_test(extended, seed=0, log=str)

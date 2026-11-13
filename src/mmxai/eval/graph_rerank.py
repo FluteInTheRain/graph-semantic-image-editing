@@ -459,6 +459,11 @@ def extended_metrics(
     )
 
     if config.image_to_text:
+        if "alpha_image_to_text" not in selection:
+            raise ValueError(
+                "selection.json is missing 'alpha_image_to_text'; "
+                "re-train with image_to_text: true before evaluating test"
+            )
         alpha = selection["alpha_image_to_text"]
         text_scores = text_graph_scores(text_candidates, h, h_image_ids)
         text_final = fuse_scores(text_candidates.clip_scores, text_scores, alpha)

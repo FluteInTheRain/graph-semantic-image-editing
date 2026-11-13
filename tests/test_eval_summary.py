@@ -264,3 +264,43 @@ def test_under_seeded_eval2_experiment_is_reported_as_skipped(tmp_path):
     assert group_skipped == ["short_eval2"]
     assert text_skipped == ["short_eval2"]
     assert {row["experiment"] for row in group_rows} == {"graph_eval2"}
+
+
+def test_missing_image_to_text_block_is_a_clear_error(tmp_path):
+    write_eval2_runs(tmp_path)
+    rewrite_metrics(tmp_path, "e1", lambda metrics: metrics.pop("image_to_text"))
+
+    with pytest.raises(ValueError, match=r"graph_eval2: seed 1 .* no 'image_to_text'"):
+        summarize_image_to_text(load_run_records(tmp_path), "test", "_eval2")
+
+
+def test_image_to_text_metric_missing_in_later_seed_is_an_error(tmp_path):
+    write_eval2_runs(tmp_path)
+    rewrite_metrics(tmp_path, "e2", lambda metrics: metrics["image_to_text"].pop("nDCG@10"))
+
+    with pytest.raises(ValueError, match="seed 2.*nDCG@10"):
+        summarize_image_to_text(load_run_records(tmp_path), "test", "_eval2")
+
+
+def test_dirty_runs_are_skipped_by_groups_and_image_to_text_tables(tmp_path):
+    write_eval2_runs(tmp_path)
+    for seed in range(3):
+        write_run(
+            tmp_path,
+            f"dirty{seed}",
+            seed,
+            0.2,
+            experiment="dirty_eval2",
+            dirty=True,
+            extra_metrics={"groups": {}, "image_to_text": {"alpha": 1.0}},
+        )
+
+    group_rows, group_skipped = summarize_groups(load_run_records(tmp_path), "test", "_eval2")
+    text_rows, text_skipped = summarize_image_to_text(
+        load_run_records(tmp_path), "test", "_eval2"
+    )
+
+    assert group_skipped == []
+    assert text_skipped == []
+    assert {row["experiment"] for row in group_rows} == {"graph_eval2"}
+    assert {row["experiment"] for row in text_rows} == {"graph_eval2"}

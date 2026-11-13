@@ -134,6 +134,8 @@ def evaluate_clip(
     several = sum(1 for images in candidates.relevant if len(images) > 1)
     metrics["fraction_queries_with_several_relevant"] = several / len(candidates.relevant)
 
+    if image_to_text and ndcg_k is None:
+        raise ValueError("image_to_text requires ndcg_k to be set")
     if image_to_text:
         text_candidates = retrieve_text_candidates(
             image_embeddings,
