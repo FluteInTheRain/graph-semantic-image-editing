@@ -1,0 +1,2497 @@
+{
+  "settings": {
+    "experiment": "clip_graph_vg_lr1e4",
+    "seed": 0,
+    "split": "val",
+    "alpha": 0.0,
+    "num_edges": 3,
+    "queries_per_group": 5,
+    "explainer": "occlusion",
+    "selection_rule": "Only queries whose relevant image is in CLIP's top-k. change = CLIP rank - CLIP+Graph rank of the first relevant image. Success: change > 0, largest first; failure: change < 0, most negative first; ties: smaller query index first. A sentence already picked (same text, ignoring case and spaces) is skipped. 5 of each, fewer if not enough exist."
+  },
+  "summary": {
+    "num_queries": 25000,
+    "relevant_not_in_candidates": 11530,
+    "improved": 7387,
+    "worsened": 4620,
+    "unchanged": 1463,
+    "clip_metrics": {
+      "R@1": 0.05588,
+      "R@5": 0.14432,
+      "R@10": 0.20456,
+      "MRR@100": 0.10607431959550617,
+      "num_queries": 25000
+    },
+    "graph_metrics": {
+      "R@1": 0.0742,
+      "R@5": 0.17048,
+      "R@10": 0.2372,
+      "MRR@100": 0.1285508567450282,
+      "num_queries": 25000
+    }
+  },
+  "queries": [
+    {
+      "group": "success",
+      "query_index": 20811,
+      "text_id": 807685,
+      "text": "man in a grey shirt and blue jeans",
+      "source_image_id": 2398911,
+      "relevant_image_ids": [
+        2398911
+      ],
+      "clip_rank": 99,
+      "graph_rank": 1,
+      "rank_change": 98,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2398911,
+          "clip_rank": 99,
+          "graph_rank": 1,
+          "clip_score": 0.1811356246471405,
+          "graph_score": 0.20457473397254944,
+          "final_score": 0.20457473397254944,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5856,
+              "target": 4162,
+              "drop": 0.0029992759227752686
+            },
+            {
+              "source": 5017,
+              "target": 4162,
+              "drop": 0.002487391233444214
+            },
+            {
+              "source": 7896,
+              "target": 4162,
+              "drop": 0.0016671419143676758
+            },
+            {
+              "source": 6516,
+              "target": 4162,
+              "drop": 0.0011756420135498047
+            },
+            {
+              "source": 6737,
+              "target": 4162,
+              "drop": 0.001045823097229004
+            },
+            {
+              "source": 7562,
+              "target": 4162,
+              "drop": 0.0008373856544494629
+            },
+            {
+              "source": 5934,
+              "target": 4162,
+              "drop": 0.000813901424407959
+            },
+            {
+              "source": 8002,
+              "target": 4162,
+              "drop": 0.0005594640970230103
+            },
+            {
+              "source": 6506,
+              "target": 4162,
+              "drop": -0.0004418790340423584
+            },
+            {
+              "source": 8327,
+              "target": 4162,
+              "drop": -0.0006097853183746338
+            },
+            {
+              "source": 8565,
+              "target": 4162,
+              "drop": -0.0006860643625259399
+            },
+            {
+              "source": 8453,
+              "target": 4162,
+              "drop": -0.0014153718948364258
+            },
+            {
+              "source": 7950,
+              "target": 4162,
+              "drop": -0.0015311241149902344
+            },
+            {
+              "source": 8579,
+              "target": 4162,
+              "drop": -0.0017488747835159302
+            },
+            {
+              "source": 7942,
+              "target": 4162,
+              "drop": -0.002124011516571045
+            },
+            {
+              "source": 8450,
+              "target": 4162,
+              "drop": -0.002719104290008545
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "competition.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": 0.0029992759227752686
+            },
+            {
+              "concept": "action.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": 0.002487391233444214
+            },
+            {
+              "concept": "scene.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": 0.0016671419143676758
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "tennis.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": -0.002719104290008545
+            },
+            {
+              "concept": "seesaw.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": -0.002124011516571045
+            },
+            {
+              "concept": "trick.n.01",
+              "relation": "in",
+              "image": "image 2398911",
+              "effect_on_final_score": -0.0017488747835159302
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5856,
+                "target": 4162
+              },
+              {
+                "source": 5017,
+                "target": 4162
+              },
+              {
+                "source": 7896,
+                "target": 4162
+              }
+            ],
+            "graph_score_before": 0.20457473397254944,
+            "graph_score_after": 0.19624558091163635,
+            "final_score_before": 0.20457473397254944,
+            "final_score_after": 0.19624558091163635,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    },
+    {
+      "group": "success",
+      "query_index": 4623,
+      "text_id": 4281310,
+      "text": "Blue jacket with orange stripes",
+      "source_image_id": 2326205,
+      "relevant_image_ids": [
+        2326205
+      ],
+      "clip_rank": 100,
+      "graph_rank": 3,
+      "rank_change": 97,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2326205,
+          "clip_rank": 100,
+          "graph_rank": 3,
+          "clip_score": 0.16853101551532745,
+          "graph_score": 0.17707769572734833,
+          "final_score": 0.17707769572734833,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 8090,
+              "target": 924,
+              "drop": 0.0016548782587051392
+            },
+            {
+              "source": 8089,
+              "target": 924,
+              "drop": 0.001551598310470581
+            },
+            {
+              "source": 6152,
+              "target": 924,
+              "drop": 0.0014094561338424683
+            },
+            {
+              "source": 8092,
+              "target": 924,
+              "drop": 0.0013318657875061035
+            },
+            {
+              "source": 8096,
+              "target": 924,
+              "drop": 0.0010849088430404663
+            },
+            {
+              "source": 8095,
+              "target": 924,
+              "drop": 0.0006200820207595825
+            },
+            {
+              "source": 5514,
+              "target": 924,
+              "drop": 0.0004257112741470337
+            },
+            {
+              "source": 8138,
+              "target": 924,
+              "drop": 0.00040414929389953613
+            },
+            {
+              "source": 8091,
+              "target": 924,
+              "drop": 0.0003882944583892822
+            },
+            {
+              "source": 8139,
+              "target": 924,
+              "drop": 0.00035209953784942627
+            },
+            {
+              "source": 8075,
+              "target": 924,
+              "drop": 0.00027492642402648926
+            },
+            {
+              "source": 8081,
+              "target": 924,
+              "drop": -0.00023598968982696533
+            },
+            {
+              "source": 8137,
+              "target": 924,
+              "drop": -0.0015519410371780396
+            },
+            {
+              "source": 8143,
+              "target": 924,
+              "drop": -0.0015726834535598755
+            },
+            {
+              "source": 8087,
+              "target": 924,
+              "drop": -0.0017553120851516724
+            },
+            {
+              "source": 8083,
+              "target": 924,
+              "drop": -0.004094764590263367
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "ski_run.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": 0.0016548782587051392
+            },
+            {
+              "concept": "ski_resort.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": 0.001551598310470581
+            },
+            {
+              "concept": "downhill.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": 0.0014094561338424683
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "ski_cap.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": -0.004094764590263367
+            },
+            {
+              "concept": "ski_pole.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": -0.0017553120851516724
+            },
+            {
+              "concept": "snowshoe.n.01",
+              "relation": "in",
+              "image": "image 2326205",
+              "effect_on_final_score": -0.0015726834535598755
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 8090,
+                "target": 924
+              },
+              {
+                "source": 8089,
+                "target": 924
+              },
+              {
+                "source": 6152,
+                "target": 924
+              }
+            ],
+            "graph_score_before": 0.17707769572734833,
+            "graph_score_after": 0.1717148721218109,
+            "final_score_before": 0.17707769572734833,
+            "final_score_after": 0.1717148721218109,
+            "graph_rank_before": 3,
+            "graph_rank_after": 5
+          }
+        }
+      ]
+    },
+    {
+      "group": "success",
+      "query_index": 4715,
+      "text_id": 4255791,
+      "text": "part of a trouser",
+      "source_image_id": 2326733,
+      "relevant_image_ids": [
+        2326733,
+        2366176,
+        2387245
+      ],
+      "clip_rank": 100,
+      "graph_rank": 3,
+      "rank_change": 97,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2387245,
+          "clip_rank": 100,
+          "graph_rank": 3,
+          "clip_score": 0.17430870234966278,
+          "graph_score": 0.07272665202617645,
+          "final_score": 0.07272665202617645,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5646,
+              "target": 3645,
+              "drop": 0.0014004483819007874
+            },
+            {
+              "source": 7560,
+              "target": 3645,
+              "drop": 0.0008650049567222595
+            },
+            {
+              "source": 7338,
+              "target": 3645,
+              "drop": 0.0006728395819664001
+            },
+            {
+              "source": 6346,
+              "target": 3645,
+              "drop": 0.0004899501800537109
+            },
+            {
+              "source": 5203,
+              "target": 3645,
+              "drop": 0.0004522055387496948
+            },
+            {
+              "source": 5264,
+              "target": 3645,
+              "drop": 0.00032746046781539917
+            },
+            {
+              "source": 8632,
+              "target": 3645,
+              "drop": 0.0001294463872909546
+            },
+            {
+              "source": 6813,
+              "target": 3645,
+              "drop": 8.272379636764526e-05
+            },
+            {
+              "source": 5499,
+              "target": 3645,
+              "drop": 3.32072377204895e-05
+            },
+            {
+              "source": 8244,
+              "target": 3645,
+              "drop": -0.00040952861309051514
+            },
+            {
+              "source": 5233,
+              "target": 3645,
+              "drop": -0.00043079257011413574
+            },
+            {
+              "source": 5317,
+              "target": 3645,
+              "drop": -0.0005666613578796387
+            },
+            {
+              "source": 7533,
+              "target": 3645,
+              "drop": -0.0006095916032791138
+            },
+            {
+              "source": 7534,
+              "target": 3645,
+              "drop": -0.0006095916032791138
+            },
+            {
+              "source": 7316,
+              "target": 3645,
+              "drop": -0.000803723931312561
+            },
+            {
+              "source": 7535,
+              "target": 3645,
+              "drop": -0.00093059241771698
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "catcher.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": 0.0014004483819007874
+            },
+            {
+              "concept": "player.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": 0.0008650049567222595
+            },
+            {
+              "concept": "outfielder.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": 0.0006728395819664001
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "pitcher.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": -0.00093059241771698
+            },
+            {
+              "concept": "one-third.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": -0.000803723931312561
+            },
+            {
+              "concept": "pitch.n.01",
+              "relation": "in",
+              "image": "image 2387245",
+              "effect_on_final_score": -0.0006095916032791138
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5646,
+                "target": 3645
+              },
+              {
+                "source": 7560,
+                "target": 3645
+              },
+              {
+                "source": 7338,
+                "target": 3645
+              }
+            ],
+            "graph_score_before": 0.07272665202617645,
+            "graph_score_after": 0.06933349370956421,
+            "final_score_before": 0.07272665202617645,
+            "final_score_after": 0.06933349370956421,
+            "graph_rank_before": 3,
+            "graph_rank_after": 4
+          }
+        }
+      ]
+    },
+    {
+      "group": "success",
+      "query_index": 7996,
+      "text_id": 3539105,
+      "text": "a girl wearing blue jeans.",
+      "source_image_id": 2341744,
+      "relevant_image_ids": [
+        2341744
+      ],
+      "clip_rank": 99,
+      "graph_rank": 3,
+      "rank_change": 96,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2341744,
+          "clip_rank": 99,
+          "graph_rank": 3,
+          "clip_score": 0.18483301997184753,
+          "graph_score": 0.14282621443271637,
+          "final_score": 0.14282621443271637,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 8152,
+              "target": 1599,
+              "drop": 0.002257734537124634
+            },
+            {
+              "source": 7082,
+              "target": 1599,
+              "drop": 0.002246081829071045
+            },
+            {
+              "source": 5934,
+              "target": 1599,
+              "drop": 0.0016147196292877197
+            },
+            {
+              "source": 6832,
+              "target": 1599,
+              "drop": 0.0008542090654373169
+            },
+            {
+              "source": 8646,
+              "target": 1599,
+              "drop": 0.0008400678634643555
+            },
+            {
+              "source": 7725,
+              "target": 1599,
+              "drop": 0.0006314665079116821
+            },
+            {
+              "source": 8429,
+              "target": 1599,
+              "drop": 0.0003280043601989746
+            },
+            {
+              "source": 7541,
+              "target": 1599,
+              "drop": 0.00032626092433929443
+            },
+            {
+              "source": 5569,
+              "target": 1599,
+              "drop": 0.0002222210168838501
+            },
+            {
+              "source": 6637,
+              "target": 1599,
+              "drop": -0.0001472383737564087
+            },
+            {
+              "source": 7399,
+              "target": 1599,
+              "drop": -0.000647321343421936
+            },
+            {
+              "source": 7724,
+              "target": 1599,
+              "drop": -0.0008219778537750244
+            },
+            {
+              "source": 8409,
+              "target": 1599,
+              "drop": -0.0013886690139770508
+            },
+            {
+              "source": 6490,
+              "target": 1599,
+              "drop": -0.001394420862197876
+            },
+            {
+              "source": 8323,
+              "target": 1599,
+              "drop": -0.0018459558486938477
+            },
+            {
+              "source": 5023,
+              "target": 1599,
+              "drop": -0.002941027283668518
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "sociable.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": 0.002257734537124634
+            },
+            {
+              "concept": "main.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": 0.002246081829071045
+            },
+            {
+              "concept": "course.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": 0.0016147196292877197
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "adolescent.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": -0.002941027283668518
+            },
+            {
+              "concept": "student.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": -0.0018459558486938477
+            },
+            {
+              "concept": "friend.n.01",
+              "relation": "in",
+              "image": "image 2341744",
+              "effect_on_final_score": -0.001394420862197876
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 8152,
+                "target": 1599
+              },
+              {
+                "source": 7082,
+                "target": 1599
+              },
+              {
+                "source": 5934,
+                "target": 1599
+              }
+            ],
+            "graph_score_before": 0.14282621443271637,
+            "graph_score_after": 0.1357475370168686,
+            "final_score_before": 0.14282621443271637,
+            "final_score_after": 0.1357475370168686,
+            "graph_rank_before": 3,
+            "graph_rank_after": 3
+          }
+        }
+      ]
+    },
+    {
+      "group": "success",
+      "query_index": 14193,
+      "text_id": 2245035,
+      "text": "the grass beside the car",
+      "source_image_id": 2368850,
+      "relevant_image_ids": [
+        2368850
+      ],
+      "clip_rank": 98,
+      "graph_rank": 3,
+      "rank_change": 95,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2368850,
+          "clip_rank": 98,
+          "graph_rank": 3,
+          "clip_score": 0.20008538663387299,
+          "graph_score": 0.17614953219890594,
+          "final_score": 0.17614953219890594,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 7940,
+              "target": 2838,
+              "drop": 0.0013647079467773438
+            },
+            {
+              "source": 5594,
+              "target": 2838,
+              "drop": 0.001178160309791565
+            },
+            {
+              "source": 7727,
+              "target": 2838,
+              "drop": 0.0008863210678100586
+            },
+            {
+              "source": 6457,
+              "target": 2838,
+              "drop": 0.0006988346576690674
+            },
+            {
+              "source": 5596,
+              "target": 2838,
+              "drop": 0.0006382018327713013
+            },
+            {
+              "source": 5597,
+              "target": 2838,
+              "drop": 0.0006382018327713013
+            },
+            {
+              "source": 7490,
+              "target": 2838,
+              "drop": 0.00047935545444488525
+            },
+            {
+              "source": 6133,
+              "target": 2838,
+              "drop": 0.00046230852603912354
+            },
+            {
+              "source": 8675,
+              "target": 2838,
+              "drop": 0.0002998262643814087
+            },
+            {
+              "source": 7590,
+              "target": 2838,
+              "drop": 0.00028218328952789307
+            },
+            {
+              "source": 7230,
+              "target": 2838,
+              "drop": 8.146464824676514e-05
+            },
+            {
+              "source": 6882,
+              "target": 2838,
+              "drop": -0.00023762881755828857
+            },
+            {
+              "source": 5376,
+              "target": 2838,
+              "drop": -0.0009774863719940186
+            },
+            {
+              "source": 7585,
+              "target": 2838,
+              "drop": -0.0016680657863616943
+            },
+            {
+              "source": 7584,
+              "target": 2838,
+              "drop": -0.0017389655113220215
+            },
+            {
+              "source": 7674,
+              "target": 2838,
+              "drop": -0.002197638154029846
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "sedan.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": 0.0013647079467773438
+            },
+            {
+              "concept": "caption.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": 0.001178160309791565
+            },
+            {
+              "concept": "ready.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": 0.0008863210678100586
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "pursuit.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": -0.002197638154029846
+            },
+            {
+              "concept": "police.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": -0.0017389655113220215
+            },
+            {
+              "concept": "policeman.n.01",
+              "relation": "in",
+              "image": "image 2368850",
+              "effect_on_final_score": -0.0016680657863616943
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 7940,
+                "target": 2838
+              },
+              {
+                "source": 5594,
+                "target": 2838
+              },
+              {
+                "source": 7727,
+                "target": 2838
+              }
+            ],
+            "graph_score_before": 0.17614953219890594,
+            "graph_score_after": 0.1722089946269989,
+            "final_score_before": 0.17614953219890594,
+            "final_score_after": 0.1722089946269989,
+            "graph_rank_before": 3,
+            "graph_rank_after": 3
+          }
+        }
+      ]
+    },
+    {
+      "group": "failure",
+      "query_index": 628,
+      "text_id": 5068729,
+      "text": "scattered waves in water",
+      "source_image_id": 2798,
+      "relevant_image_ids": [
+        2798
+      ],
+      "clip_rank": 7,
+      "graph_rank": 100,
+      "rank_change": -93,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2798,
+          "clip_rank": 7,
+          "graph_rank": 100,
+          "clip_score": 0.23723021149635315,
+          "graph_score": 0.09296335279941559,
+          "final_score": 0.09296335279941559,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 6002,
+              "target": 125,
+              "drop": 0.0022550001740455627
+            },
+            {
+              "source": 8690,
+              "target": 125,
+              "drop": 0.0016347244381904602
+            },
+            {
+              "source": 7911,
+              "target": 125,
+              "drop": 0.0014045760035514832
+            },
+            {
+              "source": 6055,
+              "target": 125,
+              "drop": 0.0010753348469734192
+            },
+            {
+              "source": 6846,
+              "target": 125,
+              "drop": 0.0008355006575584412
+            },
+            {
+              "source": 7747,
+              "target": 125,
+              "drop": 0.0008266717195510864
+            },
+            {
+              "source": 5687,
+              "target": 125,
+              "drop": 0.0007333531975746155
+            },
+            {
+              "source": 5270,
+              "target": 125,
+              "drop": 0.0005960240960121155
+            },
+            {
+              "source": 6821,
+              "target": 125,
+              "drop": -0.0005208700895309448
+            },
+            {
+              "source": 6930,
+              "target": 125,
+              "drop": -0.0008166581392288208
+            },
+            {
+              "source": 5890,
+              "target": 125,
+              "drop": -0.0008344724774360657
+            },
+            {
+              "source": 7466,
+              "target": 125,
+              "drop": -0.0009761825203895569
+            },
+            {
+              "source": 6755,
+              "target": 125,
+              "drop": -0.0011879503726959229
+            },
+            {
+              "source": 8100,
+              "target": 125,
+              "drop": -0.0014402195811271667
+            },
+            {
+              "source": 7113,
+              "target": 125,
+              "drop": -0.0016339421272277832
+            },
+            {
+              "source": 5378,
+              "target": 125,
+              "drop": -0.0018498599529266357
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "current.n.01",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": 0.0022550001740455627
+            },
+            {
+              "concept": "view.n.02",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": 0.0016347244381904602
+            },
+            {
+              "concept": "screen_saver.n.01",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": 0.0014045760035514832
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "blue_sky.n.01",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": -0.0018498599529266357
+            },
+            {
+              "concept": "marsh.n.01",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": -0.0016339421272277832
+            },
+            {
+              "concept": "sky.n.01",
+              "relation": "in",
+              "image": "image 2798",
+              "effect_on_final_score": -0.0014402195811271667
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 6002,
+                "target": 125
+              },
+              {
+                "source": 8690,
+                "target": 125
+              },
+              {
+                "source": 7911,
+                "target": 125
+              }
+            ],
+            "graph_score_before": 0.09296335279941559,
+            "graph_score_after": 0.08684413135051727,
+            "final_score_before": 0.09296335279941559,
+            "final_score_after": 0.08684413135051727,
+            "graph_rank_before": 100,
+            "graph_rank_after": 100
+          }
+        },
+        {
+          "role": "rank 1 under CLIP+Graph",
+          "image_id": 2353055,
+          "clip_rank": 4,
+          "graph_rank": 1,
+          "clip_score": 0.245191290974617,
+          "graph_score": 0.2299838364124298,
+          "final_score": 0.2299838364124298,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5856,
+              "target": 2129,
+              "drop": 0.002271875739097595
+            },
+            {
+              "source": 5017,
+              "target": 2129,
+              "drop": 0.00208301842212677
+            },
+            {
+              "source": 6506,
+              "target": 2129,
+              "drop": 0.00149478018283844
+            },
+            {
+              "source": 8341,
+              "target": 2129,
+              "drop": 0.0013267695903778076
+            },
+            {
+              "source": 7896,
+              "target": 2129,
+              "drop": 0.0013252198696136475
+            },
+            {
+              "source": 5934,
+              "target": 2129,
+              "drop": 0.0008241981267929077
+            },
+            {
+              "source": 8363,
+              "target": 2129,
+              "drop": 0.0002482980489730835
+            },
+            {
+              "source": 8715,
+              "target": 2129,
+              "drop": 3.0547380447387695e-06
+            },
+            {
+              "source": 7700,
+              "target": 2129,
+              "drop": -0.00029678642749786377
+            },
+            {
+              "source": 7868,
+              "target": 2129,
+              "drop": -0.0006649494171142578
+            },
+            {
+              "source": 5382,
+              "target": 2129,
+              "drop": -0.0007099360227584839
+            },
+            {
+              "source": 8364,
+              "target": 2129,
+              "drop": -0.0009080022573471069
+            },
+            {
+              "source": 7920,
+              "target": 2129,
+              "drop": -0.0009631067514419556
+            },
+            {
+              "source": 8362,
+              "target": 2129,
+              "drop": -0.0012637078762054443
+            },
+            {
+              "source": 8360,
+              "target": 2129,
+              "drop": -0.002118512988090515
+            },
+            {
+              "source": 8379,
+              "target": 2129,
+              "drop": -0.002226218581199646
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "competition.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": 0.002271875739097595
+            },
+            {
+              "concept": "action.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": 0.00208301842212677
+            },
+            {
+              "concept": "fun.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": 0.00149478018283844
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "swell.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": -0.002226218581199646
+            },
+            {
+              "concept": "surf.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": -0.002118512988090515
+            },
+            {
+              "concept": "surfboard.n.01",
+              "relation": "in",
+              "image": "image 2353055",
+              "effect_on_final_score": -0.0012637078762054443
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5856,
+                "target": 2129
+              },
+              {
+                "source": 5017,
+                "target": 2129
+              },
+              {
+                "source": 6506,
+                "target": 2129
+              }
+            ],
+            "graph_score_before": 0.2299838364124298,
+            "graph_score_after": 0.22303247451782227,
+            "final_score_before": 0.2299838364124298,
+            "final_score_after": 0.22303247451782227,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    },
+    {
+      "group": "failure",
+      "query_index": 22323,
+      "text_id": 437164,
+      "text": "tall green and tan grass",
+      "source_image_id": 2405444,
+      "relevant_image_ids": [
+        2405444
+      ],
+      "clip_rank": 15,
+      "graph_rank": 96,
+      "rank_change": -81,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2405444,
+          "clip_rank": 15,
+          "graph_rank": 96,
+          "clip_score": 0.21741139888763428,
+          "graph_score": 0.030573951080441475,
+          "final_score": 0.030573951080441475,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5392,
+              "target": 4464,
+              "drop": 0.0015381760895252228
+            },
+            {
+              "source": 7906,
+              "target": 4464,
+              "drop": 0.001449350267648697
+            },
+            {
+              "source": 7568,
+              "target": 4464,
+              "drop": 0.0012893453240394592
+            },
+            {
+              "source": 8737,
+              "target": 4464,
+              "drop": 0.0005886498838663101
+            },
+            {
+              "source": 7033,
+              "target": 4464,
+              "drop": 0.00043215230107307434
+            },
+            {
+              "source": 7827,
+              "target": 4464,
+              "drop": 0.0003741718828678131
+            },
+            {
+              "source": 5952,
+              "target": 4464,
+              "drop": 0.0003147292882204056
+            },
+            {
+              "source": 6973,
+              "target": 4464,
+              "drop": 0.0002736523747444153
+            },
+            {
+              "source": 8743,
+              "target": 4464,
+              "drop": 0.00020038336515426636
+            },
+            {
+              "source": 6039,
+              "target": 4464,
+              "drop": 6.46933913230896e-05
+            },
+            {
+              "source": 6519,
+              "target": 4464,
+              "drop": -8.367002010345459e-06
+            },
+            {
+              "source": 7554,
+              "target": 4464,
+              "drop": -0.0002991817891597748
+            },
+            {
+              "source": 6038,
+              "target": 4464,
+              "drop": -0.00033117085695266724
+            },
+            {
+              "source": 6607,
+              "target": 4464,
+              "drop": -0.001310143619775772
+            },
+            {
+              "source": 6118,
+              "target": 4464,
+              "drop": -0.0013968534767627716
+            },
+            {
+              "source": 6602,
+              "target": 4464,
+              "drop": -0.0031454898416996002
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "body_waste.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": 0.0015381760895252228
+            },
+            {
+              "concept": "scrape.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": 0.001449350267648697
+            },
+            {
+              "concept": "plot.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": 0.0012893453240394592
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "grass.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": -0.0031454898416996002
+            },
+            {
+              "concept": "ditch.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": -0.0013968534767627716
+            },
+            {
+              "concept": "grave.n.01",
+              "relation": "in",
+              "image": "image 2405444",
+              "effect_on_final_score": -0.001310143619775772
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5392,
+                "target": 4464
+              },
+              {
+                "source": 7906,
+                "target": 4464
+              },
+              {
+                "source": 7568,
+                "target": 4464
+              }
+            ],
+            "graph_score_before": 0.030573951080441475,
+            "graph_score_after": 0.02565087005496025,
+            "final_score_before": 0.030573951080441475,
+            "final_score_after": 0.02565087005496025,
+            "graph_rank_before": 96,
+            "graph_rank_after": 96
+          }
+        },
+        {
+          "role": "rank 1 under CLIP+Graph",
+          "image_id": 2410837,
+          "clip_rank": 3,
+          "graph_rank": 1,
+          "clip_score": 0.2518960237503052,
+          "graph_score": 0.20507694780826569,
+          "final_score": 0.20507694780826569,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5934,
+              "target": 4694,
+              "drop": 0.0016951411962509155
+            },
+            {
+              "source": 6542,
+              "target": 4694,
+              "drop": 0.0016632229089736938
+            },
+            {
+              "source": 5089,
+              "target": 4694,
+              "drop": 0.001558750867843628
+            },
+            {
+              "source": 6714,
+              "target": 4694,
+              "drop": 0.0008752644062042236
+            },
+            {
+              "source": 6459,
+              "target": 4694,
+              "drop": 0.0007147938013076782
+            },
+            {
+              "source": 5028,
+              "target": 4694,
+              "drop": 0.0006887167692184448
+            },
+            {
+              "source": 6559,
+              "target": 4694,
+              "drop": 0.0005275905132293701
+            },
+            {
+              "source": 6648,
+              "target": 4694,
+              "drop": 0.00041197240352630615
+            },
+            {
+              "source": 8808,
+              "target": 4694,
+              "drop": 0.00013968348503112793
+            },
+            {
+              "source": 6937,
+              "target": 4694,
+              "drop": -5.696713924407959e-05
+            },
+            {
+              "source": 5113,
+              "target": 4694,
+              "drop": -0.00011943280696868896
+            },
+            {
+              "source": 8748,
+              "target": 4694,
+              "drop": -0.0004823654890060425
+            },
+            {
+              "source": 7882,
+              "target": 4694,
+              "drop": -0.0009784549474716187
+            },
+            {
+              "source": 6612,
+              "target": 4694,
+              "drop": -0.0015585869550704956
+            },
+            {
+              "source": 7881,
+              "target": 4694,
+              "drop": -0.0015982389450073242
+            },
+            {
+              "source": 6603,
+              "target": 4694,
+              "drop": -0.0031633079051971436
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "course.n.01",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": 0.0016951411962509155
+            },
+            {
+              "concept": "gazelle.n.01",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": 0.0016632229089736938
+            },
+            {
+              "concept": "antelope.n.01",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": 0.001558750867843628
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "grassland.n.01",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": -0.0031633079051971436
+            },
+            {
+              "concept": "savanna.n.01",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": -0.0015982389450073242
+            },
+            {
+              "concept": "graze.n.02",
+              "relation": "in",
+              "image": "image 2410837",
+              "effect_on_final_score": -0.0015585869550704956
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5934,
+                "target": 4694
+              },
+              {
+                "source": 6542,
+                "target": 4694
+              },
+              {
+                "source": 5089,
+                "target": 4694
+              }
+            ],
+            "graph_score_before": 0.20507694780826569,
+            "graph_score_after": 0.1993733048439026,
+            "final_score_before": 0.20507694780826569,
+            "final_score_after": 0.1993733048439026,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    },
+    {
+      "group": "failure",
+      "query_index": 22494,
+      "text_id": 399572,
+      "text": "wheel of car",
+      "source_image_id": 2406229,
+      "relevant_image_ids": [
+        2406229
+      ],
+      "clip_rank": 15,
+      "graph_rank": 96,
+      "rank_change": -81,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2406229,
+          "clip_rank": 15,
+          "graph_rank": 96,
+          "clip_score": 0.2074771225452423,
+          "graph_score": 0.0020276037976145744,
+          "final_score": 0.0020276037976145744,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 8659,
+              "target": 4498,
+              "drop": 0.002925461158156395
+            },
+            {
+              "source": 8665,
+              "target": 4498,
+              "drop": 0.0014563100412487984
+            },
+            {
+              "source": 6155,
+              "target": 4498,
+              "drop": 0.0009172018617391586
+            },
+            {
+              "source": 5733,
+              "target": 4498,
+              "drop": 0.0007099360227584839
+            },
+            {
+              "source": 5932,
+              "target": 4498,
+              "drop": 0.0006654057651758194
+            },
+            {
+              "source": 7670,
+              "target": 4498,
+              "drop": 0.0005322825163602829
+            },
+            {
+              "source": 6507,
+              "target": 4498,
+              "drop": 0.00043875351548194885
+            },
+            {
+              "source": 8407,
+              "target": 4498,
+              "drop": 0.00023080874234437943
+            },
+            {
+              "source": 7528,
+              "target": 4498,
+              "drop": -0.00015375204384326935
+            },
+            {
+              "source": 7529,
+              "target": 4498,
+              "drop": -0.00015375204384326935
+            },
+            {
+              "source": 6374,
+              "target": 4498,
+              "drop": -0.0005407407879829407
+            },
+            {
+              "source": 8746,
+              "target": 4498,
+              "drop": -0.0006633121520280838
+            },
+            {
+              "source": 5394,
+              "target": 4498,
+              "drop": -0.0008793631568551064
+            },
+            {
+              "source": 8220,
+              "target": 4498,
+              "drop": -0.0010198112577199936
+            },
+            {
+              "source": 6380,
+              "target": 4498,
+              "drop": -0.002034679986536503
+            },
+            {
+              "source": 6169,
+              "target": 4498,
+              "drop": -0.0024515334516763687
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "utility.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": 0.002925461158156395
+            },
+            {
+              "concept": "valve.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": 0.0014563100412487984
+            },
+            {
+              "concept": "drain.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": 0.0009172018617391586
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "drinking_fountain.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": -0.0024515334516763687
+            },
+            {
+              "concept": "fireplug.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": -0.002034679986536503
+            },
+            {
+              "concept": "spout.n.01",
+              "relation": "in",
+              "image": "image 2406229",
+              "effect_on_final_score": -0.0010198112577199936
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 8659,
+                "target": 4498
+              },
+              {
+                "source": 8665,
+                "target": 4498
+              },
+              {
+                "source": 6155,
+                "target": 4498
+              }
+            ],
+            "graph_score_before": 0.0020276037976145744,
+            "graph_score_after": -0.004067162983119488,
+            "final_score_before": 0.0020276037976145744,
+            "final_score_after": -0.004067162983119488,
+            "graph_rank_before": 96,
+            "graph_rank_after": 97
+          }
+        },
+        {
+          "role": "rank 1 under CLIP+Graph",
+          "image_id": 2363372,
+          "clip_rank": 1,
+          "graph_rank": 1,
+          "clip_score": 0.308267205953598,
+          "graph_score": 0.2077806293964386,
+          "final_score": 0.2077806293964386,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 7940,
+              "target": 2593,
+              "drop": 0.00267048180103302
+            },
+            {
+              "source": 5596,
+              "target": 2593,
+              "drop": 0.0018697679042816162
+            },
+            {
+              "source": 5597,
+              "target": 2593,
+              "drop": 0.0018697679042816162
+            },
+            {
+              "source": 8216,
+              "target": 2593,
+              "drop": 0.0018533766269683838
+            },
+            {
+              "source": 8675,
+              "target": 2593,
+              "drop": 0.0017705708742141724
+            },
+            {
+              "source": 8244,
+              "target": 2593,
+              "drop": 0.0014064162969589233
+            },
+            {
+              "source": 5437,
+              "target": 2593,
+              "drop": -9.909272193908691e-06
+            },
+            {
+              "source": 7501,
+              "target": 2593,
+              "drop": -0.0002442300319671631
+            },
+            {
+              "source": 7780,
+              "target": 2593,
+              "drop": -0.0006177425384521484
+            },
+            {
+              "source": 8785,
+              "target": 2593,
+              "drop": -0.0009274780750274658
+            },
+            {
+              "source": 8407,
+              "target": 2593,
+              "drop": -0.0010761171579360962
+            },
+            {
+              "source": 5602,
+              "target": 2593,
+              "drop": -0.0012478381395339966
+            },
+            {
+              "source": 5500,
+              "target": 2593,
+              "drop": -0.0012728869915008545
+            },
+            {
+              "source": 8505,
+              "target": 2593,
+              "drop": -0.001396462321281433
+            },
+            {
+              "source": 5601,
+              "target": 2593,
+              "drop": -0.001475691795349121
+            },
+            {
+              "source": 6777,
+              "target": 2593,
+              "drop": -0.0030100345611572266
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "sedan.n.01",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": 0.00267048180103302
+            },
+            {
+              "concept": "car.n.01",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": 0.0018697679042816162
+            },
+            {
+              "concept": "car.n.02",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": 0.0018697679042816162
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "hubcap.n.01",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": -0.0030100345611572266
+            },
+            {
+              "concept": "car_tire.n.01",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": -0.001475691795349121
+            },
+            {
+              "concept": "tire.n.01",
+              "relation": "in",
+              "image": "image 2363372",
+              "effect_on_final_score": -0.001396462321281433
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 7940,
+                "target": 2593
+              },
+              {
+                "source": 5596,
+                "target": 2593
+              },
+              {
+                "source": 5597,
+                "target": 2593
+              }
+            ],
+            "graph_score_before": 0.2077806293964386,
+            "graph_score_after": 0.2003222554922104,
+            "final_score_before": 0.2077806293964386,
+            "final_score_after": 0.2003222554922104,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    },
+    {
+      "group": "failure",
+      "query_index": 13958,
+      "text_id": 2300927,
+      "text": "a wooden sign",
+      "source_image_id": 2367684,
+      "relevant_image_ids": [
+        2367684
+      ],
+      "clip_rank": 12,
+      "graph_rank": 92,
+      "rank_change": -80,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2367684,
+          "clip_rank": 12,
+          "graph_rank": 92,
+          "clip_score": 0.2623451054096222,
+          "graph_score": 0.0014263167977333069,
+          "final_score": 0.0014263167977333069,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 7836,
+              "target": 2791,
+              "drop": 0.004106031730771065
+            },
+            {
+              "source": 8526,
+              "target": 2791,
+              "drop": 0.002319544553756714
+            },
+            {
+              "source": 6891,
+              "target": 2791,
+              "drop": 0.0018638409674167633
+            },
+            {
+              "source": 5330,
+              "target": 2791,
+              "drop": 0.0009803175926208496
+            },
+            {
+              "source": 5974,
+              "target": 2791,
+              "drop": 0.0008255969732999802
+            },
+            {
+              "source": 5975,
+              "target": 2791,
+              "drop": 0.0008255969732999802
+            },
+            {
+              "source": 8245,
+              "target": 2791,
+              "drop": 0.0007258374243974686
+            },
+            {
+              "source": 6095,
+              "target": 2791,
+              "drop": 0.0003099478781223297
+            },
+            {
+              "source": 6096,
+              "target": 2791,
+              "drop": 0.0003099478781223297
+            },
+            {
+              "source": 5227,
+              "target": 2791,
+              "drop": -0.0005654618144035339
+            },
+            {
+              "source": 7870,
+              "target": 2791,
+              "drop": -0.001499626785516739
+            },
+            {
+              "source": 6836,
+              "target": 2791,
+              "drop": -0.0016550812870264053
+            },
+            {
+              "source": 6837,
+              "target": 2791,
+              "drop": -0.0016550812870264053
+            },
+            {
+              "source": 8290,
+              "target": 2791,
+              "drop": -0.0018440894782543182
+            },
+            {
+              "source": 5394,
+              "target": 2791,
+              "drop": -0.002346998080611229
+            },
+            {
+              "source": 5518,
+              "target": 2791,
+              "drop": -0.0027175340801477432
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "rung.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": 0.004106031730771065
+            },
+            {
+              "concept": "tongs.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": 0.002319544553756714
+            },
+            {
+              "concept": "kickstand.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": 0.0018638409674167633
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "bus_stop.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": -0.0027175340801477432
+            },
+            {
+              "concept": "bollard.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": -0.002346998080611229
+            },
+            {
+              "concept": "stopping_point.n.01",
+              "relation": "in",
+              "image": "image 2367684",
+              "effect_on_final_score": -0.0018440894782543182
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 7836,
+                "target": 2791
+              },
+              {
+                "source": 8526,
+                "target": 2791
+              },
+              {
+                "source": 6891,
+                "target": 2791
+              }
+            ],
+            "graph_score_before": 0.0014263167977333069,
+            "graph_score_after": -0.008088907226920128,
+            "final_score_before": 0.0014263167977333069,
+            "final_score_after": -0.008088907226920128,
+            "graph_rank_before": 92,
+            "graph_rank_after": 95
+          }
+        },
+        {
+          "role": "rank 1 under CLIP+Graph",
+          "image_id": 2363366,
+          "clip_rank": 1,
+          "graph_rank": 1,
+          "clip_score": 0.30783554911613464,
+          "graph_score": 0.15114621818065643,
+          "final_score": 0.15114621818065643,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 5020,
+              "target": 2592,
+              "drop": 0.0040206462144851685
+            },
+            {
+              "source": 5451,
+              "target": 2592,
+              "drop": 0.003666222095489502
+            },
+            {
+              "source": 5075,
+              "target": 2592,
+              "drop": 0.003438889980316162
+            },
+            {
+              "source": 5244,
+              "target": 2592,
+              "drop": 0.003384992480278015
+            },
+            {
+              "source": 6261,
+              "target": 2592,
+              "drop": 0.0029859542846679688
+            },
+            {
+              "source": 5352,
+              "target": 2592,
+              "drop": 0.0019928663969039917
+            },
+            {
+              "source": 5342,
+              "target": 2592,
+              "drop": 0.001081317663192749
+            },
+            {
+              "source": 5345,
+              "target": 2592,
+              "drop": 0.00012765824794769287
+            },
+            {
+              "source": 7240,
+              "target": 2592,
+              "drop": -7.186830043792725e-05
+            },
+            {
+              "source": 7870,
+              "target": 2592,
+              "drop": -0.0017876774072647095
+            },
+            {
+              "source": 8045,
+              "target": 2592,
+              "drop": -0.002081453800201416
+            },
+            {
+              "source": 8047,
+              "target": 2592,
+              "drop": -0.0022707581520080566
+            },
+            {
+              "source": 8052,
+              "target": 2592,
+              "drop": -0.002520054578781128
+            },
+            {
+              "source": 8306,
+              "target": 2592,
+              "drop": -0.003159567713737488
+            },
+            {
+              "source": 8053,
+              "target": 2592,
+              "drop": -0.0037726610898971558
+            },
+            {
+              "source": 8307,
+              "target": 2592,
+              "drop": -0.004746854305267334
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "adam.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": 0.0040206462144851685
+            },
+            {
+              "concept": "bric-a-brac.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": 0.003666222095489502
+            },
+            {
+              "concept": "amour_propre.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": 0.003438889980316162
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "street_sign.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": -0.004746854305267334
+            },
+            {
+              "concept": "signpost.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": -0.0037726610898971558
+            },
+            {
+              "concept": "street_name.n.01",
+              "relation": "in",
+              "image": "image 2363366",
+              "effect_on_final_score": -0.003159567713737488
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 5020,
+                "target": 2592
+              },
+              {
+                "source": 5451,
+                "target": 2592
+              },
+              {
+                "source": 5075,
+                "target": 2592
+              }
+            ],
+            "graph_score_before": 0.15114621818065643,
+            "graph_score_after": 0.13819213211536407,
+            "final_score_before": 0.15114621818065643,
+            "final_score_after": 0.13819213211536407,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    },
+    {
+      "group": "failure",
+      "query_index": 18381,
+      "text_id": 1331501,
+      "text": "handicap parking sign on metal post",
+      "source_image_id": 2388012,
+      "relevant_image_ids": [
+        2388012
+      ],
+      "clip_rank": 15,
+      "graph_rank": 95,
+      "rank_change": -80,
+      "explained": [
+        {
+          "role": "first relevant image",
+          "image_id": 2388012,
+          "clip_rank": 15,
+          "graph_rank": 95,
+          "clip_score": 0.24650312960147858,
+          "graph_score": 0.03251834213733673,
+          "final_score": 0.03251834213733673,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 7423,
+              "target": 3676,
+              "drop": 0.0036331862211227417
+            },
+            {
+              "source": 8659,
+              "target": 3676,
+              "drop": 0.003532594069838524
+            },
+            {
+              "source": 7618,
+              "target": 3676,
+              "drop": 0.0017027128487825394
+            },
+            {
+              "source": 8218,
+              "target": 3676,
+              "drop": 0.0015515871345996857
+            },
+            {
+              "source": 8219,
+              "target": 3676,
+              "drop": 0.0015515871345996857
+            },
+            {
+              "source": 7732,
+              "target": 3676,
+              "drop": 0.0008302628993988037
+            },
+            {
+              "source": 7453,
+              "target": 3676,
+              "drop": 0.0005945675075054169
+            },
+            {
+              "source": 7109,
+              "target": 3676,
+              "drop": -0.00013887882232666016
+            },
+            {
+              "source": 7110,
+              "target": 3676,
+              "drop": -0.00013887882232666016
+            },
+            {
+              "source": 7081,
+              "target": 3676,
+              "drop": -0.0007446706295013428
+            },
+            {
+              "source": 8534,
+              "target": 3676,
+              "drop": -0.0013432316482067108
+            },
+            {
+              "source": 6935,
+              "target": 3676,
+              "drop": -0.0016583949327468872
+            },
+            {
+              "source": 8220,
+              "target": 3676,
+              "drop": -0.0017316006124019623
+            },
+            {
+              "source": 6169,
+              "target": 3676,
+              "drop": -0.0018530413508415222
+            },
+            {
+              "source": 5394,
+              "target": 3676,
+              "drop": -0.0022590458393096924
+            },
+            {
+              "source": 7406,
+              "target": 3676,
+              "drop": -0.0034954622387886047
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "passerby.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": 0.0036331862211227417
+            },
+            {
+              "concept": "utility.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": 0.003532594069838524
+            },
+            {
+              "concept": "post.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": 0.0017027128487825394
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "parking_meter.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": -0.0034954622387886047
+            },
+            {
+              "concept": "bollard.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": -0.0022590458393096924
+            },
+            {
+              "concept": "drinking_fountain.n.01",
+              "relation": "in",
+              "image": "image 2388012",
+              "effect_on_final_score": -0.0018530413508415222
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 7423,
+                "target": 3676
+              },
+              {
+                "source": 8659,
+                "target": 3676
+              },
+              {
+                "source": 7618,
+                "target": 3676
+              }
+            ],
+            "graph_score_before": 0.03251834213733673,
+            "graph_score_after": 0.022305069491267204,
+            "final_score_before": 0.03251834213733673,
+            "final_score_after": 0.022305069491267204,
+            "graph_rank_before": 95,
+            "graph_rank_after": 98
+          }
+        },
+        {
+          "role": "rank 1 under CLIP+Graph",
+          "image_id": 2393216,
+          "clip_rank": 3,
+          "graph_rank": 1,
+          "clip_score": 0.27596259117126465,
+          "graph_score": 0.21413105726242065,
+          "final_score": 0.21413105726242065,
+          "num_edges_into_image": 16,
+          "graph_score_drop_per_edge": [
+            {
+              "source": 7944,
+              "target": 3922,
+              "drop": 0.004355475306510925
+            },
+            {
+              "source": 6005,
+              "target": 3922,
+              "drop": 0.004239797592163086
+            },
+            {
+              "source": 5565,
+              "target": 3922,
+              "drop": 0.0025484710931777954
+            },
+            {
+              "source": 8707,
+              "target": 3922,
+              "drop": 0.0016654729843139648
+            },
+            {
+              "source": 6710,
+              "target": 3922,
+              "drop": 0.0014437437057495117
+            },
+            {
+              "source": 7588,
+              "target": 3922,
+              "drop": 0.0009034276008605957
+            },
+            {
+              "source": 7646,
+              "target": 3922,
+              "drop": 0.0007173120975494385
+            },
+            {
+              "source": 7429,
+              "target": 3922,
+              "drop": 0.0006960034370422363
+            },
+            {
+              "source": 6322,
+              "target": 3922,
+              "drop": 0.000592350959777832
+            },
+            {
+              "source": 7358,
+              "target": 3922,
+              "drop": 0.0004803389310836792
+            },
+            {
+              "source": 7417,
+              "target": 3922,
+              "drop": -0.000696033239364624
+            },
+            {
+              "source": 7135,
+              "target": 3922,
+              "drop": -0.0017246901988983154
+            },
+            {
+              "source": 7404,
+              "target": 3922,
+              "drop": -0.0026289522647857666
+            },
+            {
+              "source": 7405,
+              "target": 3922,
+              "drop": -0.0029448866844177246
+            },
+            {
+              "source": 7407,
+              "target": 3922,
+              "drop": -0.003960222005844116
+            },
+            {
+              "source": 7406,
+              "target": 3922,
+              "drop": -0.005376458168029785
+            }
+          ],
+          "supporting": [
+            {
+              "concept": "seller.n.01",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": 0.004355475306510925
+            },
+            {
+              "concept": "customer.n.01",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": 0.004239797592163086
+            },
+            {
+              "concept": "campaign.n.04",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": 0.0025484710931777954
+            }
+          ],
+          "opposing": [
+            {
+              "concept": "parking_meter.n.01",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": -0.005376458168029785
+            },
+            {
+              "concept": "parking_space.n.01",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": -0.003960222005844116
+            },
+            {
+              "concept": "parking_lot.n.01",
+              "relation": "in",
+              "image": "image 2393216",
+              "effect_on_final_score": -0.0029448866844177246
+            }
+          ],
+          "deletion_check": {
+            "removed": [
+              {
+                "source": 7944,
+                "target": 3922
+              },
+              {
+                "source": 6005,
+                "target": 3922
+              },
+              {
+                "source": 5565,
+                "target": 3922
+              }
+            ],
+            "graph_score_before": 0.21413105726242065,
+            "graph_score_after": 0.201200470328331,
+            "final_score_before": 0.21413105726242065,
+            "final_score_after": 0.201200470328331,
+            "graph_rank_before": 1,
+            "graph_rank_after": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+clip_graph_vg_lr1e4 seed 0 alpha 0.0 with edges MRR@100 0.12855
+clip_graph_vg_lr1e4 seed 0 alpha 0.0 no edges MRR@100 0.12730
+clip_graph_vg_lr1e4 seed 1 alpha 0.0 with edges MRR@100 0.12846
+clip_graph_vg_lr1e4 seed 1 alpha 0.0 no edges MRR@100 0.12738
+clip_graph_vg_lr1e4 seed 2 alpha 0.1 with edges MRR@100 0.12718
+clip_graph_vg_lr1e4 seed 2 alpha 0.1 no edges MRR@100 0.12395
+clip_graph_vg_lr1e4_shuffled seed 0 alpha 0.1 with edges MRR@100 0.12401
+clip_graph_vg_lr1e4_shuffled seed 0 alpha 0.1 no edges MRR@100 0.12252
+clip_graph_vg_lr1e4_shuffled seed 1 alpha 0.2 with edges MRR@100 0.12403
+clip_graph_vg_lr1e4_shuffled seed 1 alpha 0.2 no edges MRR@100 0.12381
+clip_graph_vg_lr1e4_shuffled seed 2 alpha 0.1 with edges MRR@100 0.12408
+clip_graph_vg_lr1e4_shuffled seed 2 alpha 0.1 no edges MRR@100 0.12284

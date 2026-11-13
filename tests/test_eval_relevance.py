@@ -1,6 +1,7 @@
 """Which images count as correct answers for a query (ADR-0043). Numpy only."""
 
 import numpy as np
+
 from mmxai.eval.relevance import same_text_relevant_images
 
 

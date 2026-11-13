@@ -89,6 +89,20 @@ uv run python scripts/train_graph_rerank.py --config configs/clip_graph_vg_lr1e4
 Lưu ý:
 
 - Cảnh báo `CUDA initialization ... driver is too old` khi chạy là **vô hại**: code chạy trên CPU.
+- **macOS:** chương trình dừng với lỗi `OMP: Error #15 ... libomp.dylib already initialized` (hoặc `Fatal Python error: Aborted` trong FAISS).
+  Nguyên nhân: wheel `faiss-cpu` và `torch` mỗi bên mang một bản `libomp.dylib`. Cách sửa trên máy mình: trỏ bản
+  của faiss sang bản của torch. Đây là sửa **môi trường cục bộ** trong `.venv`, không phải sửa repo; trên macOS,
+  `uv run pytest` chỉ chạy hết khi đã sửa. Phải làm lại sau mỗi lần `uv sync` cài lại faiss. Không dùng
+  `KMP_DUPLICATE_LIB_OK=TRUE`: cách đó làm test bị treo.
+
+  ```bash
+  # sao lưu bản của faiss, rồi trỏ nó sang bản của torch
+  cp .venv/lib/python3.11/site-packages/faiss/.dylibs/libomp.dylib /tmp/faiss_libomp.dylib.bak
+  ln -sf "$PWD/.venv/lib/python3.11/site-packages/torch/lib/libomp.dylib" \
+         .venv/lib/python3.11/site-packages/faiss/.dylibs/libomp.dylib
+  # hoàn tác: cài lại faiss
+  uv sync --group ml --group graph --reinstall-package faiss-cpu
+  ```
 - Thiếu RAM: đóng bớt chương trình. Không giảm `batch_size` trong config đã commit; muốn đổi thì tạo config với tên experiment mới.
 - Số val có thể lệch rất nhỏ so với bảng ở mục 6–7 nếu khác phiên bản thư viện hoặc số luồng.
 - **Không chạy lại test** cho experiment đã có trong `results/tables/main.csv`. Script chỉ chặn khi tìm thấy run test trong `results/runs/` **trên chính máy đó** (thư mục này gitignored), nên trên máy khác nó không chặn được. Muốn kiểm tái lập, chỉ chạy train + val rồi so với `selection.json` / số val ở mục 7.
@@ -221,12 +235,77 @@ MRR@100 test theo từng seed (từ `results/runs/*/metrics.json`):
 
 Đọc (đã sửa theo review `experiment-reviewer` và `leakage-auditor`):
 
-- **Đồ thị đóng góp nhỏ, nhất quán ở cả 3 seed khi `lr = 1e-4`** (+0,0014 đến +0,0020), nhưng **không ổn định theo `lr`**: ở `lr = 1e-3`, mô hình một lớp chỉ hơn đối chứng +0,0010 và còn thua ở seed 0. Std của hiệu khoảng 0,0009, nên +0,0018 chỉ cỡ 2 std. Với 3 seed và khởi tạo cố định (std đánh giá thấp dao động thật), đây là **dấu hiệu**, chưa phải bằng chứng chắc. Cần thêm ablation xáo cạnh/đồ thị ngẫu nhiên.
+- **Đồ thị đóng góp nhỏ, nhất quán ở cả 3 seed khi `lr = 1e-4`** (+0,0014 đến +0,0020), nhưng **không ổn định theo `lr`**: ở `lr = 1e-3`, mô hình một lớp chỉ hơn đối chứng +0,0010 và còn thua ở seed 0. Std của hiệu khoảng 0,0009, nên +0,0018 chỉ cỡ 2 std. Với 3 seed và khởi tạo cố định (std đánh giá thấp dao động thật), đây là **dấu hiệu**, chưa phải bằng chứng chắc. Cần thêm ablation xáo cạnh/đồ thị ngẫu nhiên (đã làm 2026-11-13: xem "Ablation: đồ thị xáo cạnh giữ bậc" ở cuối mục này).
 - Phần lớn cải thiện so với CLIP (+0,019) vẫn đến từ phép chiếu học được, không phải đồ thị.
 - `alpha` chọn được gần 0 ở `lr = 1e-4`: điểm cuối gần như chỉ còn điểm đồ thị. Vì vậy so sánh chính là với **đối chứng**, không phải với CLIP thuần.
 - Cạnh đồng xuất hiện: **không có bằng chứng cải thiện** (−0,0004 MRR@100, chênh R@5/R@10 cũng nằm trong nhiễu). Chưa chứng minh được là nó kém hơn.
 
 **Giới hạn về quy trình (phải ghi trong báo cáo):** ý định thử `lr = 1e-4` có **sau khi** đã xem test của `clip_graph_vg` và `clip_nograph_vg` ở `lr = 1e-3` (test lúc 11:06, config `lr = 1e-4` commit `ed5873c` lúc 14:10). Lý do thử là quan sát trên val (val tốt nhất ngay epoch 1), và quy tắc chọn được commit trước khi chạy test mới (`6c97c4c`), nhưng họ mô hình một lớp vì vậy đã được xem test hai lần. Trên val, hai `lr` của mô hình một lớp chênh rất ít (0,1281 so với 0,1277, std 0,0022). Giữ **cả hai** dòng test trong `results/tables/main.csv`, không bỏ dòng nào. Bảng nào là cấu hình chính: xem `results/tables/README.md`.
+
+### Ablation: đồ thị xáo cạnh giữ bậc (2026-11-13)
+
+**Câu hỏi:** mức hơn đối chứng (+0,0018) có đến từ việc *ảnh nào nối với khái niệm nào*, hay chỉ vì mô hình có thêm
+một nhánh láng giềng, nối với khái niệm nào cũng được?
+
+**Cách làm:**
+- Giữ nguyên mô hình chính `clip_graph_vg_lr1e4` và mọi siêu tham số.
+- Chỉ thay đồ thị bằng bản **xáo cạnh `contains` trong từng split**. Mỗi ảnh vẫn có 16 cạnh, mỗi khái niệm vẫn có
+  đúng số cạnh như cũ trong split đó, nhưng ảnh nối với khái niệm ngẫu nhiên. Đây là ablation ADR-0046 §6.
+- Code: `src/mmxai/graph/shuffle.py` (`shuffle_contains_edges`). Config: `configs/graph_vg_clip_topk_shuffled.yaml`,
+  `configs/clip_graph_vg_lr1e4_shuffled.yaml`.
+- Quy tắc báo cáo được commit **trước khi chạy** (`ea7068f`, `results/tables/README.md`): chạy test đúng một lần
+  mỗi seed, báo cáo dù kết quả ra sao.
+
+```bash
+uv run python scripts/shuffle_graph.py --config configs/graph_vg_clip_topk_shuffled.yaml
+uv run python scripts/train_graph_rerank.py --config configs/clip_graph_vg_lr1e4_shuffled.yaml --seeds 0 1 2 --threads 8
+for s in 0 1 2; do uv run python scripts/evaluate_graph_rerank.py --config configs/clip_graph_vg_lr1e4_shuffled.yaml --seed $s; done
+```
+
+Thời gian trên MacBook (8 luồng): xáo đồ thị vài giây; huấn luyện 3 seed khoảng 5 phút; test khoảng 15 giây mỗi seed.
+
+**Kết quả test** (`results/tables/main.csv`; MRR@100 theo seed lấy từ `results/runs/*/metrics.json`):
+
+| Seed | Đồ thị thật (`clip_graph_vg_lr1e4`) | Đồ thị xáo (`_shuffled`) | Đối chứng không đồ thị (`clip_nograph_vg`) | Thật − xáo |
+|---|---|---|---|---|
+| 0 | 0,1279 | 0,12681 | 0,1259 | +0,00109 |
+| 1 | 0,1283 | 0,12735 | 0,1269 | +0,00095 |
+| 2 | 0,1291 | 0,12736 | 0,1271 | +0,00174 |
+| mean ± std | 0,1284 ± 0,0006 | 0,12718 ± 0,00031 | 0,1266 ± 0,0006 | **+0,00126 ± 0,00042** |
+
+Mean, std và hiệu tính trên số chưa làm tròn của bản xáo (`metrics.json`). Số của mô hình thật và đối chứng chỉ có
+4 chữ số (mục 7 ở trên).
+
+Trên val, đồ thị xáo được 0,1240 (3 seed gần như bằng nhau). Con số này **thấp hơn** cả đối chứng không đồ thị cùng
+`lr = 1e-4` (0,1246) và thấp hơn đồ thị thật (0,1281). `alpha` chọn được là 0,1 / 0,2 / 0,1, tức mô hình tin CLIP
+hơn so với khi dùng đồ thị thật (0 / 0 / 0,1).
+
+**Đọc** (theo review `experiment-reviewer`, 2026-11-13):
+
+- Đồ thị thật hơn đồ thị xáo ở **cả 3 seed** (+0,00095 đến +0,00174 MRR@100). Kết quả **phù hợp** với giả thuyết
+  rằng một phần nhỏ cải thiện đến từ quan hệ ảnh – khái niệm thật. Không được viết là "chứng minh": chỉ có 3 seed,
+  1 bản xáo, và hiệu ứng tuyệt đối khoảng 1% MRR. t ghép cặp = 5,16 (p ≈ 0,04, df = 2) chỉ là số mô tả: nó không tính
+  dao động do cách xáo hay do mẫu truy vấn.
+- So với đối chứng `lr = 1e-3` (cấu hình chính của đối chứng), xáo cạnh làm mất khoảng 70% phần chênh +0,0018. Vì
+  đối chứng khác `lr`, 70% chỉ là ước lượng thô. Trên val, so với đối chứng **cùng** `lr = 1e-4` (0,1246), đồ thị xáo
+  (0,1240) còn thấp hơn.
+- R@1: +0,0019 (0,0705 so với 0,0686), lớn hơn std của mô hình chính (0,0014) nhưng sát nhiễu. R@5 (+0,0006) và
+  R@10 (+0,0003) chênh nhỏ hơn std, không kết luận được.
+- Không được viết "đồ thị xáo tốt hơn không đồ thị": chênh chỉ +0,00054, và hai mô hình dùng `lr` khác nhau.
+- Bất thường cần ghi trong báo cáo: trên val, đồ thị xáo mất **toàn bộ** phần chênh (+0,0040 so với đồ thị thật),
+  còn trên test chỉ mất +0,0013. Tỉ lệ cạnh xáo trùng cạnh gốc gần như bằng nhau ở val và test (1,78% và 1,89%), nên
+  điều đó không giải thích được. Với 1 bản xáo thì không tách được dao động do cách xáo.
+
+**Giới hạn:**
+- Chỉ một `shuffle_seed` (0), như quy tắc đã chốt. FluteInTheRain quyết định (2026-11-13) **không** thêm bản xáo
+  seed 1, 2, dù `experiment-reviewer` có đề xuất. Báo cáo phải ghi rõ giới hạn này.
+- Toàn bộ số theo từng run, tham số, suy luận và review của lần chạy này: `results/records/20261113_cap-do-1/README.md`.
+- Ba split dùng chung một bộ sinh số ngẫu nhiên, xáo theo thứ tự `test`, `train`, `val`. Vì vậy cách xáo của train
+  phụ thuộc vào *số cạnh* của test. Phần này không mang nhãn hay nội dung test, và không cạnh nào vượt split
+  (`leakage-auditor`: không phải rò rỉ). Không sửa code, vì đồ thị đã chốt trước khi chạy.
+- Dòng mô hình chính trong `main.csv` chạy trên máy khác (commit `6c97c4c`). Dòng ablation chạy trên MacBook
+  (commit `ea7068f`). Mô hình chính huấn luyện lại trên MacBook cho kết quả val khớp tới 4 chữ số (0,1281 ± 0,0008,
+  epoch 6/8/6, `alpha` 0/0/0,1), nhưng chưa đối chiếu `model_sha256` của run test cũ.
 
 ## 8. Câu hỏi hay gặp khi vấn đáp
 

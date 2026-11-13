@@ -1,6 +1,7 @@
 """Retrieval metrics checked against small examples computed by hand (ADR-0043)."""
 
 import pytest
+
 from mmxai.eval.metrics import (
     compute_metrics,
     first_relevant_rank,
