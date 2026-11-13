@@ -6,6 +6,7 @@
 |---|---|---|
 | `results/runs/<ngày>_<thí-nghiệm>_seed<k>/` | Mỗi lần chạy: `config.yaml` đã dùng, `metrics.json`, `env.json`, log | Không (gitignore) |
 | `results/tables/*.csv` | Bảng tổng hợp mean ± std qua ≥3 seed, dùng cho báo cáo | Có |
+| `results/records/<ngày>_<việc>/` | Hồ sơ một phiên: bản chép `config.yaml`/`metrics.json`/`env.json` của các run, `selection.json`, meta đồ thị, và `README.md` ghi tham số, kết quả, suy luận, quyết định, review. Để truy vết, không thay `results/tables/` | Có |
 | `results/figures/*.png` | Hình cho báo cáo/slide | Có (nếu nhỏ) |
 
 Chi tiết: `docs/decisions/0010-theo-doi-thi-nghiem-bang-file.md`.

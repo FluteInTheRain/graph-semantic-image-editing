@@ -283,8 +283,9 @@ hơn so với khi dùng đồ thị thật (0 / 0 / 0,1).
   còn trên test chỉ mất +0,0013. Với 1 bản xáo thì không tách được dao động do cách xáo.
 
 **Giới hạn:**
-- Chỉ một `shuffle_seed` (0), như quy tắc đã chốt. Muốn thêm bản xáo seed 1, 2 thì nhóm phải quyết định trước,
-  ghi là phụ lục bổ sung sau khi đã thấy số, và báo cáo đủ mọi run.
+- Chỉ một `shuffle_seed` (0), như quy tắc đã chốt. FluteInTheRain quyết định (2026-11-13) **không** thêm bản xáo
+  seed 1, 2, dù `experiment-reviewer` có đề xuất. Báo cáo phải ghi rõ giới hạn này.
+- Toàn bộ số theo từng run, tham số, suy luận và review của lần chạy này: `results/records/20261113_cap-do-1/README.md`.
 - Ba split dùng chung một bộ sinh số ngẫu nhiên, xáo theo thứ tự `test`, `train`, `val`. Vì vậy cách xáo của train
   phụ thuộc vào *số cạnh* của test. Phần này không mang nhãn hay nội dung test, và không cạnh nào vượt split
   (`leakage-auditor`: không phải rò rỉ). Không sửa code, vì đồ thị đã chốt trước khi chạy.

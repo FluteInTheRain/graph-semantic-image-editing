@@ -1,0 +1,49 @@
+{
+  "dataset": "visual_genome",
+  "edge_types": [
+    "contains"
+  ],
+  "edge_source": "clip_topk",
+  "clip_topk_k": 16,
+  "num_images": 108077,
+  "num_concepts": 3880,
+  "num_edges": 1729232,
+  "images_without_edges": {
+    "train": 0,
+    "val": 0,
+    "test": 0
+  },
+  "synset_sources": {
+    "annotated": 2023481,
+    "from_name": 379421,
+    "unmapped": 114019
+  },
+  "name_dictionary_size": 40195,
+  "dropped_records": {
+    "empty_name": 18
+  },
+  "feature_dim": 512,
+  "objects_sha256": "94238b6187c0ea1f97acc1fdaec106bd3dee12bb0f81b23dc8b07e9173514985",
+  "split_sha256": "0c65b3e5fa9fedc3c225e77806dc9832d5e2135cadba973fd3506d80a002c4ee",
+  "git": {
+    "git_commit": "6a76986d65a836f83fedfdd5ebe53fb3288b1279",
+    "git_dirty": false
+  },
+  "created_at": "2026-11-13T02:46:24+00:00",
+  "config": {
+    "dataset": "visual_genome",
+    "data_dir": "data/visual_genome",
+    "objects_file": "objects.json",
+    "split_file": "splits/visual_genome/split_seed0.json",
+    "min_train_images": 5,
+    "edge_source": "clip_topk",
+    "clip_topk_k": 16,
+    "features_dir": "artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k",
+    "concept_prompt": "a photo of a {}",
+    "model": "ViT-B-32",
+    "pretrained": "laion2b_s34b_b79k",
+    "device": "auto",
+    "text_batch_size": 256,
+    "output_dir": "artifacts/graphs/visual_genome/contains_clip_top16_v1"
+  }
+}
