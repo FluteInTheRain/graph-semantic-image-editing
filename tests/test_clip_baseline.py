@@ -158,3 +158,173 @@ def test_run_writes_traceable_files(tmp_path):
     assert len(metrics["split_sha256"]) == 64
     assert (run_dir / "config.yaml").exists()
     assert "git_commit" in json.loads((run_dir / "env.json").read_text(encoding="utf-8"))
+
+
+def write_features_and_split(tmp_path):
+    """Save tiny features (6 images, 2 texts each) and a split; return their paths."""
+    images, image_ids, texts, text_image_ids = make_data()
+    features_dir = tmp_path / "features"
+    save_features(
+        features_dir,
+        image_embeddings=images,
+        image_ids=image_ids,
+        text_embeddings=texts,
+        text_image_ids=text_image_ids,
+        text_id_name="text_ids",
+        text_id_values=np.arange(100, 112),
+        meta={"dataset": "visual_genome", "is_partial": False, "code_hash": "abc"},
+    )
+    split_file = tmp_path / "split_seed0.json"
+    save_split(
+        {
+            "dataset": "visual_genome",
+            "seed": 0,
+            "train": ["1", "2"],
+            "val": ["3", "4"],
+            "test": ["5", "6"],
+        },
+        split_file,
+    )
+    return features_dir, split_file
+
+
+def make_config(tmp_path, eval_split="val", **extra):
+    features_dir, split_file = write_features_and_split(tmp_path)
+    return ClipEvalConfig(
+        experiment="clip_vg",
+        dataset="visual_genome",
+        split_file=str(split_file),
+        features_dir=str(features_dir),
+        eval_split=eval_split,
+        top_k=2,
+        recall_ks=[1],
+        same_text_threshold=0.9999,
+        output_dir=str(tmp_path / "runs"),
+        **extra,
+    )
+
+
+def read_metrics(run_dir):
+    return json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
+
+
+def test_old_clip_config_writes_the_same_metrics_keys_as_before(tmp_path):
+    run_dir = run_clip_evaluation(make_config(tmp_path), seed=0)
+
+    assert set(read_metrics(run_dir)) == {
+        "R@1",
+        "MRR@2",
+        "num_queries",
+        "num_images",
+        "fraction_queries_with_several_relevant",
+        "split",
+        "split_file",
+        "split_sha256",
+        "seed",
+        "features_code_hash",
+    }
+
+
+def test_clip_eval2_metrics_have_ndcg_groups_and_image_to_text(tmp_path):
+    predicates_file = tmp_path / "predicates.yaml"
+    predicates_file.write_text(
+        "predicate_templates:\n  holding: is holding\n"
+        "predicate_aliases:\n  holds: holding\n"
+        "action_predicates: [holding]\n",
+        encoding="utf-8",
+    )
+    # Region ids match text_id_values in write_features_and_split: text row r has id 100 + r.
+    regions = []
+    for image_id in [3, 4]:
+        first_id = 100 + 2 * (image_id - 1)
+        phrases = ["man holding cup", "red car"]
+        regions.append(
+            {
+                "image_id": image_id,
+                "regions": [
+                    {"region_id": first_id + k, "image_id": image_id, "phrase": phrase}
+                    for k, phrase in enumerate(phrases)
+                ],
+            }
+        )
+    (tmp_path / "region_descriptions.json").write_text(json.dumps(regions), encoding="utf-8")
+    config = make_config(
+        tmp_path,
+        ndcg_k=2,
+        image_to_text=True,
+        vg_data_dir=str(tmp_path),
+        predicates_file=str(predicates_file),
+    )
+
+    metrics = read_metrics(run_clip_evaluation(config, seed=0))
+
+    assert metrics["nDCG@2"] == 1.0
+    assert set(metrics["groups"]) == {"specificity", "relation"}
+    assert metrics["image_to_text"]["alpha"] == 1.0
+    assert metrics["image_to_text"]["R@1"] == 1.0
+    assert "nDCG@2" in metrics["image_to_text"]
+
+
+def test_second_clip_test_run_is_refused(tmp_path):
+    config = make_config(tmp_path, eval_split="test")
+    run_clip_evaluation(config, seed=0)
+
+    with pytest.raises(FileExistsError, match="already run"):
+        run_clip_evaluation(config, seed=0)
+
+
+def test_clip_eval2_config_differs_from_its_source_only_in_name_and_extension_fields():
+    source = load_clip_eval_config(REPO_ROOT / "configs" / "clip_vg.yaml")
+    eval2 = load_clip_eval_config(REPO_ROOT / "configs" / "clip_vg_eval2.yaml")
+
+    changed = {name for name in source.__dict__ if source.__dict__[name] != eval2.__dict__[name]}
+    assert changed == {"experiment", "ndcg_k", "image_to_text", "vg_data_dir", "predicates_file"}
+    assert eval2.experiment == "clip_vg_eval2"
+    assert eval2.eval_split == "val"
+    assert eval2.ndcg_k == 10
+    assert eval2.image_to_text is True
+    assert eval2.vg_data_dir == "data/visual_genome"
+    assert eval2.predicates_file == "configs/query_benchmark_vg.yaml"
+    assert eval2.extra_action_predicates is None
+    assert eval2.extra_spatial_predicates is None
+    assert eval2.excluded_predicates is None
+
+
+def test_old_clip_config_values_match_extended_run(tmp_path):
+    old_metrics = read_metrics(run_clip_evaluation(make_config(tmp_path), seed=0))
+    assert old_metrics["R@1"] == 1.0
+    assert old_metrics["MRR@2"] == 1.0
+    assert old_metrics["num_queries"] == 4
+
+
+def test_evaluate_clip_rejects_image_to_text_without_ndcg(tmp_path):
+    with pytest.raises(ValueError, match="ndcg_k"):
+        evaluate_clip(
+            image_embeddings=np.eye(2, dtype=np.float32),
+            image_ids=np.array([1, 2]),
+            text_embeddings=np.eye(2, dtype=np.float32),
+            text_image_ids=np.array([1, 2]),
+            eval_image_ids=np.array([1, 2]),
+            recall_ks=[1],
+            top_k=1,
+            same_text_threshold=0.9999,
+            image_to_text=True,
+        )
+
+
+def test_load_clip_eval_config_rejects_invalid_extension_settings(tmp_path):
+    path = tmp_path / "config.yaml"
+    text = (REPO_ROOT / "configs" / "clip_vg.yaml").read_text(encoding="utf-8")
+    path.write_text(text + "\nimage_to_text: true\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="ndcg_k"):
+        load_clip_eval_config(path)
+
+
+def test_test_run_exists_ignores_experiment_whose_name_only_ends_with_target(tmp_path):
+    target = make_config(tmp_path, eval_split="test")
+    other = ClipEvalConfig(**{**target.__dict__, "experiment": "other_clip_vg"})
+    run_clip_evaluation(other, seed=0)
+
+    run_dir = run_clip_evaluation(target, seed=0)
+    assert (run_dir / "metrics.json").exists()

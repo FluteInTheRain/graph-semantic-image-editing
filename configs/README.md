@@ -10,6 +10,7 @@
 | `configs/concept_edges_vg_cooccurrence.yaml` | Dựng cạnh khái niệm → khái niệm bằng PMI trên annotation **train** (ADR-0048) |
 | `configs/clip_graph_vg_lr1e4_shuffled.yaml` | Ablation **xáo cạnh giữ bậc** (ADR-0046 mục 6): mô hình chính `clip_graph_vg_lr1e4` huấn luyện y hệt trên đồ thị đã xáo cạnh; chỉ khác `experiment`, `graph_dir`, `model_dir` (có test kiểm) |
 | `configs/*_lr1e4.yaml` | Ba thí nghiệm trên với `lr = 1e-4` thay vì `1e-3` (val tốt nhất ngay epoch 1 rồi giảm); so với bản `1e-3` **chỉ trên val** |
+| `configs/*_eval2.yaml` | Bản sao **giao thức đánh giá v2** của năm thí nghiệm được báo cáo (`clip_vg`, `clip_nograph_vg`, `clip_graph_vg_lr1e4`, `clip_cooc_graph_vg_lr1e4`, `clip_graph_vg_lr1e4_shuffled`): thêm nDCG@10, chiều ảnh → văn bản và metric theo nhóm truy vấn. Chỉ khác `experiment`, `model_dir` và 7 trường mở rộng (có test kiểm); `clip_vg_eval2` vẫn chạy `val` mặc định. Spec: `docs/superpowers/specs/2026-11-13-cap-do-1-mo-rong-design.md` |
 | `configs/features_visual_genome.yaml` | Trích embedding CLIP cho Visual Genome (5 region mỗi ảnh) |
 | `configs/features_flickr30k.yaml` | Trích embedding CLIP cho Flickr30k |
 | `configs/clip_vg.yaml` | Baseline CLIP thuần trên Visual Genome; mặc định chạy `val`, `test` chỉ chạy một lần (ADR-0043) |

@@ -1,0 +1,82 @@
+{
+  "R@1": 0.06888,
+  "R@5": 0.18072,
+  "R@10": 0.251,
+  "MRR@100": 0.12823796218349715,
+  "num_queries": 25000,
+  "nDCG@10": 0.13893402480968686,
+  "groups": {
+    "specificity": {
+      "generic": {
+        "R@1": 0.03475177304964539,
+        "R@5": 0.1971631205673759,
+        "R@10": 0.2783687943262411,
+        "MRR@100": 0.11147706683849641,
+        "num_queries": 2820,
+        "nDCG@10": 0.05704177255129833,
+        "fraction_queries": 0.1128
+      },
+      "specific": {
+        "R@1": 0.07321911632100991,
+        "R@5": 0.17862939585211904,
+        "R@10": 0.24752028854824165,
+        "MRR@100": 0.1303689687151879,
+        "num_queries": 22180,
+        "nDCG@10": 0.14934593424921191,
+        "fraction_queries": 0.8872
+      }
+    },
+    "relation": {
+      "action": {
+        "R@1": 0.08750563824988723,
+        "R@5": 0.20027063599458728,
+        "R@10": 0.2679296346414073,
+        "MRR@100": 0.14564468496655558,
+        "num_queries": 2217,
+        "nDCG@10": 0.1601595093140451,
+        "fraction_queries": 0.08868
+      },
+      "none": {
+        "R@1": 0.060160323760603936,
+        "R@5": 0.15168495602770643,
+        "R@10": 0.21877188886294655,
+        "MRR@100": 0.1120223310741098,
+        "num_queries": 12849,
+        "nDCG@10": 0.12317101121154973,
+        "fraction_queries": 0.51396
+      },
+      "spatial": {
+        "R@1": 0.07600161063015905,
+        "R@5": 0.21391181799879203,
+        "R@10": 0.288906784779545,
+        "MRR@100": 0.14532714475994749,
+        "num_queries": 9934,
+        "nDCG@10": 0.15458553100823805,
+        "fraction_queries": 0.39736
+      }
+    }
+  },
+  "image_to_text": {
+    "R@1": 0.1524,
+    "R@5": 0.3096,
+    "R@10": 0.3988,
+    "MRR@100": 0.2322826813888666,
+    "num_queries": 5000,
+    "nDCG@10": 0.10502420118563484,
+    "alpha": 0.6
+  },
+  "split": "test",
+  "split_file": "splits/visual_genome/split_seed0.json",
+  "split_sha256": "0c65b3e5fa9fedc3c225e77806dc9832d5e2135cadba973fd3506d80a002c4ee",
+  "seed": 1,
+  "alpha": 0.0,
+  "best_epoch": 8,
+  "use_graph": true,
+  "graph_dir": "artifacts/graphs/visual_genome/contains_clip_top16_v1",
+  "concept_edges_dir": null,
+  "graph_edge_source": "clip_topk",
+  "graph_git_commit": "6a76986d65a836f83fedfdd5ebe53fb3288b1279",
+  "features_code_hash": "6f1ebf3a94b9c652ac64a8c658269f752347842352ae933ebdd16c0dea3ba027",
+  "model_sha256": "f99e047e409a1bbbe057ddc9f9edacc378a994b2a0dbdce7baacba20d3bf8d03",
+  "model_git_commit": "46bff84e47f17af3b567dbb28ad81f013a7caa7f"
+}

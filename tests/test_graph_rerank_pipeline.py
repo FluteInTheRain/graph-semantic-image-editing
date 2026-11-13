@@ -324,3 +324,213 @@ def test_shuffled_ablation_config_differs_from_the_main_config_only_in_the_graph
 
     differences = {name for name in main.__dict__ if main.__dict__[name] != shuffled.__dict__[name]}
     assert differences == {"experiment", "graph_dir", "model_dir"}
+
+
+def with_extensions(config: GraphRerankConfig, tmp_path) -> GraphRerankConfig:
+    """The same experiment with nDCG, query groups and image -> text (spec 2026-11-13)."""
+    predicates_file = tmp_path / "predicates.yaml"
+    predicates_file.write_text(
+        "predicate_templates:\n  holding: is holding\n"
+        "predicate_aliases:\n  holds: holding\n"
+        "action_predicates: [holding]\n",
+        encoding="utf-8",
+    )
+    # Text row r of write_inputs has region id r and belongs to image IMAGE_IDS[r // 2].
+    regions = []
+    for image_index, image_id in enumerate(IMAGE_IDS.tolist()):
+        phrases = ["man holding cup", "red car"]
+        regions.append(
+            {
+                "image_id": image_id,
+                "regions": [
+                    {"region_id": 2 * image_index + k, "image_id": image_id, "phrase": phrase}
+                    for k, phrase in enumerate(phrases)
+                ],
+            }
+        )
+    vg_dir = tmp_path / "vg"
+    vg_dir.mkdir()
+    (vg_dir / "region_descriptions.json").write_text(json.dumps(regions), encoding="utf-8")
+    return dataclasses.replace(
+        config,
+        experiment=f"{config.experiment}_eval2",
+        model_dir=f"{config.model_dir}_eval2",
+        ndcg_k=3,
+        image_to_text=True,
+        vg_data_dir=str(vg_dir),
+        predicates_file=str(predicates_file),
+    )
+
+
+def read_selection(config: GraphRerankConfig, seed: int) -> dict:
+    with open(Path(config.model_dir) / f"seed{seed}" / "selection.json", encoding="utf-8") as file:
+        return json.load(file)
+
+
+RUN_FACT_KEYS = {
+    "split",
+    "split_file",
+    "split_sha256",
+    "seed",
+    "alpha",
+    "best_epoch",
+    "use_graph",
+    "graph_dir",
+    "concept_edges_dir",
+    "graph_edge_source",
+    "graph_git_commit",
+    "features_code_hash",
+}
+
+
+def test_old_graph_config_keeps_selection_and_metrics_keys(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    prepared = prepare(config, log=str)
+
+    val_metrics = read_metrics(train_and_select(config, prepared, seed=0, log=str))
+    test_metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    assert prepared.val_text_candidates is None
+    assert set(read_selection(config, 0)) == {
+        "alpha",
+        "best_epoch",
+        "history",
+        "alpha_sweep",
+        "git",
+    }
+    metric_keys = {"R@1", "R@3", "MRR@3", "num_queries"}
+    assert set(val_metrics) == metric_keys | RUN_FACT_KEYS | {"alpha_sweep", "history"}
+    assert set(test_metrics) == metric_keys | RUN_FACT_KEYS | {"model_sha256", "model_git_commit"}
+
+
+def test_image_to_text_alpha_is_chosen_on_val_and_reused_on_test(tmp_path, monkeypatch):
+    config = with_extensions(write_inputs(tmp_path, monkeypatch), tmp_path)
+    prepared = prepare(config, log=str)
+
+    train_and_select(config, prepared, seed=0, log=str)
+    test_metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    selection = read_selection(config, 0)
+    sweep = selection["alpha_sweep_image_to_text"]
+    assert set(sweep) == {str(alpha) for alpha in config.alpha_grid}
+    best = max(values["MRR@3"] for values in sweep.values())
+    assert sweep[str(selection["alpha_image_to_text"])]["MRR@3"] == best
+    assert test_metrics["image_to_text"]["alpha"] == selection["alpha_image_to_text"]
+    assert test_metrics["alpha"] == selection["alpha"]
+
+
+def test_eval2_test_metrics_have_ndcg_groups_and_image_to_text(tmp_path, monkeypatch):
+    config = with_extensions(write_inputs(tmp_path, monkeypatch), tmp_path)
+    train_and_select(config, prepare(config, log=str), seed=0, log=str)
+
+    metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    assert "nDCG@3" in metrics
+    assert set(metrics["groups"]) == {"specificity", "relation"}
+    # Both phrases occur once per image: half the queries are "action", half "none".
+    assert metrics["groups"]["relation"]["action"]["num_queries"] == 3
+    image_to_text = metrics["image_to_text"]
+    assert image_to_text["num_queries"] == 3  # the 3 test images
+    assert {"R@1", "R@3", "MRR@3", "nDCG@3", "alpha"} <= set(image_to_text)
+    assert "alpha_sweep" not in metrics  # nothing is chosen on test
+
+
+def test_epoch_and_text_to_image_alpha_do_not_change_when_extensions_are_on(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    extended = with_extensions(config, tmp_path)
+
+    old_val = read_metrics(train_and_select(config, prepare(config, log=str), seed=0, log=str))
+    new_val = read_metrics(train_and_select(extended, prepare(extended, log=str), seed=0, log=str))
+
+    assert new_val["best_epoch"] == old_val["best_epoch"]
+    assert new_val["alpha"] == old_val["alpha"]
+
+
+def test_cooccurrence_model_reports_image_to_text(tmp_path, monkeypatch):
+    config = with_concept_edges(write_inputs(tmp_path, monkeypatch), tmp_path)
+    config = with_extensions(config, tmp_path)
+    train_and_select(config, prepare(config, log=str), seed=0, log=str)
+
+    metrics = read_metrics(evaluate_test(config, seed=0, log=str))
+
+    assert metrics["image_to_text"]["alpha"] == read_selection(config, 0)["alpha_image_to_text"]
+
+
+def test_graph_config_with_image_to_text_needs_ndcg(tmp_path):
+    config_file = tmp_path / "config.yaml"
+    text = Path("configs/clip_graph_vg.yaml").read_text(encoding="utf-8")
+    config_file.write_text(text + "\nimage_to_text: true\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="ndcg_k"):
+        load_graph_rerank_config(config_file)
+
+
+GRAPH_EVAL2_SOURCES = [
+    "clip_nograph_vg",
+    "clip_graph_vg_lr1e4",
+    "clip_cooc_graph_vg_lr1e4",
+    "clip_graph_vg_lr1e4_shuffled",
+]
+EXTENSION_FIELDS = {
+    "ndcg_k": 10,
+    "image_to_text": True,
+    "vg_data_dir": "data/visual_genome",
+    "predicates_file": "configs/query_benchmark_vg.yaml",
+    "extra_action_predicates": None,
+    "extra_spatial_predicates": None,
+    "excluded_predicates": None,
+}
+
+
+@pytest.mark.parametrize("source_name", GRAPH_EVAL2_SOURCES)
+def test_graph_eval2_config_differs_from_its_source_only_in_name_model_dir_and_extensions(
+    source_name,
+):
+    source = load_graph_rerank_config(f"configs/{source_name}.yaml")
+    eval2 = load_graph_rerank_config(f"configs/{source_name}_eval2.yaml")
+
+    differences = {
+        name for name in source.__dict__ if source.__dict__[name] != eval2.__dict__[name]
+    }
+    assert differences == {"experiment", "model_dir"} | {
+        name for name in EXTENSION_FIELDS if EXTENSION_FIELDS[name] is not None
+    }
+    assert eval2.experiment == f"{source_name}_eval2"
+    assert eval2.model_dir == f"artifacts/models/visual_genome/{source_name}_eval2"
+    for name, value in EXTENSION_FIELDS.items():
+        assert getattr(eval2, name) == value
+
+
+def test_val_metrics_match_selection_image_to_text_and_old_values(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    extended = with_extensions(config, tmp_path)
+
+    old_val = read_metrics(train_and_select(config, prepare(config, log=str), seed=0, log=str))
+    new_val = read_metrics(train_and_select(extended, prepare(extended, log=str), seed=0, log=str))
+
+    for key in ("R@1", "R@3", "MRR@3", "num_queries"):
+        assert new_val[key] == old_val[key]
+
+    selection = read_selection(extended, 0)
+    alpha_i2t = selection["alpha_image_to_text"]
+    assert set(new_val["groups"]) == {"specificity", "relation"}
+    assert new_val["image_to_text"]["alpha"] == alpha_i2t
+    assert (
+        new_val["image_to_text"]["MRR@3"]
+        == selection["alpha_sweep_image_to_text"][str(alpha_i2t)]["MRR@3"]
+    )
+
+
+def test_evaluate_test_raises_when_selection_lacks_alpha_image_to_text(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch)
+    train_and_select(config, prepare(config, log=str), seed=0, log=str)
+    extended = with_extensions(config, tmp_path)
+    # Reuse the model/selection trained without image_to_text by copying artifacts.
+    old_seed_dir = Path(config.model_dir) / "seed0"
+    new_seed_dir = Path(extended.model_dir) / "seed0"
+    new_seed_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("model.pt", "selection.json"):
+        (new_seed_dir / name).write_bytes((old_seed_dir / name).read_bytes())
+
+    with pytest.raises(ValueError, match="alpha_image_to_text"):
+        evaluate_test(extended, seed=0, log=str)

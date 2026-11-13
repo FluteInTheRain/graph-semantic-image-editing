@@ -307,6 +307,26 @@ hơn so với khi dùng đồ thị thật (0 / 0 / 0,1).
   (commit `ea7068f`). Mô hình chính huấn luyện lại trên MacBook cho kết quả val khớp tới 4 chữ số (0,1281 ± 0,0008,
   epoch 6/8/6, `alpha` 0/0/0,1), nhưng chưa đối chiếu `model_sha256` của run test cũ.
 
+### Mở rộng đánh giá NV1 (`_eval2`, ADR-0049)
+
+Bổ sung ba phần mở rộng đánh giá (không sửa `main.csv` cũ) và chạy lại 5 cấu hình (`configs/*_eval2.yaml`) dưới giao thức khóa trước tại ADR-0049:
+
+1. **nDCG@10** (nhị phân, IDCG dùng `min(#relevant, 10)`) trong `src/mmxai/eval/metrics.py`.
+2. **Chiều ảnh → văn bản** (`src/mmxai/eval/image_to_text.py`): dùng cùng công thức `fuse_scores` và chọn `alpha_image_to_text` riêng trên `val` theo `MRR@100`.
+3. **Phân nhóm truy vấn** (`src/mmxai/eval/query_groups.py`): tách theo độ cụ thể (`specific` / `generic`) và loại quan hệ (`action` / `spatial` / `none`), kiểm tra phân bố trên `val` trước khi khóa bằng `scripts/inspect_query_groups.py`.
+
+Tổng hợp 3 bảng từ các lần chạy `_eval2`:
+
+```bash
+uv run python scripts/summarize_runs.py --experiment-suffix _eval2 --output results/tables/eval2_text_to_image.csv
+uv run python scripts/summarize_runs.py --kind image_to_text --experiment-suffix _eval2 --output results/tables/eval2_image_to_text.csv
+uv run python scripts/summarize_runs.py --kind groups --experiment-suffix _eval2 --output results/tables/eval2_groups.csv
+```
+
+Kết quả chính (`results/records/20261113_cap-do-1-mo-rong/README.md`):
+- Trên toàn tập `test`, cả `text→image` và `image→text` đều cho thấy 4 biến thể có học vượt `clip_vg_eval2`, nhưng chênh lệch giữa `graph` / `cooc` / `shuffled` / `nograph` nhỏ (nhiều cặp `< std`).
+- Khi tách nhóm (`eval2_groups.csv`), khác biệt rõ nhất nằm ở nhóm **`generic`** (11,28% số truy vấn `test`): `clip_graph_vg_lr1e4_eval2` (`R@1 = 0.0424 ± 0.0080`, `MRR = 0.1082 ± 0.0040`) và `clip_cooc_graph_vg_lr1e4_eval2` (`R@1 = 0.0457 ± 0.0055`) cao hơn rõ so với `shuffled` (`0.0274 ± 0.0007`) và `nograph` (`0.0280 ± 0.0027`).
+
 ## 8. Câu hỏi hay gặp khi vấn đáp
 
 - **Vì sao chỉ một lớp?** Đơn giản, giải thích được bằng công thức, và điểm của một ảnh chỉ phụ thuộc cạnh của chính nó (ảnh test không ảnh hưởng lẫn nhau). Đổi sang hai lớp cần ADR mới.

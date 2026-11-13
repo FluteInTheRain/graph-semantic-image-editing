@@ -24,6 +24,11 @@ Output:
     results/runs/<YYYYMMDD-HHMM>_clip_vg_seed<k>/ with config.yaml, metrics.json
     (metrics, split hash, feature code hash) and env.json (commit, dirty flag, versions).
     Then build the table with scripts/summarize_runs.py.
+
+Optional extensions (config fields, spec 2026-11-13; all off = the output above):
+    ndcg_k adds nDCG@k; vg_data_dir + predicates_file add per-group metrics
+    (specificity, relation); image_to_text: true adds the image -> text block (alpha = 1).
+    A test run of the same experiment and seed is refused a second time.
 """
 
 import argparse
