@@ -59,3 +59,15 @@ def write_run_files(run_dir: Path, config: dict, metrics: dict, env: dict) -> No
         json.dump(metrics, file, indent=2)
     with open(run_dir / "env.json", "w", encoding="utf-8") as file:
         json.dump(env, file, indent=2)
+
+
+def test_run_exists(output_dir: str | Path, experiment: str, seed: int) -> bool:
+    """True if output_dir already holds a test run of this experiment and seed (ADR-0009)."""
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        return False
+    for metrics_file in output_dir.glob(f"*_{experiment}_seed{seed}/metrics.json"):
+        with open(metrics_file, encoding="utf-8") as file:
+            if json.load(file)["split"] == "test":
+                return True
+    return False

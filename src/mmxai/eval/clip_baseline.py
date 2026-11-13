@@ -26,10 +26,23 @@ import faiss
 import numpy as np
 
 from mmxai.data.splits import load_split
+from mmxai.eval.extended import (
+    image_to_text_report,
+    query_groupings,
+    text_to_image_report,
+)
+from mmxai.eval.image_to_text import retrieve_text_candidates
 from mmxai.eval.metrics import compute_metrics, first_relevant_rank
+from mmxai.eval.query_groups import Predicates, load_predicates
 from mmxai.features.cache import load_image_features, load_meta, load_text_features
 from mmxai.rerank.fusion import retrieve_candidates
-from mmxai.utils.runs import collect_env, file_sha256, make_run_dir, write_run_files
+from mmxai.utils.runs import (
+    collect_env,
+    file_sha256,
+    make_run_dir,
+    test_run_exists,
+    write_run_files,
+)
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 # Decision (ADR-0009): never evaluate on "train".
@@ -51,6 +64,15 @@ class ClipEvalConfig:
     recall_ks: list[int]
     same_text_threshold: float
     output_dir: str
+    # Optional extensions (spec 2026-11-13). All None = the original evaluation, unchanged.
+    # Plain None defaults, not default_factory: load_yaml_dataclass treats those as required.
+    ndcg_k: int | None = None
+    image_to_text: bool | None = None
+    vg_data_dir: str | None = None
+    predicates_file: str | None = None
+    extra_action_predicates: list[str] | None = None
+    extra_spatial_predicates: list[str] | None = None
+    excluded_predicates: list[str] | None = None
 
 
 def load_clip_eval_config(path: str | Path) -> ClipEvalConfig:
@@ -70,8 +92,16 @@ def evaluate_clip(
     top_k: int,
     recall_ks: list[int],
     same_text_threshold: float,
+    ndcg_k: int | None = None,
+    image_to_text: bool = False,
+    group_inputs: tuple[np.ndarray, str, Predicates] | None = None,
 ) -> dict:
-    """Return the metrics of plain CLIP on the images listed in eval_image_ids."""
+    """Return the metrics of plain CLIP on the images listed in eval_image_ids.
+
+    ndcg_k, image_to_text and group_inputs switch on the extended report. group_inputs is
+    (query text ids, Visual Genome folder, predicates). With all three off the result is
+    the original one.
+    """
     # The same function CLIP + Graph uses, so both re-rank the same candidates.
     candidates = retrieve_candidates(
         image_embeddings,
@@ -83,16 +113,50 @@ def evaluate_clip(
         same_text_threshold,
     )
 
-    ranks = []
-    for query in range(len(candidates.candidate_ids)):
-        retrieved = candidates.candidate_ids[query].tolist()
-        ranks.append(first_relevant_rank(retrieved, candidates.relevant[query]))
-
-    metrics = compute_metrics(ranks, recall_ks, top_k)
+    if ndcg_k is None:
+        ranks = []
+        for query in range(len(candidates.candidate_ids)):
+            retrieved = candidates.candidate_ids[query].tolist()
+            ranks.append(first_relevant_rank(retrieved, candidates.relevant[query]))
+        metrics = compute_metrics(ranks, recall_ks, top_k)
+    else:
+        groupings = None
+        if group_inputs is not None:
+            query_text_ids, vg_data_dir, predicates = group_inputs
+            groupings = query_groupings(candidates, query_text_ids, vg_data_dir, predicates)
+        # Plain CLIP: the final score is the CLIP score itself.
+        metrics = text_to_image_report(
+            candidates, candidates.clip_scores, groupings, recall_ks, top_k, ndcg_k
+        )
     metrics["num_images"] = int(np.isin(image_ids, eval_image_ids).sum())
     several = sum(1 for images in candidates.relevant if len(images) > 1)
     metrics["fraction_queries_with_several_relevant"] = several / len(candidates.relevant)
+
+    if image_to_text:
+        text_candidates = retrieve_text_candidates(
+            image_embeddings,
+            image_ids,
+            text_embeddings,
+            text_image_ids,
+            eval_image_ids,
+            top_k,
+            same_text_threshold,
+        )
+        metrics["image_to_text"] = image_to_text_report(
+            text_candidates, text_candidates.clip_scores, recall_ks, top_k, ndcg_k
+        )
+        # alpha = 1 means the pair score is CLIP only.
+        metrics["image_to_text"]["alpha"] = 1.0
     return metrics
+
+
+def check_extension_settings(config: ClipEvalConfig) -> None:
+    """Reject settings that ask for a report part whose inputs are missing."""
+    wants_groups = config.vg_data_dir is not None or config.predicates_file is not None
+    if wants_groups and (config.vg_data_dir is None or config.predicates_file is None):
+        raise ValueError("groups need both vg_data_dir and predicates_file")
+    if (wants_groups or config.image_to_text) and config.ndcg_k is None:
+        raise ValueError("groups and image_to_text need ndcg_k")
 
 
 def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
@@ -108,6 +172,13 @@ def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
       Why: every number must name exactly the data it came from.
       Decided by: FluteInTheRain, ADR-0009 and ADR-0010.
     """
+    # Decision (ADR-0009): refuse a second test run of the same experiment and seed.
+    #   Why: test runs once with the locked config; a repeat means test could steer choices.
+    #   Decided by: FluteInTheRain, ADR-0009; this check proposed by Claude Code, 2026-11-13.
+    if config.eval_split == "test" and test_run_exists(config.output_dir, config.experiment, seed):
+        raise FileExistsError(f"test of {config.experiment} seed {seed} was already run")
+    check_extension_settings(config)
+
     meta = load_meta(config.features_dir)
     if meta["dataset"] != config.dataset or meta["is_partial"]:
         raise ValueError(f"{config.features_dir} is not a complete {config.dataset} feature set")
@@ -115,6 +186,18 @@ def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
     image_embeddings, image_ids = load_image_features(config.features_dir)
     texts = load_text_features(config.features_dir)
     split = load_split(config.split_file)
+
+    group_inputs = None
+    if config.vg_data_dir is not None:
+        predicates = load_predicates(
+            config.predicates_file,
+            config.extra_action_predicates,
+            config.extra_spatial_predicates,
+            config.excluded_predicates,
+        )
+        # The same mask retrieve_candidates uses, so ids line up with the queries.
+        query_rows = np.isin(texts["image_ids"], split[config.eval_split])
+        group_inputs = (texts["text_ids"][query_rows], config.vg_data_dir, predicates)
 
     metrics = evaluate_clip(
         image_embeddings,
@@ -125,6 +208,9 @@ def run_clip_evaluation(config: ClipEvalConfig, seed: int) -> Path:
         config.top_k,
         config.recall_ks,
         config.same_text_threshold,
+        config.ndcg_k,
+        bool(config.image_to_text),
+        group_inputs,
     )
     metrics["split"] = config.eval_split
     metrics["split_file"] = config.split_file

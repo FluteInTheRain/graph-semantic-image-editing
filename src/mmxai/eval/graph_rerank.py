@@ -47,7 +47,13 @@ from mmxai.rerank.fusion import (
     retrieve_candidates,
     sweep_alpha,
 )
-from mmxai.utils.runs import collect_env, file_sha256, make_run_dir, write_run_files
+from mmxai.utils.runs import (
+    collect_env,
+    file_sha256,
+    make_run_dir,
+    test_run_exists,
+    write_run_files,
+)
 from mmxai.utils.seed import set_seed
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
@@ -379,14 +385,7 @@ def write_run(config: GraphRerankConfig, metrics: dict, seed: int) -> Path:
 
 def has_test_run(config: GraphRerankConfig, seed: int) -> bool:
     """True if results/runs already holds a test run of this experiment and seed."""
-    output_dir = Path(config.output_dir)
-    if not output_dir.exists():
-        return False
-    for metrics_file in output_dir.glob(f"*_{config.experiment}_seed{seed}/metrics.json"):
-        with open(metrics_file, encoding="utf-8") as file:
-            if json.load(file)["split"] == "test":
-                return True
-    return False
+    return test_run_exists(config.output_dir, config.experiment, seed)
 
 
 def evaluate_test(config: GraphRerankConfig, seed: int, log=print) -> Path:

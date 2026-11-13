@@ -158,3 +158,116 @@ def test_run_writes_traceable_files(tmp_path):
     assert len(metrics["split_sha256"]) == 64
     assert (run_dir / "config.yaml").exists()
     assert "git_commit" in json.loads((run_dir / "env.json").read_text(encoding="utf-8"))
+
+
+def write_features_and_split(tmp_path):
+    """Save tiny features (6 images, 2 texts each) and a split; return their paths."""
+    images, image_ids, texts, text_image_ids = make_data()
+    features_dir = tmp_path / "features"
+    save_features(
+        features_dir,
+        image_embeddings=images,
+        image_ids=image_ids,
+        text_embeddings=texts,
+        text_image_ids=text_image_ids,
+        text_id_name="text_ids",
+        text_id_values=np.arange(100, 112),
+        meta={"dataset": "visual_genome", "is_partial": False, "code_hash": "abc"},
+    )
+    split_file = tmp_path / "split_seed0.json"
+    save_split(
+        {
+            "dataset": "visual_genome",
+            "seed": 0,
+            "train": ["1", "2"],
+            "val": ["3", "4"],
+            "test": ["5", "6"],
+        },
+        split_file,
+    )
+    return features_dir, split_file
+
+
+def make_config(tmp_path, eval_split="val", **extra):
+    features_dir, split_file = write_features_and_split(tmp_path)
+    return ClipEvalConfig(
+        experiment="clip_vg",
+        dataset="visual_genome",
+        split_file=str(split_file),
+        features_dir=str(features_dir),
+        eval_split=eval_split,
+        top_k=2,
+        recall_ks=[1],
+        same_text_threshold=0.9999,
+        output_dir=str(tmp_path / "runs"),
+        **extra,
+    )
+
+
+def read_metrics(run_dir):
+    return json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
+
+
+def test_old_clip_config_writes_the_same_metrics_keys_as_before(tmp_path):
+    run_dir = run_clip_evaluation(make_config(tmp_path), seed=0)
+
+    assert set(read_metrics(run_dir)) == {
+        "R@1",
+        "MRR@2",
+        "num_queries",
+        "num_images",
+        "fraction_queries_with_several_relevant",
+        "split",
+        "split_file",
+        "split_sha256",
+        "seed",
+        "features_code_hash",
+    }
+
+
+def test_clip_eval2_metrics_have_ndcg_groups_and_image_to_text(tmp_path):
+    predicates_file = tmp_path / "predicates.yaml"
+    predicates_file.write_text(
+        "predicate_templates:\n  holding: is holding\n"
+        "predicate_aliases:\n  holds: holding\n"
+        "action_predicates: [holding]\n",
+        encoding="utf-8",
+    )
+    # Region ids match text_id_values in write_features_and_split: text row r has id 100 + r.
+    regions = []
+    for image_id in [3, 4]:
+        first_id = 100 + 2 * (image_id - 1)
+        phrases = ["man holding cup", "red car"]
+        regions.append(
+            {
+                "image_id": image_id,
+                "regions": [
+                    {"region_id": first_id + k, "image_id": image_id, "phrase": phrase}
+                    for k, phrase in enumerate(phrases)
+                ],
+            }
+        )
+    (tmp_path / "region_descriptions.json").write_text(json.dumps(regions), encoding="utf-8")
+    config = make_config(
+        tmp_path,
+        ndcg_k=10,
+        image_to_text=True,
+        vg_data_dir=str(tmp_path),
+        predicates_file=str(predicates_file),
+    )
+
+    metrics = read_metrics(run_clip_evaluation(config, seed=0))
+
+    assert metrics["nDCG@10"] == 1.0
+    assert set(metrics["groups"]) == {"specificity", "relation"}
+    assert metrics["image_to_text"]["alpha"] == 1.0
+    assert metrics["image_to_text"]["R@1"] == 1.0
+    assert "nDCG@10" in metrics["image_to_text"]
+
+
+def test_second_clip_test_run_is_refused(tmp_path):
+    config = make_config(tmp_path, eval_split="test")
+    run_clip_evaluation(config, seed=0)
+
+    with pytest.raises(FileExistsError, match="already run"):
+        run_clip_evaluation(config, seed=0)
