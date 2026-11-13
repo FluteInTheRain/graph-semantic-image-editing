@@ -227,7 +227,47 @@ Bản đầu của ADR-0016 (2026-11-01) chọn cách hiểu **chặt hơn đề
 | `src/mmxai/explain/statistics.py` | `spearman`, `wilcoxon_greater`, `mean_and_std`, `choose_on_validation` | So sánh explainer, kiểm định, chọn explainer trên val |
 | `src/mmxai/explain/config.py`, `configs/explain_vg.yaml` | `load_explain_config` | Mọi siêu tham số của module xAI |
 
-**Còn thiếu (bị chặn bởi module Graph):** script chạy trên mô hình thật cho ≥ 10 truy vấn × 3 seed và ghi `results/runs/` (ADR-0010), bảng tổng hợp, phân tích 5 thành công + 5 thất bại. Attention của GAT chỉ thêm nếu nhóm Graph chọn GAT.
+| `src/mmxai/explain/sage_scoring.py` | `image_scorer`, `candidate_scores` | Hàm điểm của một ảnh trên mô hình đã chốt (`ConceptToImageSage`, ADR-0046), chỉ dùng các cạnh của ảnh đó; bản có trọng số cạnh cho IG/GNNExplainer (mục 7c) |
+| `src/mmxai/explain/evaluation.py`, `scripts/evaluate_explanations.py` | `evaluate_split`, `summarize`, `pick_query_rows` | Chạy cả quy trình cấp độ 3 trên mô hình `clip_graph_vg_lr1e4` (mục 7d) |
+
+**Đã nối với mô hình thật (2026-11-14).** Giải thích cấp độ 3 chạy trên **chính mô hình đã báo cáo** trong `results/tables/main.csv` (`clip_graph_vg_lr1e4`, 3 seed, `alpha` đã chọn trên val). Code đã có test trên dữ liệu tổng hợp nhỏ (`tests/test_explain_sage_scoring.py`, `tests/test_explain_evaluation.py`), **chưa chạy trên dữ liệu thật** (máy chạy cần checkpoint trong `artifacts/models/`). Attention của GAT không áp dụng vì mô hình là GraphSAGE.
+
+## 7c. Trọng số cạnh cho Integrated Gradients và GNNExplainer
+
+**Vấn đề.** IG và GNNExplainer cần "giữ một phần" cạnh (trọng số giữa 0 và 1). Mô hình đã chốt lấy **trung bình** vector khái niệm của ảnh. Phép trung bình không có trọng số, nên nhóm phải chọn cách mở rộng:
+
+| Cách | Công thức phần trung bình | Vấn đề |
+|---|---|---|
+| Trung bình có trọng số thường | `Σ w·x / Σ w` | Nhân mọi `w` cùng một số thì kết quả không đổi. Trên đường đi của IG (mọi `w = t`), điểm hằng số rồi nhảy ở `t = 0`, gradient tiến tới vô cùng: IG hỏng |
+| Chia cho bậc gốc | `Σ w·x / bậc` | Khi xoá hẳn cạnh (`w = 0`), mô hình thật chia cho bậc **mới**. Không khớp với xoá cạnh thật |
+| **Chọn:** chặn dưới mẫu số | `Σ w·x / max(Σ w, 1)` | Với `w` bằng 0 hoặc 1, kết quả **đúng bằng** mô hình thật (trung bình các cạnh còn lại; 0 nếu không còn cạnh nào, như PyG). Giữa 0 và 1 thì liên tục, gradient hữu hạn |
+
+- Phần nằm giữa 0 và 1 là **lựa chọn của nhóm**: không có cách "đúng duy nhất" để giữ nửa cạnh. Mọi số liệu fidelity vẫn đo bằng **xoá cạnh thật** (0/1), nên lựa chọn này chỉ ảnh hưởng **thứ tự** cạnh mà IG/GNNExplainer đưa ra, không ảnh hưởng con số đo.
+- `checks.check_gradient_function` kiểm trước mỗi giải thích rằng trọng số 0/1 cho đúng điểm của xoá cạnh thật.
+- Code: `score_and_gradient` trong `src/mmxai/explain/sage_scoring.py`. Trạng thái: Claude Code đề xuất 2026-11-14, **nhóm chưa duyệt**.
+
+## 7d. Quy trình chạy cấp độ 3
+
+```
+configs/explain_vg.yaml (eval_split: val)
+ → với mỗi seed 0, 1, 2: nạp trọng số + alpha đã lưu, xếp hạng lại split
+     (val: dừng nếu MRR không khớp số lúc train)
+ → num_queries = 20 truy vấn, bốc ngẫu nhiên MỘT lần (query_sample_seed = 0), giống nhau cho mọi seed
+ → giải thích ảnh đứng hạng 1 bằng Occlusion, IG, GNNExplainer; lấy top m với m ∈ {3, 5, 10}
+ → fidelity.evaluate_explanation: Fid+/Fid−, tụt hạng, robust Fid, đối chứng ngẫu nhiên, sparsity, validity
+ → summary.md: mean ± std qua 3 seed; Wilcoxon (giải thích > ngẫu nhiên) trên 20 truy vấn; đề xuất (explainer, m)
+nhóm ghi main_explainer, top_m vào config (commit)  →  eval_split: test, chạy MỘT lần
+```
+
+| Điểm | Quyết định | Vì sao |
+|---|---|---|
+| Truy vấn nào | Bốc ngẫu nhiên, không nhìn thứ hạng | Không chọn truy vấn để giải thích trông đẹp |
+| Ảnh nào | Ảnh hạng 1 theo CLIP + Graph | Đó là ảnh hệ thống đưa ra cho người dùng |
+| Bỏ `m` phủ hết cạnh | `m ≥ số cạnh của ảnh` thì bỏ qua | Giữ mọi cạnh thì Fid− = 0, characterization = 1 hiển nhiên: bước chọn trên val sẽ luôn chọn `m` lớn nhất |
+| Thứ hạng | Cùng cách sắp xếp ổn định của pipeline (hoà thì theo thứ tự CLIP) | Tụt hạng phải là tụt hạng thật trong kết quả |
+| Test | Chỉ chạy explainer và `m` đã chốt; script từ chối lần chạy test thứ hai | ADR-0009 |
+
+**Câu hỏi mở:** chọn (explainer, `m`) chung bằng characterization vẫn có xu hướng ưu tiên `m` lớn (giữ nhiều cạnh thì Fid− nhỏ). Nhóm cần quyết định trước khi chạy val: giữ quy tắc này, cố định `m` trước rồi chỉ chọn explainer, hay chọn explainer ở từng `m`.
 
 ## 8. Câu hỏi còn mở (phía xAI)
 
