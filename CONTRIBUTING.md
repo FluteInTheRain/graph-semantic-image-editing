@@ -15,23 +15,10 @@ Tài liệu này dành cho thành viên mới vào repo. Đọc theo thứ tự 
 
 ## 1. Cài môi trường
 
-**uv** là công cụ quản lý môi trường của repo (ADR-0002): tự tải Python 3.11 theo `.python-version`, tạo `.venv`, cài đúng phiên bản thư viện ghi trong `uv.lock`. Không cần cài Python tay, không cần `activate`: mọi lệnh chạy qua `uv run`.
-
-### 1.1. Cài uv (một lần trên mỗi máy)
-
-| Máy | Lệnh |
-|---|---|
-| macOS | `brew install uv` |
-| Linux / macOS (không có brew) | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| Windows (PowerShell) | `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 \| iex"` |
-
-Kiểm tra: `uv --version`. Chi tiết: https://docs.astral.sh/uv/getting-started/installation/
-
-### 1.2. Môi trường nhẹ (viết code, tài liệu, chạy test)
+Cần: `git` và `uv` (macOS: `brew install uv`). Không cần cài Python tay: uv tự tải Python 3.11 theo `.python-version`.
 
 ```bash
-git clone https://github.com/FluteInTheRain/graph-semantic-image-editing.git
-cd graph-semantic-image-editing
+git clone <url-repo> && cd project_graph_ml
 uv sync                                   # gói nhẹ + công cụ dev (vài giây)
 uv run pytest                             # phải xanh
 uv run pre-commit install                 # bật hook: ruff, nbstripout, chặn file lớn
@@ -39,51 +26,16 @@ git config user.name  "Tên Thật"          # khớp tài khoản GitHub (commi
 git config user.email "email@github"
 ```
 
-### 1.3. Thư viện ML (chạy pipeline thật)
+Cài thêm khi cần chạy pipeline thật (ADR-0006):
 
-Thư viện nặng được tách thành **nhóm** (dependency group, ADR-0006), chỉ cài khi cần:
+| Việc | Lệnh |
+|---|---|
+| Trích đặc trưng CLIP, FAISS | `uv sync --group ml` |
+| Đồ thị + GNN | `uv sync --group ml --group graph` |
+| Notebook / UI demo | `uv sync --group ml --group graph --group demo` |
+| Tất cả | `uv sync --all-groups` |
 
-| Nhóm | Gói chính | Cần cho |
-|---|---|---|
-| `ml` | `torch`, `open-clip-torch`, `faiss-cpu` | Trích đặc trưng CLIP, FAISS, mọi bước pipeline |
-| `graph` | `torch-geometric`, `networkx` | Đồ thị + GNN (`scripts/setup.py`, `train.py`, `run_pipeline.py`) |
-| `tracking` | `wandb` | Log huấn luyện lên Weights & Biases (tuỳ chọn, ADR-0047) |
-| `demo` | `jupyterlab`, `matplotlib`, `gradio` | Notebook, UI demo |
-
-Hai cách dùng, chọn một:
-
-```bash
-# Cách 1 (khuyên dùng): để uv run tự cài nhóm cần cho lệnh đó
-uv run --group ml --group graph python scripts/setup.py
-
-# Cách 2: cài trước rồi chạy
-uv sync --group ml --group graph
-uv run python scripts/setup.py
-```
-
-Lưu ý:
-
-- **`uv sync` cài đúng những nhóm được liệt kê và gỡ các nhóm còn lại.** Ví dụ đã cài `ml` + `graph` mà chạy `uv sync --group ml` thì `torch-geometric` bị gỡ. Luôn liệt kê đủ nhóm, hoặc dùng `uv sync --all-groups`. Cách 1 (`uv run --group ...`) **không** gỡ gói nào, nên an toàn hơn.
-- **Lần đầu cài `ml` rất lâu**: trên Linux, `torch` kèm thư viện CUDA của NVIDIA, tải vài GB (đo ngày 2026-11-10: hơn 15 phút, cache uv khoảng 5,5 GB). Trong lúc cài, `.venv` bị dựng lại nên `ruff` / `pytest` tạm thời không chạy được; chờ cài xong.
-- **Không có GPU vẫn chạy được** toàn bộ pipeline trên CPU (xem `docs/guides/chay-pipeline.md` mục 4 cho thời gian).
-- **Google Colab / Kaggle:** torch có sẵn, chỉ chạy `pip install -e .` và cài gói còn thiếu; không cài lại torch.
-
-### 1.4. W&B (chỉ khi muốn xem log huấn luyện trên cloud)
-
-```bash
-uv run --group tracking wandb login       # dán API key từ https://wandb.ai/authorize; lưu ở ~/.netrc
-```
-
-Hoặc đặt biến môi trường `WANDB_API_KEY`. **Không** ghi key vào repo. `WANDB_ENTITY` chọn team; `WANDB_MODE=disabled` tắt log.
-
-### 1.5. Lỗi thường gặp khi cài
-
-| Lỗi | Nguyên nhân | Cách sửa |
-|---|---|---|
-| `invalid peer certificate: UnknownIssuer` | Mạng công ty / proxy có chứng chỉ riêng; uv mặc định không dùng chứng chỉ của hệ điều hành | Thêm `UV_NATIVE_TLS=1` trước lệnh: `UV_NATIVE_TLS=1 uv sync --group ml --group graph` |
-| `No module named 'torch'` (hoặc `faiss`, `torch_geometric`) | Chưa cài nhóm, hoặc lần `uv sync` sau đã gỡ nhóm đó | Chạy lại với đủ nhóm: `uv sync --group ml --group graph` |
-| `401 Unauthorized` từ Hugging Face khi tải CLIP | Token HF trên máy hỏng / hết hạn | `HF_HUB_DISABLE_IMPLICIT_TOKEN=1` trước lệnh (model CLIP công khai) |
-| Test bị `SKIPPED ... could not import 'torch'` | Bình thường khi chỉ có môi trường nhẹ | Cài nhóm `ml` + `graph` nếu cần chạy các test đó |
+Google Colab: torch có sẵn, chỉ chạy `pip install -e .` và cài gói còn thiếu; không cài lại torch.
 
 ## 2. Repo có gì
 

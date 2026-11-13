@@ -576,11 +576,10 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 | [`Project03_Multimodal_XAI.pdf`](Project03_Multimodal_XAI.pdf) | Đề bài gốc – nguồn sự thật |
 | [`docs/decisions/`](docs/decisions/) | Các ADR (Architecture Decision Record – ghi chép quyết định thiết kế): bố cục repo, lựa chọn dữ liệu/mô hình và lý do |
 | [`CLAUDE.md`](CLAUDE.md) | Cấu hình và quy ước cho trợ lý AI (Claude Code) khi làm việc trong repo |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | **Cài môi trường** (uv, các nhóm thư viện `ml` / `graph` / `tracking`, lỗi proxy) ở mục 1; quy trình branch, commit, review |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Hướng dẫn đóng góp: quy trình branch, commit, review |
 | [`docs/guides/chuan-bi-embedding-clip.md`](docs/guides/chuan-bi-embedding-clip.md) | Tải dữ liệu, dùng hoặc tạo lại embedding CLIP (Visual Genome, Flickr30k) |
 | [`docs/query_benchmark.md`](docs/query_benchmark.md) | Sinh và kiểm tra bộ truy vấn trực tiếp/gián tiếp từ scene graph Visual Genome (ADR-0044) |
 | [`docs/guides/xay-do-thi.md`](docs/guides/xay-do-thi.md) | Dựng đồ thị ảnh – khái niệm (cạnh `contains`) cho Visual Genome, cách dùng trong GNN, các điều bắt buộc chống rò rỉ (ADR-0045) |
-| [`docs/guides/chay-pipeline.md`](docs/guides/chay-pipeline.md) | **Chạy toàn bộ pipeline** (CLIP thuần và CLIP + Graph) kèm giải thích: `scripts/setup.py` + `scripts/train.py` (một lần) và `scripts/run_pipeline.py` (nhiều lần) |
 | [`docs/guides/huan-luyen-va-xep-hang-lai.md`](docs/guides/huan-luyen-va-xep-hang-lai.md) | Huấn luyện GraphSAGE, kết hợp điểm, chọn `alpha` trên val, chạy test một lần, so CLIP với CLIP + Graph (ADR-0046, ADR-0047) |
 
 💡 Nhắc lại theo PDF §9: dùng công cụ AI phải **khai báo trong báo cáo**.

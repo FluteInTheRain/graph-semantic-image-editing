@@ -46,4 +46,3 @@ Thumbs.db
 # --- Claude Code: personal, never commit (see docs/decisions/0020, 0021) ---
 .claude/settings.local.json
 CLAUDE.local.md
-wandb/

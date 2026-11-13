@@ -44,10 +44,6 @@ demo = [
     "matplotlib>=3.9",
     "gradio>=5.0",
 ]
-# Optional training logs on Weights & Biases (ADR-0047): `--group tracking`
-tracking = [
-    "wandb>=0.19",
-]
 
 [build-system]
 requires = ["hatchling>=1.25"]
