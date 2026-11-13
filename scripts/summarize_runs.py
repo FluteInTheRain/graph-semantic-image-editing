@@ -22,6 +22,7 @@ Output:
 import argparse
 
 from mmxai.eval.summary import (
+    MIN_SEEDS,
     load_run_records,
     summarize_groups,
     summarize_image_to_text,
@@ -49,15 +50,14 @@ def main() -> None:
     args = parser.parse_args()
 
     records = load_run_records(args.runs_dir)
-    skipped = []
     if args.kind == "main":
         rows, skipped = summarize_runs(records, args.split, args.experiment_suffix)
     elif args.kind == "groups":
-        rows = summarize_groups(records, args.split, args.experiment_suffix)
+        rows, skipped = summarize_groups(records, args.split, args.experiment_suffix)
     else:
-        rows = summarize_image_to_text(records, args.split, args.experiment_suffix)
+        rows, skipped = summarize_image_to_text(records, args.split, args.experiment_suffix)
     for experiment in skipped:
-        print(f"skipped {experiment}: fewer than 3 seeds with committed code")
+        print(f"skipped {experiment}: fewer than {MIN_SEEDS} seeds with committed code")
     write_table(rows, args.output)
     print(f"saved {args.output}: {len(rows)} rows")
 

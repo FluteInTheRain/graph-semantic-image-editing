@@ -127,26 +127,60 @@ def summarize_runs(
     return rows, skipped
 
 
+def _seed_of(run: dict) -> int:
+    return run["metrics"]["seed"]
+
+
+def _require_same_keys(experiment: str, runs: list[dict], key_sets: list[set], what: str) -> None:
+    """Raise if some seed has different keys than the first run, in either direction.
+
+    Why: averaging over fewer seeds for one key would silently weaken the table.
+    """
+    for run, keys in zip(runs, key_sets, strict=True):
+        if keys != key_sets[0]:
+            missing = sorted(map(str, key_sets[0] - keys))
+            extra = sorted(map(str, keys - key_sets[0]))
+            raise ValueError(
+                f"{experiment}: {what} differ between seeds; seed {_seed_of(run)} "
+                f"(run {run['run']}) is missing {missing} and has extra {extra} "
+                f"compared with seed {_seed_of(runs[0])}"
+            )
+
+
 def summarize_groups(
     records: list[dict], split: str, experiment_suffix: str | None = None
-) -> list[dict]:
-    """One row per experiment, grouping and group: mean and std over seeds of each metric."""
-    experiments, _ = _eligible_experiments(records, split, experiment_suffix)
+) -> tuple[list[dict], list[str]]:
+    """Return (one row per experiment, grouping and group, skipped experiments).
+
+    Each row has the mean and std over seeds of every metric of that group.
+    """
+    experiments, skipped = _eligible_experiments(records, split, experiment_suffix)
 
     rows = []
     for experiment, runs in experiments.items():
+        for run in runs:
+            if "groups" not in run["metrics"]:
+                raise ValueError(
+                    f"{experiment}: seed {_seed_of(run)} (run {run['run']}) has no 'groups' "
+                    "in metrics.json; use --experiment-suffix to keep only _eval2 experiments"
+                )
+        group_keys = []
+        for run in runs:
+            keys = set()
+            for grouping, groups in run["metrics"]["groups"].items():
+                for group in groups:
+                    keys.add((grouping, group))
+            group_keys.append(keys)
+        _require_same_keys(experiment, runs, group_keys, "groups")
+
         first_groups = runs[0]["metrics"]["groups"]
         for grouping in first_groups:
             for group in first_groups[grouping]:
-                # Every seed must have this group, else the mean would use fewer seeds.
-                per_seed = []
-                for run in runs:
-                    run_groups = run["metrics"].get("groups", {})
-                    if group not in run_groups.get(grouping, {}):
-                        raise ValueError(
-                            f"{experiment}: group {grouping}/{group} is missing in run {run['run']}"
-                        )
-                    per_seed.append(run_groups[grouping][group])
+                per_seed = [run["metrics"]["groups"][grouping][group] for run in runs]
+                metric_keys = [
+                    set(metric_names(m)) | {"num_queries", "fraction_queries"} for m in per_seed
+                ]
+                _require_same_keys(experiment, runs, metric_keys, f"metrics of {grouping}/{group}")
 
                 row = {"experiment": experiment, "grouping": grouping, "group": group}
                 row["num_queries_mean"] = statistics.mean(m["num_queries"] for m in per_seed)
@@ -156,33 +190,50 @@ def summarize_groups(
                 for name in metric_names(per_seed[0]):
                     _mean_and_std(row, name, [m[name] for m in per_seed])
                 rows.append(row)
-    return rows
+    return rows, skipped
 
 
 def summarize_image_to_text(
     records: list[dict], split: str, experiment_suffix: str | None = None
-) -> list[dict]:
-    """One row per experiment: image-to-text metrics (mean, std) and the alpha of each seed."""
-    experiments, _ = _eligible_experiments(records, split, experiment_suffix)
+) -> tuple[list[dict], list[str]]:
+    """Return (one row per experiment with image-to-text metrics and alphas, skipped).
+
+    The row has mean and std of each metric and the alpha of each seed.
+    """
+    experiments, skipped = _eligible_experiments(records, split, experiment_suffix)
 
     rows = []
     for experiment, runs in experiments.items():
+        # Order by seed so the alphas line up with the "seeds" column.
+        runs = sorted(runs, key=_seed_of)
+        blocks = []
         for run in runs:
             if "image_to_text" not in run["metrics"]:
-                raise ValueError(f"{experiment}: run {run['run']} has no image_to_text metrics")
-        # Order by seed so the alphas line up with the "seeds" column.
-        runs = sorted(runs, key=lambda run: run["metrics"]["seed"])
+                raise ValueError(
+                    f"{experiment}: seed {_seed_of(run)} (run {run['run']}) has no "
+                    "'image_to_text' in metrics.json"
+                )
+            block = run["metrics"]["image_to_text"]
+            if "alpha" not in block:
+                raise ValueError(
+                    f"{experiment}: seed {_seed_of(run)} (run {run['run']}) has no "
+                    "'alpha' in image_to_text"
+                )
+            blocks.append(block)
+        metric_keys = [set(metric_names(block)) for block in blocks]
+        _require_same_keys(experiment, runs, metric_keys, "image_to_text metrics")
+
         row = {
             "experiment": experiment,
             "split": split,
             "num_seeds": len(runs),
-            "seeds": " ".join(str(run["metrics"]["seed"]) for run in runs),
-            "alphas": " ".join(str(run["metrics"]["image_to_text"]["alpha"]) for run in runs),
+            "seeds": " ".join(str(_seed_of(run)) for run in runs),
+            "alphas": " ".join(str(block["alpha"]) for block in blocks),
         }
-        for name in metric_names(runs[0]["metrics"]["image_to_text"]):
-            _mean_and_std(row, name, [run["metrics"]["image_to_text"][name] for run in runs])
+        for name in metric_names(blocks[0]):
+            _mean_and_std(row, name, [block[name] for block in blocks])
         rows.append(row)
-    return rows
+    return rows, skipped
 
 
 def write_table(rows: list[dict], path: str | Path) -> None:
