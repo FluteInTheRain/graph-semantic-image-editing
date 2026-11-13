@@ -1,0 +1,82 @@
+{
+  "R@1": 0.07136,
+  "R@5": 0.17912,
+  "R@10": 0.24704,
+  "MRR@100": 0.1278689852695522,
+  "num_queries": 25000,
+  "nDCG@10": 0.13791209814165215,
+  "groups": {
+    "specificity": {
+      "generic": {
+        "R@1": 0.052127659574468084,
+        "R@5": 0.20390070921985815,
+        "R@10": 0.2620567375886525,
+        "MRR@100": 0.11147642591192708,
+        "num_queries": 2820,
+        "nDCG@10": 0.055900230570499164,
+        "fraction_queries": 0.1128
+      },
+      "specific": {
+        "R@1": 0.07380522993688007,
+        "R@5": 0.17596934174932372,
+        "R@10": 0.2451307484220018,
+        "MRR@100": 0.1299531609858946,
+        "num_queries": 22180,
+        "nDCG@10": 0.14833921565971656,
+        "fraction_queries": 0.8872
+      }
+    },
+    "relation": {
+      "action": {
+        "R@1": 0.08750563824988723,
+        "R@5": 0.19576003608479928,
+        "R@10": 0.26612539467749213,
+        "MRR@100": 0.14433235794389204,
+        "num_queries": 2217,
+        "nDCG@10": 0.15946264546393354,
+        "fraction_queries": 0.08868
+      },
+      "none": {
+        "R@1": 0.06117207564791034,
+        "R@5": 0.14935014398007626,
+        "R@10": 0.21464705424546657,
+        "MRR@100": 0.11166918680324917,
+        "num_queries": 12849,
+        "nDCG@10": 0.1221345448539066,
+        "fraction_queries": 0.51396
+      },
+      "spatial": {
+        "R@1": 0.08093416549224884,
+        "R@5": 0.21391181799879203,
+        "R@10": 0.28467888061203944,
+        "MRR@100": 0.1451482195432052,
+        "num_queries": 9934,
+        "nDCG@10": 0.15350986528286864,
+        "fraction_queries": 0.39736
+      }
+    }
+  },
+  "image_to_text": {
+    "R@1": 0.153,
+    "R@5": 0.3086,
+    "R@10": 0.3954,
+    "MRR@100": 0.23252352185274025,
+    "num_queries": 5000,
+    "nDCG@10": 0.1049056336552482,
+    "alpha": 0.6
+  },
+  "split": "test",
+  "split_file": "splits/visual_genome/split_seed0.json",
+  "split_sha256": "0c65b3e5fa9fedc3c225e77806dc9832d5e2135cadba973fd3506d80a002c4ee",
+  "seed": 2,
+  "alpha": 0.0,
+  "best_epoch": 6,
+  "use_graph": true,
+  "graph_dir": "artifacts/graphs/visual_genome/contains_clip_top16_v1",
+  "concept_edges_dir": "artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1",
+  "graph_edge_source": "clip_topk",
+  "graph_git_commit": "6a76986d65a836f83fedfdd5ebe53fb3288b1279",
+  "features_code_hash": "6f1ebf3a94b9c652ac64a8c658269f752347842352ae933ebdd16c0dea3ba027",
+  "model_sha256": "0e1e44ed9ec2da3c533ca1e175f5dbbabb35836e7af14cc3c5382b693a0ab2a6",
+  "model_git_commit": "46bff84e47f17af3b567dbb28ad81f013a7caa7f"
+}

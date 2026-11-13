@@ -6,6 +6,7 @@ nearest concepts are obvious by eye.
 
 import numpy as np
 import pytest
+
 from mmxai.graph.clip_edges import clip_topk_concepts
 
 CONCEPTS = ["cat.n.01", "dog.n.01", "sofa.n.01"]

@@ -1,0 +1,19 @@
+experiment: clip_vg_eval2
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+eval_split: val
+top_k: 100
+recall_ks:
+- 1
+- 5
+- 10
+same_text_threshold: 0.9999
+output_dir: results/runs
+ndcg_k: 10
+image_to_text: true
+vg_data_dir: data/visual_genome
+predicates_file: configs/query_benchmark_vg.yaml
+extra_action_predicates: null
+extra_spatial_predicates: null
+excluded_predicates: null

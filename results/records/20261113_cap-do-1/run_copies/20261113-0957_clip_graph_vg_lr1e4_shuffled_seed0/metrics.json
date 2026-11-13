@@ -1,0 +1,21 @@
+{
+  "R@1": 0.0684,
+  "R@5": 0.17548,
+  "R@10": 0.24848,
+  "MRR@100": 0.1268141312560703,
+  "num_queries": 25000,
+  "split": "test",
+  "split_file": "splits/visual_genome/split_seed0.json",
+  "split_sha256": "0c65b3e5fa9fedc3c225e77806dc9832d5e2135cadba973fd3506d80a002c4ee",
+  "seed": 0,
+  "alpha": 0.1,
+  "best_epoch": 7,
+  "use_graph": true,
+  "graph_dir": "artifacts/graphs/visual_genome/contains_clip_top16_shuffled_seed0",
+  "concept_edges_dir": null,
+  "graph_edge_source": "clip_topk_shuffled",
+  "graph_git_commit": "ea7068f8ff40c1836ad80d8dc27c3b6e64ee8ca9",
+  "features_code_hash": "6f1ebf3a94b9c652ac64a8c658269f752347842352ae933ebdd16c0dea3ba027",
+  "model_sha256": "7811ab7c0b77f9d82021c281e780f3f44c389acb9bc0d5cdd39588116b54f4ab",
+  "model_git_commit": "ea7068f8ff40c1836ad80d8dc27c3b6e64ee8ca9"
+}

@@ -1,0 +1,11 @@
+# Degree-preserving edge shuffle of the main graph (ADR-0046 section 6 ablation).
+# Every image keeps its number of contains edges and every concept keeps its number of
+# edges inside each split; only WHICH image links to WHICH concept becomes random.
+# Edges never cross splits. Used by configs/clip_graph_vg_lr1e4_shuffled.yaml.
+# How to run: see the docstring of scripts/shuffle_graph.py.
+# The graph built by configs/graph_vg_clip_topk.yaml (main model).
+graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Proposed by Claude Code, 2026-11-13; not yet decided by the team.
+#   Fixed before any result is seen; one shuffled graph, trained with the usual 3 seeds.
+shuffle_seed: 0
+output_dir: artifacts/graphs/visual_genome/contains_clip_top16_shuffled_seed0
