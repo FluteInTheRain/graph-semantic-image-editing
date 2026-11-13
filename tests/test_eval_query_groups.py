@@ -1,0 +1,83 @@
+import pytest
+
+from mmxai.eval.query_groups import (
+    load_predicates,
+    metrics_by_group,
+    relation_group,
+    relation_groups,
+    specificity_groups,
+)
+
+PREDICATE_YAML = """
+predicate_templates:
+  holding: is holding
+  "on": is on
+  in: is in
+  next to: is next to
+predicate_aliases:
+  holds: holding
+action_predicates: [holding]
+"""
+
+
+@pytest.fixture
+def predicates(tmp_path):
+    path = tmp_path / "predicates.yaml"
+    path.write_text(PREDICATE_YAML, encoding="utf-8")
+    return load_predicates(path, None, None, None)
+
+
+def test_specificity_splits_on_the_number_of_relevant_images():
+    assert specificity_groups([{1}, {1, 2}, {3}]) == ["specific", "generic", "specific"]
+
+
+def test_action_wins_over_spatial(predicates):
+    assert relation_group("man holding umbrella on street", predicates) == "action"
+
+
+def test_multiword_predicate_matches_only_as_consecutive_words(predicates):
+    assert relation_group("cat next to dog", predicates) == "spatial"
+    assert relation_group("next dog to", predicates) == "none"
+
+
+def test_predicate_does_not_match_inside_a_word(predicates):
+    assert relation_group("onion", predicates) == "none"
+
+
+def test_alias_joins_its_canonical_group(predicates):
+    assert relation_group("man holds cup", predicates) == "action"
+
+
+def test_excluded_predicate_is_not_a_relation(tmp_path):
+    path = tmp_path / "predicates.yaml"
+    path.write_text(PREDICATE_YAML, encoding="utf-8")
+    predicates = load_predicates(path, None, None, ["in"])
+    assert relation_group("man in shirt", predicates) == "none"
+
+
+def test_extra_predicates_are_added_to_their_group(tmp_path):
+    path = tmp_path / "predicates.yaml"
+    path.write_text(PREDICATE_YAML, encoding="utf-8")
+    predicates = load_predicates(path, ["eating"], ["behind"], None)
+    assert relation_group("cat eating fish", predicates) == "action"
+    assert relation_group("cat behind tree", predicates) == "spatial"
+
+
+def test_missing_region_text_raises_with_the_id(predicates):
+    with pytest.raises(KeyError, match="42"):
+        relation_groups([42], {1: "man holding cup"}, predicates)
+
+
+def test_relation_groups_follow_query_row_order(predicates):
+    texts = {3: "cat next to dog", 5: "man holding cup"}
+    assert relation_groups([5, 3], texts, predicates) == ["action", "spatial"]
+
+
+def test_metrics_by_group_cover_every_query_once():
+    rankings = [[1, 2], [2, 1], [3, 1], [1, 3]]
+    relevant = [{1}, {1}, {3}, {2}]
+    labels = ["a", "a", "b", "b"]
+    result = metrics_by_group(rankings, relevant, labels, [1, 2], 2, 2)
+    assert result["a"]["num_queries"] + result["b"]["num_queries"] == 4
+    assert result["a"]["fraction_queries"] + result["b"]["fraction_queries"] == pytest.approx(1.0)
+    assert result["a"]["R@1"] == 0.5
