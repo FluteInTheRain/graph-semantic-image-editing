@@ -1,0 +1,103 @@
+grouping specificity:
+  specific: 22111 queries (88.4%)
+  generic: 2889 queries (11.6%)
+grouping relation:
+  none: 13003 queries (52.0%)
+  spatial: 9878 queries (39.5%)
+  action: 2119 queries (8.5%)
+
+relation group action: 30 random sentences
+  [action] a woman riding an elephant.
+  [action] The batter is wearing a helmet.
+  [action] boy wearing white shirt
+  [action] man wearing blue jeans
+  [action] the woman playing wii
+  [action] surfer standing in front of waves
+  [action] The man sitting on the left is wearing an orange shirt
+  [action] woman wearing leather pants
+  [action] the rider of the horse is wearing white pants
+  [action] men sitting on bench
+  [action] Man wearing a black baseball cap.
+  [action] The boy is wearing a green shirt.
+  [action] cream colored canister holding utensils
+  [action] lavender cap woman is wearing
+  [action] young man standing on the beach
+  [action] Grass covering the mountain slope
+  [action] the man wearing a hat
+  [action] The shelf is hanging on the wall.
+  [action] the man is wearing helmet
+  [action] Tow men playing nintendo wii
+  [action] man wearing white shirt
+  [action] A yellow bowl sitting on a coffee table.
+  [action] Couple both wearing black coat and blue jeans
+  [action] a bird sitting on a tree
+  [action] sticks lying on the ground
+  [action] the man is wearing a red shirt.
+  [action] blow dryer hanging on wall
+  [action] man's hand and a woman's hand holding a cake server
+  [action] the man wearing shorts
+  [action] Yellow colored fruit sitting on the table
+
+relation group none: 30 random sentences
+  [none] The front legs of the giraffe
+  [none] arrow shaped kite overhead
+  [none] the bear is white
+  [none] Blue and white checkered dishcloth
+  [none] an owl staring
+  [none] The front legs of the horse
+  [none] light blue colored sky
+  [none] the nose is black and white
+  [none] a small gray elephant
+  [none] the brown carpet
+  [none] the toilet is broken
+  [none] the surfer is using his arms for balance
+  [none] this is an urban setting.
+  [none] the horns are furry
+  [none] A black baseball cap
+  [none] This is an eye lid
+  [none] a woman
+  [none] the collar is red
+  [none] tall grey building with large windows
+  [none] dirty toilet with no cover
+  [none] the mouth is closed
+  [none] cord hanging down from the table
+  [none] the wall is beige
+  [none] a yellow sign with black letters
+  [none] a sign with the price of an item
+  [none] The bread crust is toasted brown.
+  [none] large wooden desk
+  [none] part of a wheel
+  [none] the suitcase handle is white
+  [none] long grey beak of the bird
+
+relation group spatial: 30 random sentences
+  [spatial] green fire hydrant in residential area
+  [spatial] A castle on a mound
+  [spatial] white hand towel on stove
+  [spatial] a crumb of food on the plate
+  [spatial] dried brown leaves under the bench
+  [spatial] The man is putting chicken in the oven.
+  [spatial] Green leaves of a tree shining in the sun
+  [spatial] words on the side of the trailer
+  [spatial] Clock face on the building's clock tower
+  [spatial] A man is skateboarding on the sidewalk
+  [spatial] Shades in a window
+  [spatial] white clouds in blue sky
+  [spatial] black seat on bike
+  [spatial] silver spiral in notebook
+  [spatial] White bus is on the road
+  [spatial] White building behind a tree.
+  [spatial] Carrots in a bag.
+  [spatial] Fordable chair on the green grass
+  [spatial] Pepsi sign on top.
+  [spatial] caps lock button on keyboard
+  [spatial] White slice of cake on top of plate.
+  [spatial] shadow of bird cast on sand
+  [spatial] a plane in the sky
+  [spatial] A black sharpie on the wooden desk
+  [spatial] reflections in the front windshield of the car
+  [spatial] Two sheep standing next to each other.
+  [spatial] Tiles on the kitchen wall
+  [spatial] large glass door in building
+  [spatial] a person on the water
+  [spatial] glass window on train

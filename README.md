@@ -390,6 +390,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 - [x] **Ablation cơ bản**: bỏ cạnh hoặc thay bằng cạnh ngẫu nhiên, để chứng minh cải thiện đến từ cấu trúc quan hệ. → bỏ cạnh: `clip_nograph_vg`; cạnh xáo giữ bậc: `clip_graph_vg_lr1e4_shuffled`; xem `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 7, "Ablation"
 - [x] **Giải thích cơ bản**: hiển thị quan hệ/đường đi dùng khi xếp hạng cho một số truy vấn. → `scripts/explain.py` (Occlusion trên chính mô hình đã xếp hạng, ADR-0016)
 - [x] Phân tích **5 truy vấn thành công** và **5 truy vấn thất bại**. → bản nháp trên val: `reports/case_studies/5-thanh-cong-5-that-bai.md` (nhóm cần viết lại cho báo cáo)
+- [x] **Mở rộng NV1 (tùy chọn)**: nDCG@10, chiều ảnh → văn bản (`alpha_image_to_text` chọn trên val), và phân nhóm truy vấn (`specificity`, `relation`). → ADR-0049, bảng `results/tables/eval2_{text_to_image,image_to_text,groups}.csv`, hồ sơ `results/records/20261113_cap-do-1-mo-rong/`
 
 ### Cấp độ 2 – trần 8.5
 
