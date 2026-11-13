@@ -340,4 +340,4 @@ Kết quả cuối trên nhánh: `uv run pytest` → 424 passed, 1 skipped. Test
 | `bb092ff` | Tài liệu: guide, bản nháp 5 + 5, checklist README, nhật ký AI |
 | `4c77b2a` | Hồ sơ phiên này (bản đầu) |
 | `9689c79` | Sau review lần 2: chốt chặn khớp `selection.json`, phép "bỏ mọi cạnh", docstring quy tắc 6, test "test chỉ một lần". Lần chạy giải thích `1036` ở commit này |
-| (commit tài liệu kế tiếp) | Sau review lần 2: sửa hồ sơ, guide, case study; thêm `run_copies/`, `diagnostics/` |
+| `b3cd667` | Sau review lần 2: sửa hồ sơ, guide, case study; thêm `run_copies/`, `diagnostics/` |
