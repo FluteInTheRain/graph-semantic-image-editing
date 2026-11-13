@@ -42,15 +42,23 @@ def load_run_records(runs_dir: str | Path) -> list[dict]:
 
 
 def metric_names(metrics: dict) -> list[str]:
-    """The reported metrics, e.g. R@1, R@5, R@10, MRR@100."""
-    return [name for name in metrics if name.startswith("R@") or name.startswith("MRR@")]
+    """The reported metrics, e.g. R@1, R@5, R@10, MRR@100, nDCG@10."""
+    prefixes = ("R@", "MRR@", "nDCG@")
+    return [name for name in metrics if name.startswith(prefixes)]
 
 
-def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[str]]:
-    """Return (one row per experiment, experiments skipped for having too few seeds)."""
+def _eligible_experiments(
+    records: list[dict], split: str, experiment_suffix: str | None
+) -> tuple[dict[str, list[dict]], list[str]]:
+    """Group usable runs by experiment; return (experiments with enough seeds, skipped ones).
+
+    Shared by every table so they all follow the same rules (ADR-0009, -0010, -0011).
+    """
     by_experiment: dict[str, list[dict]] = {}
     for record in records:
         if record["metrics"]["split"] != split:
+            continue
+        if experiment_suffix is not None and not record["experiment"].endswith(experiment_suffix):
             continue
         # Decision (ADR-0010): skip runs made with uncommitted code.
         #   Why: they cannot be reproduced from their commit.
@@ -59,7 +67,7 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
             continue
         by_experiment.setdefault(record["experiment"], []).append(record)
 
-    rows = []
+    enough = {}
     skipped = []
     for experiment in sorted(by_experiment):
         runs = by_experiment[experiment]
@@ -80,7 +88,31 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
         split_hashes = {run["metrics"]["split_sha256"] for run in runs}
         if len(split_hashes) != 1:
             raise ValueError(f"{experiment}: runs used different split files")
+        enough[experiment] = runs
+    return enough, skipped
 
+
+def _mean_and_std(row: dict, name: str, values: list[float]) -> None:
+    """Add <name>_mean and <name>_std to the row."""
+    row[f"{name}_mean"] = statistics.mean(values)
+    # Decision (ADR-0011): sample standard deviation (ddof=1).
+    #   Why: the seeds are a small sample of possible runs.
+    #   Decided by: FluteInTheRain, ADR-0011.
+    row[f"{name}_std"] = statistics.stdev(values)
+
+
+def summarize_runs(
+    records: list[dict], split: str, experiment_suffix: str | None = None
+) -> tuple[list[dict], list[str]]:
+    """Return (one row per experiment, experiments skipped for having too few seeds).
+
+    With experiment_suffix, only experiments whose name ends with it are kept.
+    """
+    experiments, skipped = _eligible_experiments(records, split, experiment_suffix)
+
+    rows = []
+    for experiment, runs in experiments.items():
+        seeds = [run["metrics"]["seed"] for run in runs]
         row = {
             "experiment": experiment,
             "split": split,
@@ -88,16 +120,69 @@ def summarize_runs(records: list[dict], split: str) -> tuple[list[dict], list[st
             "seeds": " ".join(str(seed) for seed in sorted(seeds)),
         }
         for name in metric_names(runs[0]["metrics"]):
-            values = [run["metrics"][name] for run in runs]
-            row[f"{name}_mean"] = statistics.mean(values)
-            # Decision (ADR-0011): sample standard deviation (ddof=1).
-            #   Why: the seeds are a small sample of possible runs.
-            #   Decided by: FluteInTheRain, ADR-0011.
-            row[f"{name}_std"] = statistics.stdev(values)
-        row["split_sha256"] = split_hashes.pop()
+            _mean_and_std(row, name, [run["metrics"][name] for run in runs])
+        row["split_sha256"] = runs[0]["metrics"]["split_sha256"]
         row["git_commits"] = " ".join(sorted({run["git_commit"] for run in runs}))
         rows.append(row)
     return rows, skipped
+
+
+def summarize_groups(
+    records: list[dict], split: str, experiment_suffix: str | None = None
+) -> list[dict]:
+    """One row per experiment, grouping and group: mean and std over seeds of each metric."""
+    experiments, _ = _eligible_experiments(records, split, experiment_suffix)
+
+    rows = []
+    for experiment, runs in experiments.items():
+        first_groups = runs[0]["metrics"]["groups"]
+        for grouping in first_groups:
+            for group in first_groups[grouping]:
+                # Every seed must have this group, else the mean would use fewer seeds.
+                per_seed = []
+                for run in runs:
+                    run_groups = run["metrics"].get("groups", {})
+                    if group not in run_groups.get(grouping, {}):
+                        raise ValueError(
+                            f"{experiment}: group {grouping}/{group} is missing in run {run['run']}"
+                        )
+                    per_seed.append(run_groups[grouping][group])
+
+                row = {"experiment": experiment, "grouping": grouping, "group": group}
+                row["num_queries_mean"] = statistics.mean(m["num_queries"] for m in per_seed)
+                row["fraction_queries_mean"] = statistics.mean(
+                    m["fraction_queries"] for m in per_seed
+                )
+                for name in metric_names(per_seed[0]):
+                    _mean_and_std(row, name, [m[name] for m in per_seed])
+                rows.append(row)
+    return rows
+
+
+def summarize_image_to_text(
+    records: list[dict], split: str, experiment_suffix: str | None = None
+) -> list[dict]:
+    """One row per experiment: image-to-text metrics (mean, std) and the alpha of each seed."""
+    experiments, _ = _eligible_experiments(records, split, experiment_suffix)
+
+    rows = []
+    for experiment, runs in experiments.items():
+        for run in runs:
+            if "image_to_text" not in run["metrics"]:
+                raise ValueError(f"{experiment}: run {run['run']} has no image_to_text metrics")
+        # Order by seed so the alphas line up with the "seeds" column.
+        runs = sorted(runs, key=lambda run: run["metrics"]["seed"])
+        row = {
+            "experiment": experiment,
+            "split": split,
+            "num_seeds": len(runs),
+            "seeds": " ".join(str(run["metrics"]["seed"]) for run in runs),
+            "alphas": " ".join(str(run["metrics"]["image_to_text"]["alpha"]) for run in runs),
+        }
+        for name in metric_names(runs[0]["metrics"]["image_to_text"]):
+            _mean_and_std(row, name, [run["metrics"]["image_to_text"][name] for run in runs])
+        rows.append(row)
+    return rows
 
 
 def write_table(rows: list[dict], path: str | Path) -> None:
