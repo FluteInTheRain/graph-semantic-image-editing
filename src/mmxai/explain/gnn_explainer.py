@@ -18,7 +18,7 @@ from mmxai.explain.subgraph import relations_in_reach
 class EdgeMask:
     """GNNExplainer's mask value for one relation: how much it is kept, not a score.
 
-    Use it only to pick relations; show their effect with occlusion.measure_drops.
+    Use it only to pick relations; measure their effect by removing them (fidelity).
     """
 
     source: int
@@ -112,7 +112,7 @@ def _sigmoid(values: np.ndarray) -> np.ndarray:
 
 
 def strongest_relations(masks: list[EdgeMask], top_m: int) -> list[tuple[int, int]]:
-    """The top_m relations by mask value, ready for occlusion.measure_drops.
+    """The top_m relations by mask value, ready to be removed by fidelity.
 
     The mask only picks relations; their effect on the score must be measured by removing
     them, so the explanation shows real score changes.

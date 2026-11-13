@@ -218,9 +218,9 @@ Bản đầu của ADR-0016 (2026-11-01) chọn cách hiểu **chặt hơn đề
 | `src/mmxai/explain/intervention.py` | `mark_remaining_edges` | Xoá cạnh rồi chấm lại; dùng chung cho Occlusion, fidelity, ablation |
 | `src/mmxai/explain/subgraph.py` | `edges_reaching_node`, `relations_in_reach` | Các cạnh/quan hệ có thể làm đổi điểm của ảnh |
 | `src/mmxai/explain/checks.py` | `check_score_function`, `check_gradient_function` | Kiểm hàm được giải thích đúng là hàm đã xếp hạng |
-| `src/mmxai/explain/occlusion.py` | `occlusion`, `measure_drops` | Explainer 1: xoá từng quan hệ (cấp độ 1); đo tác động thật của các quan hệ đã chọn |
+| `src/mmxai/explain/occlusion.py` | `occlusion` | Explainer 1: xoá từng quan hệ (cấp độ 1). Không tự so với điểm đã xếp hạng: nơi gọi kiểm tra (`ranking_model.explain_candidate`, `fidelity.evaluate_explanation`) |
 | `src/mmxai/explain/integrated_gradients.py` | `integrated_gradients` | Explainer 2: IG, kèm sai lệch completeness |
-| `src/mmxai/explain/gnn_explainer.py` | `gnn_explainer`, `mask_loss`, `strongest_relations` | Explainer 3: mask học được (`EdgeMask`). Mask chỉ dùng để **chọn** quan hệ; con số hiển thị lấy từ `measure_drops`, không phải giá trị mask |
+| `src/mmxai/explain/gnn_explainer.py` | `gnn_explainer`, `mask_loss`, `strongest_relations` | Explainer 3: mask học được (`EdgeMask`). Mask chỉ dùng để **chọn** quan hệ; tác động thật đo bằng fidelity (xoá quan hệ rồi chấm lại), không phải giá trị mask |
 | `src/mmxai/explain/presentation.py` | `build_explanation`, `format_explanation` | Trình bày giải thích bằng tên (cấp độ 1) |
 | `src/mmxai/explain/fidelity.py` | `fidelity_plus/minus`, `rank_drop`, `final_scores`, `sample_relation_sets`, `robust_fidelity`, `normalized_fidelity`, `characterization`, `evaluate_explanation` | Metric cấp độ 3 cho một giải thích |
 | `src/mmxai/explain/quality.py` | `sparsity`, `validity` | Độ gọn, tính hợp lệ |

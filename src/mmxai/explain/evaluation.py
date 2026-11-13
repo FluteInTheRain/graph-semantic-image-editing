@@ -97,7 +97,9 @@ def order_relations(
     """Run one explainer on the trained model for one image."""
     common = (scorer.edge_index, scorer.image_row, config.num_layers, config.both_directions)
     if explainer == "occlusion":
-        contributions = occlusion(*common, scorer.score_image, ranked_graph_score)
+        # Occlusion does not take the ranked score; evaluate_explanation checks the same
+        # score_image against it right after, before anything is recorded.
+        contributions = occlusion(*common, scorer.score_image)
         gap = None
     elif explainer == "integrated_gradients":
         contributions, gap = integrated_gradients(

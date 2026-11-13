@@ -3,7 +3,7 @@ import pytest
 
 from mmxai.explain.gnn_explainer import gnn_explainer, mask_loss, strongest_relations
 from mmxai.explain.integrated_gradients import relation_columns
-from mmxai.explain.occlusion import measure_drops
+from mmxai.explain.intervention import mark_remaining_edges
 from toy_gnn import finite_difference_gradient
 
 # Image 0 receives edges from objects 1, 2 and 3; only the first one matters.
@@ -74,7 +74,8 @@ def test_rejects_zero_epochs():
 def test_shown_effects_come_from_removing_the_picked_relations():
     picked = strongest_relations(run(0, **SETTINGS), top_m=1)
 
-    shown = measure_drops(GRAPH, picked, False, linear_mask_score)
+    full = linear_mask_score(np.ones(GRAPH.shape[1], dtype=bool))
+    without = linear_mask_score(mark_remaining_edges(GRAPH, picked, False))
 
-    assert [(e.source, e.target) for e in shown] == [(1, 0)]
-    assert shown[0].contribution == pytest.approx(1.0)
+    assert picked == [(1, 0)]
+    assert full - without == pytest.approx(1.0)

@@ -119,12 +119,7 @@ def explain_candidate(
 
     # One direction: removing a concept -> image edge removes exactly one column (ADR-0046 §5).
     contributions = occlusion(
-        edge_index,
-        image_row,
-        model.num_layers,
-        both_directions=False,
-        score_image=score_image,
-        ranked_graph_score=float(ranking_graph_scores[column]),
+        edge_index, image_row, model.num_layers, both_directions=False, score_image=score_image
     )
 
     def remove_and_rerank(removed: list[EdgeContribution]) -> DeletionCheck:

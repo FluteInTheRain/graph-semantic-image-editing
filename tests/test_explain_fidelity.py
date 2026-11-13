@@ -271,7 +271,7 @@ def test_occlusion_explanation_beats_random_removal_on_a_toy_gcn():
         return np.array([float(toy_gcn(graph[:, remaining], features, num_layers=1)[0])])
 
     ranked = scores(np.ones(5, dtype=bool))
-    top = occlusion(graph, 0, 1, False, lambda m: float(scores(m)[0]), float(ranked[0]))[0]
+    top = occlusion(graph, 0, 1, False, lambda m: float(scores(m)[0]))[0]
 
     config = dataclasses.replace(CONFIG, num_layers=1, both_directions=False)
     report = evaluate_explanation(
