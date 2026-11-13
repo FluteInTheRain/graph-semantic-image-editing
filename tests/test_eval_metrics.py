@@ -1,11 +1,15 @@
 """Retrieval metrics checked against small examples computed by hand (ADR-0043)."""
 
+import math
+
 import pytest
 
 from mmxai.eval.metrics import (
     compute_metrics,
     first_relevant_rank,
     mean_reciprocal_rank,
+    ndcg_at_k,
+    ranked_metrics,
     recall_at_k,
 )
 
@@ -59,3 +63,33 @@ def test_compute_metrics_rejects_k_above_top_k():
     # Recall@200 cannot be measured from a list of 100 candidates.
     with pytest.raises(ValueError, match="top_k"):
         compute_metrics([1], recall_ks=[200], top_k=100)
+
+
+def test_ndcg_one_relevant_at_first_position_is_one():
+    assert ndcg_at_k([7, 3, 5], {7}, 10) == pytest.approx(1.0)
+
+
+def test_ndcg_two_relevant_at_positions_two_and_five():
+    dcg = 1 / math.log2(3) + 1 / math.log2(6)
+    idcg = 1 / math.log2(2) + 1 / math.log2(3)
+    assert ndcg_at_k([9, 1, 8, 6, 2], {1, 2}, 10) == pytest.approx(dcg / idcg)
+
+
+def test_ndcg_counts_relevant_items_outside_the_list_in_the_ideal():
+    # 12 relevant ids, one found at position 1: IDCG uses min(12, 10) = 10 terms.
+    idcg = sum(1 / math.log2(j + 1) for j in range(1, 11))
+    assert ndcg_at_k([0], set(range(12)), 10) == pytest.approx(1 / idcg)
+
+
+def test_ndcg_is_zero_without_relevant_in_the_first_k():
+    assert ndcg_at_k(list(range(20)), {15}, 10) == 0.0
+
+
+def test_ranked_metrics_match_compute_metrics_on_the_same_lists():
+    rankings = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    relevant = [{2}, {9}, {7, 8}]
+    result = ranked_metrics(rankings, relevant, [1, 2], top_k=3, ndcg_k=3)
+    expected = compute_metrics([2, None, 1], [1, 2], 3)
+    for name, value in expected.items():
+        assert result[name] == value
+    assert "nDCG@3" in result

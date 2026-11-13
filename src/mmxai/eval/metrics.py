@@ -13,8 +13,15 @@ relevant image in the top 100 adds 0.
   scored under the same cut.
   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code in ADR-0043;
   top_k = 100 taken from FluteInTheRain's template configs/clip_graph_vg.yaml).
+
+Decision (spec 2026-11-13): nDCG@10 with binary relevance (an image is relevant or not).
+  Why: Recall and MRR only look at the first relevant image; nDCG also rewards
+  putting every relevant image high in the list.
+  Decided by: FluteInTheRain, 2026-11-13 (proposed by Claude Code in the level-1
+  evaluation extensions spec).
 """
 
+import math
 from collections.abc import Sequence
 
 
@@ -59,4 +66,45 @@ def compute_metrics(ranks: Sequence[int | None], recall_ks: Sequence[int], top_k
         metrics[f"R@{k}"] = recall_at_k(ranks, k)
     metrics[f"MRR@{top_k}"] = mean_reciprocal_rank(ranks)
     metrics["num_queries"] = len(ranks)
+    return metrics
+
+
+def ndcg_at_k(retrieved_ids: Sequence[int], relevant_ids: set[int], k: int) -> float:
+    """nDCG@k with binary relevance: DCG of the list divided by the best possible DCG."""
+    dcg = 0.0
+    for position, image_id in enumerate(retrieved_ids[:k], start=1):
+        if image_id in relevant_ids:
+            dcg += 1.0 / math.log2(position + 1)
+
+    # Ideal list: relevant ids fill the first positions. Relevant ids missing from
+    # the retrieved list still count, so a poor list cannot score 1.
+    ideal_hits = min(len(relevant_ids), k)
+    idcg = 0.0
+    for position in range(1, ideal_hits + 1):
+        idcg += 1.0 / math.log2(position + 1)
+
+    if idcg == 0.0:
+        return 0.0
+    return dcg / idcg
+
+
+def ranked_metrics(
+    rankings: Sequence[Sequence[int]],
+    relevant: Sequence[set[int]],
+    recall_ks: Sequence[int],
+    top_k: int,
+    ndcg_k: int,
+) -> dict:
+    """Metrics from one ranked list per query: compute_metrics keys plus nDCG@ndcg_k."""
+    if len(rankings) != len(relevant):
+        raise ValueError("need one relevant set per ranked list")
+
+    ranks = []
+    ndcg_total = 0.0
+    for retrieved_ids, relevant_ids in zip(rankings, relevant, strict=True):
+        ranks.append(first_relevant_rank(retrieved_ids, relevant_ids))
+        ndcg_total += ndcg_at_k(retrieved_ids, relevant_ids, ndcg_k)
+
+    metrics = compute_metrics(ranks, recall_ks, top_k)
+    metrics[f"nDCG@{ndcg_k}"] = ndcg_total / len(rankings)
     return metrics
