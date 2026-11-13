@@ -1,14 +1,21 @@
 # Explanation evaluation (xAI, level 3) on Visual Genome (ADR-0016).
 # Every value below is chosen on val only; test is run once with the final values (ADR-0009).
 experiment: explain_vg
+# The model chosen in results/tables/main.csv (one-layer GraphSAGE, ADR-0046); its weights
+# and val-chosen alpha per seed are read from that config's model_dir.
+ranking_config: configs/clip_graph_vg_lr1e4.yaml
 eval_split: val
+# Rule fixed before any run: draw num_queries query rows of the split at random with
+# query_sample_seed, the same rows for every seed; explain the image CLIP + Graph ranks first.
+num_queries: 20
+query_sample_seed: 0
 seeds: [0, 1, 2]
 # Explainers compared on val; the one with the best characterization becomes the main one.
 explainers: [occlusion, integrated_gradients, gnn_explainer]
-# Must match the Graph module's model (number of GNN layers) and how it stores relations.
-# TODO: confirm both values with the Graph team before the first real run.
-num_layers: 2
-both_directions: true
+# The ADR-0046 model: one layer, concept -> image edges stored in one direction only
+# (ADR-0046 section 5). The run stops if the model says otherwise.
+num_layers: 1
+both_directions: false
 # Explanation sizes compared on val.
 top_m_options: [3, 5, 10]
 # Chosen on val (statistics.choose_on_validation) and written here before test; test

@@ -13,7 +13,12 @@ class ExplainConfig:
     """Every hyperparameter of the xAI module; chosen on val only (PDF section 6)."""
 
     experiment: str
+    # The reported CLIP + Graph experiment whose trained model is explained (its YAML).
+    ranking_config: str
     eval_split: str
+    # How many queries of the split to explain, drawn once with query_sample_seed.
+    num_queries: int
+    query_sample_seed: int
     seeds: list[int]
     explainers: list[str]
     num_layers: int
@@ -43,6 +48,8 @@ def load_explain_config(path: str | Path) -> ExplainConfig:
     unknown = sorted(set(config.explainers) - set(EXPLAINERS))
     if unknown:
         raise ValueError(f"unknown explainers: {unknown}")
+    if config.num_queries < 10:
+        raise ValueError("level 3 needs at least 10 queries (PDF section 5)")
     if len(config.seeds) < 3:
         raise ValueError("main experiments need at least 3 seeds (PDF section 6)")
     for name in ("robust_remove_prob", "robust_add_back_prob", "plus_weight"):

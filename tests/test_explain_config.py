@@ -74,3 +74,16 @@ def test_rejects_a_main_explainer_not_compared(tmp_path):
         load_explain_config(
             write_config(tmp_path, explainers=["occlusion"], main_explainer="gnn_explainer")
         )
+
+
+def test_rejects_fewer_than_ten_queries(tmp_path):
+    with pytest.raises(ValueError, match="10 queries"):
+        load_explain_config(write_config(tmp_path, num_queries=9))
+
+
+def test_committed_config_explains_the_reported_one_layer_model():
+    config = load_explain_config(COMMITTED)
+
+    assert config.ranking_config == "configs/clip_graph_vg_lr1e4.yaml"
+    assert config.num_layers == 1
+    assert config.both_directions is False
