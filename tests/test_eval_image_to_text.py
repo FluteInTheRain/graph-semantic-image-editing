@@ -117,3 +117,22 @@ def test_text_graph_scores_works_across_multiple_chunks():
     full = text_graph_scores(candidates, image_h, IMAGE_IDS, chunk_size=100)
     assert scores.shape == (3, 2)
     np.testing.assert_allclose(scores, full)
+
+
+def test_retrieve_text_candidates_rejects_split_image_without_text():
+    with pytest.raises(ValueError, match="no text.*12"):
+        retrieve_text_candidates(
+            IMAGES,
+            IMAGE_IDS,
+            TEXTS[:4],
+            TEXT_IMAGE_IDS[:4],
+            IMAGE_IDS,
+            top_k=2,
+            same_text_threshold=0.9999,
+        )
+
+
+def test_ranked_text_rows_rejects_mismatched_final_scores_shape():
+    candidates = make_candidates(top_k=2)
+    with pytest.raises(ValueError, match="candidate_rows"):
+        ranked_text_rows(candidates, np.zeros((3, 1), dtype=np.float32))

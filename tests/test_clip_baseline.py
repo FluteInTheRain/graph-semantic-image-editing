@@ -250,7 +250,7 @@ def test_clip_eval2_metrics_have_ndcg_groups_and_image_to_text(tmp_path):
     (tmp_path / "region_descriptions.json").write_text(json.dumps(regions), encoding="utf-8")
     config = make_config(
         tmp_path,
-        ndcg_k=10,
+        ndcg_k=2,
         image_to_text=True,
         vg_data_dir=str(tmp_path),
         predicates_file=str(predicates_file),
@@ -258,11 +258,11 @@ def test_clip_eval2_metrics_have_ndcg_groups_and_image_to_text(tmp_path):
 
     metrics = read_metrics(run_clip_evaluation(config, seed=0))
 
-    assert metrics["nDCG@10"] == 1.0
+    assert metrics["nDCG@2"] == 1.0
     assert set(metrics["groups"]) == {"specificity", "relation"}
     assert metrics["image_to_text"]["alpha"] == 1.0
     assert metrics["image_to_text"]["R@1"] == 1.0
-    assert "nDCG@10" in metrics["image_to_text"]
+    assert "nDCG@2" in metrics["image_to_text"]
 
 
 def test_second_clip_test_run_is_refused(tmp_path):
@@ -310,3 +310,21 @@ def test_evaluate_clip_rejects_image_to_text_without_ndcg(tmp_path):
             same_text_threshold=0.9999,
             image_to_text=True,
         )
+
+
+def test_load_clip_eval_config_rejects_invalid_extension_settings(tmp_path):
+    path = tmp_path / "config.yaml"
+    text = (REPO_ROOT / "configs" / "clip_vg.yaml").read_text(encoding="utf-8")
+    path.write_text(text + "\nimage_to_text: true\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="ndcg_k"):
+        load_clip_eval_config(path)
+
+
+def test_test_run_exists_ignores_experiment_whose_name_only_ends_with_target(tmp_path):
+    target = make_config(tmp_path, eval_split="test")
+    other = ClipEvalConfig(**{**target.__dict__, "experiment": "other_clip_vg"})
+    run_clip_evaluation(other, seed=0)
+
+    run_dir = run_clip_evaluation(target, seed=0)
+    assert (run_dir / "metrics.json").exists()

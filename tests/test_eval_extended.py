@@ -50,12 +50,12 @@ def test_text_to_image_report_matches_the_pipeline_ranks():
     candidates = make_candidates()
     final = candidates.clip_scores
 
-    report = text_to_image_report(candidates, final, None, [1, 3], 3, 10)
+    report = text_to_image_report(candidates, final, None, [1, 3], 3, 3)
 
     expected = compute_metrics(rerank_ranks(candidates, final), [1, 3], 3)
     for key, value in expected.items():
         assert report[key] == value
-    assert "nDCG@10" in report
+    assert "nDCG@3" in report
     assert "groups" not in report
 
 
@@ -63,7 +63,7 @@ def test_text_to_image_report_adds_groups_when_given_groupings():
     candidates = make_candidates()
     groupings = {"specificity": ["specific", "generic"]}
 
-    report = text_to_image_report(candidates, candidates.clip_scores, groupings, [1], 3, 10)
+    report = text_to_image_report(candidates, candidates.clip_scores, groupings, [1], 3, 3)
 
     assert set(report["groups"]["specificity"]) == {"specific", "generic"}
 
@@ -73,7 +73,7 @@ def test_report_raises_when_ranks_disagree(monkeypatch):
     monkeypatch.setattr(mmxai.eval.extended, "rerank_ranks", lambda c, s: [None] * len(s))
 
     with pytest.raises(ValueError, match="disagree"):
-        text_to_image_report(candidates, candidates.clip_scores, None, [1], 3, 10)
+        text_to_image_report(candidates, candidates.clip_scores, None, [1], 3, 3)
 
 
 def test_image_to_text_report_scores_the_ranked_text_rows():
@@ -86,11 +86,11 @@ def test_image_to_text_report_scores_the_ranked_text_rows():
         relevant=[{4}, {9}],
     )
 
-    report = image_to_text_report(candidates, candidates.clip_scores, [1, 2], 2, 10)
+    report = image_to_text_report(candidates, candidates.clip_scores, [1, 2], 2, 2)
 
     assert report["R@1"] == 0.5
     assert report["R@2"] == 1.0
-    assert "nDCG@10" in report
+    assert "nDCG@2" in report
 
 
 def test_query_groupings_label_each_query_by_specificity_and_relation(tmp_path):
@@ -163,3 +163,9 @@ def test_check_extension_settings_rejects_groups_or_image_to_text_without_ndcg()
 def test_check_extension_settings_accepts_disabled_and_complete_settings():
     check_extension_settings(None, False, None, None)
     check_extension_settings(10, True, "data/vg", "configs/preds.yaml")
+
+
+def test_ranked_image_ids_rejects_mismatched_final_scores_shape():
+    candidates = make_candidates()
+    with pytest.raises(ValueError, match="candidate_ids"):
+        ranked_image_ids(candidates, np.zeros((2, 2), dtype=np.float32))

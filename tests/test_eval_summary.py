@@ -296,11 +296,24 @@ def test_dirty_runs_are_skipped_by_groups_and_image_to_text_tables(tmp_path):
         )
 
     group_rows, group_skipped = summarize_groups(load_run_records(tmp_path), "test", "_eval2")
-    text_rows, text_skipped = summarize_image_to_text(
-        load_run_records(tmp_path), "test", "_eval2"
-    )
+    text_rows, text_skipped = summarize_image_to_text(load_run_records(tmp_path), "test", "_eval2")
 
     assert group_skipped == []
     assert text_skipped == []
     assert {row["experiment"] for row in group_rows} == {"graph_eval2"}
     assert {row["experiment"] for row in text_rows} == {"graph_eval2"}
+
+
+def test_main_table_metric_missing_in_later_seed_is_an_error(tmp_path):
+    write_eval2_runs(tmp_path)
+    rewrite_metrics(tmp_path, "e2", lambda metrics: metrics.pop("nDCG@10"))
+
+    with pytest.raises(ValueError, match="seed 2.*nDCG@10"):
+        summarize_runs(load_run_records(tmp_path), "test", "_eval2")
+
+
+def test_write_table_rejects_rows_with_different_columns(tmp_path):
+    rows = [{"experiment": "a", "R@1_mean": 0.1}, {"experiment": "b", "nDCG@10_mean": 0.2}]
+
+    with pytest.raises(ValueError, match="same columns"):
+        write_table(rows, tmp_path / "out.csv")

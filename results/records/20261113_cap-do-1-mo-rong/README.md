@@ -98,6 +98,7 @@ Các số R@1/5/10 và MRR@100 tái lập gần như trùng khớp với `main.c
 - **`leakage-auditor`:** `KHÔNG THẤY RÒ RỈ` (đạt 7/7 quy tắc PDF §6: test tách biệt hoàn toàn, cạnh đồng xuất hiện chỉ đếm trên train, `alpha` và `alpha_image_to_text` chọn trên `val`, test chạy 1 lần, cùng `split_sha256`, 3 seed).
 - **`experiment-reviewer`:** Đạt tất cả mục kỹ thuật (3 seed, mean ± std, đủ 5 mô hình/ablation, công thức nDCG/MRR/R@K đúng). Yêu cầu hoàn tất hồ sơ phiên (`README.md` + `run_copies/`) và lưu ý không suy diễn quá dữ liệu ở các cặp chênh `< std`.
 - **`pr-test-analyzer`:** Không có lỗi Critical; chỉ ra 6 lỗ hổng test/guard mức Important (kiểm giá trị `old_config`, unit test `check_extension_settings`, lỗi và multi-chunk của `image_to_text`, đường lỗi/dirty run của `summarize_image_to_text`, guard `evaluate_clip(..., image_to_text=True, ndcg_k=None)`, và guard thiếu `alpha_image_to_text` trong `evaluate_test`). Đã kiểm chứng và bổ sung đầy đủ ở commit `4d3603a`.
+- **Independent PR #9 Reviewer + PR Code Updater (vòng review lần 2):** Không có lỗi Blocking hay làm lệch số 30 run `_eval2`; chỉ ra 4 mục Important và 2 mục Minor về guard & validation (`_require_same_keys` trong `summarize_runs` và kiểm cột đồng nhất trong `write_table`; chặn `ndcg_k < 1` hoặc `ndcg_k > top_k`; gọi `check_extension_settings` trong `load_clip_eval_config` và chặn `group_inputs` thiếu `ndcg_k` ở đầu `evaluate_clip`; đối chiếu `config.yaml` trong `test_run_exists` để tránh khớp nhầm hậu tố tên experiment; chặn đầu vào rỗng/lệch độ dài trong `query_groups.py`, `image_to_text.py` và `extended.py`). Đã cập nhật toàn bộ kèm 12 unit test mới.
 
 ---
 
@@ -109,3 +110,4 @@ Các số R@1/5/10 và MRR@100 tái lập gần như trùng khớp với `main.c
 - `46bff84` — Task 9: Khóa giao thức v2 (ADR-0049, `results/tables/README.md`) trước khi chạy `_eval2`
 - `88d29bb` — Task 10: Xuất 3 bảng `eval2_*.csv` sau khi chạy xong 5 thực nghiệm × (3 val + 3 test)
 - `4d3603a` — Task 11: Bổ sung test và guard theo góp ý `pr-test-analyzer`
+- `a87cd38` — Task 11: Hồ sơ phiên, cập nhật guide, checklist và nhật ký AI

@@ -119,6 +119,8 @@ def summarize_runs(
             "num_seeds": len(runs),
             "seeds": " ".join(str(seed) for seed in sorted(seeds)),
         }
+        metric_keys = [set(metric_names(run["metrics"])) for run in runs]
+        _require_same_keys(experiment, runs, metric_keys, "metrics")
         for name in metric_names(runs[0]["metrics"]):
             _mean_and_std(row, name, [run["metrics"][name] for run in runs])
         row["split_sha256"] = runs[0]["metrics"]["split_sha256"]
@@ -240,6 +242,10 @@ def write_table(rows: list[dict], path: str | Path) -> None:
     """Write the rows as CSV, numbers rounded to 4 decimals."""
     if not rows:
         raise ValueError("no experiment has enough traceable runs to summarise")
+    expected_keys = list(rows[0])
+    for row in rows:
+        if list(row) != expected_keys:
+            raise ValueError("all table rows must have the same columns")
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as file:

@@ -67,6 +67,11 @@ def test_run_exists(output_dir: str | Path, experiment: str, seed: int) -> bool:
     if not output_dir.exists():
         return False
     for metrics_file in output_dir.glob(f"*_{experiment}_seed{seed}/metrics.json"):
+        config_file = metrics_file.parent / "config.yaml"
+        if config_file.exists():
+            with open(config_file, encoding="utf-8") as file:
+                if yaml.safe_load(file).get("experiment") != experiment:
+                    continue
         with open(metrics_file, encoding="utf-8") as file:
             if json.load(file)["split"] == "test":
                 return True

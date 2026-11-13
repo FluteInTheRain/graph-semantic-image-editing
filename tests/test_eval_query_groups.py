@@ -103,3 +103,20 @@ def test_group_samples_pick_a_random_subset_of_each_group_with_a_fixed_seed():
     assert set(first["action"]) <= set(sentences[:5])
     # A group smaller than per_group is shown whole.
     assert sorted(first["none"]) == ["sentence 5", "sentence 6"]
+
+
+def test_specificity_groups_rejects_query_without_relevant_images():
+    with pytest.raises(ValueError, match="at least one relevant image"):
+        specificity_groups([set()])
+
+
+def test_metrics_by_group_and_group_sizes_reject_empty_labels():
+    with pytest.raises(ValueError, match="at least one query"):
+        metrics_by_group([], [], [], [1], 1, 1)
+    with pytest.raises(ValueError, match="at least one query"):
+        group_sizes([])
+
+
+def test_group_samples_rejects_mismatched_labels_and_sentences():
+    with pytest.raises(ValueError, match="one sentence per label"):
+        group_samples(["action"], ["s1", "s2"], per_group=1, seed=0)

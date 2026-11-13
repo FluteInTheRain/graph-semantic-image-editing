@@ -355,7 +355,7 @@ def with_extensions(config: GraphRerankConfig, tmp_path) -> GraphRerankConfig:
         config,
         experiment=f"{config.experiment}_eval2",
         model_dir=f"{config.model_dir}_eval2",
-        ndcg_k=10,
+        ndcg_k=3,
         image_to_text=True,
         vg_data_dir=str(vg_dir),
         predicates_file=str(predicates_file),
@@ -425,13 +425,13 @@ def test_eval2_test_metrics_have_ndcg_groups_and_image_to_text(tmp_path, monkeyp
 
     metrics = read_metrics(evaluate_test(config, seed=0, log=str))
 
-    assert "nDCG@10" in metrics
+    assert "nDCG@3" in metrics
     assert set(metrics["groups"]) == {"specificity", "relation"}
     # Both phrases occur once per image: half the queries are "action", half "none".
     assert metrics["groups"]["relation"]["action"]["num_queries"] == 3
     image_to_text = metrics["image_to_text"]
     assert image_to_text["num_queries"] == 3  # the 3 test images
-    assert {"R@1", "R@3", "MRR@3", "nDCG@10", "alpha"} <= set(image_to_text)
+    assert {"R@1", "R@3", "MRR@3", "nDCG@3", "alpha"} <= set(image_to_text)
     assert "alpha_sweep" not in metrics  # nothing is chosen on test
 
 

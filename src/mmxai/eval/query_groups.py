@@ -32,6 +32,8 @@ def specificity_groups(relevant: Sequence[set[int]]) -> list[str]:
     """Label each query "specific" (one relevant image) or "generic" (more)."""
     labels = []
     for relevant_images in relevant:
+        if len(relevant_images) == 0:
+            raise ValueError("every query needs at least one relevant image")
         if len(relevant_images) == 1:
             labels.append("specific")
         else:
@@ -127,6 +129,8 @@ def metrics_by_group(
     """ranked_metrics of each group, plus the share of queries in that group."""
     if not (len(rankings) == len(relevant) == len(labels)):
         raise ValueError("need one label and one relevant set per ranked list")
+    if not labels:
+        raise ValueError("need at least one query")
 
     result = {}
     for group in sorted(set(labels)):
@@ -145,6 +149,8 @@ def metrics_by_group(
 
 def group_sizes(labels: Sequence[str]) -> dict[str, tuple[int, float]]:
     """Return (count, fraction of all queries) of every label that occurs."""
+    if not labels:
+        raise ValueError("need at least one query")
     counts = {}
     for label in labels:
         counts[label] = counts.get(label, 0) + 1
@@ -158,6 +164,8 @@ def group_samples(
 
     labels[i] belongs to sentences[i]. A fixed seed makes the check repeatable.
     """
+    if len(labels) != len(sentences):
+        raise ValueError("need one sentence per label")
     rng = np.random.default_rng(seed)
     samples = {}
     for label in sorted(set(labels)):

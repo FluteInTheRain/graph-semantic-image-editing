@@ -93,3 +93,15 @@ def test_ranked_metrics_match_compute_metrics_on_the_same_lists():
     for name, value in expected.items():
         assert result[name] == value
     assert "nDCG@3" in result
+
+
+def test_ndcg_at_k_rejects_non_positive_k():
+    with pytest.raises(ValueError, match="k >= 1"):
+        ndcg_at_k([1, 2], {1}, 0)
+
+
+def test_ranked_metrics_rejects_invalid_ndcg_k():
+    with pytest.raises(ValueError, match="top_k"):
+        ranked_metrics([[1, 2]], [{1}], [1], top_k=2, ndcg_k=0)
+    with pytest.raises(ValueError, match="top_k"):
+        ranked_metrics([[1, 2]], [{1}], [1], top_k=2, ndcg_k=10)

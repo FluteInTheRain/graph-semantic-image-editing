@@ -48,6 +48,9 @@ def retrieve_text_candidates(
     missing = np.setdiff1d(eval_image_ids, image_ids)
     if len(missing) > 0:
         raise ValueError(f"{len(missing)} split images have no embedding, e.g. {missing[0]}")
+    missing_texts = np.setdiff1d(eval_image_ids, text_image_ids)
+    if len(missing_texts) > 0:
+        raise ValueError(f"{len(missing_texts)} split images have no text, e.g. {missing_texts[0]}")
 
     image_rows = np.isin(image_ids, eval_image_ids)
     text_rows = np.isin(text_image_ids, eval_image_ids)
@@ -116,6 +119,8 @@ def ranked_text_rows(candidates: TextCandidates, final_scores: np.ndarray) -> li
 
     The sort is stable, so equal scores keep CLIP's order (alpha = 1 is plain CLIP).
     """
+    if final_scores.shape != candidates.candidate_rows.shape:
+        raise ValueError("final_scores shape must match candidate_rows")
     rankings = []
     for image in range(len(final_scores)):
         order = np.argsort(-final_scores[image], kind="stable")

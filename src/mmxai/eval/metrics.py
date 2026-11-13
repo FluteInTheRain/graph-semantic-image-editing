@@ -71,6 +71,8 @@ def compute_metrics(ranks: Sequence[int | None], recall_ks: Sequence[int], top_k
 
 def ndcg_at_k(retrieved_ids: Sequence[int], relevant_ids: set[int], k: int) -> float:
     """nDCG@k with binary relevance: DCG of the list divided by the best possible DCG."""
+    if k < 1:
+        raise ValueError("ndcg needs k >= 1")
     dcg = 0.0
     for position, image_id in enumerate(retrieved_ids[:k], start=1):
         if image_id in relevant_ids:
@@ -98,6 +100,8 @@ def ranked_metrics(
     """Metrics from one ranked list per query: compute_metrics keys plus nDCG@ndcg_k."""
     if len(rankings) != len(relevant):
         raise ValueError("need one relevant set per ranked list")
+    if ndcg_k < 1 or ndcg_k > top_k:
+        raise ValueError(f"cannot measure nDCG@{ndcg_k} from top_k={top_k} candidates")
 
     ranks = []
     ndcg_total = 0.0

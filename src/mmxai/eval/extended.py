@@ -41,6 +41,8 @@ def ranked_image_ids(candidates: Candidates, final_scores: np.ndarray) -> list[l
 
     The sort is stable like in rerank_ranks, so equal scores keep CLIP's order.
     """
+    if final_scores.shape != candidates.candidate_ids.shape:
+        raise ValueError("final_scores shape must match candidate_ids")
     rankings = []
     for query in range(len(final_scores)):
         order = np.argsort(-final_scores[query], kind="stable")

@@ -82,6 +82,9 @@ def load_clip_eval_config(path: str | Path) -> ClipEvalConfig:
     config = load_yaml_dataclass(path, ClipEvalConfig)
     if config.eval_split not in EVAL_SPLITS:
         raise ValueError(f"eval_split must be one of {EVAL_SPLITS}, got {config.eval_split!r}")
+    check_extension_settings(
+        config.ndcg_k, config.image_to_text, config.vg_data_dir, config.predicates_file
+    )
     return config
 
 
@@ -104,6 +107,8 @@ def evaluate_clip(
     (query text ids, Visual Genome folder, predicates). With all three off the result is
     the original one.
     """
+    if (image_to_text or group_inputs is not None) and ndcg_k is None:
+        raise ValueError("image_to_text and group_inputs require ndcg_k to be set")
     # The same function CLIP + Graph uses, so both re-rank the same candidates.
     candidates = retrieve_candidates(
         image_embeddings,
@@ -134,8 +139,6 @@ def evaluate_clip(
     several = sum(1 for images in candidates.relevant if len(images) > 1)
     metrics["fraction_queries_with_several_relevant"] = several / len(candidates.relevant)
 
-    if image_to_text and ndcg_k is None:
-        raise ValueError("image_to_text requires ndcg_k to be set")
     if image_to_text:
         text_candidates = retrieve_text_candidates(
             image_embeddings,
