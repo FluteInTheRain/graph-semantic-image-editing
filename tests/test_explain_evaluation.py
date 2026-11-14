@@ -28,6 +28,7 @@ from mmxai.explain.config import ExplainConfig, load_explain_config  # noqa: E40
 from mmxai.explain.evaluation import (  # noqa: E402
     check_settings,
     evaluate_split,
+    format_summary,
     make_explain_run_dir,
     pick_query_rows,
     write_evaluation,
@@ -224,3 +225,41 @@ def test_rejects_settings_that_do_not_match_the_one_layer_model(tmp_path, monkey
 
     with pytest.raises(ValueError, match="num_layers"):
         check_settings(config, ranking)
+
+
+def test_summary_table_shows_validity_columns():
+    measure = {"mean": 0.5, "std": 0.1}
+    row = {"explainer": "occlusion", "top_m": 3, "num_records": 6}
+    for name in (
+        "fidelity_plus",
+        "random_plus_mean",
+        "rank_drop",
+        "random_rank_drop_mean",
+        "fidelity_minus",
+        "characterization",
+        "robust_plus",
+        "sparsity",
+    ):
+        row[name] = measure
+    row["all_in_reach_share"] = 0.75
+    row["connected_share"] = {"mean": 0.9, "std": 0.05}
+    row["p_fidelity_plus_vs_random"] = 0.01
+    row["p_rank_drop_vs_random"] = 0.02
+    evaluation = {
+        "settings": {
+            "ranking_experiment": "toy",
+            "split": "val",
+            "seeds": [0, 1],
+            "query_rows": [0, 1, 2],
+            "explained_image": "rank 1",
+        },
+        "summary": {"rows": [row], "val_proposal": None},
+    }
+
+    lines = format_summary(evaluation).splitlines()
+    header = [cell.strip() for cell in lines[4].strip("|").split("|")]
+    cells = [cell.strip() for cell in lines[6].strip("|").split("|")]
+
+    assert len(cells) == len(header) == lines[5].count("---")
+    assert cells[header.index("valid: in reach")] == "0.75"
+    assert cells[header.index("valid: connected")] == "0.9000 ± 0.0500"

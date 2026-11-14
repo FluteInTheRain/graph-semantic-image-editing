@@ -360,8 +360,9 @@ def format_summary(evaluation: dict) -> str:
         f"explained image: {settings['explained_image']}. Mean ± std over seeds.",
         "",
         "| explainer | m | Fid+ | random Fid+ | rank drop | random rank drop | Fid- "
-        "| characterization | robust Fid+ | sparsity | p (Fid+ > random) | p (rank > random) |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| characterization | robust Fid+ | sparsity | valid: in reach | valid: connected "
+        "| p (Fid+ > random) | p (rank > random) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in evaluation["summary"]["rows"]:
         cells = [row["explainer"], str(row["top_m"])]
@@ -376,6 +377,10 @@ def format_summary(evaluation: dict) -> str:
             "sparsity",
         ):
             cells.append(_format_mean_std(row[measure]))
+        # Validity (quality.validity): share of explanations whose relations all exist and
+        # can change the image's score, then the share of relations linked to the image.
+        cells.append(f"{row['all_in_reach_share']:.2f}")
+        cells.append(_format_mean_std(row["connected_share"]))
         cells.append(f"{row['p_fidelity_plus_vs_random']:.3g}")
         cells.append(f"{row['p_rank_drop_vs_random']:.3g}")
         lines.append("| " + " | ".join(cells) + " |")
