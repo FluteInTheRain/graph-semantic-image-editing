@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from mmxai.explain.intervention import mark_remaining_edges
-from mmxai.explain.subgraph import edges_reaching_node
+from mmxai.explain.subgraph import edges_reaching_node, relations_in_reach
 
 
 @dataclass(frozen=True)
@@ -42,34 +42,11 @@ def occlusion(
     if not np.isclose(score_image(reach), full_score):
         raise ValueError("edges out of reach change the score; check num_layers")
 
-    existing = set(zip(edge_index[0].tolist(), edge_index[1].tolist(), strict=True))
     contributions = []
-    tried = set()
-    for column in np.flatnonzero(reach):
-        source = int(edge_index[0, column])
-        target = int(edge_index[1, column])
-        if both_directions:
-            # Both copies of one relation are removed together: try it once and report it
-            # in a fixed direction, so the result does not depend on the order of the edges.
-            if frozenset((source, target)) in tried:
-                continue
-            tried.add(frozenset((source, target)))
-            source, target = _reported_direction(source, target, image_node, existing)
-
+    for source, target in relations_in_reach(edge_index, image_node, num_layers, both_directions):
         remaining = mark_remaining_edges(edge_index, [(source, target)], both_directions)
         drop = full_score - score_image(remaining)
         contributions.append(EdgeContribution(source, target, float(drop)))
 
     contributions.sort(key=lambda edge: edge.contribution, reverse=True)
     return contributions
-
-
-def _reported_direction(
-    source: int, target: int, image_node: int, existing: set[tuple[int, int]]
-) -> tuple[int, int]:
-    """Pick the copy pointing at the image if there is one, otherwise the smaller pair."""
-    copies = [pair for pair in ((source, target), (target, source)) if pair in existing]
-    for pair in copies:
-        if pair[1] == image_node:
-            return pair
-    return min(copies)

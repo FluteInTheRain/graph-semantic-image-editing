@@ -30,3 +30,34 @@ def toy_gcn(edge_index: np.ndarray, features: np.ndarray, num_layers: int) -> np
             new_state[target] += state[source] / np.sqrt(degree[source] * degree[target])
         state = np.maximum(new_state - 0.1, 0.0)
     return state
+
+
+def toy_weighted_gcn(
+    edge_index: np.ndarray, weights: np.ndarray, features: np.ndarray, num_layers: int
+) -> np.ndarray:
+    """toy_gcn with a weight per edge; weight 0 acts exactly like a removed edge."""
+    num_nodes = len(features)
+    degree = np.ones(num_nodes)
+    for column, target in enumerate(edge_index[1]):
+        degree[target] += weights[column]
+
+    state = features.copy()
+    for _ in range(num_layers):
+        new_state = state / degree
+        for column, (source, target) in enumerate(edge_index.T):
+            scale = weights[column] / np.sqrt(degree[source] * degree[target])
+            new_state[target] += scale * state[source]
+        state = np.maximum(new_state - 0.1, 0.0)
+    return state
+
+
+def finite_difference_gradient(function, point: np.ndarray, step: float = 1e-6) -> np.ndarray:
+    """Central differences: an independent check for any gradient."""
+    gradient = np.empty(len(point))
+    for index in range(len(point)):
+        up = point.copy()
+        down = point.copy()
+        up[index] += step
+        down[index] -= step
+        gradient[index] = (function(up) - function(down)) / (2 * step)
+    return gradient
