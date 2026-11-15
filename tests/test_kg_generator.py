@@ -124,3 +124,17 @@ def test_term_with_several_synsets_in_a_group_is_rejected():
 
     assert not [r for r in records if r["hidden_concept"].startswith("bat.")]
     assert rejections["term_has_several_synsets"] == 2
+
+
+def test_pair_whose_indirect_text_names_the_concept_is_rejected_not_fatal():
+    train, test = fixture_graphs()
+    # A template that happens to contain the concept name: the text would leak it.
+    leaky = {**CONFIG.activity_templates, "uses": "is used in tennis with"}
+    config = replace(CONFIG, activity_templates=leaky)
+
+    records, rejections = generate_kg_pairs(train, test, build_fact_index(EDGES), config)
+
+    # (tennis may still appear as an OBJECT concept; only the activity pair is rejected.)
+    activity = [record for record in records if record["query_group"] == "activity"]
+    assert activity == []
+    assert rejections["hidden_name_in_indirect_text"] == 1

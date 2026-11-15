@@ -1,6 +1,6 @@
 """Facts per concept and the unique description (ADR-0050). Synthetic edges only."""
 
-from conceptnet_fixtures import EDGES
+from conceptnet_fixtures import EDGES, edge
 from mmxai.queries.kg_facts import build_fact_index, choose_description, leaks_name
 
 CATEGORIES = ["sport", "vehicle"]
@@ -52,3 +52,10 @@ def test_leaks_name_checks_whole_words():
     assert leaks_name("tennis ball", "tennis")
     assert leaks_name("tennis", "tennis")
     assert not leaks_name("court", "tennis")
+
+
+def test_category_that_repeats_the_name_is_skipped():
+    index = build_fact_index([edge("IsA", "tennis", "tennis sport")])
+
+    # The only category word would put "tennis" into the query.
+    assert choose_description("tennis", [], index, ["tennis sport"], num_properties=0) is None

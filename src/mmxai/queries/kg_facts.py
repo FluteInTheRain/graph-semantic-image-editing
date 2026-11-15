@@ -102,7 +102,12 @@ def choose_description(
 
     categories = []
     for fact in facts:
-        if fact.kind == "isa" and fact.value in category_words:
+        # A category that repeats the name ("tennis sport") would leak it into the query.
+        if (
+            fact.kind == "isa"
+            and fact.value in category_words
+            and not leaks_name(fact.value, concept)
+        ):
             categories.append(fact)
     if not categories:
         return None

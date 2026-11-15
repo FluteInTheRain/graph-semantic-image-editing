@@ -15,11 +15,22 @@ from mmxai.data.conceptnet import ConceptEdge, load_edges_tsv
 from mmxai.data.scene_graph import SceneGraph, build_scene_graphs, load_annotation_files
 from mmxai.data.splits import load_split
 from mmxai.queries.generator import PLAIN_WORDS, canonicalize_graphs, synset_lemma
-from mmxai.queries.kg_facts import Description, Fact, build_fact_index, choose_description
+from mmxai.queries.kg_facts import (
+    Description,
+    Fact,
+    build_fact_index,
+    choose_description,
+    leaks_name,
+)
 from mmxai.queries.kg_targets import activity_images, object_images
 from mmxai.queries.kg_text import direct_text, indirect_text
 from mmxai.queries.schema import STATUS_CANDIDATE, write_jsonl
-from mmxai.queries.validator import check_kg_evidence, validate_queries, write_review_manifest
+from mmxai.queries.validator import (
+    check_kg_evidence,
+    hidden_names_in_text,
+    validate_queries,
+    write_review_manifest,
+)
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 FACT_KINDS = ("uses", "location", "has", "can")
@@ -30,6 +41,7 @@ REJECT_NO_FACTS = "no_conceptnet_facts"
 REJECT_ANSWERS = "answer_count_out_of_range"
 REJECT_NO_DESCRIPTION = "no_unique_description"
 REJECT_USED = "concept_already_used"
+REJECT_NAME_LEAK = "hidden_name_in_indirect_text"
 REJECT_AMBIGUOUS_TERM = "term_has_several_synsets"
 
 
@@ -192,14 +204,21 @@ def generate_kg_pairs(
             if description is None:
                 rejections[REJECT_NO_DESCRIPTION] += 1
                 continue
+            pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs + 1:03d}"
+            pair = make_kg_pair(group, synset, description, answers, pair_id, templates, config)
+            # Cheap per-pair checks here, so one bad pair is dropped instead of making the
+            # final whole-file validation fail and abort the run.
+            indirect = pair[1]
+            if hidden_names_in_text(indirect["text"], indirect["hidden_names"]) or leaks_name(
+                description.category.value, term
+            ):
+                rejections[REJECT_NAME_LEAK] += 1
+                continue
             num_pairs += 1
             # Both: the same term must not appear in the other group either.
             used.add(synset)
             used.add(term)
-            pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs:03d}"
-            records.extend(
-                make_kg_pair(group, synset, description, answers, pair_id, templates, config)
-            )
+            records.extend(pair)
     return records, rejections
 
 
