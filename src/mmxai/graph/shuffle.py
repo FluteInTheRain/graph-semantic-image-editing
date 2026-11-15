@@ -22,6 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+import networkx as nx
 import numpy as np
 
 from mmxai.graph.contains import (
@@ -140,6 +141,22 @@ def remove_pair(pair_count: dict[tuple[int, int], int], pair: tuple[int, int]) -
     pair_count[pair] -= 1
     if pair_count[pair] == 0:
         del pair_count[pair]
+
+
+def shuffle_concept_pairs(pairs: np.ndarray, seed: int) -> np.ndarray:
+    """Ablation 2 of ADR-0051: rewire concept-concept edges, keeping every concept's degree.
+
+    Double edge swaps (a-b, c-d -> a-d, c-b) keep how many edges each concept has but
+    destroy which concepts co-occur. If PCST helps only because of the real co-occurrence
+    structure, scores should drop on the shuffled graph.
+    """
+    graph = nx.Graph()
+    graph.add_edges_from(pairs.tolist())
+    # About 10 swaps per edge mixes the graph well; the count is a fixed rule, not tuned.
+    swaps = 10 * graph.number_of_edges()
+    nx.double_edge_swap(graph, nswap=swaps, max_tries=100 * swaps, seed=seed)
+    shuffled = sorted((min(a, b), max(a, b)) for a, b in graph.edges())
+    return np.array(shuffled, dtype=np.int64).reshape(-1, 2)
 
 
 @dataclass(frozen=True)
