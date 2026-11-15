@@ -10,7 +10,7 @@ pytest.importorskip("torch_geometric")
 pytest.importorskip("faiss")
 
 from mmxai.eval.graph_rerank import image_vectors  # noqa: E402
-from mmxai.explain.query_path import QueryEngine, search_and_explain  # noqa: E402
+from mmxai.explain.query_path import QueryEngine, concept_name, search_and_explain  # noqa: E402
 from mmxai.explain.ranking_model import graph_scores_with_edges  # noqa: E402
 from mmxai.index.image_index import build_image_index  # noqa: E402
 from test_explain_ranking_model import EDGE_INDEX, GRAPH, random_model  # noqa: E402
@@ -37,6 +37,7 @@ def make_engine(alpha: float) -> QueryEngine:
         image_index=build_image_index(IMAGE_EMBEDDINGS, GRAPH.image_ids),
         alpha=alpha,
         top_k=3,
+        concept_keys=np.array(["dog.n.01", "cat.n.01", "car.n.01"]),
     )
 
 
@@ -109,3 +110,11 @@ def test_graph_vectors_from_another_model_are_rejected():
 
     with pytest.raises(ValueError, match="the ranking used"):
         search_and_explain(stale, QUERY, k=3)
+
+
+def test_concept_rows_are_named_after_the_images():
+    engine = make_engine(alpha=0.5)
+
+    # Rows 0-2 are images, so concept row 3 is the first concept.
+    assert concept_name(engine, 3) == "dog.n.01"
+    assert concept_name(engine, 5) == "car.n.01"
