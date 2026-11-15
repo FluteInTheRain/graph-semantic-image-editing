@@ -11,15 +11,94 @@
 `app/gradio_app.py`: nhập một câu truy vấn, xem top-k ảnh **val** và, với mỗi ảnh, đường đi
 `truy vấn → khái niệm → contains → ảnh` đã tạo ra điểm đồ thị của ảnh đó.
 
+### Setup trên máy mới (vừa clone repo)
+
+Cần: Linux/macOS/WSL, khoảng 8 GB RAM, khoảng 10 GB đĩa trống (thư viện ~6 GB, embedding 1,3 GB, dữ liệu ~0,4 GB), có mạng. **Không cần GPU.** Mọi lệnh chạy từ thư
+mục gốc của repo.
+
+**Bước 1. Cài `uv` và thư viện** (khoảng 5–10 phút, torch nặng nhất)
+
 ```bash
-uv sync --group ml --group graph --group demo
-uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
-    --vg-data-dir data/visual_genome   # cần image_data.json để hiện ảnh
+curl -LsSf https://astral.sh/uv/install.sh | sh        # cài uv, mở terminal mới sau đó
+uv sync --group ml --group graph --group demo           # torch, open_clip, faiss, PyG, gradio
 ```
 
-Cần có trước: checkpoint `artifacts/models/visual_genome/clip_graph_vg_lr1e4/seed<k>/`
-(`model.pt`, `selection.json`), đặc trưng và đồ thị trong `artifacts/`. Nạp mất khoảng 10 giây, mỗi
-truy vấn khoảng 0.1 giây trên CPU laptop.
+Mạng công ty báo lỗi chứng chỉ (`invalid peer certificate: UnknownIssuer`) thì thêm `--system-certs`
+vào lệnh `uv sync`.
+
+**Bước 2. Dữ liệu Visual Genome** (`data/`, gitignored; khoảng 370 MB)
+
+```bash
+mkdir -p data/visual_genome && cd data/visual_genome
+curl -L -O https://homes.cs.washington.edu/~ranjay/visualgenome/data/dataset/image_data.json.zip
+curl -L -O https://homes.cs.washington.edu/~ranjay/visualgenome/data/dataset/objects.json.zip
+unzip -q image_data.json.zip && unzip -q objects.json.zip && rm ./*.zip
+cd ../..
+```
+
+| File | Dùng để |
+|---|---|
+| `image_data.json` | URL của từng ảnh, để gallery hiện ảnh |
+| `objects.json` | đếm từ vựng khái niệm trên ảnh train khi dựng đồ thị (bước 4) |
+
+Không cần tải 15 GB ảnh: gallery dùng URL gốc ở `cs.stanford.edu` (trình duyệt cần mạng). Muốn chạy
+offline thì giải nén ảnh vào `data/visual_genome/images/VG_100K/` và `VG_100K_2/`
+(`docs/guides/chuan-bi-embedding-clip.md`); app tự dùng file trên máy khi có.
+
+**Bước 3. Embedding CLIP** (tải sẵn, khoảng 1,3 GB)
+
+Tải 3 file `image_features.npz`, `text_features.npz`, `meta.json` của phiên bản **visual_genome** trong
+tab Output của notebook Kaggle (hướng dẫn chi tiết: `docs/guides/chuan-bi-embedding-clip.md` §2), đặt vào:
+
+```text
+artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/
+```
+
+**Bước 4. Dựng đồ thị** (khoảng 3–4 phút CPU, tối đa ~4,3 GB RAM; lần đầu tải trọng số CLIP ~600 MB)
+
+```bash
+uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml
+# → artifacts/graphs/visual_genome/contains_clip_top16_v1/
+```
+
+**Bước 5. Checkpoint mô hình đồ thị** — chọn một trong hai:
+
+- **Lấy từ nhóm** (nhanh): xin thư mục `artifacts/models/visual_genome/clip_graph_vg_lr1e4/` đã huấn
+  luyện, đặt đúng đường dẫn đó. Mỗi seed cần `seed<k>/model.pt` và `seed<k>/selection.json`.
+- **Tự huấn luyện** (CPU được, chỉ dùng train/val: khoảng 8 phút chuẩn bị + khoảng 10 phút mỗi seed, 4–5 GB RAM):
+
+  ```bash
+  uv run python scripts/train_graph_rerank.py --config configs/clip_graph_vg_lr1e4.yaml --seeds 0
+  ```
+
+  Mô hình tự huấn luyện có thể khác chút với bản nhóm báo cáo; demo vẫn đúng vì nó kiểm checkpoint khớp
+  với `selection.json` của chính nó.
+
+**Bước 6. Chạy demo**
+
+```bash
+uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
+    --vg-data-dir data/visual_genome
+```
+
+Mở <http://127.0.0.1:7860>, gõ truy vấn (ví dụ `man riding a horse`), bấm **Search**. Nạp mất khoảng
+10 giây, mỗi truy vấn khoảng 0,1 giây trên CPU laptop.
+
+**Kiểm tra nhanh** (thiếu gì thì app báo lỗi ngay lúc nạp):
+
+```bash
+ls data/visual_genome/                                                   # image_data.json  objects.json
+ls artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/         # 3 file
+ls artifacts/graphs/visual_genome/contains_clip_top16_v1/                # graph.npz  meta.json
+ls artifacts/models/visual_genome/clip_graph_vg_lr1e4/seed0/             # model.pt  selection.json
+```
+
+| Lỗi khi nạp | Nguyên nhân |
+|---|---|
+| `FileNotFoundError ... selection.json` | thiếu bước 5 |
+| `... was built with a different split file` | đồ thị dựng với split khác: xoá thư mục đồ thị, làm lại bước 4 |
+| `the analysis does not reproduce training` | checkpoint và đồ thị/embedding không cùng bộ: dựng lại đồ thị hoặc huấn luyện lại |
+| Gallery trống, có dòng "No thumbnails" | thiếu `data/visual_genome/image_data.json` hoặc quên `--vg-data-dir` |
 
 **Màn hình gồm gì?**
 
