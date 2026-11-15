@@ -61,6 +61,7 @@ class KgQueryConfig:
     activity_templates: dict[str, str]
     object_templates: dict[str, str]
     num_properties: int
+    min_fact_weight: float
     min_train_images: int
     min_answer_images: int
     max_answer_images: int
@@ -199,7 +200,12 @@ def generate_kg_pairs(
                 rejections[REJECT_ANSWERS] += 1
                 continue
             description = choose_description(
-                term, pool, fact_index, config.category_words, config.num_properties
+                term,
+                pool,
+                fact_index,
+                config.category_words,
+                config.num_properties,
+                config.min_fact_weight,
             )
             if description is None:
                 rejections[REJECT_NO_DESCRIPTION] += 1

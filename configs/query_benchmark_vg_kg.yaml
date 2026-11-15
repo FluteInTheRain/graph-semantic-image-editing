@@ -26,6 +26,9 @@ activity_templates: {uses: uses, location: is played on, has: has, can: can}
 object_templates: {uses: is used with, location: is found at, has: has, can: can}
 # Number of property facts in an indirect query (besides the one category fact).
 num_properties: 2
+# Decision (pilot val 2026-11-15): ConceptNet weight-1 facts were often odd ("cable found at
+# a back of computer"), so a property fact needs weight >= 2. IsA categories are not filtered.
+min_fact_weight: 2.0
 # Decision (ADR-0050, proposed): thresholds, fixed on the val pilot.
 #   A concept needs enough TRAIN images to be a fair target, and a small answer set
 #   in the queried split so a human can verify all of it.

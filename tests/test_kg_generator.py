@@ -28,6 +28,8 @@ CONFIG = KgQueryConfig(
         "can": "can",
     },
     num_properties=2,
+    # Fixture edges weigh 1.0, so keep them all usable.
+    min_fact_weight=1.0,
     min_train_images=1,
     min_answer_images=1,
     max_answer_images=10,

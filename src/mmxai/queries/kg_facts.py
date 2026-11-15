@@ -100,6 +100,7 @@ def choose_description(
     index: dict[str, list[Fact]],
     category_words: list[str],
     num_properties: int,
+    min_fact_weight: float,
 ) -> Description | None:
     """One category + num_properties properties that together fit `concept` only.
 
@@ -107,6 +108,9 @@ def choose_description(
     shared with any of them is not unique. Greedy: always add the property that the
     fewest remaining look-alikes share; ties go to the heavier edge, then the
     alphabet, so the result is deterministic. None if no unique description exists.
+
+    Property facts of `concept` lighter than min_fact_weight are not used in the query
+    (pilot val: weight-1 facts were often odd). Categories (IsA) are not filtered.
     """
     facts = index.get(concept, [])
     others = [other for other in pool if other != concept]
@@ -135,11 +139,16 @@ def choose_description(
             continue
         if leaks_name(fact.value, concept):
             continue
+        if fact.edge.weight < min_fact_weight:
+            continue
         # "can" values are verb phrases ("carry passengers"), where a plural is fine.
         if fact.kind != "can" and looks_plural(fact.value):
             continue
         candidates.append(fact)
 
+    # Look-alikes are counted with ALL facts of the other concepts, whatever their weight:
+    # a weak fact is still true, so "uses a racket" would also fit a concept that only
+    # has it as a weight-1 edge.
     chosen: list[Fact] = []
     while len(chosen) < num_properties and candidates:
         best = min(candidates, key=lambda fact: property_order(fact, index, look_alikes))

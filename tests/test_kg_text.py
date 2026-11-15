@@ -15,7 +15,9 @@ def test_with_article():
 
 def test_activity_sentences():
     index = build_fact_index(EDGES)
-    description = choose_description("tennis", ["tennis", "badminton"], index, ["sport"], 2)
+    description = choose_description(
+        "tennis", ["tennis", "badminton"], index, ["sport"], 2, min_fact_weight=1.0
+    )
 
     assert direct_text("activity", "tennis") == "A person playing tennis."
     assert indirect_text("activity", description, ACTIVITY_TEMPLATES) == (
@@ -25,7 +27,9 @@ def test_activity_sentences():
 
 def test_object_sentences_keep_verb_values_without_article():
     index = build_fact_index(EDGES)
-    description = choose_description("train", ["train", "bus", "car"], index, ["vehicle"], 2)
+    description = choose_description(
+        "train", ["train", "bus", "car"], index, ["vehicle"], 2, min_fact_weight=1.0
+    )
 
     assert direct_text("object", "train") == "A train."
     assert indirect_text("object", description, OBJECT_TEMPLATES) == (
@@ -35,7 +39,9 @@ def test_object_sentences_keep_verb_values_without_article():
 
 def test_two_properties_of_one_kind_share_the_verb():
     index = build_fact_index(EDGES)
-    description = choose_description("baseball", ["baseball", "tennis"], index, ["sport"], 2)
+    description = choose_description(
+        "baseball", ["baseball", "tennis"], index, ["sport"], 2, min_fact_weight=1.0
+    )
 
     assert indirect_text("activity", description, ACTIVITY_TEMPLATES) == (
         "A person playing a sport that uses a bat and a glove."
