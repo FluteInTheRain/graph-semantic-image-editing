@@ -66,8 +66,10 @@ Ngưỡng ban đầu, sẽ chỉnh trên pilot val trước khi sinh trên test:
 - **Rò rỉ dữ liệu:**
   - Khái niệm đích chọn theo tần suất trên train; quy tắc chỉnh trên val; đáp án chỉ lấy trong test.
   - ConceptNet là tri thức ngoài, không phụ thuộc split.
-  - Đáp án được định nghĩa từ annotation VG của ảnh test (quan hệ `playing`, object synset). Vì vậy mô hình đồ thị **không được** dựng cạnh từ annotation của ảnh test. ADR-0046 đã quy định cạnh `contains` của mọi split lấy từ CLIP top-k, còn cạnh annotation chỉ làm ablation cận trên; kết quả ablation đó trên bộ này phải ghi là **oracle**.
-- **Hợp với phương pháp cấp độ 2:** cạnh ConceptNet đã lọc dùng được làm đồ thị khái niệm cho G-Retriever / PCST. Nếu dùng, phải ghi rõ trong báo cáo, kèm ablation bỏ hoặc xáo các cạnh này.
+  - **Ngưỡng số đáp án trên test:** `[min_answer_images, max_answer_images]` cố định trước trên val. Áp lên số đáp án test, ngưỡng này chỉ quyết định khái niệm nào **kiểm tay được**: người duyệt phải xem hết ảnh đáp án, nên không nhận khái niệm có quá nhiều ảnh. Nó không dùng điểm hay thứ hạng của mô hình nào, và áp như nhau cho mọi mô hình. Báo cáo phải ghi số khái niệm bị loại vì `answer_count_out_of_range` khi sinh trên test (lấy từ `rejected_concepts` trong output), không ẩn số này (leakage-auditor, 2026-11-15).
+  - **Kênh rò 1, annotation VG của ảnh test:** đáp án được định nghĩa từ quan hệ `playing` / `riding` / `flying` và object synset của ảnh test. Vì vậy mô hình đồ thị **không được** dựng cạnh từ annotation của ảnh test cho kết quả chính. ADR-0046 đã quy định cạnh `contains` của mọi split lấy từ CLIP top-k, còn cạnh annotation chỉ làm ablation cận trên; kết quả ablation đó trên bộ này phải ghi là **oracle**. Trước khi chạy mô hình đồ thị trên bộ này, cần một test chứng minh cạnh của ảnh test chỉ đến từ CLIP top-k.
+  - **Kênh rò 2, chính các cạnh ConceptNet đã sinh câu:** câu gián tiếp được viết từ các cạnh trong `kg_evidence`. Nếu G-Retriever / PCST dùng đúng các cạnh này làm đồ thị khái niệm, mô hình nhận đường đi truy vấn → khái niệm gần như miễn phí. Đây không phải rò train/test, nhưng làm điểm và giải thích trông tốt hơn thực tế. Báo cáo phải gọi đây là kịch bản "KG đã biết". Cần ablation **loại đúng các cạnh trong `kg_evidence`** của từng truy vấn (ngoài ablation bỏ / xáo cạnh chung), và đồ thị khái niệm phải có nhiều cạnh khác ngoài các cạnh sinh truy vấn.
+- **Hợp với phương pháp cấp độ 2:** cạnh ConceptNet đã lọc dùng được làm đồ thị khái niệm cho G-Retriever / PCST, với các điều kiện ở "Kênh rò 2".
 - **Khó hơn:**
   - Cần tải và lọc ConceptNet; cần data card và ghi license CC BY-SA 4.0.
   - Số khái niệm activity trên VG ít, nên nhóm activity có thể dưới 10 cặp. Báo cáo phải ghi rõ cỡ mẫu từng nhóm.
@@ -102,14 +104,6 @@ Vấn đề còn lại, các luật trên không sửa được nên người du
 - Fact đùa (ví dụ chicken "can cross road").
 - Danh từ không đếm được bị gắn "a" ("a furniture", "an alcohol").
 
-## Nguồn tham khảo
-
-- Đề bài, §2, §5, §6, §7, §8.
-- ADR-0009, ADR-0040, ADR-0044, ADR-0046.
-- Speer, Chin, Havasi, "ConceptNet 5.5: An Open Multilingual Graph of General Knowledge", AAAI 2017.
-- ConceptNet downloads: https://github.com/commonsense/conceptnet5/wiki/Downloads (link tải và dung lượng file cần kiểm lại trước khi tải).
-- Kết quả review leakage-auditor và experiment-reviewer trước PR #4 (2026-11-06).
-
 ### Pilot val lần 2 (2026-11-15)
 
 Chạy lại trên val sau các thay đổi luật của lần 1. Kết quả: 24 cặp, trong đó 4 activity (frisbee, tennis, ball, baseball) và 20 object. Lý do loại: `no_unique_description` 360, `answer_count_out_of_range` 239, `term_has_several_synsets` 101, `too_few_train_images` 113, `excluded_concept` 4, `concept_already_used` 3, `name_not_plain_words` 1.
@@ -134,3 +128,25 @@ Vấn đề còn lại, luật không sửa được nên người duyệt phả
 - male "An animal that can father child" (từ loại và fact không hợp).
 - bean "A fruit" (từ loại sai về mặt đời thường).
 - wine "A food that has an alcohol" (danh từ không đếm được gắn "an").
+
+### Pilot val lần 3 (2026-11-15)
+
+Chạy lại trên val sau khi thêm `riding` và `flying`, config giống hệt config test trừ split và đường dẫn. Kết quả: **29 cặp, 9 activity và 20 object**. Lý do loại: `no_unique_description` 367, `answer_count_out_of_range` 239, `too_few_train_images` 220, `term_has_several_synsets` 101, `concept_already_used` 8, `excluded_concept` 4, `name_not_plain_words` 1.
+
+| Vị từ | Khái niệm (số ảnh đáp án trên val) |
+|---|---|
+| playing | frisbee (14), tennis (13), ball (4), baseball (8) |
+| riding | bicycle (28), horse (24), elephant (9), boat (3) |
+| flying | kite (19) |
+
+Vấn đề mới, để người duyệt xử lý: bicycle bị ConceptNet gán từ loại "toy" ("A person riding a toy …"); "found in an africa", "found in a harbor and a water" (danh từ riêng hoặc không đếm được gắn mạo từ). Nhóm object giống pilot lần 2.
+
+Quyết định (Thuat Nguyen, 2026-11-15): **chốt config** ở trạng thái này. Từ đây không đổi quy tắc, template hay ngưỡng nữa; bước tiếp theo là nhóm duyệt ADR, rồi sinh trên test.
+
+## Nguồn tham khảo
+
+- Đề bài, §2, §5, §6, §7, §8.
+- ADR-0009, ADR-0040, ADR-0044, ADR-0046.
+- Speer, Chin, Havasi, "ConceptNet 5.5: An Open Multilingual Graph of General Knowledge", AAAI 2017.
+- ConceptNet downloads: https://github.com/commonsense/conceptnet5/wiki/Downloads; file đã tải: https://s3.amazonaws.com/conceptnet/downloads/2019/edges/conceptnet-assertions-5.7.0.csv.gz (xem `data_cards/conceptnet.md`).
+- Kết quả review leakage-auditor và experiment-reviewer trước PR #4 (2026-11-06); leakage-auditor và code review của nhánh này (2026-11-15).
