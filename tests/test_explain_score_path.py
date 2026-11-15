@@ -76,6 +76,21 @@ def test_shares_by_hand_on_the_identity_model():
     assert path.concept_shares[0].concept_row == 3  # largest share first
 
 
+def test_removing_another_images_edge_leaves_the_path_unchanged():
+    model = random_model()
+    before = decompose_graph_score(model, GRAPH, 0, QUERY)
+    keep = EDGE_INDEX[1] != 2  # remove 5 -> 2, an edge of image 2 only
+    graph = SplitGraph(GRAPH.image_ids, X, EDGE_INDEX[:, keep], None)
+    after = decompose_graph_score(model, graph, 0, QUERY)
+
+    assert after.graph_score == pytest.approx(before.graph_score, abs=1e-6)
+    assert after.self_share == pytest.approx(before.self_share, abs=1e-6)
+    assert after.bias_share == pytest.approx(before.bias_share, abs=1e-6)
+    assert [(c.concept_row, round(c.share, 6)) for c in after.concept_shares] == [
+        (c.concept_row, round(c.share, 6)) for c in before.concept_shares
+    ]
+
+
 def test_image_without_edges_has_only_its_own_part_and_the_bias():
     model = random_model()
     keep = EDGE_INDEX[1] != 2  # image 2 loses its only edge
