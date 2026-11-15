@@ -77,6 +77,8 @@ Kết hợp điểm giữ như ADR-0047: `final = alpha·cos(q, x_i) + (1−alph
 
 Thêm `pcst-fast` vào nhóm `graph`. Thư viện có wheel cho Windows `cp311` và Linux, license **GNU GPL**. Đồ án học thuật không phân phối thương mại, nhưng phải ghi license trong README hoặc báo cáo. Thêm dependency là quyết định của nhóm (CLAUDE.md).
 
+**Ghim `numpy<2`.** `pcst-fast` 1.0.10 (bản mới nhất trên PyPI) chỉ cho kết quả đúng với numpy 1.x. Kiểm thử bài toán 3 nút (kết quả đúng là `[0, 1, 2] [0, 1]`): numpy 1.26.4 cho đúng; numpy 2.4.6 cho sai (`[0, 0, 0] [1, 1]`), với cả list, int32 và int64 liên tục. Build từ mã nguồn cần MSVC (chưa cài). Vì vậy project ghim `numpy>=1.26,<2` trong `pyproject.toml` (kéo theo pandas 2.3.3 thay cho 3.x). Quyết định bởi Thuat Nguyen, 2026-11-15. Sau khi merge, cả nhóm cần chạy lại `uv sync`. Gỡ ràng buộc này khi `pcst-fast` có bản sửa.
+
 Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. Các giá trị lưới cụ thể là đề xuất, chốt trên val. **Nhóm chưa duyệt.**
 
 ## Các phương án đã cân nhắc
