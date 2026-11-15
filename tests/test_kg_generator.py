@@ -113,3 +113,14 @@ def test_limits_per_group():
     records, _ = generate_kg_pairs(train, test, build_fact_index(EDGES), config)
 
     assert {record["query_group"] for record in records} == {"object"}
+
+
+def test_term_with_several_synsets_in_a_group_is_rejected():
+    # bat.n.01 (animal) and bat.n.05 (club) would give two pairs with the same text.
+    train = {1: scene(1, "bat.n.01", "near"), 2: scene(2, "bat.n.05", "near")}
+    test = {10: scene(10, "bat.n.01", "near"), 11: scene(11, "bat.n.05", "near")}
+
+    records, rejections = generate_kg_pairs(train, test, build_fact_index(EDGES), CONFIG)
+
+    assert not [r for r in records if r["hidden_concept"].startswith("bat.")]
+    assert rejections["term_has_several_synsets"] == 2

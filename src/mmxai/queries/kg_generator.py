@@ -30,6 +30,7 @@ REJECT_NO_FACTS = "no_conceptnet_facts"
 REJECT_ANSWERS = "answer_count_out_of_range"
 REJECT_NO_DESCRIPTION = "no_unique_description"
 REJECT_USED = "concept_already_used"
+REJECT_AMBIGUOUS_TERM = "term_has_several_synsets"
 
 
 @dataclass(frozen=True)
@@ -155,6 +156,9 @@ def generate_kg_pairs(
     used: set[str] = set()
     for group, train_images, eval_images, templates, limit in groups:
         pool = sorted({synset_lemma(synset) for synset in train_images})
+        # Synsets per term: "bat" as animal and as club would give two pairs with the same
+        # text but different answers, and the pool (by term) cannot tell them apart.
+        synsets_per_term = Counter(synset_lemma(synset) for synset in train_images)
 
         # Most frequent first; the synset name breaks ties so the order is deterministic.
         ordered = sorted(train_images.items(), key=lambda item: (-len(item[1]), item[0]))
@@ -166,7 +170,10 @@ def generate_kg_pairs(
                 rejections[REJECT_TOO_RARE] += 1
                 continue
             term = synset_lemma(synset)
-            if synset in used:
+            if synsets_per_term[term] > 1:
+                rejections[REJECT_AMBIGUOUS_TERM] += 1
+                continue
+            if synset in used or term in used:
                 rejections[REJECT_USED] += 1
                 continue
             if not PLAIN_WORDS.fullmatch(term):
@@ -186,7 +193,9 @@ def generate_kg_pairs(
                 rejections[REJECT_NO_DESCRIPTION] += 1
                 continue
             num_pairs += 1
+            # Both: the same term must not appear in the other group either.
             used.add(synset)
+            used.add(term)
             pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs:03d}"
             records.extend(
                 make_kg_pair(group, synset, description, answers, pair_id, templates, config)
