@@ -57,7 +57,7 @@ Kết hợp điểm giữ như ADR-0047: `final = alpha·cos(q, x_i) + (1−alph
 |---|---|
 | Chọn | Chỉ trên **val**, theo giao thức ADR-0043 và ADR-0047, chỉ số MRR@100. Bậc 1: `k ∈ {3, 5, 10}` và `C ∈ {0.25, 0.5, 1.0}` (gồm giá trị bài gốc dùng cho SceneGraphs: `topk=3`, `cost_e=0.5`), rồi `alpha` (hoà thì chọn `alpha` lớn hơn). Bậc 2: thêm các tham số huấn luyện của ADR-0047 |
 | Test | Chạy **một lần** với cấu hình đã chốt, bằng script riêng không chọn gì, giống ADR-0047 |
-| Seed | Bậc 1 tất định (std = 0, ghi rõ). Bậc 2 chạy `[0, 1, 2]`, báo cáo mean ± std |
+| Seed | Bậc 1 (`pcst`, `top_k_only`) **tất định**: ba seed cho kết quả giống hệt nhau, nên std = 0 (giống CLIP thuần trong `results/tables/main.csv`). Std = 0 đến từ tính tất định, **không** phải bằng chứng ổn định thống kê; không được diễn giải như vậy. Vẫn chạy `[0, 1, 2]` để `scripts/summarize_runs.py` hoạt động. Chỉ ablation xáo cạnh có seed thật (seed xáo = seed chạy): so sánh main với shuffled **theo từng seed**. Bậc 2 chạy `[0, 1, 2]`, báo cáo mean ± std |
 | Quy tắc dừng (ghi trước) | Nếu cả bậc 1 lẫn bậc 2 **không hơn `clip_nograph` trên val**, vẫn chạy test một lần và báo cáo trung thực kết quả âm. Chỉ chuyển sang AdaMF-MAT nếu còn thời gian. Không chỉnh lại tham số sau khi thấy kết quả test |
 | Đánh giá | (a) Giao thức chính trên VG test (region description, 5.000 ảnh); (b) bộ truy vấn trực tiếp/gián tiếp v2 (ADR-0050) khi đã được kiểm duyệt; (c) Flickr30k để sau, dùng cùng code khi có đồ thị khái niệm của Flickr |
 

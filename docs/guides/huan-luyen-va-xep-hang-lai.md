@@ -418,6 +418,8 @@ Lưới trên val: `prize_k ∈ {3, 5, 10}`, `C ∈ {0.25, 0.5, 1.0}`, rồi `al
 
 Ba config chỉ khác `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `selection_dir`; có test kiểm (`tests/test_pcst_rerank.py`).
 
+**Về seed và std = 0.** Bậc 1 không huấn luyện và `pcst`, `top_k_only` là tất định, nên chạy 3 seed cho ba kết quả giống hệt nhau và std = 0 (giống CLIP thuần trong `main.csv`). Std = 0 ở đây là do tính tất định, **không** phải bằng chứng ổn định thống kê. Vẫn chạy 3 seed để `summarize_runs.py` hoạt động. Chỉ ablation xáo cạnh có seed thật (seed xáo = seed chạy), nên hãy so sánh main với shuffled **theo từng seed**, không chỉ so hai giá trị trung bình.
+
 ### 9.6. Rò rỉ dữ liệu
 
 - Cạnh PMI chỉ đếm trên **train** (ADR-0048).
