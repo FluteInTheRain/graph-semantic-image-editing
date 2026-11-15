@@ -27,6 +27,9 @@ object_templates: {uses: is used with, location: is found at, has: has, can: can
 # Decision (pilot val 2026-11-15): categories one plays directly ("playing a sport"); any other
 # activity category is worded "playing with a toy" ("playing a toy" read badly).
 activity_play_categories: [sport, game]
+# Decision (pilot val 2026-11-15): too generic to be a hidden concept ("game" was chosen as the
+# target of a pair). A target whose term is listed here is rejected.
+excluded_concepts: [game, activity, sport, toy, thing, object, item, stuff]
 # Number of property facts in an indirect query (besides the one category fact).
 num_properties: 2
 # Decision (pilot val 2026-11-15): ConceptNet weight-1 facts were often odd ("cable found at

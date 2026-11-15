@@ -43,6 +43,7 @@ REJECT_NO_DESCRIPTION = "no_unique_description"
 REJECT_USED = "concept_already_used"
 REJECT_NAME_LEAK = "hidden_name_in_indirect_text"
 REJECT_AMBIGUOUS_TERM = "term_has_several_synsets"
+REJECT_EXCLUDED = "excluded_concept"
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class KgQueryConfig:
     activity_templates: dict[str, str]
     object_templates: dict[str, str]
     activity_play_categories: list[str]
+    excluded_concepts: list[str]
     num_properties: int
     min_fact_weight: float
     min_train_images: int
@@ -187,6 +189,9 @@ def generate_kg_pairs(
             term = synset_lemma(synset)
             if synsets_per_term[term] > 1:
                 rejections[REJECT_AMBIGUOUS_TERM] += 1
+                continue
+            if term in config.excluded_concepts:
+                rejections[REJECT_EXCLUDED] += 1
                 continue
             if synset in used or term in used:
                 rejections[REJECT_USED] += 1

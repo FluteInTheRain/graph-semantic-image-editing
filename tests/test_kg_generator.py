@@ -28,6 +28,7 @@ CONFIG = KgQueryConfig(
         "can": "can",
     },
     activity_play_categories=["sport", "game"],
+    excluded_concepts=[],
     num_properties=2,
     # Fixture edges weigh 1.0, so keep them all usable.
     min_fact_weight=1.0,
@@ -141,3 +142,13 @@ def test_pair_whose_indirect_text_names_the_concept_is_rejected_not_fatal():
     activity = [record for record in records if record["query_group"] == "activity"]
     assert activity == []
     assert rejections["hidden_name_in_indirect_text"] == 1
+
+
+def test_target_in_excluded_concepts_is_rejected():
+    train, test = fixture_graphs()
+    config = replace(CONFIG, excluded_concepts=["tennis"])
+
+    records, rejections = generate_kg_pairs(train, test, build_fact_index(EDGES), config)
+
+    assert "tennis.n.01" not in {record["hidden_concept"] for record in records}
+    assert rejections["excluded_concept"] >= 1
