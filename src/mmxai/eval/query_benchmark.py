@@ -102,6 +102,7 @@ def score_rankings(
         raise ValueError(f"{len(queries)} queries but {len(retrieved_ids)} result lists")
 
     ranks_by_group: dict[str, list[int | None]] = {group: [] for group in QUERY_GROUPS}
+    ranks_by_query_group: dict[str, dict[str, list[int | None]]] = {}
     all_ranks = []
     per_query = []
     for query, row in zip(queries, retrieved_ids, strict=True):
@@ -109,11 +110,16 @@ def score_rankings(
         rank = first_relevant_rank([int(image_id) for image_id in row], relevant)
         ranks_by_group[query["type"]].append(rank)
         all_ranks.append(rank)
+        group = query.get("query_group")
+        if group:
+            ranks_by_query_group.setdefault(group, {"direct": [], "indirect": []})
+            ranks_by_query_group[group][query["type"]].append(rank)
         per_query.append(
             {
                 "qid": query["qid"],
                 "pair_id": query.get("pair_id"),
                 "type": query["type"],
+                "query_group": query.get("query_group"),
                 "rank": rank,
             }
         )
@@ -125,6 +131,17 @@ def score_rankings(
             metrics[group] = compute_metrics(ranks_by_group[group], recall_ks, top_k)
         else:
             metrics[group] = None
+    # ADR-0050: activity and object queries are reported apart; v1 files have no groups.
+    metrics["by_query_group"] = {}
+    for group, ranks_by_type in sorted(ranks_by_query_group.items()):
+        metrics["by_query_group"][group] = {}
+        for query_type, ranks in ranks_by_type.items():
+            if ranks:
+                metrics["by_query_group"][group][query_type] = compute_metrics(
+                    ranks, recall_ks, top_k
+                )
+            else:
+                metrics["by_query_group"][group][query_type] = None
     metrics["per_query"] = per_query
     return metrics
 
