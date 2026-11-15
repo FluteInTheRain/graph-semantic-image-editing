@@ -7,6 +7,10 @@ Before running:
     data/visual_genome/objects.json, data/visual_genome/relationships.json
     artifacts/conceptnet/en_edges.tsv (scripts/prepare_conceptnet.py)
 
+Needs:
+    Several GB of RAM: both annotation files are read once and train graphs for
+    ~98k images are built.
+
 Run (from the repo root):
     Pilot on val (output in results/runs/, gitignored):
         uv run python scripts/generate_kg_queries.py \

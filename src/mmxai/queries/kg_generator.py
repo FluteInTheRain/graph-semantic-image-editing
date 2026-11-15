@@ -235,6 +235,8 @@ def run_kg_generation(config: KgQueryConfig) -> dict:
     eval_graphs, parse_report = build_scene_graphs(objects_entries, relationships_entries, eval_ids)
     train_graphs = canonicalize_graphs(train_graphs, config.predicate_aliases)
     eval_graphs = canonicalize_graphs(eval_graphs, config.predicate_aliases)
+    # The raw JSON lists hold several GB; only the graphs are needed from here on.
+    del objects_entries, relationships_entries
 
     edges = load_edges_tsv(config.conceptnet_edges)
     records, rejections = generate_kg_pairs(
