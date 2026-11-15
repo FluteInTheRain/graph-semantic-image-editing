@@ -46,3 +46,14 @@ Thumbs.db
 # --- Claude Code: personal, never commit (see docs/decisions/0020, 0021) ---
 .claude/settings.local.json
 CLAUDE.local.md
+
+# LaTeX build files (reports/)
+*.aux
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.nav
+*.snm
+*.xdv
+*.synctex.gz
