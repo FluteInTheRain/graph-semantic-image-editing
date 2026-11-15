@@ -78,6 +78,17 @@ def leaks_name(value: str, concept: str) -> bool:
     return bool(set(value.split()) & set(concept.split()))
 
 
+def looks_plural(value: str) -> bool:
+    """True if the last word ends in "s" but not "ss" ("legs", "glasses"; not "glass").
+
+    Deliberately narrow: the templates say "has a legs", so plural values read badly.
+    It wrongly flags words like "bus", but that only removes one candidate property,
+    never a concept, so a cheap rule is better than a word list.
+    """
+    last_word = value.split()[-1]
+    return last_word.endswith("s") and not last_word.endswith("ss")
+
+
 def property_order(fact: Fact, index: dict[str, list[Fact]], look_alikes: list[str]) -> tuple:
     """Sort key: fewest remaining look-alikes, then heavier edge, then alphabet."""
     return (len(concepts_with(index, fact, look_alikes)), -fact.edge.weight, fact.value)
@@ -123,6 +134,9 @@ def choose_description(
         if fact.kind == "isa" or not PLAIN_WORDS.fullmatch(fact.value):
             continue
         if leaks_name(fact.value, concept):
+            continue
+        # "can" values are verb phrases ("carry passengers"), where a plural is fine.
+        if fact.kind != "can" and looks_plural(fact.value):
             continue
         candidates.append(fact)
 

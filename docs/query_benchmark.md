@@ -307,11 +307,13 @@ Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất 
 | Lý do | Nghĩa |
 |---|---|
 | `too_few_train_images` | Ít hơn `min_train_images` ảnh train |
-| `concept_already_used` | Synset này đã có cặp |
+| `concept_already_used` | Synset hoặc tên (term) này đã có cặp, ở nhóm này hoặc nhóm kia |
+| `term_has_several_synsets` | Tên có nhiều synset trong cùng nhóm (`bat.n.01` con dơi, `bat.n.05` cây gậy): câu truy vấn giống nhau nhưng đáp án khác nhau |
 | `name_not_plain_words` | Tên không phải chữ thường đơn giản |
 | `no_conceptnet_facts` | Tên không có trong ConceptNet |
 | `answer_count_out_of_range` | Số ảnh đáp án ngoài `[min_answer_images, max_answer_images]` |
 | `no_unique_description` | Không có mô tả đúng riêng cho C |
+| `hidden_name_in_indirect_text` | Câu gián tiếp hoặc giá trị của loại vẫn chứa tên bị giấu; bỏ riêng cặp này thay vì dừng cả lần chạy |
 
 ### Ví dụ (DỮ LIỆU TỔNG HỢP, không phải ConceptNet hay Visual Genome)
 

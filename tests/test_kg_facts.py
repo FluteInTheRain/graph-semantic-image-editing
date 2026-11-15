@@ -1,7 +1,7 @@
 """Facts per concept and the unique description (ADR-0050). Synthetic edges only."""
 
 from conceptnet_fixtures import EDGES, edge
-from mmxai.queries.kg_facts import build_fact_index, choose_description, leaks_name
+from mmxai.queries.kg_facts import build_fact_index, choose_description, leaks_name, looks_plural
 
 CATEGORIES = ["sport", "vehicle"]
 SPORTS = ["tennis", "badminton", "baseball"]
@@ -59,3 +59,54 @@ def test_category_that_repeats_the_name_is_skipped():
 
     # The only category word would put "tennis" into the query.
     assert choose_description("tennis", [], index, ["tennis sport"], num_properties=0) is None
+
+
+def test_looks_plural_is_a_deliberately_narrow_rule():
+    assert looks_plural("legs")
+    assert looks_plural("glasses")
+    assert not looks_plural("glass")
+    assert not looks_plural("grass")
+    # Known false positive: "bus" counts as plural. It only removes a candidate
+    # property, never a concept, so the cost is one lost property.
+    assert looks_plural("bus")
+
+
+def plural_index(extra: list) -> dict:
+    return build_fact_index(
+        [
+            edge("IsA", "tennis", "sport"),
+            edge("IsA", "badminton", "sport"),
+            edge("HasA", "tennis", "legs"),
+            edge("UsedFor", "racket", "tennis"),
+            edge("UsedFor", "racket", "badminton"),
+            *extra,
+        ]
+    )
+
+
+def test_a_plural_property_is_never_chosen():
+    # "legs" is the only fact that tells tennis from badminton, but it reads "has a legs".
+    index = plural_index([])
+
+    assert choose_description("tennis", ["tennis", "badminton"], index, ["sport"], 1) is None
+
+
+def test_a_non_plural_property_is_chosen_instead_of_the_plural_one():
+    index = plural_index([edge("AtLocation", "tennis", "court")])
+
+    description = choose_description("tennis", ["tennis", "badminton"], index, ["sport"], 1)
+
+    assert [fact.value for fact in description.properties] == ["court"]
+
+
+def test_plural_values_are_fine_for_can_facts():
+    index = build_fact_index(
+        [
+            edge("IsA", "train", "vehicle"),
+            edge("CapableOf", "train", "carry passengers"),
+        ]
+    )
+
+    description = choose_description("train", ["train"], index, ["vehicle"], 1)
+
+    assert [fact.value for fact in description.properties] == ["carry passengers"]
