@@ -10,10 +10,10 @@
 
 | Mục cần người tải điền | Giá trị |
 |---|---|
-| Ngày tải | _(chưa điền)_ |
+| Ngày tải | 2026-11-15, từ https://s3.amazonaws.com/conceptnet/downloads/2019/edges/conceptnet-assertions-5.7.0.csv.gz |
 | Người tải | _(chưa điền)_ |
-| Dung lượng file tải về | _(chưa điền)_ |
-| sha256 file tải về | _(chưa điền)_ |
+| Dung lượng file tải về | 497963447 byte |
+| sha256 file tải về | `ACCD65FE94038584295574DDC26E1500C1919C8C4532BF771811CAFD0948AF7E` |
 
 ## Giấy phép
 
@@ -38,9 +38,10 @@ Mỗi cạnh giữ nguyên URI gốc để từng truy vấn trích dẫn đư�
 
 | Mục cần người chạy điền | Giá trị |
 |---|---|
-| Số dòng đọc | _(chưa điền, script in `lines_read`)_ |
-| Số cạnh giữ | _(chưa điền, script in `edges_kept`)_ |
-| sha256 của TSV | _(chưa điền, script in `sha256`)_ |
+| Số dòng đọc | 34074917 (`malformed_lines` = 0) |
+| Số cạnh giữ | 302709 |
+| sha256 của TSV | `20ecee542cd3955078a60c7719c13a2b93e5417c8e4047a5fc63659949fe589e` |
+| Cạnh theo quan hệ | IsA 198018, UsedFor 39756, AtLocation 25652, CapableOf 22672, PartOf 11066, HasA 5545 |
 
 ## Rò rỉ dữ liệu
 

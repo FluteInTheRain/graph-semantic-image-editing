@@ -80,6 +80,28 @@ Ngưỡng ban đầu, sẽ chỉnh trên pilot val trước khi sinh trên test:
   4. Nhóm duyệt ADR này và quyết trạng thái của ADR-0044.
   5. Sinh trên test, kiểm duyệt, build, đánh giá.
 
+### Pilot val lần 1 (2026-11-15)
+
+Chạy generator trên split val (chưa đụng test) và đọc kết quả thật. Thấy các vấn đề sau:
+
+- Câu activity đọc không tự nhiên: "A person playing a toy that ..." (frisbee, ball), "A person playing an activity that ..." (game).
+- Fact weight 1.0 được chọn vì hiếm, nhưng nghe lạ: "can has a fruit bowl on", "cable found at a back of computer", "jar can continue to leak", "soccer can cause head injuries".
+- Giới từ sai: "played on a park", "found at a kitchen".
+- Khái niệm quá chung chung ("game") được chọn làm khái niệm ẩn.
+
+Bốn thay đổi luật (config dùng chung cho val và test), quyết định bởi Thuat Nguyen:
+
+1. `min_fact_weight: 2.0`: tính chất (không phải `IsA`) có `weight` thấp hơn bị bỏ. Phần kiểm tra "khái niệm giống" vẫn dùng mọi fact của khái niệm khác, vì fact yếu vẫn là fact đúng.
+2. `activity_play_categories: [sport, game]`: từ loại nằm trong danh sách thì viết "playing a sport that ...", còn lại viết "playing with a toy that ...".
+3. `excluded_concepts: [game, activity, sport, toy, thing, object, item, stuff]`: khái niệm đích nằm trong danh sách bị loại với lý do `excluded_concept`.
+4. Giới từ: `activity_templates.location: is played in`, `object_templates.location: is found in`.
+
+Vấn đề còn lại, các luật trên không sửa được nên người duyệt phải xử lý bằng tay:
+
+- Nhầm nghĩa từ trong ConceptNet (ví dụ fan bị gắn với stadium).
+- Fact đùa (ví dụ chicken "can cross road").
+- Danh từ không đếm được bị gắn "a" ("a furniture", "an alcohol").
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §8.

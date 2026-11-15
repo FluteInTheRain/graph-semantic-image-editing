@@ -162,7 +162,8 @@ Vị từ trong Visual Genome rất lộn xộn ("ON", "is wearing", "on a"). Ta
 | Hai node trong chuỗi **cùng synset** (`man`/`guy` cùng `man.n.01`) | `repeated_synset_in_chain` | Đáp án khớp theo synset; có thể là cùng một người với hai tên |
 | Dạng chuỗi `shared_subject` | `shared_subject_chain` | Mục 5.2 |
 | Không có vị từ hành động | `no_action_predicate` | Mục 5.2 |
-| Tên node cầu (bị giấu) xuất hiện trong câu gián tiếp | `hidden_name_in_indirect_text` | Nếu không, đó chỉ là câu trực tiếp viết lại |
+| Tên node cầu (bị giấu) xuất hiện trong câu gián tiếp | `excluded_concept` | Tên nằm trong `excluded_concepts` của config (quá chung chung như "game", "toy", "thing") |
+| `hidden_name_in_indirect_text` | Nếu không, đó chỉ là câu trực tiếp viết lại |
 | Câu trùng (tối đa 1 cặp mỗi ảnh) | `duplicate_query_text` | Bộ truy vấn trải trên nhiều ảnh |
 | Chuỗi có > `max_candidate_images = 25` ảnh test khớp | `too_many_candidate_images` | Quá chung, không kiểm tay được |
 
@@ -295,10 +296,20 @@ Cạnh khác bị bỏ. Cùng (khái niệm, `kind`, giá trị) từ nhiều c�
 1. **Kho so sánh** (`pool`) là mọi khái niệm cùng nhóm xuất hiện ở ít nhất 1 ảnh train, không chỉ các khái niệm đích.
 2. Chọn **từ loại**: cạnh `IsA` có giá trị nằm trong `category_words` của config. Ưu tiên từ loại ít khái niệm khác chung nhất, hoà thì theo thứ tự chữ.
 3. Chọn **tính chất** theo kiểu tham lam: mỗi lần lấy fact mà ít khái niệm còn lại (cùng từ loại) có nhất. Hoà thì lấy cạnh có `weight` cao hơn, rồi theo thứ tự chữ.
-4. Bỏ tính chất lộ tên (`leaks_name`: "tennis ball" khi C là tennis) và tính chất không phải chữ thường đơn giản.
-5. Sau `num_properties` tính chất mà vẫn còn khái niệm giống C thì bỏ C (`no_unique_description`).
+4. Bỏ tính chất có `weight` nhỏ hơn `min_fact_weight` (config, hiện 2.0; không áp cho `IsA`). Phần so với khái niệm giống vẫn dùng mọi fact của khái niệm khác, vì fact yếu vẫn đúng.
+5. Bỏ tính chất lộ tên (`leaks_name`: "tennis ball" khi C là tennis) và tính chất không phải chữ thường đơn giản.
+6. Sau `num_properties` tính chất mà vẫn còn khái niệm giống C thì bỏ C (`no_unique_description`).
 
 Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất trước, hoà thì theo tên synset. Cả quy trình **không dùng seed**.
+
+Các trường config liên quan (cùng giá trị ở config val và test; lý do: pilot val 2026-11-15, ADR-0050):
+
+| Trường | Ý nghĩa |
+|---|---|
+| `min_fact_weight` | Tính chất nhẹ hơn ngưỡng này bị bỏ |
+| `activity_play_categories` | Từ loại chơi trực tiếp ("playing a sport"); từ loại khác viết "playing with a toy" |
+| `excluded_concepts` | Khái niệm quá chung chung không được làm khái niệm ẩn |
+| `activity_templates.location`, `object_templates.location` | Giới từ vị trí: `is played in`, `is found in` |
 
 ### Vì sao một khái niệm bị loại
 
@@ -313,6 +324,7 @@ Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất 
 | `no_conceptnet_facts` | Tên không có trong ConceptNet |
 | `answer_count_out_of_range` | Số ảnh đáp án ngoài `[min_answer_images, max_answer_images]` |
 | `no_unique_description` | Không có mô tả đúng riêng cho C |
+| `excluded_concept` | Tên nằm trong `excluded_concepts` của config (quá chung chung như "game", "toy", "thing") |
 | `hidden_name_in_indirect_text` | Câu gián tiếp hoặc giá trị của loại vẫn chứa tên bị giấu; bỏ riêng cặp này thay vì dừng cả lần chạy |
 
 ### Ví dụ (DỮ LIỆU TỔNG HỢP, không phải ConceptNet hay Visual Genome)
