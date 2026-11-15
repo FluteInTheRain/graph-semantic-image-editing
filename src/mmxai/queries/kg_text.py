@@ -31,9 +31,21 @@ def direct_text(group: str, concept: str) -> str:
     return as_sentence(with_article(concept))
 
 
-def indirect_text(group: str, description: Description, templates: dict[str, str]) -> str:
+def indirect_text(
+    group: str,
+    description: Description,
+    templates: dict[str, str],
+    activity_play_categories: list[str],
+) -> str:
+    """Indirect sentence. For activities, "playing a sport" but "playing with a toy".
+
+    Only categories in activity_play_categories can be played directly; for any other
+    category (toy, ...) the pilot val text "playing a toy that ..." read badly.
+    """
     category = with_article(description.category.value)
     properties = property_phrase(description, templates)
     if group == "activity":
-        return as_sentence(f"a person playing {category} that {properties}")
+        if description.category.value in activity_play_categories:
+            return as_sentence(f"a person playing {category} that {properties}")
+        return as_sentence(f"a person playing with {category} that {properties}")
     return as_sentence(f"{category} that {properties}")

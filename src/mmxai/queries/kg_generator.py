@@ -60,6 +60,7 @@ class KgQueryConfig:
     category_words: list[str]
     activity_templates: dict[str, str]
     object_templates: dict[str, str]
+    activity_play_categories: list[str]
     num_properties: int
     min_fact_weight: float
     min_train_images: int
@@ -130,7 +131,8 @@ def make_kg_pair(
     direct = {"qid": f"{pair_id}-d", "text": direct_text(group, description.concept)}
     direct.update(type="direct", reasoning_type="explicit", hidden_names=[])
     direct.update(shared)
-    indirect = {"qid": f"{pair_id}-i", "text": indirect_text(group, description, templates)}
+    text = indirect_text(group, description, templates, config.activity_play_categories)
+    indirect = {"qid": f"{pair_id}-i", "text": text}
     indirect.update(type="indirect", reasoning_type="kg_description")
     indirect["hidden_names"] = [description.concept]
     indirect.update(shared)

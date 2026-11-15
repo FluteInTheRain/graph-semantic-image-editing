@@ -24,6 +24,9 @@ category_words: [sport, game, activity, vehicle, animal, instrument, fruit, vege
 # Verb phrase per ConceptNet fact kind, for activity and object concepts.
 activity_templates: {uses: uses, location: is played on, has: has, can: can}
 object_templates: {uses: is used with, location: is found at, has: has, can: can}
+# Decision (pilot val 2026-11-15): categories one plays directly ("playing a sport"); any other
+# activity category is worded "playing with a toy" ("playing a toy" read badly).
+activity_play_categories: [sport, game]
 # Number of property facts in an indirect query (besides the one category fact).
 num_properties: 2
 # Decision (pilot val 2026-11-15): ConceptNet weight-1 facts were often odd ("cable found at

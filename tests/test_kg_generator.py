@@ -27,6 +27,7 @@ CONFIG = KgQueryConfig(
         "has": "has",
         "can": "can",
     },
+    activity_play_categories=["sport", "game"],
     num_properties=2,
     # Fixture edges weigh 1.0, so keep them all usable.
     min_fact_weight=1.0,
