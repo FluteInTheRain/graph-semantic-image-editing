@@ -308,6 +308,9 @@ Các trường config liên quan (cùng giá trị ở config val và test; lý 
 |---|---|
 | `min_fact_weight` | Tính chất nhẹ hơn ngưỡng này bị bỏ |
 | `activity_play_categories` | Từ loại chơi trực tiếp ("playing a sport"); từ loại khác viết "playing with a toy" |
+| `activity_predicates` | Vị từ của nhóm activity, duyệt theo thứ tự: `playing`, `riding`, `flying` (thêm riding và flying vì pilot val lần 2 chỉ có 4 ứng viên activity) |
+| `play_predicates` | Vị từ giữ cách viết cũ "A person playing tennis." (không mạo từ, `activity_templates`); vị từ activity khác viết "A person riding a horse." với mạo từ và `object_templates`. Phải là tập con của `activity_predicates` |
+| `limit_activity_pairs` | Tổng số cặp activity cho mọi vị từ (12) |
 | `excluded_concepts` | Khái niệm quá chung chung không được làm khái niệm ẩn |
 | `activity_templates.location`, `object_templates.location` | Giới từ vị trí: `is played in`, `is found in` |
 
@@ -340,12 +343,15 @@ Ví dụ lấy từ test fixture `tests/conceptnet_fixtures.py` và `tests/test_
 
 Nhóm object, cũng từ fixture: `A train.` và `A vehicle that is found at a railway and can carry passengers.`
 
+Activity cưỡi, cũng từ fixture (cạnh tự bịa: `horse IsA animal`, `horse AtLocation barn`, `horse CapableOf carry rider`, `elephant IsA animal`, `elephant AtLocation zoo`; các câu dưới là đầu ra của test với `object_templates` của test): `A person riding a horse.` và `A person riding an animal that is found at a barn and can carry rider.` Trong config thật, riding và flying dùng `object_templates` nên giới từ là "in".
+
 ### Các trường mới trong JSONL và manifest
 
 | Trường | Nghĩa |
 |---|---|
 | `hidden_concept` | Synset bị giấu (ví dụ `tennis.n.01`) |
 | `query_group` | `activity` hoặc `object` |
+| `activity_verb` | Vị từ của khái niệm activity (`playing`, `riding`, `flying`); `null` với nhóm object |
 | `kg_evidence` | Danh sách cạnh ConceptNet đã dùng: `{uri, rel, start, end, weight}`. `check_kg_evidence` kiểm mỗi `uri` có trong file cạnh |
 | `path_hint` | Các cạnh viết thành chuỗi "start - rel - end" |
 

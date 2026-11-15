@@ -28,15 +28,15 @@ Số đếm trên **train** của Visual Genome (2026-11-15, chỉ dùng để c
 |---|---|
 | Nguồn tri thức | ConceptNet 5.7, file `conceptnet-assertions-5.7.0.csv.gz`, đặt ở `data/conceptnet/` (không commit). Lọc **một lần** bằng `scripts/prepare_conceptnet.py`: chỉ giữ cạnh có hai đầu đều tiếng Anh (`/c/en/`), thuộc quan hệ `IsA, UsedFor, AtLocation, HasA, PartOf, CapableOf`, trọng số ≥ 1. File lọc ghi vào `artifacts/conceptnet/` kèm sha256. Mỗi cạnh giữ nguyên URI gốc để làm bằng chứng. Có data card `data_cards/conceptnet.md` |
 | Nối VG với ConceptNet | Lemma của synset VG thành node ConceptNet: `tennis.n.01` → `/c/en/tennis`, `fire_hydrant.n.01` → `/c/en/fire_hydrant`. Không khớp thì bỏ khái niệm. Tên có nhiều synset trong cùng nhóm thì bỏ (`bat.n.01` và `bat.n.05` cho hai cặp cùng câu, khác đáp án) |
-| Hai nhóm khái niệm | **activity**: đối tượng của vị từ `playing` (sau chuẩn hoá vị từ của ADR-0044), có chủ thể là người, xác định bằng danh sách synset trong config (man, woman, boy, girl, child, person, player…). **object**: synset của object VG |
+| Hai nhóm khái niệm | **activity**: đối tượng của vị từ `playing`, `riding` hoặc `flying` (sau chuẩn hoá vị từ của ADR-0044; riding và flying thêm ở pilot val lần 2), có chủ thể là người, xác định bằng danh sách synset trong config (man, woman, boy, girl, child, person, player…). Đích là cặp (vị từ, synset); kho so sánh của một đích activity chỉ gồm các khái niệm cùng vị từ trên train (ngựa so với những thứ khác được cưỡi, không so với môn thể thao). **object**: synset của object VG |
 | Chọn khái niệm đích | Chỉ đếm trên **train**: khái niệm phải xuất hiện ở ≥ `min_train_images` ảnh train. Khái niệm phải có ít nhất một cạnh `IsA` tới một **từ loại** trong danh sách config (sport, game, vehicle, animal, instrument, fruit, furniture, tool…), và ≥ 2 cạnh tính chất |
 | Ảnh đáp án | Trong split **test**. activity: ảnh có quan hệ *(người) –playing→ C*, so khớp synset. object: ảnh có object mang synset C. Số ảnh đáp án phải nằm trong `[min_answer_images, max_answer_images]`; ngoài khoảng thì bỏ khái niệm. Khoảng này cố định trước, không đổi sau khi có kết quả truy hồi |
 | Mô tả duy nhất | Mỗi câu gián tiếp gồm **1 từ loại + 2 tính chất**. Tập tính chất phải đúng với **chỉ C** trong kho so sánh. Kho so sánh gồm **mọi** khái niệm cùng nhóm xuất hiện ở ≥ 1 ảnh train và nối được sang ConceptNet, không chỉ các khái niệm đích. Ví dụ "uses a racket" phải loại được cả badminton dù badminton không phải khái niệm đích. Cách chọn: tham lam, ưu tiên tính chất ít khái niệm khác có, hoà thì theo trọng số rồi theo thứ tự chữ. Quy trình tất định: duyệt khái niệm theo tần suất trên train, hoà thì theo trọng số cạnh rồi theo thứ tự chữ, không dùng seed. Không tìm được mô tả duy nhất thì bỏ khái niệm |
 | Không lộ tên | Bỏ tính chất có đầu kia chứa tên hoặc lemma của C ("tennis racket" khi C là tennis). Câu gián tiếp không được chứa tên bị giấu (validator v1, `hidden_names_in_text`) |
 | Tính chất số nhiều | Bỏ tính chất (trừ loại "can") có từ cuối tận cùng bằng "s" nhưng không phải "ss" ("legs", "glasses"; giữ "glass", "grass") vì mẫu câu "has a legs" sai ngữ pháp; quy tắc cố ý hẹp, nhận nhầm "bus" chỉ làm mất một tính chất ứng viên (review 2026-11-15) |
-| Template | Theo quan hệ và chiều cạnh: `X UsedFor C` → "that uses a X"; `C AtLocation Y` → activity "that is played on a Y", object "that is found at a Y"; `C HasA X` hoặc `X PartOf C` → "that has a X"; `C CapableOf V` → "that can V". activity: direct "A person playing C." / indirect "A person playing a K that …"; object: direct "A C." / indirect "A K that …" (K là từ loại). "a/an/some" như ADR-0044 |
+| Template | Theo quan hệ và chiều cạnh: `X UsedFor C` → "that uses a X"; `C AtLocation Y` → activity "that is played on a Y", object "that is found at a Y"; `C HasA X` hoặc `X PartOf C` → "that has a X"; `C CapableOf V` → "that can V". activity chơi (`play_predicates: [playing]`): direct "A person playing C." (không mạo từ) / indirect "A person playing a K that …"; activity khác (riding, flying) dùng `object_templates` và mạo từ: direct "A person riding a C." / indirect "A person riding a K that …"; object: direct "A C." / indirect "A K that …" (K là từ loại). "a/an/some" như ADR-0044 |
 | Cặp và đáp án | Một khái niệm → một cặp direct + indirect, cùng `pair_id`, **cùng đáp án**. Dùng chung đáp án hợp lệ vì mô tả trỏ duy nhất tới C, nên vấn đề H1 không còn |
-| Bằng chứng trong JSONL | Thêm các trường tuỳ chọn `hidden_concept` (synset), `query_group` (`activity` / `object`), `kg_evidence` (danh sách `{uri, rel, start, end, weight}`). Giữ các trường bắt buộc của `queries/README.md` |
+| Bằng chứng trong JSONL | Thêm các trường tuỳ chọn `hidden_concept` (synset), `query_group` (`activity` / `object`), `activity_verb` (vị từ của đích activity, null với object), `kg_evidence` (danh sách `{uri, rel, start, end, weight}`). Giữ các trường bắt buộc của `queries/README.md` |
 | Kiểm duyệt | Như ADR-0044: manifest CSV, A duyệt rồi B (khác A) kiểm lại; người duyệt xác nhận tính chất đúng với khái niệm, câu đọc được, ảnh đúng. Có thể sửa câu (`edited_*_text`) nhưng không được thêm tên bị giấu |
 | Số lượng | Sinh khoảng 30 cặp ứng viên, cần ≥ 10 cặp `verified` (≥ 20 truy vấn), trong đó ≥ 4 cặp activity |
 | Thứ tự | Pilot trên **val** để chỉnh từ loại, template và ngưỡng, rồi chốt config (`configs/query_benchmark_vg_kg.yaml` và bản pilot), sau đó mới sinh trên test. Một test bắt hai config dùng chung mọi quy tắc |
@@ -109,3 +109,28 @@ Vấn đề còn lại, các luật trên không sửa được nên người du
 - Speer, Chin, Havasi, "ConceptNet 5.5: An Open Multilingual Graph of General Knowledge", AAAI 2017.
 - ConceptNet downloads: https://github.com/commonsense/conceptnet5/wiki/Downloads (link tải và dung lượng file cần kiểm lại trước khi tải).
 - Kết quả review leakage-auditor và experiment-reviewer trước PR #4 (2026-11-06).
+
+### Pilot val lần 2 (2026-11-15)
+
+Chạy lại trên val sau các thay đổi luật của lần 1. Kết quả: 24 cặp, trong đó 4 activity (frisbee, tennis, ball, baseball) và 20 object. Lý do loại: `no_unique_description` 360, `answer_count_out_of_range` 239, `term_has_several_synsets` 101, `too_few_train_images` 113, `excluded_concept` 4, `concept_already_used` 3, `name_not_plain_words` 1.
+
+Chỉ có 4 ứng viên activity, đúng mức tối thiểu của yêu cầu "≥ 4 cặp activity đã verified": sau khi duyệt tay có thể không đủ. Trong khi đó VG train có rất nhiều quan hệ `riding` (horse, skateboard, surfboard, bike, motorcycle, elephant…) và `flying` (kite).
+
+Quyết định (Thuat Nguyen, 2026-11-15): mở rộng nhóm activity từ `playing` sang `playing`, `riding`, `flying`.
+
+- Đích activity là cặp (vị từ, synset); kho so sánh theo từng vị từ. Lý do: ngựa chỉ cần khác những thứ khác được cưỡi, so với môn thể thao thì vô nghĩa.
+- `play_predicates: [playing]` giữ cách viết cũ; riding và flying viết "A person riding a horse." và "A person riding an animal that …".
+- Thêm alias `rides`, `ride`, `riding on` → `riding` (VG viết "riding on a horse" cho cùng một hành động) và `flies`, `fly` → `flying`.
+- `limit_activity_pairs` là tổng cho mọi vị từ, tăng từ 10 lên 12. `used` dùng chung nên một khái niệm chỉ xuất hiện một lần; vị từ duyệt theo thứ tự trong config, trong mỗi vị từ theo số ảnh train rồi tên synset.
+- Bản ghi thêm trường `activity_verb`.
+
+Vấn đề còn lại, luật không sửa được nên người duyệt phải xử lý bằng tay:
+
+- tennis "has an advantage" (fact đùa).
+- fan "found in a stadium" (nhầm nghĩa: fan là người hâm mộ, không phải quạt).
+- chicken "can cross road" (fact đùa).
+- nail "found in a board" (đúng nhưng đọc lạ).
+- machine "can bottle soda" (fact quá hẹp).
+- male "An animal that can father child" (từ loại và fact không hợp).
+- bean "A fruit" (từ loại sai về mặt đời thường).
+- wine "A food that has an alcohol" (danh từ không đếm được gắn "an").
