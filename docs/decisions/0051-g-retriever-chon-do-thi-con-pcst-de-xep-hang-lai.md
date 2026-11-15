@@ -37,7 +37,7 @@ Tái lập **bước (1)–(3)** của G-Retriever, **bỏ bước (4) LLM**, đ
 | Cạnh (bản chính) | Cạnh đồng xuất hiện PMI của ADR-0048 (đếm trên **train**, top 10 mỗi khái niệm), xem như **vô hướng**, bỏ cạnh trùng. **Không** dùng ConceptNet ở bản chính, để tránh "Kênh rò 2" của ADR-0050 |
 | Giải thưởng | Theo bài gốc: `k` khái niệm có `cos(q, x_c)` cao nhất nhận giải thưởng `k, k−1, …, 1` theo hạng; các khái niệm khác nhận 0. `q` là vector CLIP text của truy vấn |
 | Phí cạnh | Một hằng số `C` cho mọi cạnh, theo bài gốc. PMI chỉ quyết định cạnh nào tồn tại. Cạnh của nhóm không có chữ, nên **không có giải thưởng cho cạnh**. Đây là chỗ khác bài gốc, phải ghi trong báo cáo |
-| Thuật toán | `pcst-fast` (Goemans–Williamson kèm pruning, một cây). Tham số gọi hàm cụ thể ghi trong kế hoạch cài đặt sau khi kiểm tài liệu thư viện |
+| Thuật toán | `pcst-fast`, gọi giống hệt code gốc: `pcst_fast(edges, prizes, costs, root=-1, num_clusters=1, pruning='gw', verbosity_level=0)`; đỉnh của đồ thị con gồm đỉnh được chọn và hai đầu của mọi cạnh được chọn |
 | Kết quả | `S_q`: tập khái niệm của cây, gồm khái niệm có thưởng và khái niệm cầu nối |
 
 ### 2. Điểm đồ thị của ảnh
@@ -55,7 +55,7 @@ Kết hợp điểm giữ như ADR-0047: `final = alpha·cos(q, x_i) + (1−alph
 
 | Việc | Quy định |
 |---|---|
-| Chọn | Chỉ trên **val**, theo giao thức ADR-0043 và ADR-0047, chỉ số MRR@100. Bậc 1: `k ∈ {5, 10, 20}`, `C` trong lưới nhỏ ghi ở config, rồi `alpha` (hoà thì chọn `alpha` lớn hơn). Bậc 2: thêm các tham số huấn luyện của ADR-0047 |
+| Chọn | Chỉ trên **val**, theo giao thức ADR-0043 và ADR-0047, chỉ số MRR@100. Bậc 1: `k ∈ {3, 5, 10}` và `C ∈ {0.25, 0.5, 1.0}` (gồm giá trị bài gốc dùng cho SceneGraphs: `topk=3`, `cost_e=0.5`), rồi `alpha` (hoà thì chọn `alpha` lớn hơn). Bậc 2: thêm các tham số huấn luyện của ADR-0047 |
 | Test | Chạy **một lần** với cấu hình đã chốt, bằng script riêng không chọn gì, giống ADR-0047 |
 | Seed | Bậc 1 tất định (std = 0, ghi rõ). Bậc 2 chạy `[0, 1, 2]`, báo cáo mean ± std |
 | Quy tắc dừng (ghi trước) | Nếu cả bậc 1 lẫn bậc 2 **không hơn `clip_nograph` trên val**, vẫn chạy test một lần và báo cáo trung thực kết quả âm. Chỉ chuyển sang AdaMF-MAT nếu còn thời gian. Không chỉnh lại tham số sau khi thấy kết quả test |
@@ -114,6 +114,6 @@ Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. 
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
-- He et al., "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering", NeurIPS 2024. https://arxiv.org/abs/2402.07630, code https://github.com/XiaoxinHe/G-Retriever (MIT). Chi tiết cách đặt giải thưởng và phí lấy từ báo cáo nghiên cứu ngày 2026-11-15; **cần đối chiếu lại với mục "Retrieval" và "Subgraph Construction" của bài gốc** trước khi cài đặt.
+- He et al., "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering", NeurIPS 2024. https://arxiv.org/abs/2402.07630, code https://github.com/XiaoxinHe/G-Retriever (MIT). Đã đối chiếu với code gốc ngày 2026-11-15: `src/dataset/utils/retrieval.py` (`retrieval_via_pcst`: giải thưởng đỉnh `topk..1`, phí cạnh hằng `cost_e`, giải thưởng cạnh chỉ khi cạnh có chữ) và `src/dataset/scene_graphs.py` (`topk=3, topk_e=3, cost_e=0.5`).
 - `pcst-fast`: https://pypi.org/project/pcst-fast/ (GPL).
 - ADR-0009, ADR-0016, ADR-0043, ADR-0045, ADR-0046, ADR-0047, ADR-0048, ADR-0050.
