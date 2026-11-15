@@ -1,0 +1,840 @@
+% ============================================================
+%  BÁO CÁO ĐỒ ÁN – HỌC MÁY VỚI DỮ LIỆU ĐỒ THỊ – PROJECT 3
+%  Theo template báo cáo của nhóm (template/main.tex)
+%  Compiler: XeLaTeX (chạy 2 lần để mục lục đúng)
+% ============================================================
+\documentclass[12pt, a4paper]{article}
+
+% ── Font & ngôn ngữ ──────────────────────────────────────────
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+\setotherlanguage{english}
+\setmainfont{Latin Modern Roman}
+\setsansfont{Latin Modern Sans}
+\setmonofont{Latin Modern Mono}
+
+% ── Packages ─────────────────────────────────────────────────
+\usepackage{amsmath, amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{microtype}
+\microtypesetup{protrusion=false}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ── Page geometry ────────────────────────────────────────────
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm}
+
+% ── Colors: bảng màu Madrid (beamer) ───────────────────────
+\definecolor{madrid}{RGB}{51,51,178}       % structure của Madrid
+\definecolor{heading1}{RGB}{51,51,178}
+\definecolor{heading2}{RGB}{38,38,134}
+\definecolor{noteblue}{RGB}{38,38,134}
+\colorlet{notebg}{madrid!6}
+\colorlet{toybg}{madrid!5}
+\colorlet{toyborder}{madrid}
+\colorlet{tablehead}{madrid}
+\colorlet{tablealt}{madrid!8}
+\definecolor{captiongray}{RGB}{90,90,90}
+\definecolor{do}{RGB}{178,34,34}           % alerted text của Madrid
+\definecolor{xanhla}{RGB}{0,128,0}         % example block của Madrid
+\colorlet{xanh}{madrid}
+\colorlet{xam}{captiongray}
+
+% ── Heading styles (template) ────────────────────────────────
+\titleformat{\section}
+  {\color{heading1}\Large\bfseries}
+  {\thesection.}{0.6em}{}[\vspace{-2pt}\rule{\linewidth}{1.5pt}]
+\titleformat{\subsection}
+  {\color{heading2}\large\bfseries}
+  {\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}
+  {\color{noteblue}\normalsize\bfseries}
+  {\thesubsubsection.}{0.4em}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{5pt}
+\titlespacing*{\subsubsection}{0pt}{8pt}{3pt}
+
+% ── Paragraph ────────────────────────────────────────────────
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setstretch{1.12}
+\setlength{\emergencystretch}{3em}
+\captionsetup{font=small,labelfont={bf,color=heading2}}
+
+% ── Khung kiểu block của Madrid ────────────────────────────
+\tcbuselibrary{skins, breakable}
+\tcbset{madridblock/.style={enhanced, breakable, arc=2pt, boxrule=0pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries\small,
+  coltitle=white, toptitle=2pt, bottomtitle=2pt, fontupper=\small,
+  drop fuzzy shadow=black!25}}
+% Nhận xét: block xanh Madrid
+\newenvironment{nhanxet}{%
+  \begin{tcolorbox}[madridblock, colback=madrid!6, colframe=madrid, title={Nhận xét}]
+}{\end{tcolorbox}}
+% Ghi chú: block xanh, tiêu đề tuỳ chọn
+\newenvironment{ghichu}[1][Ghi chú]{%
+  \begin{tcolorbox}[madridblock, colback=madrid!6, colframe=madrid, title={#1}]
+}{\end{tcolorbox}}
+% Phần chưa thực hiện: alertblock đỏ của Madrid
+\newtcolorbox{chualam}[1]{madridblock, colback=do!6, colframe=do,
+  title={Chưa thực hiện --- #1}}
+
+% ── Header / Footer kiểu footline Madrid ───────────────────
+\setlength{\headheight}{15pt}
+\newcommand{\otrang}[3]{\colorbox{#1}{\parbox[c][9pt][c]{#2}{\centering\color{white}\scriptsize #3}}}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\small\color{madrid}\bfseries Học máy với dữ liệu đồ thị --- Project 3}
+\fancyhead[R]{\small\color{captiongray} Cao học K2025 · KHTN TP.HCM}
+\fancyfoot[C]{\setlength{\fboxsep}{2pt}%
+  \otrang{madrid!55!black}{0.30\textwidth}{Nhóm Project 3 (KHTN TP.HCM)}%
+  \otrang{madrid!80!black}{0.42\textwidth}{Truy vấn đa phương thức có giải thích}%
+  \otrang{madrid}{0.22\textwidth}{Trang \thepage}}
+\fancypagestyle{cover}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}
+
+\hypersetup{colorlinks=true, linkcolor=heading2, urlcolor=heading2, citecolor=heading2}
+
+\setlist[itemize]{noitemsep, topsep=3pt, leftmargin=1.4em}
+\setlist[enumerate]{noitemsep, topsep=3pt, leftmargin=1.6em}
+
+% ── Macro ────────────────────────────────────────────────────
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\mrr}{MRR@100}
+\newcommand{\pmm}{\ensuremath{\pm}}
+
+\begin{document}
+\thispagestyle{cover}
+
+% ══════════════════════════════════════════════════════════════
+%  TRANG BÌA
+% ══════════════════════════════════════════════════════════════
+\begin{titlepage}
+\begin{center}
+{\large\bfseries ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH}\\[4pt]
+{\large\bfseries TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN}\\[2pt]
+{\normalsize KHOA CÔNG NGHỆ THÔNG TIN}
+
+\vspace{10pt}
+\noindent{\color{heading1}\rule{\linewidth}{1.5pt}}
+\vspace{6pt}
+
+{\large\color{heading2} BÁO CÁO ĐỒ ÁN MÔN HỌC MÁY VỚI DỮ LIỆU ĐỒ THỊ}\\[4pt]
+{\normalsize\itshape Cao học Khóa 2025}
+
+\vspace{28pt}
+{\color{captiongray}\rule{0.5\linewidth}{0.6pt}}\\[10pt]
+{\normalsize\bfseries\color{heading2} PROJECT 3}\\[8pt]
+{\LARGE\bfseries\color{heading1}
+  Truy Vấn Đa Phương Thức\\[6pt]
+  Có Giải Thích Bằng Đồ Thị}\\[10pt]
+{\color{captiongray}\rule{0.5\linewidth}{0.6pt}}
+
+\vspace{16pt}
+{\normalsize\itshape Báo cáo kỹ thuật}\\[6pt]
+{\small\color{captiongray} Mã nguồn: \url{https://github.com/FluteInTheRain/graph-semantic-image-editing}}\\[2pt]
+{\small\color{captiongray} Số liệu theo repo tại commit \code{050c1a2} (14/11/2026)}
+
+\vfill
+
+\begin{tabular}{@{}r@{\hspace{8pt}}l@{}}
+  \textbf{Giáo viên hướng dẫn:} & \dots \\[10pt]
+  \textbf{Học viên thực hiện:}  & 25C15068 -- Trần Hồ Thanh Vũ \\[4pt]
+                                 & \dots \\[4pt]
+                                 & \dots \\[4pt]
+                                 & \dots \\[4pt]
+                                 & \dots \\
+\end{tabular}
+
+\vspace{24pt}
+\noindent{\color{heading1}\rule{\linewidth}{1.5pt}}
+\vspace{8pt}
+
+{\normalsize TP. Hồ Chí Minh --- Tháng 11/2026}
+\end{center}
+\end{titlepage}
+
+% ══════════════════════════════════════════════════════════════
+%  MỤC LỤC
+% ══════════════════════════════════════════════════════════════
+\clearpage
+\thispagestyle{fancy}
+\renewcommand{\contentsname}{\color{heading1}Mục Lục}
+\tableofcontents
+\clearpage
+
+% ══════════════════════════════════════════════════════════════
+%  PHÂN CÔNG CÔNG VIỆC + KHAI BÁO AI
+% ══════════════════════════════════════════════════════════════
+\section*{Phân công công việc}
+\addcontentsline{toc}{section}{Phân công công việc và khai báo sử dụng AI}
+Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh chứng đóng góp. Mỗi thành viên tự điền phần việc của mình; lịch sử commit và pull request trên GitHub là minh chứng đi kèm.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{\textwidth}{|c|c|l|X|c|}
+        \hline
+        \rowcolor{madrid}\textcolor{white}{\textbf{STT}} & \textcolor{white}{\textbf{MSHV}} & \textcolor{white}{\textbf{Họ và tên}} & \textcolor{white}{\textbf{Phân công công việc}} & \textcolor{white}{\textbf{Tỉ lệ}} \\ \hline
+        1 & 25C15068 & Trần Hồ Thanh Vũ & \textit{(tự điền)} & \\ \hline
+        2 & & & & \\ \hline
+        3 & & & & \\ \hline
+        4 & & & & \\ \hline
+        5 & & & & \\ \hline
+    \end{tabularx}
+    \caption{Bảng phân công nhiệm vụ thành viên}
+\end{table}
+
+\subsection*{Khai báo sử dụng công cụ AI (đề §9)}
+\begin{itemize}
+\item Nhóm dùng \textbf{Claude Code} để hỗ trợ viết code, test, tài liệu ADR và review. Mọi lần dùng được ghi trong \code{docs/ai-usage-log.md} của repo (ngày, việc, phần đã sửa). Các quyết định có giá trị do AI đề xuất mà nhóm chưa duyệt được đánh dấu ``nhóm chưa duyệt'' ngay trong ADR.
+\item Repo có ba agent review độc lập (kiểm rò rỉ dữ liệu, kiểm thiết kế thí nghiệm, kiểm độ trung thực của giải thích; định nghĩa trong \code{.claude/agents/}) chạy trên từng pull request; phát hiện và cách xử lý được ghi trong hồ sơ phiên ở \code{results/records/}.
+\item Bản nháp báo cáo này được soạn với hỗ trợ của Claude từ tài liệu và số liệu có trong repo; mọi con số được chép từ \code{results/tables/*.csv} và các hồ sơ phiên, không tính lại.
+\item Mỗi thành viên phải tự giải thích được toàn bộ nội dung khi vấn đáp.
+\end{itemize}
+
+\newpage
+\clearpage
+\section*{Tóm tắt}
+\addcontentsline{toc}{section}{Tóm tắt}
+Khi tìm ảnh bằng văn bản, CLIP chỉ so khớp hai vectơ. Cách này không khai thác quan hệ giữa các khái niệm trong ảnh và không cho biết vì sao một ảnh được trả về. Nhóm xây dựng trên Visual Genome một hệ thống gồm ba bước: (i) CLIP ViT-B/32 đóng băng và FAISS lấy 100 ứng viên; (ii) một đồ thị hai phía ảnh -- khái niệm (3.880 synset WordNet, mỗi ảnh nối với 16 khái niệm) cùng một lớp GraphSAGE được huấn luyện để xếp hạng lại 100 ứng viên này; điểm cuối là $\alpha\cdot\cos + (1-\alpha)\cdot$điểm đồ thị; (iii) giải thích bằng các cạnh ảnh -- khái niệm, tính bằng can thiệp trên chính mô hình xếp hạng.
+
+Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Các phần chưa hoàn thành (cấp độ 2, MMKG tiếng Việt, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
+
+\vspace{0.3cm}
+\noindent\textbf{Từ khoá:} truy vấn đa phương thức, CLIP, GraphSAGE, xếp hạng lại, giải thích trung thực, fidelity.
+
+
+% ================= 1. GIỚI THIỆU =================
+\section{Giới thiệu}
+
+\subsection{Bài toán}
+Cho một truy vấn văn bản (ví dụ ``a girl wearing blue jeans''), hệ thống trả về danh sách ảnh xếp theo mức phù hợp. Cách làm phổ biến là mã hoá truy vấn và ảnh vào cùng một không gian bằng CLIP~\cite{radford2021clip} rồi xếp theo cosine. Cách này mạnh, nhưng có hai giới hạn mà đề bài đã chỉ ra: nó không dùng quan hệ có cấu trúc giữa thực thể và khái niệm, và nó không trả lời được câu hỏi ``vì sao ảnh này được trả về''.
+
+Đề tài yêu cầu đưa dữ liệu đồ thị vào bài toán: dùng đồ thị để cải thiện thứ hạng, rồi giải thích mỗi kết quả bằng các quan hệ hoặc đồ thị con đã thực sự tham gia vào việc xếp hạng. Mục tiêu không phải xây một mô hình thị giác mới mà là \textbf{đánh giá rõ vai trò của đồ thị}.
+
+\subsection{Câu hỏi nghiên cứu}
+Ba nhiệm vụ của đề tương ứng ba câu hỏi:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+\item[RQ1] (Nhiệm vụ 1 -- truy vấn) Với pipeline đánh giá chuẩn, CLIP thuần và CLIP + Graph trả về kết quả tốt đến đâu?
+\item[RQ2] (Nhiệm vụ 2 -- vai trò đồ thị) Phần cải thiện có thật sự đến từ cấu trúc quan hệ không, và đồ thị giúp ở nhóm truy vấn nào?
+\item[RQ3] (Nhiệm vụ 3 -- giải thích) Những cạnh nào đã đẩy một ảnh lên, và giải thích đó có trung thực với cơ chế xếp hạng không?
+\end{description}
+
+\subsection{Phạm vi và đóng góp}
+Nhóm làm \textbf{nhánh A} (văn bản $\to$ ảnh) trên Visual Genome~\cite{krishna2017vg}, kèm chiều ảnh $\to$ văn bản như một phép đo mở rộng. Các đóng góp đã hoàn thành:
+\begin{enumerate}
+\item Một split cố định cho Visual Genome có gom ảnh gần trùng, cùng một giao thức đánh giá coi mọi ảnh có cùng câu mô tả là đáp án đúng (mục~\ref{sec:data}).
+\item Đồ thị ảnh -- khái niệm dựng được cả cho ảnh mới chưa có nhãn, và mô hình GraphSAGE một lớp được khởi tạo để cho kết quả đúng bằng CLIP, rồi huấn luyện trực tiếp cho việc xếp hạng lại (mục~\ref{sec:method}).
+\item Một bộ mô hình đối chứng để tách riêng đóng góp của đồ thị: mô hình không đồ thị, đồ thị xáo cạnh giữ bậc, cạnh đồng xuất hiện; đánh giá thêm nDCG@10, ảnh $\to$ văn bản và theo nhóm truy vấn (mục~\ref{sec:res1}, \ref{sec:res2}).
+\item Giải thích tính bằng can thiệp trên chính mô hình, có chốt chặn kiểm tra rằng mô hình được giải thích chính là mô hình đã báo cáo, và bộ đo fidelity/validity/sparsity có đối chứng ngẫu nhiên (mục~\ref{sec:xai}).
+\end{enumerate}
+Tình trạng từng cấp độ của đề được tổng hợp ở Bảng~\ref{tab:tiendo}.
+
+\begin{table}[H]
+\centering\small
+\caption{Tình trạng thực hiện theo các cấp độ của đề (PDF §5) tại commit \code{050c1a2}.}
+\label{tab:tiendo}
+\begin{tabularx}{\linewidth}{l X l}
+\toprule
+\textbf{Cấp độ} & \textbf{Yêu cầu} & \textbf{Tình trạng} \\
+\midrule
+1 (7.0) & Baseline CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, giải thích 5+5 & Hoàn thành \\
+NV1 mở rộng & nDCG, chiều ảnh $\to$ văn bản, đánh giá theo nhóm truy vấn & Hoàn thành \\
+2 (8.5) & Tập công khai thứ 2; phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
+3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Đã chạy val; test chưa chạy \\
+3 (10) & MMKG tiếng Việt tự xây & Chưa \\
+4 (+1--2) & Cải tiến riêng & Chưa (có ý tưởng, mục~\ref{sec:future}) \\
+Sản phẩm & Notebook/giao diện demo, slide & Chưa \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ================= 2. CƠ SỞ =================
+\section{Cơ sở lý thuyết và công trình liên quan}
+
+\subsection{Truy vấn văn bản -- ảnh bằng CLIP}
+CLIP~\cite{radford2021clip} huấn luyện song song một bộ mã hoá ảnh $f_I$ và một bộ mã hoá văn bản $f_T$ bằng học tương phản trên các cặp ảnh -- chú thích. Sau khi chuẩn hoá L2, mức độ phù hợp giữa truy vấn $q$ và ảnh $i$ là $\cos(f_T(q), f_I(i))$; tìm kiếm khi đó chỉ là tìm láng giềng gần nhất. Nhóm dùng bản OpenCLIP~\cite{cherti2023openclip} ViT-B/32 huấn luyện trên LAION-2B~\cite{schuhmann2022laion}, giữ đóng băng, và FAISS~\cite{johnson2019faiss} \code{IndexFlatIP} để tìm chính xác.
+
+\subsection{Mạng nơ-ron đồ thị}
+GNN cập nhật biểu diễn của một đỉnh bằng cách gom thông tin từ láng giềng. GCN~\cite{kipf2017gcn} dùng trung bình có chuẩn hoá theo bậc, GAT~\cite{velickovic2018gat} dùng trọng số chú ý, còn GraphSAGE~\cite{hamilton2017sage} tách phần của chính đỉnh và phần láng giềng:
+\begin{equation}
+h_v = W_{\text{self}}\,x_v + W_{\text{nb}}\cdot \operatorname{mean}_{u\in N(v)} x_u + b.
+\end{equation}
+Nhóm chọn GraphSAGE vì phần ``chính đỉnh'' và phần ``láng giềng'' tách rời, nên dễ khởi tạo bằng đúng CLIP và dễ giải thích (mục~\ref{sec:model}). Cài đặt dùng \code{SAGEConv} của PyTorch Geometric~\cite{fey2019pyg}.
+
+\subsection{Đồ thị tri thức đa phương thức}
+Scene graph của Visual Genome mô tả đối tượng, thuộc tính và quan hệ trong từng ảnh~\cite{krishna2017vg}. Đồ thị tri thức đa phương thức (MMKG) gắn ảnh vào thực thể của một KG; khảo sát~\cite{chen2024kgmm} phân loại các hướng chính. Các phương pháp hoàn thiện MMKG gần đây như MKGformer~\cite{chen2022mkgformer}, NativE~\cite{zhang2024native} và AdaMF-MAT~\cite{zhang2024adamf} làm việc trên MKG-W/MKG-Y hay FB15k-237-IMG; đây là bài toán dự đoán liên kết, nên không chạy thẳng trên bộ truy vấn ảnh của nhóm (mục~\ref{sec:level2}).
+
+\subsection{Giải thích GNN và đánh giá giải thích}
+\begin{itemize}
+\item \textbf{Occlusion:} xoá từng cạnh, đo điểm thay đổi bao nhiêu. Đơn giản và đúng với mô hình, nhưng tốn một lần chạy cho mỗi cạnh.
+\item \textbf{Integrated Gradients (IG)}~\cite{sundararajan2017ig}: gán một trọng số cho mỗi cạnh, tích phân gradient của điểm theo trọng số đó từ 0 đến 1.
+\item \textbf{GNNExplainer}~\cite{ying2019gnnexplainer}: học một mặt nạ cạnh giữ được dự đoán nhưng thưa nhất.
+\item \textbf{Đánh giá:} GraphFramEx~\cite{amara2022graphframex} tách Fid$^+$ (bỏ giải thích thì dự đoán đổi bao nhiêu -- tính cần thiết) và Fid$^-$ (chỉ giữ giải thích thì dự đoán đổi bao nhiêu -- tính đủ), gộp thành characterization. Zheng và cộng sự~\cite{zheng2024robust} chỉ ra việc xoá cạnh tạo đồ thị lệch phân phối lúc huấn luyện và đề xuất robust fidelity, chỉ xoá mỗi cạnh với một xác suất.
+\end{itemize}
+Yêu cầu xuyên suốt của đề là giải thích phải đến từ chính cơ chế xếp hạng. Vì vậy nhóm chỉ dùng các explainer chạy lại đúng mô hình xếp hạng trên đồ thị đã sửa, không dùng đường đi được tìm sau khi đã có kết quả.
+
+% ================= 3. DỮ LIỆU =================
+\section{Dữ liệu và chống rò rỉ}
+\label{sec:data}
+
+\subsection{Visual Genome}
+Visual Genome v1.2~\cite{krishna2017vg} (giấy phép CC BY 4.0) có 108.077 ảnh và 5.408.689 câu mô tả vùng (region description). Mỗi ảnh được lấy mẫu 5 câu mô tả vùng (một ảnh chỉ có 3), tổng 540.383 câu. Ảnh và câu được mã hoá một lần bằng OpenCLIP ViT-B/32 (\code{laion2b\_s34b\_b79k}) trên Kaggle, lưu dạng \code{.npz} và chia sẻ cho cả nhóm (ADR-0041). Không ảnh nào bị lỗi khi mã hoá.
+
+Đồ thị dùng thêm \code{objects.json} v1.4: 2.516.939 đối tượng, trong đó 19,6\% không có synset WordNet~\cite{miller1995wordnet}; 1.793 ảnh không có đối tượng nào. Data card đầy đủ (nguồn, giấy phép, sha256 của file) nằm ở \code{data\_cards/visual\_genome.md}.
+
+\subsection{Split cố định và ảnh trùng}
+Visual Genome không có split chính thức. Nhóm chia theo \textbf{ảnh}: test 5.000, val 5.000, train 98.077 (ADR-0042). Câu thuộc tập của ảnh tương ứng.
+
+Dữ liệu có ảnh trùng: 5 cặp có embedding giống hệt, 247 cặp có cosine $\ge 0.99$ (ví dụ ảnh \code{285982} và \code{2375578}, cosine 0.99992). Nếu hai bản của cùng một ảnh rơi vào train và test thì dữ liệu bị rò rỉ. Vì vậy ảnh có cosine $\ge 0.99$ được gom thành nhóm (nối theo chuỗi) và cả nhóm luôn nằm cùng một tập. Ngưỡng được chốt trước khi có kết quả truy vấn nào. File split \code{splits/visual\_genome/split\_seed0.json} (sha256 \code{0c65b3e5\dots}) được commit và là nguồn sự thật duy nhất; chạy lại script cho ra file giống hệt từng byte.
+
+\subsection{Giao thức đánh giá}
+\label{sec:protocol}
+\begin{itemize}
+\item \textbf{Truy vấn:} mọi câu mô tả vùng đã lấy mẫu của ảnh test (25.000 câu). \textbf{Kho:} 5.000 ảnh test.
+\item \textbf{Đáp án đúng:} mọi ảnh trong kho có một câu trùng truy vấn (cosine văn bản $\ge 0.9999$, chỉ để bù sai số số học), kể cả ảnh gốc. Lý do: 26\% số câu trong toàn bộ dữ liệu bị trùng (``a man'', ``white clouds''); nếu chỉ tính ảnh gốc là đúng thì CLIP bị phạt oan. Trong test, 11,28\% truy vấn có hơn một đáp án.
+\item \textbf{Chỉ số:} Recall@1/5/10, MRR@100 (ảnh đúng ngoài 100 kết quả đầu tính 0) và nDCG@10 nhị phân~\cite{jarvelin2002ndcg}. Vì mỗi ảnh chỉ xét 5 câu mô tả vùng, Recall tuyệt đối là \textbf{cận dưới}; so sánh giữa các mô hình vẫn công bằng vì dùng chung định nghĩa.
+\item \textbf{Ứng viên:} CLIP thuần và CLIP + Graph gọi cùng một hàm lấy 100 ứng viên, nên hai mô hình chỉ khác nhau ở thứ tự sắp xếp trong 100 ảnh đó.
+\end{itemize}
+
+\subsection{Các quy tắc chống rò rỉ đã áp dụng (PDF §6)}
+\begin{enumerate}
+\item Từ vựng khái niệm, từ điển tên $\to$ synset và cạnh đồng xuất hiện chỉ đếm trên \textbf{train}; có test tự động chứng minh ảnh test không làm đổi từ vựng.
+\item Cạnh của ảnh val/test chỉ phụ thuộc vào vectơ CLIP của chính ảnh đó, không dùng nhãn (mục~\ref{sec:graph}).
+\item Mọi lựa chọn (learning rate, epoch, $\alpha$, explainer, $m$) làm trên \textbf{val}. Test chạy \textbf{đúng một lần} mỗi seed; script từ chối lần chạy thứ hai cho cùng thí nghiệm và seed.
+\item Quy tắc chọn cấu hình chính và quy tắc của ablation được commit \textbf{trước} khi chạy test (ADR-0047, \code{results/tables/README.md}). Kết quả xấu vẫn được báo cáo.
+\item Seed 0, 1, 2 chỉ đổi phần huấn luyện (thứ tự batch, hard negative); split giữ cố định. Vì CLIP đóng băng và FAISS Flat là tất định, CLIP thuần có std = 0.
+\end{enumerate}
+
+\subsection{Flickr30k -- tập công khai thứ hai}
+Nhóm đã chọn Flickr30k~\cite{young2014flickr} với split Karpathy~\cite{karpathy2015} (29.000/1.014/1.000 ảnh) làm tập thứ hai, và đã trích embedding CLIP cho 31.014 ảnh và 155.070 caption (ADR-0040, \code{data\_cards/flickr30k.md}).
+\begin{chualam}{Split, đồ thị và thực nghiệm trên Flickr30k}
+Còn thiếu: chuyển split Karpathy sang \code{splits/flickr30k/} (gom 1 ảnh trùng), dựng đồ thị ảnh -- khái niệm (liên kết từ trong caption sang ConceptNet~\cite{speer2017conceptnet}/WordNet), chạy lại toàn bộ thí nghiệm với cùng giao thức và 3 seed. Đây là điều kiện bắt buộc của cấp độ 2.
+\end{chualam}
+
+% ================= 4. PHƯƠNG PHÁP =================
+\section{Phương pháp}
+\label{sec:method}
+
+\subsection{Pipeline tổng thể}
+Hình~\ref{fig:pipeline} theo đúng quy trình của đề (PDF §4.2): truy vấn $\to$ CLIP $\to$ top-$k$ theo cosine $\to$ điểm đồ thị cho từng ứng viên $\to$ xếp hạng lại $\to$ giải thích $\to$ đo fidelity.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.45cm and 0.5cm,
+  box/.style={draw=xanh,thick,rounded corners=2pt,fill=xanh!6,align=center,font=\small,minimum height=1.05cm,text width=2.35cm},
+  data/.style={draw=xam,dashed,rounded corners=2pt,fill=gray!5,align=center,font=\small,text width=2.35cm,minimum height=0.9cm},
+  arr/.style={-{Stealth[length=2.2mm]},thick,xanh!80!black}]
+\node[data] (q) {Truy vấn\\ văn bản $q$};
+\node[box,right=of q] (clip) {CLIP $f_T$\\ (đóng băng)};
+\node[box,right=of clip] (faiss) {FAISS\\ top-100 ảnh};
+\node[box,right=of faiss] (gnn) {GraphSAGE\\ $h_i$, điểm đồ thị};
+\node[box,below=0.9cm of gnn] (fuse) {Kết hợp điểm\\ {\footnotesize $\alpha\cos+(1{-}\alpha)g$}};
+\node[box,left=of fuse] (exp) {Giải thích\\ (cạnh $i$--$c$)};
+\node[box,left=of exp] (fid) {Đo fidelity,\\ validity, sparsity};
+\node[data,above=0.9cm of faiss] (img) {Ảnh $\to f_I$\\ (cache .npz)};
+\node[data,above=0.9cm of gnn] (graph) {Đồ thị ảnh --\\ khái niệm};
+\draw[arr] (q) -- (clip);
+\draw[arr] (clip) -- (faiss);
+\draw[arr] (faiss) -- (gnn);
+\draw[arr] (img) -- (faiss);
+\draw[arr] (graph) -- (gnn);
+\draw[arr] (gnn) -- (fuse);
+\draw[arr] (fuse) -- (exp);
+\draw[arr] (exp) -- (fid);
+\end{tikzpicture}
+\caption{Pipeline của hệ thống. Ô nét đứt là dữ liệu tính trước một lần.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Đồ thị ảnh -- khái niệm}
+\label{sec:graph}
+\paragraph{Đỉnh.} Mọi ảnh trong split (kể cả ảnh không có đối tượng), và 3.880 \textbf{khái niệm} là các synset WordNet xuất hiện trong ít nhất 5 ảnh train. Vector của ảnh là embedding CLIP; vectơ của khái niệm là CLIP text của câu ``a photo of a \{lemma\}'' (ví dụ \code{fire\_hydrant.n.01} $\to$ ``a photo of a fire hydrant''). Ảnh và khái niệm vì vậy nằm trong cùng không gian 512 chiều.
+
+\paragraph{Cạnh \code{contains} (ảnh ← khái niệm).} Bản đầu (ADR-0045) lấy cạnh từ annotation đối tượng. Cách này có hai vấn đề: nếu ảnh test dùng annotation thì hệ thống đọc thông tin mà ảnh mới ngoài thực tế không có; và nếu train dùng annotation còn test không thì hai phân bố khác nhau. Vì vậy, bản chính (ADR-0046) nối mỗi ảnh với \textbf{$k=16$ khái niệm có cosine CLIP cao nhất}, áp dụng như nhau cho train, val và test. $k=16$ gần bậc trung bình của đồ thị annotation (1.719.645 cạnh / 108.077 ảnh $\approx$ 15,9). Đồ thị có 1.569.232 cạnh ở train và 80.000 cạnh ở mỗi tập val/test.
+
+\paragraph{Cạnh \code{cooccurs\_with} (khái niệm ← khái niệm).} Biến thể ADR-0048 thêm quan hệ giữa khái niệm, đếm trên annotation \textbf{chỉ của ảnh train}: cặp $(a,b)$ được giữ khi xuất hiện cùng nhau trong ít nhất 10 ảnh và PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
+
+\subsection{Mô hình xếp hạng lại}
+\label{sec:model}
+\paragraph{GraphSAGE một lớp.} Với ảnh $i$ có tập khái niệm $N(i)$, $|N(i)|=16$:
+\begin{equation}
+h_i = W_{\text{self}}\,x_i + b + \frac{1}{|N(i)|}\sum_{c\in N(i)} W_{\text{nb}}\,x_c,
+\qquad g(q,i)=\cos\big(f_T(q),\,h_i\big).
+\end{equation}
+Không có hàm kích hoạt; $x_i$, $x_c$, $f_T(q)$ đóng băng, chỉ $W_{\text{self}}, W_{\text{nb}}, b$ được học. Khởi tạo $W_{\text{self}}=I$, $W_{\text{nb}}=0$, $b=0$ nên lúc chưa học, $g$ đúng bằng cosine của CLIP: mô hình xuất phát từ baseline và chỉ rời khỏi baseline khi điều đó làm giảm loss. Vì chỉ có một lớp và cạnh đi một chiều (khái niệm $\to$ ảnh), điểm của một ảnh chỉ phụ thuộc vào chính nó và khái niệm của nó, nên ảnh val/test không ảnh hưởng lẫn nhau.
+
+\paragraph{Biến thể hai lớp \code{CooccurrenceSage}.} Lớp đầu cập nhật khái niệm theo cạnh đồng xuất hiện, $z_c = W_{\text{cself}}x_c + \operatorname{mean}_{c'\in co(c)} W_{\text{co}}x_{c'}$, lớp sau dùng $z_c$ thay cho $x_c$. Khởi tạo $W_{\text{cself}}=I$, $W_{\text{co}}=0$ nên cũng bắt đầu bằng CLIP.
+
+\paragraph{Điểm cuối.}
+\begin{equation}
+s(q,i) = \alpha\cdot\cos\big(f_T(q),x_i\big) + (1-\alpha)\cdot g(q,i),
+\end{equation}
+với $\alpha$ chọn trên val từ lưới $\{0, 0.1, \dots, 1\}$, hoà thì lấy $\alpha$ lớn hơn (gần CLIP hơn).
+
+\subsection{Huấn luyện}
+\begin{itemize}
+\item \textbf{Mẫu:} mỗi câu train $t$ có ảnh gốc nằm trong top-100 CLIP (tìm trong kho ảnh train). Ứng viên gồm ảnh gốc và $n_{\text{hard}}=15$ ảnh sai lấy từ top-100 đó; ảnh có cùng câu không được làm ảnh sai.
+\item \textbf{Loss:} cross-entropy trên $g(t,\cdot)/\tau$ của các ứng viên, $\tau=0.05$ (InfoNCE~\cite{oord2018cpc} dạng listwise), tức học đúng việc xếp hạng lại top-100.
+\item \textbf{Tối ưu:} Adam, batch 512, tối đa 10 epoch, early stopping (patience 2) theo \mrr{} val của điểm đồ thị một mình. Epoch 0 (bằng CLIP) cũng được chấm, nên trên val mô hình không bao giờ kém hơn CLIP.
+\item \textbf{Chọn learning rate:} mỗi mô hình thử \code{lr} $\in\{10^{-3}, 10^{-4}\}$ và lấy bản có điểm val cao hơn (quy tắc chốt trước khi chạy test).
+\end{itemize}
+
+\begin{ghichu}[Một lỗi đã gặp và cách sửa (ADR-0047)]
+Bản đầu dùng mọi câu train. Ảnh đúng luôn có mặt trong ứng viên kể cả khi CLIP xếp nó ngoài top-100, còn 15 ảnh sai thì luôn trong top-100. Mô hình học được một ``mẹo'': chọn ứng viên mà CLIP đánh giá \emph{thấp nhất}. Loss train giảm nhưng \mrr{} val tụt từ 0.106 xuống 0.038 sau một epoch. Lọc câu như trên giúp ảnh đúng và ảnh sai đến từ cùng một phân bố, đúng với bản chất của bài toán xếp hạng lại.
+\end{ghichu}
+
+\subsection{Các mô hình đối chứng}
+\begin{table}[H]
+\centering\small
+\caption{Các thí nghiệm và câu hỏi mỗi thí nghiệm trả lời. Tất cả dùng cùng split, cùng 100 ứng viên, 3 seed.}
+\label{tab:exps}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+\textbf{Tên} & \textbf{lr} & \textbf{Trả lời câu hỏi} \\
+\midrule
+\code{clip\_vg} & -- & Baseline CLIP thuần \\
+\code{clip\_nograph\_vg} & $10^{-3}$ & Cùng mô hình nhưng $W_{\text{nb}}=0$ cố định: mức tăng có đến từ đồ thị không, hay chỉ từ một phép chiếu tuyến tính học trên VG? \\
+\code{clip\_graph\_vg\_lr1e4} & $10^{-4}$ & \textbf{Mô hình chính}: GraphSAGE một lớp \\
+\code{clip\_cooc\_graph\_vg\_lr1e4} & $10^{-4}$ & Thêm cạnh đồng xuất hiện có giúp không? \\
+\code{\dots\_shuffled} & $10^{-4}$ & Ablation: xáo cạnh \code{contains} giữ nguyên bậc của từng ảnh và từng khái niệm, trong từng split. Huấn luyện y hệt mô hình chính \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Chiều ảnh $\to$ văn bản}
+Không huấn luyện thêm. Cùng điểm cặp $s(t,i)$, truy vấn là mỗi ảnh, kho là 25.000 câu của tập đánh giá, câu đúng là các câu của chính ảnh và mọi câu giống hệt chúng. $\alpha$ của chiều này chọn riêng trên val, sau khi đã chốt epoch và $\alpha$ của chiều văn bản $\to$ ảnh (ADR-0049).
+
+% ================= 5. KẾT QUẢ NV1 =================
+\section{Kết quả Nhiệm vụ 1: truy vấn}
+\label{sec:res1}
+
+\subsection{Văn bản $\to$ ảnh}
+Bảng~\ref{tab:main} là kết quả test chính (\code{results/tables/main.csv}). Mọi mô hình có học tham số đều vượt CLIP thuần rõ rệt: \mrr{} tăng khoảng 0.02 (tương đối khoảng 18--19\%), R@10 tăng khoảng 0.045.
+
+\begin{table}[H]
+\centering\small
+\caption{Văn bản $\to$ ảnh trên test Visual Genome (5.000 ảnh, 25.000 truy vấn). Mean \pmm{} std mẫu qua 3 seed. CLIP có std = 0 vì tất định.}
+\label{tab:main}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \\
+\midrule
+CLIP thuần & 0.0584 & 0.1422 & 0.2018 & 0.1076 \\
+Không đồ thị (lr $10^{-3}$) & 0.0689 \pmm{} 0.0006 & 0.1741 \pmm{} 0.0056 & 0.2457 \pmm{} 0.0043 & 0.1266 \pmm{} 0.0006 \\
+\textbf{CLIP + Graph} (lr $10^{-4}$) & 0.0705 \pmm{} 0.0014 & 0.1765 \pmm{} 0.0037 & 0.2492 \pmm{} 0.0015 & \textbf{0.1284 \pmm{} 0.0006} \\
+CLIP + Graph + đồng xuất hiện & \textbf{0.0709 \pmm{} 0.0009} & \textbf{0.1792 \pmm{} 0.0012} & 0.2469 \pmm{} 0.0006 & 0.1280 \pmm{} 0.0006 \\
+Đồ thị xáo cạnh (ablation) & 0.0686 \pmm{} 0.0002 & 0.1759 \pmm{} 0.0004 & 0.2489 \pmm{} 0.0004 & 0.1272 \pmm{} 0.0003 \\
+\midrule
+\multicolumn{5}{l}{\textit{Chạy trước khi có quy tắc chọn lr, giữ lại để minh bạch:}} \\
+CLIP + Graph (lr $10^{-3}$) & 0.0692 \pmm{} 0.0015 & 0.1750 \pmm{} 0.0056 & \textbf{0.2495 \pmm{} 0.0002} & 0.1276 \pmm{} 0.0015 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, width=0.92\linewidth, height=5.2cm, bar width=16pt,
+  ymin=0.10, ymax=0.132, ylabel={\mrr{} (test)},
+  symbolic x coords={CLIP,Không đồ thị,Xáo cạnh,Đồng xuất hiện,CLIP+Graph},
+  xtick=data, x tick label style={font=\small,align=center,text width=2cm},
+  xticklabels={CLIP,Không đồ thị,Xáo cạnh,Đồng xuất hiện,CLIP + Graph},
+  y tick label style={/pgf/number format/fixed,/pgf/number format/precision=3},
+  nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/fixed zerofill,/pgf/number format/precision=4},
+  every node near coord/.append style={yshift=4pt},
+  enlarge x limits=0.13, axis lines*=left, ymajorgrids, grid style={gray!25}]
+\addplot[fill=xanh!70,draw=xanh,error bars/.cd,y dir=both,y explicit]
+ coordinates {(CLIP,0.1076)+-(0,0) (Không đồ thị,0.1266)+-(0,0.0006) (Xáo cạnh,0.1272)+-(0,0.0003) (Đồng xuất hiện,0.1280)+-(0,0.0006) (CLIP+Graph,0.1284)+-(0,0.0006)};
+\end{axis}
+\end{tikzpicture}
+\caption{\mrr{} trên test (thanh lỗi = std qua 3 seed). Trục tung bắt đầu từ 0.10 để thấy chênh lệch nhỏ giữa các mô hình có học.}
+\label{fig:mrr}
+\end{figure}
+
+\subsection{nDCG@10 và chiều ảnh $\to$ văn bản}
+Năm thí nghiệm được chạy lại dưới giao thức v2 (hậu tố \code{\_eval2}, ADR-0049) để có thêm chỉ số, với điều kiện: cấu hình giữ nguyên, quy tắc được commit trước, test chạy một lần mỗi seed, dòng cũ không bị sửa. R@K/MRR của bản chạy lại khớp bảng chính tới 4 chữ số (sai khác tối đa 0.0001).
+
+\begin{table}[H]
+\centering\small
+\caption{nDCG@10 văn bản $\to$ ảnh và kết quả ảnh $\to$ văn bản trên test (3 seed). Cột $\alpha$ là giá trị chọn trên val cho chiều ảnh $\to$ văn bản.}
+\label{tab:eval2}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c c}
+\toprule
+& \textbf{T$\to$I} & \multicolumn{4}{c}{\textbf{Ảnh $\to$ văn bản}} \\
+\cmidrule(lr){2-2}\cmidrule(lr){3-6}
+\textbf{Mô hình} & \textbf{nDCG@10} & \textbf{R@1} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
+\midrule
+CLIP thuần & 0.1169 & 0.1280 & 0.3630 & 0.2068 & 1.0 \\
+Không đồ thị & 0.1387 \pmm{} 0.0006 & 0.1484 \pmm{} 0.0015 & 0.3895 \pmm{} 0.0013 & 0.2281 \pmm{} 0.0006 & 0.7/0.6/0.6 \\
+CLIP + Graph & \textbf{0.1391 \pmm{} 0.0007} & 0.1515 \pmm{} 0.0008 & \textbf{0.3961 \pmm{} 0.0024} & 0.2315 \pmm{} 0.0007 & 0.6 \\
++ Đồng xuất hiện & 0.1383 \pmm{} 0.0006 & \textbf{0.1522 \pmm{} 0.0008} & 0.3957 \pmm{} 0.0016 & \textbf{0.2316 \pmm{} 0.0008} & 0.6 \\
+Xáo cạnh & 0.1390 \pmm{} 0.0003 & 0.1519 \pmm{} 0.0009 & 0.3957 \pmm{} 0.0012 & 0.2312 \pmm{} 0.0010 & 0.6 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Nhận xét (RQ1).} Ở cả hai chiều và cả ba nhóm chỉ số, các mô hình có học vượt CLIP thuần với khoảng cách lớn hơn nhiều lần std. Ngược lại, giữa bốn mô hình có học, phần lớn mức chênh lệch \textbf{nhỏ hơn hoặc xấp xỉ std}: ví dụ nDCG@10 0.1391 \pmm{} 0.0007, 0.1390 \pmm{} 0.0003 và 0.1387 \pmm{} 0.0006. Vì vậy, trên toàn tập nhóm không kết luận mô hình nào vượt trội. Ở chiều ảnh $\to$ văn bản, ba mô hình có đồ thị (kể cả bản xáo) cao hơn mô hình không đồ thị khoảng 0.003 \mrr, nhưng bản xáo ngang bản thật.
+
+% ================= 6. KẾT QUẢ NV2 =================
+\section{Kết quả Nhiệm vụ 2: vai trò của đồ thị}
+\label{sec:res2}
+
+\subsection{Phân rã mức tăng}
+Bảng~\ref{tab:main} cho phép tách mức tăng \mrr{} của mô hình chính so với CLIP (+0.0208) thành:
+\begin{itemize}
+\item \textbf{Phép chiếu học được} (CLIP $\to$ không đồ thị): +0.0190, khoảng 91\%.
+\item \textbf{Đồ thị} (không đồ thị $\to$ CLIP + Graph): +0.0018, khoảng 9\%. Trong đó, so với đồ thị xáo, đồ thị thật hơn +0.00126 \pmm{} 0.00042 (ghép cặp theo seed, Bảng~\ref{tab:paired}).
+\end{itemize}
+Lưu ý mô hình không đồ thị dùng lr $10^{-3}$ còn mô hình chính dùng $10^{-4}$ (mỗi mô hình lấy lr tốt nhất trên val), nên phép tách này chỉ là ước lượng thô. Trên val, đối chứng không đồ thị cùng lr $10^{-4}$ đạt 0.1246 \pmm{} 0.0003, thấp hơn bản lr $10^{-3}$ (0.1262 \pmm{} 0.0017).
+
+\subsection{Ablation: đồ thị xáo cạnh}
+\begin{table}[H]
+\centering\small
+\caption{\mrr{} test ghép cặp theo seed. Số của bản xáo lấy đủ chữ số; hiệu tính trước khi làm tròn.}
+\label{tab:paired}
+\resizebox{\linewidth}{!}{\begin{tabular}{c c c c c c}
+\toprule
+\textbf{Seed} & \textbf{Thật} & \textbf{Xáo} & \textbf{Không đồ thị} & \textbf{Thật -- xáo} & \textbf{Xáo -- không đồ thị} \\
+\midrule
+0 & 0.1279 & 0.12681 & 0.1259 & +0.00109 & +0.00091 \\
+1 & 0.1283 & 0.12735 & 0.1269 & +0.00095 & +0.00045 \\
+2 & 0.1291 & 0.12736 & 0.1271 & +0.00174 & +0.00026 \\
+\midrule
+Trung bình & 0.1284 \pmm{} 0.0006 & 0.12718 \pmm{} 0.00031 & 0.1266 \pmm{} 0.0006 & \textbf{+0.00126 \pmm{} 0.00042} & +0.00054 \pmm{} 0.00034 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Đồ thị thật hơn đồ thị xáo ở cả 3 seed (t ghép cặp = 5.16, df = 2). Kết quả này \textbf{phù hợp} với giả thuyết rằng một phần nhỏ cải thiện đến từ quan hệ ảnh -- khái niệm thật, nhưng nhóm không dùng chữ ``chứng minh'': chỉ có 3 seed và \textbf{một} bản xáo, hiệu ứng tuyệt đối khoảng 1\% \mrr, và t, p ở đây chỉ đo dao động theo seed huấn luyện. Xét từng chỉ số, chỉ R@1 có mức chênh (+0.0019) lớn hơn std của mô hình chính; ở R@5 và R@10 mức chênh nhỏ hơn std.
+
+Hai dấu hiệu phụ cũng ủng hộ giả thuyết này: với đồ thị xáo, $\alpha$ chọn được cao hơn (0.1/0.2/0.1 so với 0/0/0.1) và epoch tốt nhất muộn hơn (7/9/8 so với 6/8/6), nghĩa là khi cạnh mang ít thông tin, mô hình dựa vào CLIP nhiều hơn.
+
+\paragraph{Bất thường chưa giải thích được.} Trên val, đồ thị xáo mất toàn bộ phần chênh lệch (thật -- xáo = +0.0040), nhưng trên test chỉ mất +0.0013: bản xáo tăng từ val lên test +0.0031, trong khi mô hình chính chỉ tăng +0.0003. Tỉ lệ cạnh xáo trùng cạnh gốc gần bằng nhau ở val và test (1.78\% và 1.89\%) nên không giải thích được điều này. Vì chỉ có một bản xáo, nhóm không tách được phần dao động do cách xáo; đây là một giới hạn của thí nghiệm.
+
+\subsection{Cạnh đồng xuất hiện}
+Thêm quan hệ khái niệm -- khái niệm không cải thiện kết quả trên toàn tập: \mrr{} 0.1280 \pmm{} 0.0006 so với 0.1284 \pmm{} 0.0006 của mô hình một lớp. Nhóm không có bằng chứng cạnh đồng xuất hiện giúp thêm, và báo cáo kết quả âm này đúng theo quy tắc đã chốt.
+
+\subsection{Đồ thị giúp ở nhóm truy vấn nào?}
+Theo luật chốt trên val trước khi chạy test (ADR-0049), truy vấn test được chia theo hai cách độc lập:
+\begin{itemize}
+\item \textbf{Độ đặc trưng:} \code{specific} (đúng 1 ảnh đúng, 88.7\%) và \code{generic} (từ 2 ảnh đúng trở lên, 11.3\%).
+\item \textbf{Quan hệ:} \code{action} nếu câu chứa vị từ hành động (8.9\%), \code{spatial} nếu chứa vị từ không gian khác (39.7\%), còn lại \code{none} (51.4\%).
+\end{itemize}
+
+\begin{table}[H]
+\centering\small
+\caption{\mrr{} văn bản $\to$ ảnh trên test theo nhóm truy vấn (3 seed). $n$ = số truy vấn.}
+\label{tab:groups}
+\resizebox{\linewidth}{!}{\begin{tabular}{l r c c c c c}
+\toprule
+\textbf{Nhóm} & $n$ & \textbf{CLIP} & \textbf{Không đồ thị} & \textbf{Xáo cạnh} & \textbf{CLIP+Graph} & \textbf{+ Đồng xuất hiện} \\
+\midrule
+generic & 2.820 & 0.0681 & 0.0914 \pmm{} 0.0092 & 0.0951 \pmm{} 0.0018 & \textbf{0.1082 \pmm{} 0.0040} & 0.1072 \pmm{} 0.0039 \\
+specific & 22.180 & 0.1126 & 0.1311 \pmm{} 0.0007 & \textbf{0.1313 \pmm{} 0.0005} & 0.1309 \pmm{} 0.0011 & 0.1305 \pmm{} 0.0009 \\
+\midrule
+action & 2.217 & 0.1223 & 0.1446 \pmm{} 0.0004 & \textbf{0.1468 \pmm{} 0.0003} & 0.1455 \pmm{} 0.0012 & 0.1455 \pmm{} 0.0017 \\
+spatial & 9.934 & 0.1158 & 0.1396 \pmm{} 0.0020 & 0.1410 \pmm{} 0.0007 & \textbf{0.1444 \pmm{} 0.0008} & 0.1439 \pmm{} 0.0011 \\
+none & 12.849 & 0.0987 & 0.1134 \pmm{} 0.0011 & 0.1131 \pmm{} 0.0006 & 0.1130 \pmm{} 0.0012 & 0.1124 \pmm{} 0.0010 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{R@1 văn bản $\to$ ảnh trên test cho nhóm \code{generic} và \code{spatial}.}
+\label{tab:groupsr1}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Nhóm} & \textbf{CLIP} & \textbf{Không đồ thị} & \textbf{Xáo cạnh} & \textbf{CLIP+Graph} & \textbf{+ Đồng xuất hiện} \\
+\midrule
+generic & 0.0238 & 0.0280 \pmm{} 0.0027 & 0.0274 \pmm{} 0.0007 & 0.0424 \pmm{} 0.0080 & \textbf{0.0457 \pmm{} 0.0055} \\
+spatial & 0.0642 & 0.0750 \pmm{} 0.0012 & 0.0732 \pmm{} 0.0007 & 0.0777 \pmm{} 0.0015 & \textbf{0.0790 \pmm{} 0.0018} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Nhận xét (RQ2).}
+\begin{itemize}
+\item Ở nhóm \textbf{generic}, đồ thị thật tách rõ khỏi cả hai đối chứng: \mrr{} 0.1082 so với 0.0951 (xáo) và 0.0914 (không đồ thị); R@1 tăng khoảng 50\% (0.042--0.046 so với 0.027--0.028). Đây là các câu ngắn, chung chung (``a man'', ``white clouds'') với nhiều ảnh đúng. Cách hiểu hợp lý: vectơ trung bình của 16 khái niệm giúp đẩy lên các ảnh \emph{thực sự chứa} khái niệm được nhắc tới, thay vì chỉ giống bề mặt.
+\item Ở nhóm \textbf{spatial}, đồ thị thật cũng cao hơn đối chứng (0.1444 so với 0.1410 và 0.1396), mức chênh lớn hơn std.
+\item Ở nhóm \textbf{specific}, \textbf{action} và \textbf{none}, các mô hình có học gần như ngang nhau; đồ thị không giúp thêm.
+\item Đây là đánh giá theo nhóm trên một lần chia đã chốt, chưa có kiểm định theo truy vấn (paired bootstrap). Nhóm chỉ dùng chữ ``cao hơn rõ'' khi mức chênh lớn hơn nhiều lần std.
+\end{itemize}
+
+\subsection{Độ nhạy theo trọng số $\alpha$}
+\begin{table}[H]
+\centering\small
+\caption{\mrr{} val theo $\alpha$ (từ \code{selection/*.json}); in đậm là $\alpha$ được chọn. $\alpha = 1$ là CLIP thuần.}
+\label{tab:alpha}
+{\begin{tabular}{c c c c c c c}
+\toprule
+$\alpha$ & Thật s0 & Thật s1 & Thật s2 & Xáo s0 & Xáo s1 & Xáo s2 \\
+\midrule
+0.0 & \textbf{0.1286} & \textbf{0.1285} & 0.1258 & 0.1238 & 0.1240 & 0.1237 \\
+0.1 & 0.1266 & 0.1266 & \textbf{0.1272} & \textbf{0.1240} & 0.1240 & \textbf{0.1241} \\
+0.2 & 0.1267 & 0.1264 & 0.1258 & 0.1240 & \textbf{0.1240} & 0.1236 \\
+0.5 & 0.1228 & 0.1236 & 0.1233 & 0.1219 & 0.1229 & 0.1223 \\
+1.0 & 0.1061 & 0.1061 & 0.1061 & 0.1061 & 0.1061 & 0.1061 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth,height=5cm,xlabel={$\alpha$},ylabel={\mrr{} val (TB 3 seed)},
+  xmin=-0.03,xmax=1.03,ymin=0.104,ymax=0.13,legend pos=south west,legend style={font=\small},
+  y tick label style={/pgf/number format/fixed,/pgf/number format/precision=3},ymajorgrids,grid style={gray!25}]
+\addplot[thick,xanh,mark=*] coordinates {(0,0.12763) (0.1,0.12680) (0.2,0.12630) (0.5,0.12323) (1,0.1061)};
+\addlegendentry{Đồ thị thật}
+\addplot[thick,do,mark=square*,dashed] coordinates {(0,0.12383) (0.1,0.12403) (0.2,0.12387) (0.5,0.12237) (1,0.1061)};
+\addlegendentry{Đồ thị xáo}
+\end{axis}
+\end{tikzpicture}
+\caption{Trung bình 3 seed của Bảng~\ref{tab:alpha}. Điểm cao nhất nằm ở $\alpha$ nhỏ.}
+\label{fig:alpha}
+\end{figure}
+
+$\alpha$ tốt nhất gần 0, tức điểm cuối gần như chỉ còn nhánh đồ thị. Điều này không có nghĩa CLIP bị bỏ: vectơ CLIP của ảnh vẫn nằm trong $h_i$ qua $W_{\text{self}}$. Đường cong gần như phẳng trong khoảng $[0, 0.2]$ và giảm rõ khi tiến về 1.
+
+\subsection{Cấp độ 2: những phần chưa thực hiện}
+\label{sec:level2}
+
+\subsubsection{Bộ $\ge$ 20 truy vấn trực tiếp / gián tiếp}
+Nhóm đã thiết kế cách sinh truy vấn từ scene graph thật (ADR-0044 và tài liệu \code{query\_benchmark.md}): tìm trong một ảnh hai quan hệ nối nhau qua một đối tượng chung, viết câu \textbf{trực tiếp} gọi tên mọi đối tượng và câu \textbf{gián tiếp} giấu tên đối tượng ở giữa. Ví dụ từ pilot trên val (không thuộc bộ đánh giá): \code{person -holding-> kite}, \code{kite -in-> sky} cho câu trực tiếp ``A person is holding a kite, and the kite is in a sky.'' và câu gián tiếp ``A person is holding something that is in a sky.''. Code sinh, kiểm tra và đánh giá đã có, luật v2 chốt sau 3 lần pilot trên val.
+\begin{chualam}{Sinh, kiểm tra và đánh giá bộ truy vấn trên test}
+Còn thiếu: sinh ứng viên trên test; hai thành viên xem ảnh và xác nhận đáp án; commit \code{queries/*.jsonl} ($\ge$20 truy vấn, có nhóm gián tiếp); báo cáo R@K/MRR tách riêng trực tiếp và gián tiếp cho mọi mô hình ở Bảng~\ref{tab:exps}; mô tả cách xây và kiểm tra. Bộ này chỉ dùng để đánh giá, không chỉnh mô hình (PDF §6).
+\end{chualam}
+
+\subsubsection{Phương pháp mới từ năm 2024}
+\begin{chualam}{Triển khai hoặc tái lập một phương pháp 2024+}
+Các phương pháp gợi ý (NativE, AdaMF-MAT, Mixed-Curvature MMKGC) là phương pháp hoàn thiện KG nên không chạy thẳng trên bài toán truy vấn ảnh của nhóm (ADR-0040). Cần chọn một phương pháp graph-enhanced retrieval hoặc explainable graph retrieval có mã nguồn công khai, chạy trên cùng pipeline, cùng split, 3 seed, và đưa vào Bảng~\ref{tab:main}.
+\end{chualam}
+
+\subsubsection{Tập công khai thứ hai}
+Xem khung ``Split, đồ thị và thực nghiệm trên Flickr30k'' ở mục~\ref{sec:data}.
+
+% ================= 7. GIẢI THÍCH =================
+\section{Kết quả Nhiệm vụ 3: giải thích}
+\label{sec:xai}
+
+\subsection{Giải thích trung thực nghĩa là gì trong hệ thống này}
+Đề cấm sinh một đường đi hợp lý sau khi đã có kết quả mà đường đi đó không ảnh hưởng tới dự đoán. Nhóm áp dụng ba quy tắc (ADR-0016):
+\begin{enumerate}
+\item Giải thích là \textbf{tập cạnh khái niệm $\to$ ảnh} mà mô hình thật sự dùng; mọi explainer chạy lại đúng mô hình xếp hạng trên đồ thị đã sửa. Không có heuristic tìm đường đi.
+\item \textbf{Chốt chặn khớp mô hình:} khi giải thích trên val, \mrr{} tính lại phải bằng \textbf{từng bit} số đã lưu lúc huấn luyện (\code{check\_reproduces\_training}); sai checkpoint, sai đồ thị hay sai $\alpha$ đều bị dừng. Điểm mà explainer dùng phải bằng điểm xếp hạng của chính lần chạy đó.
+\item Giải thích được \textbf{kiểm bằng can thiệp}: bỏ các cạnh giải thích thì điểm hoặc hạng phải đổi theo hướng hợp lý.
+\end{enumerate}
+Vì $h_i$ là tổng, điểm đồ thị của mô hình một lớp có thể viết thành phần của chính ảnh cộng phần của từng cạnh. Phân rã này không thay explainer (xoá một cạnh còn đổi mẫu số của trung bình và $\|h_i\|$), nhưng dùng để kiểm chéo thứ tự cạnh mà explainer đưa ra.
+
+\subsection{Cấp độ 1: Occlusion và phân tích 5 thành công + 5 thất bại}
+Với mỗi ảnh cần giải thích, Occlusion xoá lần lượt từng cạnh trong 16 cạnh và đo điểm đồ thị giảm bao nhiêu; giải thích hiển thị là 3 cạnh đẩy lên mạnh nhất. Năm truy vấn ``thành công'' là các truy vấn mà CLIP + Graph nâng hạng ảnh đúng nhiều nhất trên val (seed 0); năm truy vấn ``thất bại'' là các truy vấn bị hạ nhiều nhất. Hai phép can thiệp chấm lại mọi ứng viên với $\alpha$ đã lưu: \emph{xoá 3} cạnh đẩy lên mạnh nhất, và \emph{bỏ mọi cạnh} (16 cạnh của riêng ảnh đó).
+
+\begin{table}[H]
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\caption{5 thành công và 5 thất bại trên val (seed 0). Hạng là hạng của ảnh đúng; điểm là điểm đồ thị $g$.}
+\label{tab:case}
+\begin{tabularx}{\linewidth}{l >{\raggedright\arraybackslash}X c c c}
+\toprule
+& \textbf{Truy vấn} & \textbf{Hạng CLIP $\to$ Graph} & \textbf{Xoá 3 cạnh: $g$; hạng} & \textbf{Bỏ mọi cạnh: $g$; hạng} \\
+\midrule
+\multirow{5}{*}{\rotatebox{90}{Thành công}}
+& man in a grey shirt and blue jeans & 99 $\to$ 1 & .2046$\to$.1962; 1$\to$1 & .2046$\to$.1679; 1$\to$7 \\
+& Blue jacket with orange stripes & 100 $\to$ 3 & .1771$\to$.1717; 3$\to$5 & .1771$\to$.1658; 3$\to$5 \\
+& part of a trouser & 100 $\to$ 3 & .0727$\to$.0693; 3$\to$4 & .0727$\to$.0987; 3$\to$1 \\
+& a girl wearing blue jeans. & 99 $\to$ 3 & .1428$\to$.1357; 3$\to$3 & .1428$\to$.1369; 3$\to$3 \\
+& the grass beside the car & 98 $\to$ 3 & .1761$\to$.1722; 3$\to$3 & .1761$\to$.1603; 3$\to$8 \\
+\midrule
+\multirow{5}{*}{\rotatebox{90}{Thất bại}}
+& scattered waves in water & 7 $\to$ 100 & .0930$\to$.0868; 100$\to$100 & .0930$\to$.1043; 100$\to$96 \\
+& tall green and tan grass & 15 $\to$ 96 & .0306$\to$.0257; 96$\to$96 & .0306$\to$.0518; 96$\to$94 \\
+& wheel of car & 15 $\to$ 96 & .0020$\to$$-$.0041; 96$\to$97 & .0020$\to$.0331; 96$\to$82 \\
+& a wooden sign & 12 $\to$ 92 & .0014$\to$$-$.0081; 92$\to$95 & .0014$\to$.0721; 92$\to$34 \\
+& handicap parking sign on metal post & 15 $\to$ 95 & .0325$\to$.0223; 95$\to$98 & .0325$\to$.0724; 95$\to$75 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Phân tích.}
+\begin{itemize}
+\item \textbf{Tác động đúng hướng:} ở cả 15 ảnh được giải thích (10 ảnh đúng và 5 ảnh hạng 1 của các truy vấn thất bại), xoá 3 cạnh do Occlusion chọn đều làm điểm đồ thị giảm.
+\item \textbf{Thành công chủ yếu nhờ vectơ của chính ảnh}, tức phép chiếu $W_{\text{self}}x_i+b$, không phải nhờ cạnh. Khi bỏ mọi cạnh, 5 ảnh này vẫn đứng hạng 7/5/1/3/8, so với 99/100/100/99/98 theo CLIP. Cạnh giúp 3/5 ca (7$\to$1, 5$\to$3, 8$\to$3), không đổi 1 ca, và kéo xuống 1 ca (``part of a trouser'': không cạnh thì hạng 1).
+\item \textbf{Thất bại chủ yếu do $\alpha=0$ và phép chiếu; cạnh làm nặng thêm ở một số ca.} Ảnh đúng vốn hạng 7--15 theo CLIP rơi xuống 92--100; bỏ mọi cạnh vẫn chỉ lên 96/94/82/34/75. Cạnh kéo xuống rõ nhất ở ``a wooden sign'' (34 $\to$ 92). Ảnh hạng 1 của cả 5 truy vấn thất bại vẫn hạng 1 khi bỏ mọi cạnh. Vì vậy giải thích bằng cạnh chỉ giải thích được một phần các ca thất bại.
+\item \textbf{Cạnh đúng nghĩa vẫn có thể kéo ảnh xuống:} với ``tall green and tan grass'', cạnh \code{grass.n.01} có đóng góp $-0.0031$, vì mô hình lấy trung bình 16 khái niệm rồi mới tính cosine nên đóng góp không cộng dồn và không luôn cùng chiều với nghĩa.
+\item \textbf{Cạnh CLIP top-16 có nhiễu}, ví dụ \code{screen\_saver.n.01}, \code{body\_waste.n.01}, \code{adam.n.01}. Giải thích hiển thị đúng đồ thị mà mô hình dùng, kể cả phần nhiễu; đây là cái giá của việc không dùng annotation cho cạnh.
+\item \textbf{Mức toàn cục (val):} bỏ mọi cạnh của đồ thị val, giữ trọng số, \mrr{} giảm từ 0.12806 xuống 0.12621 (trung bình 3 seed), vẫn xa trên CLIP (0.1061). Mô hình trên đồ thị xáo cũng mất khoảng 0.001 khi bỏ cạnh, nên ``bỏ cạnh thì điểm giảm'' một mình không chứng minh vai trò của quan hệ; phép so có ý nghĩa vẫn là thật so với xáo.
+\end{itemize}
+
+\subsection{Cấp độ 3: đánh giá giải thích định lượng}
+\subsubsection{Thước đo}
+Ký hiệu $i^*$ là ảnh được giải thích, $E_x$ là tập $m$ cạnh giải thích, $S(i^*)$ là các cạnh trong vùng ảnh hưởng của $i^*$, $g$ là điểm đồ thị.
+\begin{table}[H]
+\centering\small
+\caption{Thước đo đánh giá giải thích (cài đặt trong \code{src/mmxai/explain/fidelity.py}, \code{quality.py}).}
+\label{tab:metrics}
+\begin{tabularx}{\linewidth}{l X}
+\toprule
+\textbf{Thước đo} & \textbf{Định nghĩa} \\
+\midrule
+Fid$^+$ (điểm) & $g_G(q,i^*) - g_{G\setminus E_x}(q,i^*)$: bỏ giải thích thì điểm giảm bao nhiêu (lớn là tốt) \\
+Fid$^+$ (hạng) & $\text{rank}_{G\setminus E_x}(i^*) - \text{rank}_G(i^*)$, tính trên điểm cuối với $\alpha$ đã chốt \\
+Fid$^-$ & $g_G(q,i^*) - g_{E_x}(q,i^*)$: chỉ giữ giải thích thì điểm giảm bao nhiêu ($\approx 0$ là tốt) \\
+Characterization & Trung bình điều hoà có trọng số của Fid$^+$ và $1-$Fid$^-$ đã chuẩn hoá về $[0,1]$ theo $g(\text{đủ cạnh}) - g(\text{không cạnh})$~\cite{amara2022graphframex} \\
+Robust Fid$^\pm$ & Mỗi cạnh giải thích chỉ bị xoá với xác suất 0.1; mỗi cạnh khác được thêm lại với xác suất 0.9~\cite{zheng2024robust} \\
+Sparsity & $1 - |E_x| / |S(i^*)|$ \\
+Validity & Mọi cạnh của $E_x$ có thật trong đồ thị đã chấm và nằm trong $S(i^*)$; tỉ lệ cạnh nối được tới $i^*$ chỉ qua chính $E_x$ \\
+Đối chứng ngẫu nhiên & Xoá $|E_x|$ cạnh chọn ngẫu nhiên trong $S(i^*)$, lặp $R\ge 20$ lần; so bằng Wilcoxon signed-rank một phía~\cite{wilcoxon1945}, ghép cặp theo truy vấn \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Fid$^\pm$ dùng hiệu điểm chưa chia thay vì hiệu xác suất như bài gốc, vì bài toán là xếp hạng và điểm cosine có thể bằng 0 hoặc âm; đây là điều chỉnh của nhóm.
+
+\subsubsection{Quy trình}
+Trên val, 20 truy vấn được bốc ngẫu nhiên \textbf{một lần} (không nhìn thứ hạng), giống nhau cho cả 3 seed. Ảnh được giải thích là ảnh hạng 1 theo CLIP + Graph, vì đó là ảnh hệ thống đưa cho người dùng. Ba explainer (Occlusion, IG, GNNExplainer) với $m\in\{3,5,10\}$, tổng 540 bản ghi (20 truy vấn × 3 explainer × 3 giá trị $m$ × 3 seed). Explainer và $m$ chọn trên val, sau đó test chạy đúng một lần. Lần chạy val dùng mô hình huấn luyện lại trên Kaggle; $\alpha$ (0, 0, 0.1) và epoch tốt nhất (6, 8, 6) trùng lần huấn luyện gốc, \mrr{} val lệch $\le 2\cdot10^{-5}$.
+
+\subsubsection{Kết quả trên val}
+\begin{itemize}
+\item \textbf{Occlusion} và \textbf{Integrated Gradients}: bỏ cạnh giải thích làm điểm giảm và ảnh tụt hạng nhiều hơn rõ so với xoá cùng số cạnh ngẫu nhiên, ở mọi $m$ (Wilcoxon một phía, $p\le 0.002$). Như vậy, ít nhất trên val, câu trả lời cho RQ3 là có: các cạnh được chọn làm giải thích thật sự ảnh hưởng tới thứ hạng.
+\item \textbf{GNNExplainer} không tốt hơn đối chứng ngẫu nhiên.
+\item Đề xuất trên val là Integrated Gradients với $m=10$. Nhóm \textbf{chưa chốt}: IG hoà với Occlusion, và quy tắc chọn bằng characterization có xu hướng ưu tiên $m$ lớn.
+\end{itemize}
+
+\begin{chualam}{Bảng số đánh giá giải thích (val) và kết quả test}
+Còn thiếu: (1) đưa \code{summary.md} của lần chạy val (Kaggle, 14/11) vào \code{results/records/20261114\_xai-cap-do-3/} và điền bảng Fid$^+$, Fid$^-$, characterization, robust Fid, sparsity, validity, hạng tụt (mean \pmm{} std qua 3 seed) cho từng explainer và $m$, kèm $p$-value so với ngẫu nhiên; (2) nhóm chốt \code{main\_explainer} và \code{top\_m} trong \code{configs/explain\_vg.yaml}; (3) chạy test một lần và báo cáo bằng chứng cụ thể cho $\ge$10 truy vấn; (4) nếu có bộ truy vấn ở mục~\ref{sec:level2}, tách kết quả theo trực tiếp/gián tiếp (RQ4 trong \code{docs/research/xai-method-proposal.md}).
+\end{chualam}
+
+% ================= 8. MMKG =================
+\section{MMKG tiếng Việt tự xây}
+\label{sec:mmkg}
+Thiết kế đã chốt về định dạng (ADR-0015, \code{mmkg/README.md}): \code{entities.csv} (\code{entity\_id, name\_vi, name\_en, type, source\_url}), \code{triples.csv} (\code{head\_id, relation, tail\_id, source}), \code{images.csv} (\code{image\_id, entity\_id, file\_name, source\_url, license, author}), kèm data card \code{data\_cards/mmkg\_vi.md}. Quy mô mục tiêu theo đề: 50--150 thực thể, 300--1.000 triple, 200--500 ảnh trong một miền hẹp.
+\begin{chualam}{Xây MMKG và chạy chuyển giao}
+\begin{itemize}[leftmargin=*]
+\item Chọn miền (ví dụ món ăn Việt Nam, di tích), thu thập ảnh có giấy phép rõ, không dữ liệu cá nhân nhạy cảm.
+\item Tạo triple (nguồn: Wikidata, ConceptNet, mô tả tự viết), mô tả cách liên kết ảnh -- thực thể.
+\item Chạy phương pháp tốt nhất của cấp độ 1/2 trên MMKG này; phân tích khả năng chuyển giao (CLIP với truy vấn tiếng Việt, đồ thị nhỏ).
+\item Data card: nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng.
+\end{itemize}
+\end{chualam}
+
+% ================= 9. THẢO LUẬN =================
+\section{Thảo luận và hạn chế}
+\begin{enumerate}
+\item \textbf{Đồ thị đóng góp ít trên toàn tập.} Khoảng 91\% mức tăng so với CLIP đến từ một phép chiếu tuyến tính học trên Visual Genome. Đây là phát hiện quan trọng: nếu không có đối chứng không đồ thị, toàn bộ mức tăng 19\% sẽ bị gán nhầm cho đồ thị.
+\item \textbf{Đồ thị hiện tại ít ``quan hệ''.} Cạnh \code{contains} được suy ra từ chính CLIP (16 khái niệm gần nhất), không có cạnh quan hệ giữa đối tượng trong scene graph và chưa có ConceptNet. Lựa chọn này giúp hệ thống chạy được với ảnh chưa gán nhãn và tránh rò rỉ, nhưng khiến đồ thị mang ít thông tin mới so với những gì CLIP đã có. Đây có lẽ là lý do chính khiến đồ thị chỉ giúp ở các truy vấn chung chung, và là điểm cần cải thiện để trả lời được câu hỏi về truy vấn gián tiếp.
+\item \textbf{$\alpha \approx 0$} khiến điểm cuối gần như chỉ còn nhánh đồ thị; các ca thất bại lớn (hạng 7--15 rơi xuống 92--100) cho thấy một $\alpha$ cố định cho mọi truy vấn là chưa tốt.
+\item \textbf{Thống kê:} 3 seed và một bản xáo; t, p theo seed chỉ là số mô tả; chưa có kiểm định theo truy vấn. Recall là cận dưới, MRR cắt ở 100. Hai câu khác chữ cùng nghĩa (``a man'', ``man'') vẫn tính là khác nhau.
+\item \textbf{Tái lập:} số trong bảng chính chạy trên máy thành viên khác; mô hình được huấn luyện lại để giải thích khớp \mrr{} val tới từng bit (giải thích cấp 1) hoặc tới $2\cdot 10^{-5}$ (Kaggle), nhưng chưa đối chiếu \code{model\_sha256} với run test gốc.
+\end{enumerate}
+
+% ================= 10. KẾT LUẬN =================
+\section{Kết luận và hướng phát triển}
+\label{sec:future}
+Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chống rò rỉ chặt chẽ: CLIP + GraphSAGE nâng \mrr{} test từ 0.1076 lên 0.1284. Các đối chứng cho thấy phần lớn mức tăng đến từ phép chiếu học được; cấu trúc ảnh -- khái niệm thật đóng góp một phần nhỏ nhưng nhất quán qua 3 seed, và rõ nhất ở nhóm truy vấn chung chung. Giải thích được tính trên chính mô hình xếp hạng, có chốt chặn khớp mô hình, và trên val Occlusion và IG vượt đối chứng ngẫu nhiên có ý nghĩa thống kê.
+
+Việc cần làm tiếp, theo thứ tự ưu tiên của đề:
+\begin{enumerate}
+\item Hoàn tất cấp độ 3 phần giải thích: điền bảng val, chốt explainer, chạy test.
+\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+.
+\item Cấp độ 3: MMKG tiếng Việt.
+\item Notebook demo: nhập truy vấn, trả về top-$k$ kèm cạnh giải thích (PDF §8).
+\end{enumerate}
+
+\begin{chualam}{Cấp độ 4 -- cải tiến của nhóm}
+Hướng đề xuất (a): \textbf{kết hợp điểm thích nghi theo truy vấn}, $\alpha(q)$ dự đoán từ đặc trưng của truy vấn thay cho một $\alpha$ cố định, nhắm vào các ca thất bại ở Bảng~\ref{tab:case}. Hướng thứ hai: thêm cạnh quan hệ scene graph và ConceptNet để kiểm giả thuyết ``đồ thị giàu quan hệ giúp truy vấn gián tiếp''. Theo đề, cần giả thuyết, ablation và thực nghiệm trên ít nhất 2 tập công khai.
+\end{chualam}
+
+% ================= PHỤ LỤC =================
+\appendix
+\section{Tái lập}
+Môi trường: Python 3.11, quản lý bằng \code{uv} (\code{pyproject.toml}, \code{uv.lock}); PyTorch, PyTorch Geometric, open\_clip, FAISS. Các lệnh chính:
+\begin{ghichu}[Lệnh chạy lại]\ttfamily\footnotesize\raggedright
+uv sync --group ml --group graph\\
+uv run python scripts/make\_splits.py --config configs/splits\_visual\_genome.yaml\\
+uv run python scripts/evaluate\_clip.py --config configs/clip\_vg.yaml --seed <k> [--split test]\\
+uv run python scripts/build\_graph.py --config configs/graph\_vg\_clip\_topk.yaml\\
+uv run python scripts/train\_graph\_rerank.py --config configs/clip\_graph\_vg\_lr1e4.yaml --seed <k>\\
+uv run python scripts/evaluate\_graph\_rerank.py --config configs/clip\_graph\_vg\_lr1e4.yaml --seed <k>\\
+uv run python scripts/summarize\_runs.py\\
+uv run python scripts/explain.py --config configs/explain\_vg.yaml
+\end{ghichu}
+Mọi lần chạy ghi \code{config.yaml}, \code{metrics.json}, \code{env.json} (commit, phiên bản thư viện); bản chép của các run đã báo cáo nằm trong \code{results/records/}. Số trong báo cáo chỉ lấy từ \code{results/tables/}.
+
+\section{Danh sách quyết định thiết kế (ADR) chính}
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{l X}
+\toprule
+ADR-0016 & Giải thích trung thực, tính từ chính cơ chế xếp hạng \\
+ADR-0040 & Chọn Visual Genome và Flickr30k \\
+ADR-0042 & Split cố định cho Visual Genome, gom ảnh trùng \\
+ADR-0043 & Giao thức đánh giá CLIP thuần, mọi ảnh cùng câu là đáp án \\
+ADR-0044 & Bộ truy vấn đánh giá sinh từ scene graph \\
+ADR-0045 & Đồ thị ảnh -- khái niệm, cạnh \code{contains} \\
+ADR-0046 & GNN một lớp, cạnh CLIP top-$k$ cho mọi split \\
+ADR-0047 & Quy trình huấn luyện, chọn $\alpha$, chạy test một lần \\
+ADR-0048 & Cạnh đồng xuất hiện đếm trên train, GraphSAGE hai lớp \\
+ADR-0049 & Giao thức đánh giá v2: nDCG, ảnh $\to$ văn bản, nhóm truy vấn \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Demo}
+\begin{chualam}{Notebook hoặc giao diện Gradio}
+Theo PDF §8: nhập truy vấn, trả về top-$k$ ảnh và hiển thị các cạnh giải thích (ADR-0013 đã chọn notebook làm bản chính, Gradio là phần thêm). Chuẩn bị video dự phòng không quá 5 phút.
+\end{chualam}
+
+% ================= THAM KHẢO =================
+\renewcommand{\refname}{Tài liệu tham khảo}
+\begin{thebibliography}{99}\small
+\bibitem{radford2021clip} A. Radford et al. Learning transferable visual models from natural language supervision. \textit{ICML}, 2021.
+\bibitem{cherti2023openclip} M. Cherti et al. Reproducible scaling laws for contrastive language-image learning. \textit{CVPR}, 2023.
+\bibitem{schuhmann2022laion} C. Schuhmann et al. LAION-5B: An open large-scale dataset for training next generation image-text models. \textit{NeurIPS Datasets and Benchmarks}, 2022.
+\bibitem{johnson2019faiss} J. Johnson, M. Douze, H. Jégou. Billion-scale similarity search with GPUs. \textit{IEEE Transactions on Big Data}, 2019.
+\bibitem{krishna2017vg} R. Krishna et al. Visual Genome: Connecting language and vision using crowdsourced dense image annotations. \textit{IJCV}, 2017.
+\bibitem{young2014flickr} P. Young, A. Lai, M. Hodosh, J. Hockenmaier. From image descriptions to visual denotations. \textit{TACL}, 2014.
+\bibitem{karpathy2015} A. Karpathy, L. Fei-Fei. Deep visual-semantic alignments for generating image descriptions. \textit{CVPR}, 2015.
+\bibitem{miller1995wordnet} G. A. Miller. WordNet: A lexical database for English. \textit{Communications of the ACM}, 1995.
+\bibitem{speer2017conceptnet} R. Speer, J. Chin, C. Havasi. ConceptNet 5.5: An open multilingual graph of general knowledge. \textit{AAAI}, 2017.
+\bibitem{kipf2017gcn} T. N. Kipf, M. Welling. Semi-supervised classification with graph convolutional networks. \textit{ICLR}, 2017.
+\bibitem{velickovic2018gat} P. Veličković et al. Graph attention networks. \textit{ICLR}, 2018.
+\bibitem{hamilton2017sage} W. Hamilton, Z. Ying, J. Leskovec. Inductive representation learning on large graphs. \textit{NeurIPS}, 2017.
+\bibitem{fey2019pyg} M. Fey, J. E. Lenssen. Fast graph representation learning with PyTorch Geometric. \textit{ICLR Workshop}, 2019.
+\bibitem{oord2018cpc} A. van den Oord, Y. Li, O. Vinyals. Representation learning with contrastive predictive coding. \textit{arXiv:1807.03748}, 2018.
+\bibitem{church1990pmi} K. Church, P. Hanks. Word association norms, mutual information, and lexicography. \textit{Computational Linguistics}, 1990.
+\bibitem{jarvelin2002ndcg} K. Järvelin, J. Kekäläinen. Cumulated gain-based evaluation of IR techniques. \textit{ACM TOIS}, 2002.
+\bibitem{chen2022mkgformer} X. Chen et al. Hybrid transformer with multi-level fusion for multimodal knowledge graph completion. \textit{SIGIR}, 2022.
+\bibitem{zhang2024native} Y. Zhang et al. NativE: Multi-modal knowledge graph completion in the wild. \textit{SIGIR}, 2024.
+\bibitem{zhang2024adamf} Y. Zhang et al. Unleashing the power of imbalanced modality information for multi-modal knowledge graph completion. \textit{LREC-COLING}, 2024.
+\bibitem{chen2024kgmm} Z. Chen et al. Knowledge graphs meet multi-modal learning: A comprehensive survey. \textit{arXiv:2402.05391}, 2024.
+\bibitem{sundararajan2017ig} M. Sundararajan, A. Taly, Q. Yan. Axiomatic attribution for deep networks. \textit{ICML}, 2017.
+\bibitem{ying2019gnnexplainer} Z. Ying et al. GNNExplainer: Generating explanations for graph neural networks. \textit{NeurIPS}, 2019.
+\bibitem{amara2022graphframex} K. Amara et al. GraphFramEx: Towards systematic evaluation of explainability methods for graph neural networks. \textit{LoG}, 2022.
+\bibitem{zheng2024robust} X. Zheng et al. Towards robust fidelity for evaluating explainability of GNNs. \textit{ICLR}, 2024.
+\bibitem{wilcoxon1945} F. Wilcoxon. Individual comparisons by ranking methods. \textit{Biometrics Bulletin}, 1945.
+\end{thebibliography}
+
+\end{document}
