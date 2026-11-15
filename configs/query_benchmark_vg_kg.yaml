@@ -22,8 +22,9 @@ person_synsets: [man.n.01, woman.n.01, boy.n.01, girl.n.01, child.n.01, person.n
 category_words: [sport, game, activity, vehicle, animal, instrument, fruit, vegetable,
                  furniture, tool, food, toy, appliance, device, container, clothing]
 # Verb phrase per ConceptNet fact kind, for activity and object concepts.
-activity_templates: {uses: uses, location: is played on, has: has, can: can}
-object_templates: {uses: is used with, location: is found at, has: has, can: can}
+# Decision: "in", not "on"/"at": pilot val 2026-11-15 gave "played on a park".
+activity_templates: {uses: uses, location: is played in, has: has, can: can}
+object_templates: {uses: is used with, location: is found in, has: has, can: can}
 # Decision (pilot val 2026-11-15): categories one plays directly ("playing a sport"); any other
 # activity category is worded "playing with a toy" ("playing a toy" read badly).
 activity_play_categories: [sport, game]
