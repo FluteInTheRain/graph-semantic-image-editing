@@ -37,3 +37,17 @@ def test_kg_pilot_and_test_configs_share_every_rule():
         if field in allowed:
             continue
         assert getattr(test_config, field) == getattr(pilot_config, field), field
+
+
+def test_kg_config_rejects_play_predicates_outside_activity_predicates(tmp_path):
+    import pytest
+
+    from mmxai.queries.kg_generator import load_kg_query_config
+
+    text = (REPO_ROOT / "configs/query_benchmark_vg_kg.yaml").read_text(encoding="utf-8")
+    bad = text.replace("play_predicates: [playing]", "play_predicates: [playing, cooking]")
+    path = tmp_path / "bad.yaml"
+    path.write_text(bad, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="cooking"):
+        load_kg_query_config(path)

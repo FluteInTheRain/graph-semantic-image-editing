@@ -57,6 +57,7 @@ class KgQueryConfig:
     conceptnet_edges: str
     predicate_aliases: dict[str, str]
     activity_predicates: list[str]
+    play_predicates: list[str]
     person_synsets: list[str]
     category_words: list[str]
     activity_templates: dict[str, str]
@@ -81,6 +82,9 @@ def load_kg_query_config(path: str | Path) -> KgQueryConfig:
     config = load_yaml_dataclass(path, KgQueryConfig)
     if config.split not in ("val", "test"):
         raise ValueError(f"split must be val or test, got {config.split!r}")
+    outside = sorted(set(config.play_predicates) - set(config.activity_predicates))
+    if outside:
+        raise ValueError(f"play_predicates {outside} are not in activity_predicates")
     if config.num_properties < 1:
         raise ValueError("num_properties must be >= 1")
     for name in ("activity_templates", "object_templates"):
@@ -106,6 +110,7 @@ def description_facts(description: Description) -> list[Fact]:
 
 def make_kg_pair(
     group: str,
+    verb: str | None,
     synset: str,
     description: Description,
     answers: set[int],
@@ -128,12 +133,23 @@ def make_kg_pair(
         "verification_status": STATUS_CANDIDATE,
         "hidden_concept": synset,
         "query_group": group,
+        "activity_verb": verb,
         "kg_evidence": [edge_record(fact.edge) for fact in facts],
     }
-    direct = {"qid": f"{pair_id}-d", "text": direct_text(group, description.concept)}
+    direct = {
+        "qid": f"{pair_id}-d",
+        "text": direct_text(group, description.concept, verb, config.play_predicates),
+    }
     direct.update(type="direct", reasoning_type="explicit", hidden_names=[])
     direct.update(shared)
-    text = indirect_text(group, description, templates, config.activity_play_categories)
+    text = indirect_text(
+        group,
+        description,
+        templates,
+        config.activity_play_categories,
+        verb,
+        config.play_predicates,
+    )
     indirect = {"qid": f"{pair_id}-i", "text": text}
     indirect.update(type="indirect", reasoning_type="kg_description")
     indirect["hidden_names"] = [description.concept]
@@ -157,7 +173,13 @@ def target_sets(
     for predicate in config.activity_predicates:
         train_images = {s: ids for (p, s), ids in train_activity.items() if p == predicate}
         eval_images = {s: ids for (p, s), ids in eval_activity.items() if p == predicate}
-        sets.append(("activity", predicate, train_images, eval_images, config.activity_templates))
+        # Played activities keep the "is played in" wording; riding and flying read like
+        # objects ("is found in a barn").
+        if predicate in config.play_predicates:
+            templates = config.activity_templates
+        else:
+            templates = config.object_templates
+        sets.append(("activity", predicate, train_images, eval_images, templates))
     sets.append(
         (
             "object",
@@ -187,7 +209,7 @@ def generate_kg_pairs(
     used: set[str] = set()
     # Pairs per group; the activity limit is shared by all activity predicates.
     num_pairs: Counter = Counter()
-    for group, _verb, train_images, eval_images, templates in target_sets(
+    for group, verb, train_images, eval_images, templates in target_sets(
         train_graphs, eval_graphs, config
     ):
         limit = limits[group]
@@ -236,7 +258,9 @@ def generate_kg_pairs(
                 rejections[REJECT_NO_DESCRIPTION] += 1
                 continue
             pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs[group] + 1:03d}"
-            pair = make_kg_pair(group, synset, description, answers, pair_id, templates, config)
+            pair = make_kg_pair(
+                group, verb, synset, description, answers, pair_id, templates, config
+            )
             # Cheap per-pair checks here, so one bad pair is dropped instead of making the
             # final whole-file validation fail and abort the run.
             indirect = pair[1]

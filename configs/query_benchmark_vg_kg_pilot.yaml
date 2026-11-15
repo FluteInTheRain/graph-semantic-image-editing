@@ -12,9 +12,18 @@ split_file: splits/visual_genome/split_seed0.json
 split: val
 # ConceptNet edges filtered once by scripts/prepare_conceptnet.py (ADR-0050).
 conceptnet_edges: artifacts/conceptnet/en_edges.tsv
-# Same canonicalisation as ADR-0044, only for the activity predicate.
-predicate_aliases: {plays: playing, play: playing, playing with: playing}
-activity_predicates: [playing]
+# Same canonicalisation as ADR-0044, only for the activity predicates. VG writes
+# "riding on a horse" for the same act as "riding a horse", so both count as riding.
+predicate_aliases: {plays: playing, play: playing, playing with: playing,
+                    rides: riding, ride: riding, riding on: riding,
+                    flies: flying, fly: flying}
+# Decision (Thuat Nguyen, 2026-11-15): the val pilot gave only 4 "playing" candidates, so
+# riding and flying (horse, skateboard, kite, ...) join the activity group. Each predicate
+# is its own comparison pool and is visited in this order.
+activity_predicates: [playing, riding, flying]
+# Predicates worded "A person playing tennis." (no article, "is played in" templates);
+# every other activity predicate is worded "A person riding a horse." with object_templates.
+play_predicates: [playing]
 # Decision (ADR-0050, proposed): subjects that count as "a person".
 person_synsets: [man.n.01, woman.n.01, boy.n.01, girl.n.01, child.n.01, person.n.01,
                  player.n.01, guy.n.01, lady.n.01, people.n.01, kid.n.01]
@@ -42,7 +51,8 @@ min_fact_weight: 2.0
 min_train_images: 20
 min_answer_images: 3
 max_answer_images: 50
-limit_activity_pairs: 10
+# Total over all activity predicates; raised from 10 so riding and flying can fill the group.
+limit_activity_pairs: 12
 limit_object_pairs: 20
 author: kg-template-v1
 # Output goes to results/runs/ (gitignored); val queries never enter queries/ (ADR-0009).

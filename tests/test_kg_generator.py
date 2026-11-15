@@ -2,7 +2,7 @@
 
 from dataclasses import replace
 
-from conceptnet_fixtures import EDGES
+from conceptnet_fixtures import EDGES, edge
 from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.generator import canonicalize_graphs
 from mmxai.queries.kg_facts import build_fact_index
@@ -16,10 +16,11 @@ CONFIG = KgQueryConfig(
     split_file="unused",
     split="test",
     conceptnet_edges="unused",
-    predicate_aliases={"plays": "playing"},
-    activity_predicates=["playing"],
+    predicate_aliases={"plays": "playing", "rides": "riding"},
+    activity_predicates=["playing", "riding"],
+    play_predicates=["playing"],
     person_synsets=["man.n.01"],
-    category_words=["sport", "vehicle"],
+    category_words=["sport", "vehicle", "animal"],
     activity_templates={"uses": "uses", "location": "is played on", "has": "has", "can": "can"},
     object_templates={
         "uses": "is used with",
@@ -152,3 +153,73 @@ def test_target_in_excluded_concepts_is_rejected():
 
     assert "tennis.n.01" not in {record["hidden_concept"] for record in records}
     assert rejections["excluded_concept"] >= 1
+
+
+def riding_graphs() -> tuple[dict, dict]:
+    train = {1: scene(1, "horse.n.01", "riding"), 2: scene(2, "elephant.n.01", "riding")}
+    test = {10: scene(10, "horse.n.01", "rides"), 11: scene(11, "elephant.n.01", "riding")}
+    aliases = CONFIG.predicate_aliases
+    return canonicalize_graphs(train, aliases), canonicalize_graphs(test, aliases)
+
+
+def test_riding_pair_uses_an_article_and_records_the_verb():
+    train, test = riding_graphs()
+
+    records, _ = generate_kg_pairs(train, test, build_fact_index(EDGES), CONFIG)
+
+    horse = [record for record in records if record["hidden_concept"] == "horse.n.01"]
+    direct, indirect = sorted(horse, key=lambda record: record["type"])
+    assert direct["text"] == "A person riding a horse."
+    assert (
+        indirect["text"] == "A person riding an animal that is found at a barn and can carry rider."
+    )
+    # "rides" is counted after canonicalisation, so image 10 is an answer.
+    assert direct["relevant"] == ["10"]
+    assert direct["activity_verb"] == indirect["activity_verb"] == "riding"
+    assert direct["pair_id"] == "vgkg-test-a001"
+
+
+def test_object_records_have_no_activity_verb():
+    train, test = fixture_graphs()
+
+    records, _ = generate_kg_pairs(train, test, build_fact_index(EDGES), CONFIG)
+
+    objects = [record for record in records if record["query_group"] == "object"]
+    assert objects
+    assert {record["activity_verb"] for record in objects} == {None}
+
+
+def test_comparison_pool_is_per_predicate():
+    # A played "tennis" and a ridden "horse" share a category and a location. In one common
+    # pool neither would be unique; per predicate each is compared only with its own kind.
+    edges = [
+        edge("IsA", "tennis", "animal"),
+        edge("AtLocation", "tennis", "barn"),
+        edge("IsA", "horse", "animal"),
+        edge("AtLocation", "horse", "barn"),
+    ]
+    train = {1: scene(1, "tennis.n.01", "playing"), 2: scene(2, "horse.n.01", "riding")}
+    test = {10: scene(10, "tennis.n.01", "playing"), 11: scene(11, "horse.n.01", "riding")}
+    config = replace(CONFIG, num_properties=1)
+
+    records, _ = generate_kg_pairs(train, test, build_fact_index(edges), config)
+
+    concepts = {record["hidden_concept"] for record in records}
+    assert {"tennis.n.01", "horse.n.01"} <= concepts
+
+
+def test_activity_limit_is_shared_by_all_predicates():
+    train, test = fixture_graphs()
+    riding_train, riding_test = riding_graphs()
+    config = replace(CONFIG, limit_activity_pairs=1)
+
+    records, _ = generate_kg_pairs(
+        {**train, **{k + 50: v for k, v in riding_train.items()}},
+        {**test, **{k + 50: v for k, v in riding_test.items()}},
+        build_fact_index(EDGES),
+        config,
+    )
+
+    activity = [r for r in records if r["query_group"] == "activity" and r["type"] == "direct"]
+    # Config order: playing is visited first, so tennis takes the only slot.
+    assert [r["hidden_concept"] for r in activity] == ["tennis.n.01"]

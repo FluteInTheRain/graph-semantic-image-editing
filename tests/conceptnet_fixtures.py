@@ -47,6 +47,12 @@ EDGES = [
     edge("CapableOf", "car", "carry passengers"),
     edge("AtLocation", "bus", "street"),
     edge("AtLocation", "car", "street"),
+    # Ridden things: only the horse is found in a barn and can carry a rider.
+    edge("IsA", "horse", "animal"),
+    edge("AtLocation", "horse", "barn"),
+    edge("CapableOf", "horse", "carry rider"),
+    edge("IsA", "elephant", "animal"),
+    edge("AtLocation", "elephant", "zoo"),
 ]
 
 

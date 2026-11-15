@@ -25,9 +25,13 @@ def property_phrase(description: Description, templates: dict[str, str]) -> str:
     return " and ".join(phrases)
 
 
-def direct_text(group: str, concept: str) -> str:
+def direct_text(group: str, concept: str, verb: str | None, play_predicates: list[str]) -> str:
+    """Direct sentence. verb is the activity predicate, None for the object group."""
+    if group == "activity" and verb in play_predicates:
+        # "playing tennis": a played activity takes no article.
+        return as_sentence(f"a person {verb} {concept}")
     if group == "activity":
-        return as_sentence(f"a person playing {concept}")
+        return as_sentence(f"a person {verb} {with_article(concept)}")
     return as_sentence(with_article(concept))
 
 
@@ -36,16 +40,21 @@ def indirect_text(
     description: Description,
     templates: dict[str, str],
     activity_play_categories: list[str],
+    verb: str | None,
+    play_predicates: list[str],
 ) -> str:
-    """Indirect sentence. For activities, "playing a sport" but "playing with a toy".
+    """Indirect sentence. For played activities, "playing a sport" but "playing with a toy".
 
     Only categories in activity_play_categories can be played directly; for any other
-    category (toy, ...) the pilot val text "playing a toy that ..." read badly.
+    category (toy, ...) the pilot val text "playing a toy that ..." read badly. Other
+    activity verbs ("riding an animal that ...") always take the category with an article.
     """
     category = with_article(description.category.value)
     properties = property_phrase(description, templates)
-    if group == "activity":
+    if group == "activity" and verb in play_predicates:
         if description.category.value in activity_play_categories:
-            return as_sentence(f"a person playing {category} that {properties}")
-        return as_sentence(f"a person playing with {category} that {properties}")
+            return as_sentence(f"a person {verb} {category} that {properties}")
+        return as_sentence(f"a person {verb} with {category} that {properties}")
+    if group == "activity":
+        return as_sentence(f"a person {verb} {category} that {properties}")
     return as_sentence(f"{category} that {properties}")
