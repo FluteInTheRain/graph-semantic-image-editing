@@ -57,3 +57,12 @@ def test_explanation_is_exactly_what_the_score_counts():
     assert record["score"] == 2 / 3
     # Fidelity by construction: dropping one matched concept lowers the score by 1/|S_q|.
     assert record["score_without_each"] == [1 / 3, 1 / 3]
+
+
+def test_empty_subgraph_scores_zero_for_every_candidate():
+    sets = image_concept_sets(contains_graph())
+    empty = subgraph([], [0.0, 0.0, 0.0, 0.0])
+
+    scores = overlap_scores(np.array([[10, 11, 12]]), [empty], sets)
+
+    assert scores.tolist() == [[0.0, 0.0, 0.0]]

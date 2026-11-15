@@ -191,6 +191,25 @@ def write_selection(config, seed, **changes):
     path.write_text(json.dumps(selection), encoding="utf-8")
 
 
+def test_select_on_val_never_asks_for_test(patched):
+    config, asked = patched
+
+    pcst_rerank.select_on_val(config, 0, log=lambda *a: None)
+
+    assert asked["candidates"] == ["val"]
+    assert asked["subgraph"] == ["val"]
+
+
+def test_evaluate_test_asks_only_for_test(patched):
+    config, asked = patched
+    write_selection(config, 0)
+
+    pcst_rerank.evaluate_test(config, 0, log=lambda *a: None)
+
+    assert asked["candidates"] == ["test"]
+    assert asked["subgraph"] == ["test"]
+
+
 def test_select_refuses_the_annotation_graph(patched, monkeypatch):
     config, _ = patched
     monkeypatch.setattr(pcst_rerank, "load_inputs", lambda c: fake_inputs("annotations"))
@@ -221,4 +240,20 @@ def test_evaluate_refuses_a_selection_made_on_another_split_file(patched):
     write_selection(config, 0, split_sha256="old")
 
     with pytest.raises(ValueError, match="split"):
+        pcst_rerank.evaluate_test(config, 0, log=lambda *a: None)
+
+
+def test_evaluate_refuses_a_second_test_run(patched, monkeypatch):
+    config, _ = patched
+    write_selection(config, 0)
+    monkeypatch.setattr(pcst_rerank, "has_test_run", lambda config, seed: True)
+
+    with pytest.raises(FileExistsError, match="already"):
+        pcst_rerank.evaluate_test(config, 0, log=lambda *a: None)
+
+
+def test_evaluate_needs_a_selection_file(patched):
+    config, _ = patched
+
+    with pytest.raises(FileNotFoundError):
         pcst_rerank.evaluate_test(config, 0, log=lambda *a: None)
