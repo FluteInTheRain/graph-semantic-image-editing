@@ -24,7 +24,16 @@ from mmxai.eval.graph_rerank import (
 )
 from mmxai.eval.metrics import compute_metrics
 from mmxai.graph.contains import split_subgraph
-from mmxai.graph.pcst import QuerySubgraph, no_tree_subgraph, query_subgraph, undirected_pairs
+from mmxai.graph.pcst import (
+    QuerySubgraph,
+    edge_costs,
+    no_tree_from_prizes,
+    prizes_from_top,
+    query_subgraph_from_prizes,
+    top_concepts,
+    undirected_pairs,
+    unit_rows,
+)
 from mmxai.graph.shuffle import shuffle_concept_pairs
 from mmxai.models.subgraph_scorer import image_concept_sets, overlap_scores
 from mmxai.rerank.fusion import (
@@ -47,6 +56,9 @@ from mmxai.utils.yaml_config import load_yaml_dataclass
 SELECTION_FILE = "selection.json"
 SUBGRAPH_MODES = ("pcst", "top_k_only")
 LOG_EVERY = 1000
+# Queries per similarity block. Only bounds memory (2,000 x ~3,900 float32 is about 31 MB);
+# it does not change any result, so it is not a hyperparameter of the method.
+SIMILARITY_CHUNK = 2000
 
 
 @dataclass(frozen=True)
@@ -97,25 +109,46 @@ def concept_pairs(inputs: Inputs, config: PcstRerankConfig, seed: int) -> np.nda
     return pairs
 
 
+def top_concepts_per_query(
+    queries: np.ndarray, concept_vectors: np.ndarray, max_k: int, chunk: int = SIMILARITY_CHUNK
+) -> np.ndarray:
+    """Top max_k concept rows of every query, shape (num_queries, max_k).
+
+    The similarity does not depend on prize_k or edge_cost, so it is computed once per
+    split. Only the top max_k rows are kept (prizes need nothing else), which keeps memory
+    small: the full 25,000 x 3,880 similarity matrix would be about 390 MB.
+    """
+    unit_concepts = unit_rows(concept_vectors).astype(np.float32)
+    unit_queries = unit_rows(queries).astype(np.float32)
+    blocks = []
+    for start in range(0, len(unit_queries), chunk):
+        similarity = unit_queries[start : start + chunk] @ unit_concepts.T
+        blocks.append(top_concepts(similarity, max_k))
+    if not blocks:
+        return np.zeros((0, max_k), dtype=np.int64)
+    return np.concatenate(blocks)
+
+
 def split_subgraphs(
-    queries: np.ndarray,
-    concept_vectors: np.ndarray,
+    top: np.ndarray,
+    num_concepts: int,
     pairs: np.ndarray,
     mode: str,
     prize_k: int,
-    edge_cost: float,
+    costs: np.ndarray,
     log=print,
 ) -> list[QuerySubgraph]:
-    """One S_q per query; slow on ~25,000 queries, so report progress."""
+    """One S_q per query from its precomputed top concepts; PCST is slow, so report progress."""
     subgraphs = []
     started = time.time()
-    for number, query in enumerate(queries, start=1):
+    for number, query_top in enumerate(top, start=1):
+        prizes = prizes_from_top(query_top, prize_k, num_concepts)
         if mode == "pcst":
-            subgraphs.append(query_subgraph(query, concept_vectors, pairs, prize_k, edge_cost))
+            subgraphs.append(query_subgraph_from_prizes(prizes, pairs, costs))
         else:
-            subgraphs.append(no_tree_subgraph(query, concept_vectors, prize_k))
+            subgraphs.append(no_tree_from_prizes(prizes))
         if number % LOG_EVERY == 0:
-            log(f"  subgraphs {number}/{len(queries)} after {time.time() - started:.0f}s")
+            log(f"  subgraphs {number}/{len(top)} after {time.time() - started:.0f}s")
     return subgraphs
 
 
@@ -137,15 +170,18 @@ def grid_search(
 ) -> list[dict]:
     """For each (prize_k, edge_cost): its best alpha and metrics on the given candidates."""
     results = []
+    top = top_concepts_per_query(
+        candidates.query_embeddings, concept_vectors, max(config.prize_k_grid)
+    )
     for prize_k, edge_cost in grid_settings(config):
         log(f"prize_k={prize_k} edge_cost={edge_cost}")
         subgraphs = split_subgraphs(
-            candidates.query_embeddings,
-            concept_vectors,
+            top,
+            len(concept_vectors),
             pairs,
             config.subgraph_mode,
             prize_k,
-            edge_cost,
+            edge_costs(pairs, edge_cost),
             log,
         )
         scores = overlap_scores(candidates.candidate_ids, subgraphs, sets)
@@ -262,13 +298,16 @@ def evaluate_test(config: PcstRerankConfig, seed: int, log=print) -> Path:
     sets = image_concept_sets(split_subgraph(inputs.graph, "test"))
     pairs = concept_pairs(inputs, config, seed)
 
+    top = top_concepts_per_query(
+        candidates.query_embeddings, inputs.concept_features, selection["prize_k"]
+    )
     subgraphs = split_subgraphs(
-        candidates.query_embeddings,
-        inputs.concept_features,
+        top,
+        len(inputs.concept_features),
         pairs,
         config.subgraph_mode,
         selection["prize_k"],
-        selection["edge_cost"],
+        edge_costs(pairs, selection["edge_cost"]),
         log,
     )
     scores = overlap_scores(candidates.candidate_ids, subgraphs, sets)

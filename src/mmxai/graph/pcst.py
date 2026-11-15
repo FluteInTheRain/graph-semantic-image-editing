@@ -39,7 +39,33 @@ def undirected_pairs(source: np.ndarray, target: np.ndarray) -> np.ndarray:
 
 
 def unit_rows(matrix: np.ndarray) -> np.ndarray:
-    return matrix / np.linalg.norm(matrix, axis=-1, keepdims=True)
+    """Scale every row to length 1, so a dot product between rows is a cosine.
+
+    A zero row has no direction; dividing by its norm would give NaN prizes silently, so
+    fail loudly instead.
+    """
+    norms = np.linalg.norm(matrix, axis=-1, keepdims=True)
+    if np.any(norms == 0):
+        raise ValueError("cannot normalise a zero vector (a row of all zeros)")
+    return matrix / norms
+
+
+def top_concepts(similarity: np.ndarray, max_k: int) -> np.ndarray:
+    """For each row of similarities, the max_k most similar concept rows, best first.
+
+    Prizes only need the top k concepts, so keeping max_k columns per query is enough for
+    every k <= max_k. Same stable tie-break as rank_prizes.
+    """
+    order = np.argsort(-similarity, axis=1, kind="stable")
+    return order[:, :max_k]
+
+
+def prizes_from_top(top: np.ndarray, k: int, num_concepts: int) -> np.ndarray:
+    """The prizes rank_prizes would give, from one query's top concepts (needs k <= len(top))."""
+    prizes = np.zeros(num_concepts, dtype=np.float64)
+    chosen = top[: min(k, num_concepts)]
+    prizes[chosen] = np.arange(len(chosen), 0, -1, dtype=np.float64)
+    return prizes
 
 
 def rank_prizes(similarity: np.ndarray, k: int) -> np.ndarray:
@@ -48,10 +74,7 @@ def rank_prizes(similarity: np.ndarray, k: int) -> np.ndarray:
     Ties are broken by concept row (stable sort) so the result is deterministic.
     """
     order = np.argsort(-similarity, kind="stable")
-    prizes = np.zeros(len(similarity), dtype=np.float64)
-    top = order[: min(k, len(similarity))]
-    prizes[top] = np.arange(len(top), 0, -1, dtype=np.float64)
-    return prizes
+    return prizes_from_top(order, k, len(similarity))
 
 
 def query_prizes(query: np.ndarray, concept_vectors: np.ndarray, k: int) -> np.ndarray:
@@ -59,12 +82,15 @@ def query_prizes(query: np.ndarray, concept_vectors: np.ndarray, k: int) -> np.n
     return rank_prizes(similarity, k)
 
 
-def query_subgraph(
-    query: np.ndarray, concept_vectors: np.ndarray, pairs: np.ndarray, k: int, edge_cost: float
+def edge_costs(pairs: np.ndarray, edge_cost: float) -> np.ndarray:
+    """Every edge costs the same constant (ADR-0051); build once per edge_cost, not per query."""
+    return np.full(len(pairs), edge_cost, dtype=np.float64)
+
+
+def query_subgraph_from_prizes(
+    prizes: np.ndarray, pairs: np.ndarray, costs: np.ndarray
 ) -> QuerySubgraph:
-    """S_q: the PCST tree on the concept graph for this query."""
-    prizes = query_prizes(query, concept_vectors, k)
-    costs = np.full(len(pairs), edge_cost, dtype=np.float64)
+    """S_q: the PCST tree for ready-made prizes and edge costs."""
     vertices, edge_rows = pcst_fast(pairs, prizes, costs, UNROOTED, NUM_TREES, PRUNING, QUIET)
     tree_pairs = pairs[edge_rows]
     # As in the G-Retriever code: the subgraph is the chosen vertices plus both ends of
@@ -73,8 +99,19 @@ def query_subgraph(
     return QuerySubgraph(concepts, tree_pairs.astype(np.int64), prizes)
 
 
-def no_tree_subgraph(query: np.ndarray, concept_vectors: np.ndarray, k: int) -> QuerySubgraph:
-    """Ablation 1 (ADR-0051): only the prized concepts, no bridges, no tree."""
+def query_subgraph(
+    query: np.ndarray, concept_vectors: np.ndarray, pairs: np.ndarray, k: int, edge_cost: float
+) -> QuerySubgraph:
+    """S_q for one query, from raw vectors (the readable path; the fast path shares its core)."""
     prizes = query_prizes(query, concept_vectors, k)
+    return query_subgraph_from_prizes(prizes, pairs, edge_costs(pairs, edge_cost))
+
+
+def no_tree_from_prizes(prizes: np.ndarray) -> QuerySubgraph:
+    """Ablation 1 (ADR-0051): only the prized concepts, no bridges, no tree."""
     concepts = np.flatnonzero(prizes > 0).astype(np.int64)
     return QuerySubgraph(concepts, np.zeros((0, 2), dtype=np.int64), prizes)
+
+
+def no_tree_subgraph(query: np.ndarray, concept_vectors: np.ndarray, k: int) -> QuerySubgraph:
+    return no_tree_from_prizes(query_prizes(query, concept_vectors, k))

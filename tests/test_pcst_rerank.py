@@ -12,6 +12,7 @@ from mmxai.eval.pcst_rerank import (
     choose_setting,
     grid_search,
     load_pcst_rerank_config,
+    top_concepts_per_query,
 )
 from mmxai.rerank.fusion import Candidates
 
@@ -111,3 +112,15 @@ def test_the_three_configs_differ_only_in_the_ablation_fields():
     assert main["shuffle_concept_edges"] is False
     assert no_tree["subgraph_mode"] == "top_k_only"
     assert shuffled["shuffle_concept_edges"] is True
+
+
+def test_top_concepts_do_not_depend_on_the_chunk_size():
+    rng = np.random.default_rng(1)
+    queries = rng.normal(size=(7, 4))
+    concepts = rng.normal(size=(12, 4))
+
+    whole = top_concepts_per_query(queries, concepts, 3, chunk=100)
+    chunked = top_concepts_per_query(queries, concepts, 3, chunk=2)
+
+    assert whole.shape == (7, 3)
+    assert whole.tolist() == chunked.tolist()
