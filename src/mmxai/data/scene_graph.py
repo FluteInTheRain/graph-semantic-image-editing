@@ -256,18 +256,12 @@ def build_scene_graphs(
     return graphs, report
 
 
-def load_scene_graphs(
+def load_annotation_files(
     data_dir: str | Path,
-    image_ids: set[int] | None,
     objects_file: str = OBJECTS_FILE,
     relationships_file: str = RELATIONSHIPS_FILE,
-) -> tuple[dict[int, SceneGraph], Counter]:
-    """Read objects.json and relationships.json from data_dir and build the scene graphs.
-
-    Both files are required: objects.json gives every object of the image, which
-    is needed to tell whether a name like "dog" points to a single object.
-    relationships.json is large (about 700 MB for v1.4), so this needs several GB of RAM.
-    """
+) -> tuple[list[dict], list[dict]]:
+    """Read objects.json and relationships.json once (several GB of RAM for v1.4)."""
     data_dir = Path(data_dir)
     objects_path = data_dir / objects_file
     relationships_path = data_dir / relationships_file
@@ -282,4 +276,22 @@ def load_scene_graphs(
         objects_entries = json.load(file)
     with open(relationships_path, encoding="utf-8") as file:
         relationships_entries = json.load(file)
+    return objects_entries, relationships_entries
+
+
+def load_scene_graphs(
+    data_dir: str | Path,
+    image_ids: set[int] | None,
+    objects_file: str = OBJECTS_FILE,
+    relationships_file: str = RELATIONSHIPS_FILE,
+) -> tuple[dict[int, SceneGraph], Counter]:
+    """Read objects.json and relationships.json from data_dir and build the scene graphs.
+
+    Both files are required: objects.json gives every object of the image, which
+    is needed to tell whether a name like "dog" points to a single object.
+    relationships.json is large (about 700 MB for v1.4), so this needs several GB of RAM.
+    """
+    objects_entries, relationships_entries = load_annotation_files(
+        data_dir, objects_file, relationships_file
+    )
     return build_scene_graphs(objects_entries, relationships_entries, image_ids)
