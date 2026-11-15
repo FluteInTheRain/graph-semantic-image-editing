@@ -1,3 +1,4 @@
+% !TEX program = xelatex
 % ============================================================
 %  BÁO CÁO ĐỒ ÁN – HỌC MÁY VỚI DỮ LIỆU ĐỒ THỊ – PROJECT 3
 %  Theo template báo cáo của nhóm (template/main.tex)
@@ -679,12 +680,15 @@ Với mỗi ảnh cần giải thích, Occlusion xoá lần lượt từng cạn
 \end{tabularx}
 \end{table}
 
-\paragraph{Phân tích.}
+\paragraph{Phân tích.} Phân tích đầy đủ từng truy vấn (cạnh đẩy lên, cạnh kéo xuống, ảnh hạng 1 của các ca thất bại) nằm trong \code{reports/case\_studies/5-thanh-cong-5-that-bai.md}. Do quy tắc chọn lấy \code{change} lớn nhất trong top 100, cả 10 truy vấn đều là ca cực trị (ảnh đúng nằm sát đáy danh sách trước hoặc sau khi xếp hạng lại), không đại diện cho truy vấn điển hình.
 \begin{itemize}
 \item \textbf{Tác động đúng hướng:} ở cả 15 ảnh được giải thích (10 ảnh đúng và 5 ảnh hạng 1 của các truy vấn thất bại), xoá 3 cạnh do Occlusion chọn đều làm điểm đồ thị giảm.
 \item \textbf{Thành công chủ yếu nhờ vectơ của chính ảnh}, tức phép chiếu $W_{\text{self}}x_i+b$, không phải nhờ cạnh. Khi bỏ mọi cạnh, 5 ảnh này vẫn đứng hạng 7/5/1/3/8, so với 99/100/100/99/98 theo CLIP. Cạnh giúp 3/5 ca (7$\to$1, 5$\to$3, 8$\to$3), không đổi 1 ca, và kéo xuống 1 ca (``part of a trouser'': không cạnh thì hạng 1).
 \item \textbf{Thất bại chủ yếu do $\alpha=0$ và phép chiếu; cạnh làm nặng thêm ở một số ca.} Ảnh đúng vốn hạng 7--15 theo CLIP rơi xuống 92--100; bỏ mọi cạnh vẫn chỉ lên 96/94/82/34/75. Cạnh kéo xuống rõ nhất ở ``a wooden sign'' (34 $\to$ 92). Ảnh hạng 1 của cả 5 truy vấn thất bại vẫn hạng 1 khi bỏ mọi cạnh. Vì vậy giải thích bằng cạnh chỉ giải thích được một phần các ca thất bại.
-\item \textbf{Cạnh đúng nghĩa vẫn có thể kéo ảnh xuống:} với ``tall green and tan grass'', cạnh \code{grass.n.01} có đóng góp $-0.0031$, vì mô hình lấy trung bình 16 khái niệm rồi mới tính cosine nên đóng góp không cộng dồn và không luôn cùng chiều với nghĩa.
+\item \textbf{Phải đọc ``xoá 3'' cùng ``bỏ mọi cạnh'':} với ``part of a trouser'', 3 cạnh đẩy lên mạnh nhất (chủ đề bóng chày) đúng là làm điểm giảm khi bị xoá, nhưng bỏ cả 16 cạnh thì ảnh lại lên hạng 1. Nếu chỉ hiển thị 3 cạnh dương, người xem sẽ tưởng đồ thị đã giúp, trong khi tổng thể nhánh láng giềng kéo ảnh xuống 2 bậc.
+\item \textbf{Khái niệm gần nghĩa truy vấn nhất thường có đóng góp âm:} \code{grass.n.01} ($-0.0031$) và \code{grassland.n.01} ($-0.0032$) với ``tall green and tan grass''; \code{street\_sign.n.01} ($-0.0047$) với ``a wooden sign''; \code{parking\_meter.n.01} với ``handicap parking sign''; \code{hubcap.n.01}, \code{tire.n.01} với ``wheel of car''. Ngược lại vẫn có \code{sedan.n.01} đẩy lên với ``the grass beside the car''. Giả thuyết (chưa kiểm): mô hình lấy trung bình 16 khái niệm rồi mới tính cosine, nên dấu đóng góp phụ thuộc vào khái niệm đó so với trung bình các khái niệm còn lại qua $W_{\text{nb}}$, không chỉ vào nghĩa của nó.
+\item \textbf{Cạnh mức ảnh, truy vấn mức vùng:} truy vấn Visual Genome mô tả một vùng hoặc thuộc tính (``wheel of car'', ``grey shirt and blue jeans''), còn 16 khái niệm mô tả bối cảnh hoặc vật chính của cả ảnh. Ở ``wheel of car'', khái niệm của ảnh đúng là trụ cứu hoả, vòi nước; đồ thị kéo ảnh xuống thêm 14 bậc.
+\item \textbf{Một số thất bại có thể là nhãn thiếu:} ảnh đúng chỉ gồm ảnh có cùng câu (ADR-0043). Theo tên khái niệm, ảnh hạng 1 của ``scattered waves in water'' (lướt sóng), ``tall green and tan grass'' (đồng cỏ) và ``wheel of car'' (xe hơi, CLIP cũng xếp 1) có thể hợp nghĩa; diễn giải này chỉ dựa trên tên khái niệm, chưa đối chiếu ảnh.
 \item \textbf{Cạnh CLIP top-16 có nhiễu}, ví dụ \code{screen\_saver.n.01}, \code{body\_waste.n.01}, \code{adam.n.01}. Giải thích hiển thị đúng đồ thị mà mô hình dùng, kể cả phần nhiễu; đây là cái giá của việc không dùng annotation cho cạnh.
 \item \textbf{Mức toàn cục (val):} bỏ mọi cạnh của đồ thị val, giữ trọng số, \mrr{} giảm từ 0.12806 xuống 0.12621 (trung bình 3 seed), vẫn xa trên CLIP (0.1061). Mô hình trên đồ thị xáo cũng mất khoảng 0.001 khi bỏ cạnh, nên ``bỏ cạnh thì điểm giảm'' một mình không chứng minh vai trò của quan hệ; phép so có ý nghĩa vẫn là thật so với xáo.
 \end{itemize}
