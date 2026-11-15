@@ -79,6 +79,8 @@ Thêm `pcst-fast` vào nhóm `graph`. Thư viện có wheel cho Windows `cp311` 
 
 **Ghim `numpy<2`.** `pcst-fast` 1.0.10 (bản mới nhất trên PyPI) chỉ cho kết quả đúng với numpy 1.x. Kiểm thử bài toán 3 nút (kết quả đúng là `[0, 1, 2] [0, 1]`): numpy 1.26.4 cho đúng; numpy 2.4.6 cho sai (`[0, 0, 0] [1, 1]`), với cả list, int32 và int64 liên tục. Build từ mã nguồn cần MSVC (chưa cài). Vì vậy project ghim `numpy>=1.26,<2` trong `pyproject.toml` (kéo theo pandas 2.3.3 thay cho 3.x). Quyết định bởi Thuat Nguyen, 2026-11-15. Sau khi merge, cả nhóm cần chạy lại `uv sync`. Gỡ ràng buộc này khi `pcst-fast` có bản sửa.
 
+Code (bậc 1): `src/mmxai/graph/pcst.py`, `src/mmxai/graph/shuffle.py` (`shuffle_concept_pairs`), `src/mmxai/models/subgraph_scorer.py`, `src/mmxai/eval/pcst_rerank.py`, `scripts/select_pcst_rerank.py`, `scripts/evaluate_pcst_rerank.py`, `configs/clip_pcst_vg.yaml`, `configs/clip_pcst_vg_no_tree.yaml`, `configs/clip_pcst_vg_shuffled.yaml`. Hướng dẫn: `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 9.
+
 Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. Các giá trị lưới cụ thể là đề xuất, chốt trên val. **Nhóm chưa duyệt.**
 
 ## Các phương án đã cân nhắc
