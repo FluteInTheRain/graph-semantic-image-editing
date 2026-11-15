@@ -14,6 +14,8 @@ Danh sách dự kiến (chưa viết), theo thứ tự chạy pipeline:
 | `scripts/generate_queries.py` (đã có) | Sinh cặp truy vấn trực tiếp/gián tiếp ứng viên từ scene graph Visual Genome + manifest để người kiểm tra (ADR-0044). Hướng dẫn: `docs/query_benchmark.md` | `mmxai.queries.generator` |
 | `scripts/build_query_benchmark.py` (đã có) | Dựng `queries/visual_genome_test.jsonl` chỉ từ các cặp đã `verified` trong manifest | `mmxai.queries.validator` |
 | `scripts/evaluate_query_benchmark.py` (đã có) | CLIP thuần trên bộ truy vấn đã kiểm tra: Recall@1/5/10/100 + MRR@100 tách direct/indirect. Cần `uv sync --group ml` | `mmxai.eval.query_benchmark` |
+| `scripts/generate_kg_queries.py` (đã có) | Sinh cặp truy vấn trực tiếp/gián tiếp ứng viên qua khái niệm ConceptNet (hoạt động, đồ vật) + manifest để người kiểm tra (ADR-0050) | `mmxai.queries.kg_generator` |
+| `scripts/build_kg_query_benchmark.py` (đã có) | Dựng `queries/visual_genome_kg_test.jsonl` chỉ từ các cặp KG đã `verified` trong manifest | `mmxai.queries.validator` |
 | `scripts/summarize_runs.py` (đã có) | Gom `results/runs/*` thành `results/tables/main.csv` (mean ± std, ≥3 seed, bỏ run có code chưa commit) | `mmxai.eval.summary` |
 | `scripts/build_graph.py` (đã có) | Dựng đồ thị ảnh – khái niệm, chỉ cạnh `contains`; từ vựng khái niệm đếm trên train (ADR-0045). Hướng dẫn: `docs/guides/xay-do-thi.md`. Cần `uv sync --group ml --group graph` | `mmxai.graph.pipeline` |
 | `scripts/shuffle_graph.py` (đã có) | Xáo cạnh `contains` của một đồ thị đã dựng, trong từng split, giữ bậc của mỗi ảnh và mỗi khái niệm; ghi thành thư mục đồ thị mới (ablation ADR-0046 mục 6) | `mmxai.graph.shuffle` |

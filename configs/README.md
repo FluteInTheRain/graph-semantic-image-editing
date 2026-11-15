@@ -19,6 +19,9 @@
 | `configs/query_benchmark_vg.yaml` | Sinh cặp truy vấn trực tiếp/gián tiếp từ scene graph ảnh **test** và dựng bộ chính thức từ manifest đã kiểm tra (ADR-0044) |
 | `configs/query_benchmark_vg_pilot.yaml` | Pilot 5 cặp trên **val** để chốt quy tắc; ra `results/runs/` (ADR-0044) |
 | `configs/eval_query_benchmark_vg.yaml` | Đánh giá CLIP thuần trên bộ truy vấn đã kiểm tra, tách direct/indirect (ADR-0044) |
+| `configs/query_benchmark_vg_kg.yaml` | Sinh cặp truy vấn trực tiếp/gián tiếp qua khái niệm ConceptNet cho ảnh **test** và dựng bộ chính thức từ manifest đã kiểm tra (ADR-0050) |
+| `configs/query_benchmark_vg_kg_pilot.yaml` | Pilot trên **val** cho bộ KG: giống hệt config test trừ split và đường dẫn; ra `results/runs/` (ADR-0050) |
+| `configs/eval_query_benchmark_vg_kg.yaml` | Đánh giá CLIP thuần trên bộ truy vấn KG đã kiểm tra, tách direct/indirect và activity/object (ADR-0050) |
 | `configs/graph_vg_clip_topk.yaml` | Đồ thị ảnh – khái niệm của **mô hình chính**: cạnh `contains` lấy từ CLIP top-k cho mọi split (ADR-0046) |
 | `configs/graph_vg_clip_topk_shuffled.yaml` | Xáo cạnh `contains` của đồ thị mô hình chính **trong từng split**, giữ số cạnh của mỗi ảnh và mỗi khái niệm (seed 0); dùng cho ablation ở trên |
 | `configs/graph_vg.yaml` | Đồ thị ảnh – khái niệm với cạnh `contains` lấy từ annotation (ADR-0045); chỉ làm ablation cận trên (ADR-0046) |

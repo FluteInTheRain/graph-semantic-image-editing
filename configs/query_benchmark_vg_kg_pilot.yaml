@@ -1,0 +1,44 @@
+# Val PILOT of the KG generator (ADR-0050): check rules and templates without touching test.
+# All values other than split and the three paths equal the test config.
+# How to run: see the docstring of scripts/generate_kg_queries.py.
+# Every value below must be fixed on the val pilot BEFORE generating on test, and never
+# changed after looking at retrieval results (PDF section 6, ADR-0009).
+dataset: visual_genome
+data_dir: data/visual_genome
+objects_file: objects.json
+relationships_file: relationships.json
+split_file: splits/visual_genome/split_seed0.json
+# Pilot on val: never look at test while tuning the rules.
+split: val
+# ConceptNet edges filtered once by scripts/prepare_conceptnet.py (ADR-0050).
+conceptnet_edges: artifacts/conceptnet/en_edges.tsv
+# Same canonicalisation as ADR-0044, only for the activity predicate.
+predicate_aliases: {plays: playing, play: playing, playing with: playing}
+activity_predicates: [playing]
+# Decision (ADR-0050, proposed): subjects that count as "a person".
+person_synsets: [man.n.01, woman.n.01, boy.n.01, girl.n.01, child.n.01, person.n.01,
+                 player.n.01, guy.n.01, lady.n.01, people.n.01, kid.n.01]
+# Decision (ADR-0050, proposed): category words an indirect query may name.
+category_words: [sport, game, activity, vehicle, animal, instrument, fruit, vegetable,
+                 furniture, tool, food, toy, appliance, device, container, clothing]
+# Verb phrase per ConceptNet fact kind, for activity and object concepts.
+activity_templates: {uses: uses, location: is played on, has: has, can: can}
+object_templates: {uses: is used with, location: is found at, has: has, can: can}
+# Number of property facts in an indirect query (besides the one category fact).
+num_properties: 2
+# Decision (ADR-0050, proposed): thresholds, fixed on the val pilot.
+#   A concept needs enough TRAIN images to be a fair target, and a small answer set
+#   in the queried split so a human can verify all of it.
+min_train_images: 20
+min_answer_images: 3
+max_answer_images: 50
+limit_activity_pairs: 10
+limit_object_pairs: 20
+author: kg-template-v1
+# Output goes to results/runs/ (gitignored); val queries never enter queries/ (ADR-0009).
+candidates_path: results/runs/query_kg_pilot_val/visual_genome_kg_candidates_val.jsonl
+manifest_path: results/runs/query_kg_pilot_val/query_review_manifest_kg_val.csv
+# Never built from val.
+benchmark_path: results/runs/query_kg_pilot_val/unused_benchmark.jsonl
+# PDF Task 2: at least 20 queries = 10 direct/indirect pairs.
+min_verified_pairs: 10
