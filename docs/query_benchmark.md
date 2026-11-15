@@ -257,3 +257,104 @@ uv run pytest tests/test_scene_graph.py tests/test_query_generator.py tests/test
 ```
 
 `tests/test_queries_committed.py` kiểm mọi file `queries/*.jsonl` đã commit: đúng schema, đáp án thuộc test; file `*_test.jsonl` phải toàn truy vấn `verified`.
+
+
+---
+
+## Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0050)
+
+### Ý tưởng
+
+Bộ v1 (các mục trên) sinh câu gián tiếp từ chuỗi quan hệ trong annotation ảnh. Bộ v2 làm khác: lấy **một khái niệm** C (ví dụ môn `tennis` hoặc vật `train`), rồi **mô tả C mà không nói tên C**, bằng tri thức thường thức của ConceptNet.
+
+| | Câu trực tiếp | Câu gián tiếp |
+|---|---|---|
+| Nói gì | Gọi tên C | Chỉ nêu 1 từ loại + 2 tính chất của C |
+| Đáp án | Cùng một tập ảnh | Cùng một tập ảnh |
+| Cần gì để trả lời | Khớp chữ | Biết "môn chơi trên sân và dùng vợt" là tennis |
+
+Điều kiện công bằng: mô tả phải đúng với **chỉ C** trong nhóm của nó. Nếu "dùng vợt" cũng đúng với badminton thì ảnh badminton cũng là đáp án đúng, nên mô tả đó bị loại.
+
+### Các loại fact (`src/mmxai/queries/kg_facts.py`, hàm `facts_from_edge`)
+
+Một cạnh ConceptNet cho ra một fact về một khái niệm. Chiều cạnh quyết định khái niệm nào "sở hữu" fact.
+
+| Cạnh | Khái niệm sở hữu | `kind` | Ví dụ cụm trong câu |
+|---|---|---|---|
+| `C IsA K` | C | `isa` (chỉ dùng làm từ loại) | "a sport" |
+| `X UsedFor C` | C | `uses` | "uses a racket" |
+| `C AtLocation Y` | C | `location` | "is played on a court" |
+| `C HasA X` | C | `has` | "has a X" |
+| `X PartOf C` | C | `has` | "has a X" |
+| `C CapableOf V` | C | `can` | "can carry passengers" (động từ, không có "a") |
+
+Cạnh khác bị bỏ. Cùng (khái niệm, `kind`, giá trị) từ nhiều cạnh thì giữ cạnh nặng nhất (`build_fact_index`).
+
+### Cách chọn mô tả duy nhất (`choose_description`)
+
+1. **Kho so sánh** (`pool`) là mọi khái niệm cùng nhóm xuất hiện ở ít nhất 1 ảnh train, không chỉ các khái niệm đích.
+2. Chọn **từ loại**: cạnh `IsA` có giá trị nằm trong `category_words` của config. Ưu tiên từ loại ít khái niệm khác chung nhất, hoà thì theo thứ tự chữ.
+3. Chọn **tính chất** theo kiểu tham lam: mỗi lần lấy fact mà ít khái niệm còn lại (cùng từ loại) có nhất. Hoà thì lấy cạnh có `weight` cao hơn, rồi theo thứ tự chữ.
+4. Bỏ tính chất lộ tên (`leaks_name`: "tennis ball" khi C là tennis) và tính chất không phải chữ thường đơn giản.
+5. Sau `num_properties` tính chất mà vẫn còn khái niệm giống C thì bỏ C (`no_unique_description`).
+
+Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất trước, hoà thì theo tên synset. Cả quy trình **không dùng seed**.
+
+### Vì sao một khái niệm bị loại
+
+`run_kg_generation` in số khái niệm bị loại theo lý do (`rejected_concepts`). Ghi các số này vào báo cáo.
+
+| Lý do | Nghĩa |
+|---|---|
+| `too_few_train_images` | Ít hơn `min_train_images` ảnh train |
+| `concept_already_used` | Synset này đã có cặp |
+| `name_not_plain_words` | Tên không phải chữ thường đơn giản |
+| `no_conceptnet_facts` | Tên không có trong ConceptNet |
+| `answer_count_out_of_range` | Số ảnh đáp án ngoài `[min_answer_images, max_answer_images]` |
+| `no_unique_description` | Không có mô tả đúng riêng cho C |
+
+### Ví dụ (DỮ LIỆU TỔNG HỢP, không phải ConceptNet hay Visual Genome)
+
+Ví dụ lấy từ test fixture `tests/conceptnet_fixtures.py` và `tests/test_kg_text.py`. Các cạnh do nhóm tự bịa để biết trước đáp án: tennis và badminton cùng "dùng vợt", chỉ tennis có "sân".
+
+| Thành phần | Giá trị tổng hợp |
+|---|---|
+| Cạnh | `tennis IsA sport`, `racket UsedFor tennis`, `tennis AtLocation court`, `racket UsedFor badminton` |
+| Câu trực tiếp | `A person playing tennis.` |
+| Câu gián tiếp | `A person playing a sport that is played on a court and uses a racket.` |
+| Vì sao đủ | "dùng vợt" cũng đúng với badminton, nhưng "chơi trên sân" chỉ đúng với tennis |
+
+Nhóm object, cũng từ fixture: `A train.` và `A vehicle that is found at a railway and can carry passengers.`
+
+### Các trường mới trong JSONL và manifest
+
+| Trường | Nghĩa |
+|---|---|
+| `hidden_concept` | Synset bị giấu (ví dụ `tennis.n.01`) |
+| `query_group` | `activity` hoặc `object` |
+| `kg_evidence` | Danh sách cạnh ConceptNet đã dùng: `{uri, rel, start, end, weight}`. `check_kg_evidence` kiểm mỗi `uri` có trong file cạnh |
+| `path_hint` | Các cạnh viết thành chuỗi "start - rel - end" |
+
+Manifest CSV thêm cột `query_group`, `hidden_concept`, `kg_edges` (các URI cách nhau bằng dấu cách) để người duyệt đối chiếu. Kết quả đánh giá thêm `by_query_group` (direct/indirect cho từng nhóm) bên cạnh `all/direct/indirect`.
+
+### Lệnh chạy theo thứ tự
+
+Trước hết tự tải `conceptnet-assertions-5.7.0.csv.gz` (xem `data_cards/conceptnet.md`) và đặt vào `data/conceptnet/`. File này không được commit.
+
+| # | Việc | Lệnh |
+|---|---|---|
+| 1 | Lọc ConceptNet một lần (chỉ cạnh tiếng Anh, 6 quan hệ) | `uv run python scripts/prepare_conceptnet.py --config configs/conceptnet_en.yaml` |
+| 2 | Pilot trên **val**, đọc thử câu | `uv run python scripts/generate_kg_queries.py --config configs/query_benchmark_vg_kg_pilot.yaml` |
+| 3 | Chốt quy tắc (chỉ dựa trên val) | sửa `configs/query_benchmark_vg_kg.yaml` và bản pilot cho giống nhau |
+| 4 | Chạy test | `uv run pytest` |
+| 5 | Sinh ứng viên trên **test** | `uv run python scripts/generate_kg_queries.py --config configs/query_benchmark_vg_kg.yaml` |
+| 6 | Review: A duyệt, B kiểm lại (mục 4) | sửa `queries/query_review_manifest_kg.csv` |
+| 7 | Dựng bộ chính thức từ các cặp `verified` (cần ít nhất `min_verified_pairs` = 10) | `uv run python scripts/build_kg_query_benchmark.py --config configs/query_benchmark_vg_kg.yaml` |
+| 8 | Đánh giá CLIP, mỗi seed một lần | `uv run python scripts/evaluate_query_benchmark.py --config configs/eval_query_benchmark_vg_kg.yaml --seed <k>` |
+
+### Lưu ý rò rỉ
+
+- Khái niệm đích và kho so sánh chỉ đếm trên **train**. Ảnh test chỉ dùng để lấy đáp án.
+- Pilot chạy trên val. Không chỉnh quy tắc sau khi nhìn kết quả truy hồi trên bộ test.
+- Đáp án lấy từ annotation của ảnh test. Mô hình đồ thị **không được dựng cạnh từ annotation ảnh test** và không được đọc `hidden_concept`, `kg_evidence`, `path_hint`.
+- Dùng cạnh ConceptNet bên trong mô hình là việc ngoài ADR-0050, cần ADR riêng.
