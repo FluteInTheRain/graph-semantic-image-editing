@@ -4,6 +4,7 @@ from conceptnet_fixtures import assertion_line, write_assertions_gz
 from mmxai.data.conceptnet import (
     ConceptEdge,
     concept_term,
+    load_conceptnet_prepare_config,
     load_edges_tsv,
     parse_assertion_line,
     prepare_conceptnet,
@@ -59,3 +60,10 @@ def test_prepare_filters_a_gzip_file_and_reports_counts(tmp_path):
     assert summary["edges_kept"] == 1
     assert len(summary["sha256"]) == 64
     assert load_edges_tsv(output)[0].start == "tennis"
+
+
+def test_prepare_config_loads_the_repo_file():
+    config = load_conceptnet_prepare_config("configs/conceptnet_en.yaml")
+
+    assert config.relations == ["IsA", "UsedFor", "AtLocation", "HasA", "PartOf", "CapableOf"]
+    assert config.min_weight == 1.0

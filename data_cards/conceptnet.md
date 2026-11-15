@@ -1,0 +1,52 @@
+# Data card: ConceptNet 5.7
+
+**Là gì?** Đồ thị tri thức thường thức công khai: mỗi cạnh là (đầu, quan hệ, cuối, weight), ví dụ `racket -UsedFor-> tennis`. Đồ án dùng nó làm tri thức ngoài để viết truy vấn gián tiếp mô tả một khái niệm ẩn (ADR-0050).
+
+## Nguồn và phiên bản
+
+| Thành phần | Bản dùng | Nguồn |
+|---|---|---|
+| `conceptnet-assertions-5.7.0.csv.gz` | 5.7.0 | https://github.com/commonsense/conceptnet5/wiki/Downloads |
+
+| Mục cần người tải điền | Giá trị |
+|---|---|
+| Ngày tải | _(chưa điền)_ |
+| Người tải | _(chưa điền)_ |
+| Dung lượng file tải về | _(chưa điền)_ |
+| sha256 file tải về | _(chưa điền)_ |
+
+## Giấy phép
+
+CC BY-SA 4.0 theo trang ConceptNet; một số nguồn con có điều khoản riêng, cần đối chiếu trang gốc trước khi đăng lại. Không commit file dữ liệu (`data/` và `artifacts/` bị gitignore).
+
+## Cách dùng trong đồ án
+
+Lọc một lần bằng `scripts/prepare_conceptnet.py` (config `configs/conceptnet_en.yaml`):
+
+```bash
+uv run python scripts/prepare_conceptnet.py --config configs/conceptnet_en.yaml
+```
+
+| Mục | Giá trị |
+|---|---|
+| Ngôn ngữ | Chỉ giữ cạnh có cả hai đầu là tiếng Anh (`/c/en/...`) |
+| Quan hệ giữ lại | `IsA`, `UsedFor`, `AtLocation`, `HasA`, `PartOf`, `CapableOf` |
+| Ngưỡng weight | `weight >= 1.0` |
+| Output | `artifacts/conceptnet/en_edges.tsv` (cột `uri`, `rel`, `start`, `end`, `weight`) |
+
+Mỗi cạnh giữ nguyên URI gốc để từng truy vấn trích dẫn được cạnh nó dựa vào.
+
+| Mục cần người chạy điền | Giá trị |
+|---|---|
+| Số dòng đọc | _(chưa điền, script in `lines_read`)_ |
+| Số cạnh giữ | _(chưa điền, script in `edges_kept`)_ |
+| sha256 của TSV | _(chưa điền, script in `sha256`)_ |
+
+## Rò rỉ dữ liệu
+
+ConceptNet là tri thức ngoài, không xây từ ảnh hay truy vấn của Visual Genome nên không phụ thuộc split (PDF §6).
+
+## Hạn chế và rủi ro
+
+- ConceptNet có cạnh nhiễu hoặc chủ quan; weight < 1 đã bị loại nhưng chưa đảm bảo đúng hoàn toàn.
+- Cạnh bị lọc theo chuỗi từ nên các nghĩa khác nhau của một từ có thể bị gộp.

@@ -14,7 +14,21 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from mmxai.utils.yaml_config import load_yaml_dataclass
+
 TSV_COLUMNS = ["uri", "rel", "start", "end", "weight"]
+
+
+@dataclass(frozen=True)
+class ConceptNetPrepareConfig:
+    source_path: str
+    output_path: str
+    relations: list[str]
+    min_weight: float
+
+
+def load_conceptnet_prepare_config(path: str | Path) -> ConceptNetPrepareConfig:
+    return load_yaml_dataclass(path, ConceptNetPrepareConfig)
 
 
 @dataclass(frozen=True)
