@@ -54,6 +54,7 @@ from mmxai.utils.runs import (
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 SELECTION_FILE = "selection.json"
+CLIP_EDGE_SOURCE = "clip_topk"  # graph.pipeline.EDGE_SOURCES: the leak-free image edges
 SUBGRAPH_MODES = ("pcst", "top_k_only")
 LOG_EVERY = 1000
 # Queries per similarity block. Only bounds memory (2,000 x ~3,900 float32 is about 31 MB);
@@ -96,6 +97,23 @@ def load_pcst_rerank_config(path: str | Path) -> PcstRerankConfig:
     if config.selection_metric != f"MRR@{config.top_k}":
         raise ValueError(f"selection_metric must be MRR@{config.top_k}")
     return config
+
+
+def load_checked_inputs(config: PcstRerankConfig) -> Inputs:
+    """load_inputs, plus: the image concepts must come from CLIP, not from annotations.
+
+    Decision (ADR-0046, ADR-0051): N(i) must be the CLIP top-k concepts of image i.
+      Why: annotation concepts exist for test images too; they would put the test answers
+        into N(i) and make the overlap score look better than it is.
+      Decided by: Claude Code proposal, 2026-11-15; not yet approved by the team.
+    """
+    inputs = load_inputs(config)
+    if inputs.graph_meta["edge_source"] != CLIP_EDGE_SOURCE:
+        raise ValueError(
+            f"{config.graph_dir} has edge_source={inputs.graph_meta['edge_source']!r}; the PCST "
+            f"reranker needs {CLIP_EDGE_SOURCE!r} (annotation edges leak test answers into N(i))"
+        )
+    return inputs
 
 
 def concept_pairs(inputs: Inputs, config: PcstRerankConfig, seed: int) -> np.ndarray:
@@ -227,6 +245,7 @@ def run_facts(config: PcstRerankConfig, inputs: Inputs, split_name: str, seed: i
         "shuffle_concept_edges": config.shuffle_concept_edges,
         "graph_dir": config.graph_dir,
         "concept_edges_dir": config.concept_edges_dir,
+        "graph_edge_source": inputs.graph_meta["edge_source"],
         "graph_git_commit": inputs.graph_meta["git"]["git_commit"],
         "features_code_hash": inputs.feature_meta["code_hash"],
     }
@@ -247,7 +266,7 @@ def select_on_val(config: PcstRerankConfig, seed: int, log=print) -> Path:
     path = selection_path(config, seed)
     if path.exists():
         raise FileExistsError(f"{path} exists; remove it on purpose to choose again")
-    inputs = load_inputs(config)
+    inputs = load_checked_inputs(config)
     candidates = split_candidates(config, inputs, "val")
     sets = image_concept_sets(split_subgraph(inputs.graph, "val"))
     pairs = concept_pairs(inputs, config, seed)
@@ -292,8 +311,11 @@ def evaluate_test(config: PcstRerankConfig, seed: int, log=print) -> Path:
         raise FileExistsError(f"test of {config.experiment} seed {seed} was already run")
     with open(selection_path(config, seed), encoding="utf-8") as file:
         selection = json.load(file)
+    # The choice was made against one split file; test must be scored against the same one.
+    if selection["split_sha256"] != file_sha256(config.split_file):
+        raise ValueError("selection.json was made with a different split file than the config")
 
-    inputs = load_inputs(config)
+    inputs = load_checked_inputs(config)
     candidates = split_candidates(config, inputs, "test")
     sets = image_concept_sets(split_subgraph(inputs.graph, "test"))
     pairs = concept_pairs(inputs, config, seed)
