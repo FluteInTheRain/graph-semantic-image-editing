@@ -4,6 +4,7 @@ from conceptnet_fixtures import assertion_line, write_assertions_gz
 from mmxai.data.conceptnet import (
     ConceptEdge,
     concept_term,
+    is_malformed,
     load_conceptnet_prepare_config,
     load_edges_tsv,
     parse_assertion_line,
@@ -67,3 +68,58 @@ def test_prepare_config_loads_the_repo_file():
 
     assert config.relations == ["IsA", "UsedFor", "AtLocation", "HasA", "PartOf", "CapableOf"]
     assert config.min_weight == 1.0
+
+
+def broken_json_line() -> str:
+    columns = assertion_line("IsA", "/c/en/tennis", "/c/en/sport").split("	")
+    columns[4] = "{not json"
+    return "	".join(columns)
+
+
+def text_weight_line() -> str:
+    columns = assertion_line("IsA", "/c/en/tennis", "/c/en/sport").split("	")
+    columns[4] = '{"weight": "abc"}'
+    return "	".join(columns)
+
+
+def test_parse_does_not_crash_on_bad_json_or_a_non_numeric_weight():
+    assert parse_assertion_line(broken_json_line(), RELATIONS, 1.0) is None
+    assert parse_assertion_line(text_weight_line(), RELATIONS, 1.0) is None
+    assert parse_assertion_line("only	two", RELATIONS, 1.0) is None
+
+
+def test_info_that_is_not_an_object_is_malformed():
+    columns = assertion_line("IsA", "/c/en/tennis", "/c/en/sport").split("	")
+    columns[4] = "[1, 2]"
+    line = "	".join(columns)
+
+    assert parse_assertion_line(line, RELATIONS, 1.0) is None
+    assert is_malformed(line, RELATIONS)
+
+
+def test_is_malformed_tells_broken_lines_from_filtered_ones():
+    good_but_french = assertion_line("IsA", "/c/fr/tennis", "/c/fr/sport")
+    other_relation = assertion_line("Synonym", "/c/en/racket", "/c/en/racquet")
+
+    assert is_malformed(broken_json_line(), RELATIONS)
+    assert is_malformed(text_weight_line(), RELATIONS)
+    assert is_malformed("only	two", RELATIONS)
+    assert not is_malformed(good_but_french, RELATIONS)
+    assert not is_malformed(other_relation, RELATIONS)
+
+
+def test_prepare_counts_malformed_lines(tmp_path):
+    source = tmp_path / "assertions.csv.gz"
+    write_assertions_gz(
+        source,
+        [
+            assertion_line("IsA", "/c/en/tennis", "/c/en/sport"),
+            broken_json_line(),
+            text_weight_line(),
+        ],
+    )
+
+    summary = prepare_conceptnet(source, tmp_path / "edges.tsv", RELATIONS, min_weight=1.0)
+
+    assert summary["malformed_lines"] == 2
+    assert summary["edges_kept"] == 1

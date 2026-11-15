@@ -51,8 +51,24 @@ def concept_term(node: str) -> str | None:
     return parts[3].replace("_", " ")
 
 
+def read_weight(info: str) -> float | None:
+    """The numeric weight in the info column, or None if the column is malformed."""
+    try:
+        data = json.loads(info)
+        if not isinstance(data, dict):
+            return None
+        return float(data.get("weight", 0.0))
+    except (ValueError, TypeError):
+        # ValueError covers json.JSONDecodeError and float("abc").
+        return None
+
+
 def parse_assertion_line(line: str, relations: list[str], min_weight: float) -> ConceptEdge | None:
-    """Turn one assertions line into a ConceptEdge, or None if the edge is not kept."""
+    """Turn one assertions line into a ConceptEdge, or None if the edge is not kept.
+
+    Never raises on a bad line: malformed and filtered-out lines both give None.
+    is_malformed tells the two apart, so the prepare step can count the broken ones.
+    """
     columns = line.rstrip("\n").split("\t")
     if len(columns) != 5:
         return None
@@ -64,10 +80,24 @@ def parse_assertion_line(line: str, relations: list[str], min_weight: float) -> 
     end = concept_term(end_uri)
     if start is None or end is None or start == end:
         return None
-    weight = float(json.loads(info).get("weight", 0.0))
-    if weight < min_weight:
+    weight = read_weight(info)
+    if weight is None or weight < min_weight:
         return None
     return ConceptEdge(uri, relation, start, end, weight)
+
+
+def is_malformed(line: str, relations: list[str]) -> bool:
+    """True if the line is broken: not 5 columns, or an unreadable info column.
+
+    The info JSON is only checked for wanted relations: parsing it for all ~34M lines
+    would be slow, and a broken line of an unwanted relation does not matter.
+    """
+    columns = line.rstrip("\n").split("\t")
+    if len(columns) != 5:
+        return True
+    if columns[1].removeprefix("/r/") not in relations:
+        return False
+    return read_weight(columns[4]) is None
 
 
 def write_edges_tsv(edges: list[ConceptEdge], path: str | Path) -> None:
@@ -118,17 +148,21 @@ def prepare_conceptnet(
         )
     edges = []
     lines_read = 0
+    malformed_lines = 0
     with gzip.open(source_path, "rt", encoding="utf-8") as file:
         for line in file:
             lines_read += 1
             edge = parse_assertion_line(line, relations, min_weight)
             if edge is not None:
                 edges.append(edge)
+            elif is_malformed(line, relations):
+                malformed_lines += 1
     write_edges_tsv(edges, output_path)
     return {
         "source": str(source_path),
         "output": str(output_path),
         "lines_read": lines_read,
+        "malformed_lines": malformed_lines,
         "edges_kept": len(edges),
         "sha256": file_sha256(output_path),
     }
