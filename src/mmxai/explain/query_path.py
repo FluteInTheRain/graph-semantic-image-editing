@@ -14,19 +14,38 @@ The engine holds one split only. Decision (ADR-0009): the demo uses val; test is
 scored once, in scripts/evaluate_graph_rerank.py.
 """
 
+import json
 from dataclasses import dataclass
 
 import numpy as np
+import torch
 
-from mmxai.eval.graph_rerank import SplitGraph
-from mmxai.eval.query_ranks import ranked_columns
+from mmxai.eval.graph_rerank import (
+    MODEL_FILE,
+    SELECTION_FILE,
+    GraphRerankConfig,
+    SplitGraph,
+    build_split_graph,
+    image_vectors,
+    load_inputs,
+    make_model,
+    seed_model_dir,
+    split_candidates,
+)
+from mmxai.eval.query_ranks import fused_ranks, ranked_columns
 from mmxai.explain.occlusion import occlusion
+from mmxai.explain.query_analysis import check_reproduces_training
 from mmxai.explain.ranking_model import SCORE_TOLERANCE
 from mmxai.explain.sage_scoring import image_scorer
 from mmxai.explain.score_path import ScorePath, decompose_graph_score
-from mmxai.index.image_index import ImageIndex, search_images
+from mmxai.features.cache import load_meta
+from mmxai.features.clip_encoder import ClipBundle, encode_texts, load_frozen_clip
+from mmxai.index.image_index import ImageIndex, build_image_index, search_images
 from mmxai.models.sage import ConceptToImageSage
 from mmxai.rerank.fusion import Candidates, candidate_graph_scores, fuse_scores
+
+# Decision (ADR-0009): a typed query searches val only; test is scored once elsewhere.
+DEMO_SPLIT = "val"
 
 
 @dataclass(frozen=True)
@@ -43,6 +62,7 @@ class QueryEngine:
     image_index: ImageIndex
     alpha: float  # chosen on val by training (selection.json), never by the demo
     top_k: int  # how many CLIP candidates are re-ranked (config.top_k)
+    concept_keys: np.ndarray  # synset of each concept; concept node row r is key r - num_images
 
 
 @dataclass(frozen=True)
@@ -127,3 +147,64 @@ def occlusion_drops(engine: QueryEngine, image_row: int, query: np.ndarray) -> d
     for edge in contributions:
         drops[edge.source] = edge.contribution
     return drops
+
+
+def load_engine(config: GraphRerankConfig, seed: int, log=print) -> QueryEngine:
+    """Load the trained model and the val split once, and check they reproduce training.
+
+    Stops (check_reproduces_training) unless every val text, ranked with these weights,
+    this graph and the saved alpha, gives exactly the val metric training saved.
+    """
+    if config.concept_edges_dir is not None:
+        raise ValueError("only the one-layer model (concept_edges_dir: null) can be explained")
+
+    model_dir = seed_model_dir(config, seed)
+    with open(model_dir / SELECTION_FILE, encoding="utf-8") as file:
+        selection = json.load(file)
+    alpha = float(selection["alpha"])
+
+    log(f"loading features, graph and model ({DEMO_SPLIT})")
+    inputs = load_inputs(config)
+    split_graph = build_split_graph(inputs, DEMO_SPLIT)
+    model = make_model(config, split_graph.x.shape[1])
+    model.load_state_dict(torch.load(model_dir / MODEL_FILE, weights_only=True))
+    model.eval()
+    image_h = image_vectors(model, split_graph)
+
+    log("checking the model reproduces the val metric saved by training")
+    candidates = split_candidates(config, inputs, DEMO_SPLIT)
+    graph_scores = candidate_graph_scores(candidates, image_h, split_graph.image_ids)
+    check_reproduces_training(
+        config, selection, alpha, fused_ranks(candidates, graph_scores, alpha)
+    )
+
+    # The same gallery as retrieve_candidates: the split's images only.
+    is_split_image = np.isin(inputs.image_ids, inputs.split[DEMO_SPLIT])
+    image_index = build_image_index(
+        inputs.image_embeddings[is_split_image], inputs.image_ids[is_split_image]
+    )
+    return QueryEngine(
+        model=model,
+        split_graph=split_graph,
+        image_h=image_h,
+        image_index=image_index,
+        alpha=alpha,
+        top_k=config.top_k,
+        concept_keys=inputs.graph.concept_keys,
+    )
+
+
+def load_text_encoder(config: GraphRerankConfig, device: str = "cpu") -> ClipBundle:
+    """The frozen CLIP that made the cached features (model name read from their meta.json)."""
+    meta = load_meta(config.features_dir)
+    return load_frozen_clip(meta["model"], meta["pretrained"], device)
+
+
+def encode_query(bundle: ClipBundle, text: str) -> np.ndarray:
+    """CLIP text vector of one query, length 1 like the cached text features."""
+    return encode_texts(bundle, [text], batch_size=1)[0]
+
+
+def concept_name(engine: QueryEngine, concept_row: int) -> str:
+    """Synset of a concept node row, e.g. "dog.n.01" (concepts come after the images)."""
+    return str(engine.concept_keys[concept_row - len(engine.split_graph.image_ids)])
