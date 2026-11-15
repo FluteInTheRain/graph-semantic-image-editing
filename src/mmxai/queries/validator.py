@@ -42,6 +42,9 @@ MANIFEST_COLUMNS = [
     "indirect_text",
     "path_hint",
     "relationship_ids",
+    "query_group",
+    "hidden_concept",
+    "kg_edges",
     "hidden_names",
     "candidate_relevant",
     "num_candidates",
@@ -217,6 +220,16 @@ def check_evidence(record: dict, graphs: dict[int, SceneGraph]) -> list[str]:
     return problems
 
 
+def check_kg_evidence(records: list[dict], edge_uris: set[str]) -> list[str]:
+    """Every ConceptNet edge a KG query cites must exist in the filtered edge file."""
+    problems = []
+    for record in records:
+        for item in record.get("kg_evidence", []):
+            if item["uri"] not in edge_uris:
+                problems.append(f"{record['qid']}: ConceptNet edge {item['uri']} not found")
+    return problems
+
+
 def validate_queries(
     records: list[dict],
     split_image_ids: set[str],
@@ -277,20 +290,29 @@ def manifest_rows(candidates: list[dict]) -> list[dict]:
     for pair_id in sorted(by_pair):
         direct = by_pair[pair_id]["direct"]
         indirect = by_pair[pair_id]["indirect"]
-        relationship_ids = [str(item["relationship_id"]) for item in direct["relation_evidence"]]
+        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0050).
+        relationship_ids = []
+        for item in direct.get("relation_evidence", []):
+            relationship_ids.append(str(item["relationship_id"]))
+        kg_edges = []
+        for item in direct.get("kg_evidence", []):
+            kg_edges.append(item["uri"])
         rows.append(
             {
                 "pair_id": pair_id,
-                "source_image_id": direct["source_image_id"],
-                "hop_count": direct["hop_count"],
-                "reasoning_type": indirect["reasoning_type"],
+                "source_image_id": direct.get("source_image_id", ""),
+                "hop_count": direct.get("hop_count", ""),
+                "reasoning_type": indirect.get("reasoning_type", ""),
                 "direct_qid": direct["qid"],
                 "direct_text": direct["text"],
                 "indirect_qid": indirect["qid"],
                 "indirect_text": indirect["text"],
                 "path_hint": direct["path_hint"],
                 "relationship_ids": " ".join(relationship_ids),
-                "hidden_names": " | ".join(indirect["hidden_names"]),
+                "query_group": direct.get("query_group", ""),
+                "hidden_concept": direct.get("hidden_concept", ""),
+                "kg_edges": " ".join(kg_edges),
+                "hidden_names": " | ".join(indirect.get("hidden_names", [])),
                 "candidate_relevant": " ".join(direct["relevant"]),
                 "num_candidates": len(direct["relevant"]),
                 "verification_status": STATUS_CANDIDATE,
