@@ -141,37 +141,56 @@ def make_kg_pair(
     return [direct, indirect]
 
 
+def target_sets(
+    train_graphs: dict[int, SceneGraph], eval_graphs: dict[int, SceneGraph], config: KgQueryConfig
+) -> list[tuple[str, str | None, dict[str, set[int]], dict[str, set[int]], dict[str, str]]]:
+    """One entry per comparison pool: (group, verb, train images, eval images, templates).
+
+    Each activity predicate is its own pool (a horse is compared with other ridden things,
+    not with sports); the object group is one pool. verb is None for objects.
+    """
+    train_activity = activity_images(
+        train_graphs, config.person_synsets, config.activity_predicates
+    )
+    eval_activity = activity_images(eval_graphs, config.person_synsets, config.activity_predicates)
+    sets = []
+    for predicate in config.activity_predicates:
+        train_images = {s: ids for (p, s), ids in train_activity.items() if p == predicate}
+        eval_images = {s: ids for (p, s), ids in eval_activity.items() if p == predicate}
+        sets.append(("activity", predicate, train_images, eval_images, config.activity_templates))
+    sets.append(
+        (
+            "object",
+            None,
+            object_images(train_graphs),
+            object_images(eval_graphs),
+            config.object_templates,
+        )
+    )
+    return sets
+
+
 def generate_kg_pairs(
     train_graphs: dict[int, SceneGraph],
     eval_graphs: dict[int, SceneGraph],
     fact_index: dict[str, list[Fact]],
     config: KgQueryConfig,
 ) -> tuple[list[dict], Counter]:
-    """Pairs for the activity group, then the object group. Graphs must be canonical.
+    """Pairs for the activity predicates in config order, then the object group.
 
-    Targets are visited from the most to the least frequent on train, so the
-    result does not depend on any random seed.
+    Graphs must be canonical. Targets are visited from the most to the least frequent
+    on train, so the result does not depend on any random seed.
     """
-    groups = [
-        (
-            "activity",
-            activity_images(train_graphs, config.person_synsets, config.activity_predicates),
-            activity_images(eval_graphs, config.person_synsets, config.activity_predicates),
-            config.activity_templates,
-            config.limit_activity_pairs,
-        ),
-        (
-            "object",
-            object_images(train_graphs),
-            object_images(eval_graphs),
-            config.object_templates,
-            config.limit_object_pairs,
-        ),
-    ]
+    limits = {"activity": config.limit_activity_pairs, "object": config.limit_object_pairs}
     rejections: Counter = Counter()
     records: list[dict] = []
     used: set[str] = set()
-    for group, train_images, eval_images, templates, limit in groups:
+    # Pairs per group; the activity limit is shared by all activity predicates.
+    num_pairs: Counter = Counter()
+    for group, _verb, train_images, eval_images, templates in target_sets(
+        train_graphs, eval_graphs, config
+    ):
+        limit = limits[group]
         pool = sorted({synset_lemma(synset) for synset in train_images})
         # Synsets per term: "bat" as animal and as club would give two pairs with the same
         # text but different answers, and the pool (by term) cannot tell them apart.
@@ -179,9 +198,8 @@ def generate_kg_pairs(
 
         # Most frequent first; the synset name breaks ties so the order is deterministic.
         ordered = sorted(train_images.items(), key=lambda item: (-len(item[1]), item[0]))
-        num_pairs = 0
         for synset, images in ordered:
-            if num_pairs >= limit:
+            if num_pairs[group] >= limit:
                 break
             if len(images) < config.min_train_images:
                 rejections[REJECT_TOO_RARE] += 1
@@ -217,7 +235,7 @@ def generate_kg_pairs(
             if description is None:
                 rejections[REJECT_NO_DESCRIPTION] += 1
                 continue
-            pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs + 1:03d}"
+            pair_id = f"vgkg-{config.split}-{group[0]}{num_pairs[group] + 1:03d}"
             pair = make_kg_pair(group, synset, description, answers, pair_id, templates, config)
             # Cheap per-pair checks here, so one bad pair is dropped instead of making the
             # final whole-file validation fail and abort the run.
@@ -227,7 +245,7 @@ def generate_kg_pairs(
             ):
                 rejections[REJECT_NAME_LEAK] += 1
                 continue
-            num_pairs += 1
+            num_pairs[group] += 1
             # Both: the same term must not appear in the other group either.
             used.add(synset)
             used.add(term)

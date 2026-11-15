@@ -15,16 +15,18 @@ def graph(image_id: int, people: str, predicate: str, thing: str) -> SceneGraph:
     return scene
 
 
-def test_activity_needs_a_person_subject_and_the_playing_predicate():
+def test_activity_images_are_keyed_by_predicate_and_synset():
     graphs = {
         1: graph(1, "man.n.01", "playing", "tennis.n.01"),
         2: graph(2, "dog.n.01", "playing", "frisbee.n.01"),  # not a person
-        3: graph(3, "girl.n.01", "holding", "tennis.n.01"),  # not playing
+        3: graph(3, "girl.n.01", "holding", "tennis.n.01"),  # not an activity predicate
+        4: graph(4, "girl.n.01", "riding", "horse.n.01"),
+        5: graph(5, "man.n.01", "riding", "horse.n.01"),
     }
 
-    images = activity_images(graphs, ["man.n.01", "girl.n.01"], ["playing"])
+    images = activity_images(graphs, ["man.n.01", "girl.n.01"], ["playing", "riding"])
 
-    assert images == {"tennis.n.01": {1}}
+    assert images == {("playing", "tennis.n.01"): {1}, ("riding", "horse.n.01"): {4, 5}}
 
 
 def test_object_images_use_every_object_synset():

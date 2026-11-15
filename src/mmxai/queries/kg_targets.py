@@ -10,11 +10,15 @@ from mmxai.data.scene_graph import SceneGraph
 
 def activity_images(
     graphs: dict[int, SceneGraph], person_synsets: list[str], activity_predicates: list[str]
-) -> dict[str, set[int]]:
-    """Synset of the played thing -> images where a person plays it."""
+) -> dict[tuple[str, str], set[int]]:
+    """(predicate, synset of the thing) -> images where a person does that to it.
+
+    The predicate is part of the key: a horse is ridden, a tennis game is played, and
+    each predicate has its own comparison pool (ADR-0050).
+    """
     persons = set(person_synsets)
     predicates = set(activity_predicates)
-    images: dict[str, set[int]] = {}
+    images: dict[tuple[str, str], set[int]] = {}
     for image_id, graph in graphs.items():
         for relation in graph.relations:
             if relation.predicate not in predicates:
@@ -22,7 +26,7 @@ def activity_images(
             subject = graph.objects[relation.subject_id]
             target = graph.objects[relation.object_id]
             if subject.synset in persons and target.synset:
-                images.setdefault(target.synset, set()).add(image_id)
+                images.setdefault((relation.predicate, target.synset), set()).add(image_id)
     return images
 
 
