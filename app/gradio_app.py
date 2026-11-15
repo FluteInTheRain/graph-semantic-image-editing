@@ -17,9 +17,12 @@ import argparse
 from pathlib import Path
 
 import gradio as gr
+from matplotlib import pyplot as plt
 
-from mmxai.data.visual_genome import IMAGE_FILE, load_image_records
+from mmxai.data.image_sources import image_sources
+from mmxai.data.visual_genome import IMAGE_FILE
 from mmxai.eval.graph_rerank import load_graph_rerank_config
+from mmxai.explain.path_graph import build_path_graph, draw_path_graph
 from mmxai.explain.path_view import HOW_TO_READ, format_image_path
 from mmxai.explain.query_path import (
     encode_query,
@@ -28,18 +31,18 @@ from mmxai.explain.query_path import (
     search_and_explain,
 )
 
-MAX_K = 10  # more tables than this do not fit one screen during the oral exam
+MAX_K = 10  # more image nodes than this do not fit one screen during the oral exam
+NO_IMAGES = (
+    "No thumbnails: give --vg-data-dir with Visual Genome's image_data.json "
+    "(images/ is optional; without it the original urls are shown, which needs internet)."
+)
 
 
-def image_paths(vg_data_dir: str | None) -> dict[int, Path]:
-    """image id -> image file, only for files that exist; empty without the data."""
+def load_sources(vg_data_dir: str | None) -> dict[int, str]:
+    """image id -> local file or url; empty when image_data.json is missing."""
     if vg_data_dir is None or not (Path(vg_data_dir) / IMAGE_FILE).exists():
         return {}
-    paths = {}
-    for record in load_image_records(Path(vg_data_dir)):
-        if record.path.exists():
-            paths[record.image_id] = record.path
-    return paths
+    return image_sources(Path(vg_data_dir))
 
 
 def main() -> None:
@@ -49,24 +52,30 @@ def main() -> None:
     parser.add_argument("--config", required=True, help="YAML file in configs/")
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--num-edges", type=int, default=3, help="edges shown per side")
-    parser.add_argument("--vg-data-dir", help="folder with image_data.json and images/")
+    parser.add_argument("--vg-data-dir", help="folder with image_data.json (and images/)")
     args = parser.parse_args()
 
     config = load_graph_rerank_config(args.config)
     engine = load_engine(config, args.seed)
     encoder = load_text_encoder(config)
-    paths = image_paths(args.vg_data_dir)
-    print(f"{len(paths)} image files found (thumbnails)")
+    sources = load_sources(args.vg_data_dir)
+    print(f"{len(sources)} image sources found (thumbnails)")
 
-    def answer(text: str, k: int) -> tuple[list, str]:
+    def answer(text: str, k: int):
         results = search_and_explain(engine, encode_query(encoder, text), int(k))
         gallery = []
+        for item in results:
+            if item.image_id in sources:
+                gallery.append((sources[item.image_id], f"#{item.rank}: image {item.image_id}"))
+        note = "" if gallery else NO_IMAGES
+
+        figure = draw_path_graph(build_path_graph(engine, results, args.num_edges), text)
+        plt.close(figure)  # gradio keeps its own copy; without this every search leaks a figure
+
         tables = [HOW_TO_READ]
         for item in results:
-            if item.image_id in paths:
-                gallery.append((str(paths[item.image_id]), f"#{item.rank}: {item.image_id}"))
             tables.append(format_image_path(engine, item, args.num_edges))
-        return gallery, "\n\n".join(tables)
+        return gallery, note, figure, "\n\n".join(tables)
 
     with gr.Blocks(title="CLIP + Graph: query paths") as demo:
         gr.Markdown(
@@ -77,12 +86,16 @@ def main() -> None:
         )
         with gr.Row():
             query = gr.Textbox(label="Query", placeholder="man riding a horse", scale=4)
-            k = gr.Slider(1, MAX_K, value=5, step=1, label="k")
+            k = gr.Slider(1, MAX_K, value=3, step=1, label="k")
         button = gr.Button("Search")
         gallery = gr.Gallery(label="Top-k images", columns=5, height="auto")
-        paths_md = gr.Markdown()
-        button.click(answer, inputs=[query, k], outputs=[gallery, paths_md])
-        query.submit(answer, inputs=[query, k], outputs=[gallery, paths_md])
+        note = gr.Markdown()
+        graph = gr.Plot(label="Paths: query → concept → contains → image")
+        with gr.Accordion("Numbers behind the graph", open=False):
+            tables = gr.Markdown()
+        outputs = [gallery, note, graph, tables]
+        button.click(answer, inputs=[query, k], outputs=outputs)
+        query.submit(answer, inputs=[query, k], outputs=outputs)
 
     demo.launch()
 
