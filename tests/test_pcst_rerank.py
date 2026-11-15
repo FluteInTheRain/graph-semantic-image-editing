@@ -1,6 +1,7 @@
 """Selection logic of the PCST reranker (ADR-0051). Synthetic numbers only."""
 
 from dataclasses import asdict, replace
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -91,3 +92,22 @@ def test_grid_search_on_synthetic_inputs():
     assert results[0]["metric"] == 1.0
     assert results[0]["alpha"] < 1.0
     assert choose_setting(results)["metric"] == 1.0
+
+
+CONFIG_DIR = Path(__file__).parent.parent / "configs"
+CONFIG_NAMES = ["clip_pcst_vg", "clip_pcst_vg_no_tree", "clip_pcst_vg_shuffled"]
+ABLATION_FIELDS = {"experiment", "subgraph_mode", "shuffle_concept_edges", "selection_dir"}
+
+
+def test_the_three_configs_differ_only_in_the_ablation_fields():
+    main, no_tree, shuffled = [
+        asdict(load_pcst_rerank_config(CONFIG_DIR / f"{name}.yaml")) for name in CONFIG_NAMES
+    ]
+
+    for other in (no_tree, shuffled):
+        differing = {key for key in main if main[key] != other[key]}
+        assert differing <= ABLATION_FIELDS
+    assert main["subgraph_mode"] == "pcst"
+    assert main["shuffle_concept_edges"] is False
+    assert no_tree["subgraph_mode"] == "top_k_only"
+    assert shuffled["shuffle_concept_edges"] is True
