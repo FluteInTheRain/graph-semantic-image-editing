@@ -1,5 +1,6 @@
 import csv
 import json
+import random
 from pathlib import Path
 
 import pytest
@@ -478,3 +479,43 @@ def test_review_keys_matching_nothing_raw_are_reported(tmp_path):
 def test_no_unmatched_review_keys_gives_an_empty_list(tmp_path):
     three_items_snapshot(tmp_path)
     assert build(tmp_path).report["review_keys_unmatched"] == []
+
+
+def test_build_is_independent_of_input_row_order(tmp_path):
+    items = ["Q1", "Q2", "Q3"]
+    entities = [entity(i) for i in items] + [entity("Q9", in_domain="false")]
+    triples = [(i, "P131", "Q9") for i in items] + [("Q1", "P276", "Q9"), ("Q1", "P195", "Q9")]
+    # Q1 has 8 images, so the cap of 5 must pick the same ones whatever the order.
+    candidates = images_of("Q1", 8) + images_of("Q2", 4) + images_of("Q3", 3)
+    # Q2_3.jpg is a byte-identical copy of Q3_0.jpg: only one of the pair may survive.
+    candidates[-4]["sha1"] = candidates[-3]["sha1"]
+    credits = [{"file_name": c["file_name"], "artist": "A", "uploader": ""} for c in candidates]
+    triple_rows = [{"head_id": h, "property": p, "tail_id": t} for h, p, t in triples]
+    tables = {
+        "entities_raw": (ENTITY_HEADER, entities),
+        "triples_raw": (TRIPLE_HEADER, triple_rows),
+        "image_candidates": (CANDIDATE_HEADER, candidates),
+        "image_credits": (CREDIT_HEADER, credits),
+    }
+    shuffler = random.Random(0)
+    for folder in ["sorted", "shuffled"]:
+        for stem, (header, rows) in tables.items():
+            rows = list(rows)
+            if folder == "shuffled":
+                shuffler.shuffle(rows)
+            write_rows(tmp_path / folder, stem, header, rows, 100000)
+    review = Review({("image", "Q1_0.jpg"): "ok"}, {})
+
+    first = build(tmp_path / "sorted", review)
+    second = build(tmp_path / "shuffled", review)
+
+    assert first.report["images_dropped_duplicate_sha1"] == 1
+    assert first.report["images_dropped_over_max_per_item"] == 3
+    assert first.entities == second.entities
+    assert first.triples == second.triples
+    assert first.images == second.images
+    assert first.pending == second.pending
+    report_without_path = {k: v for k, v in first.report.items() if k != "snapshot_dir"}
+    assert report_without_path == {
+        k: v for k, v in second.report.items() if k != "snapshot_dir"
+    }
