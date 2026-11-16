@@ -1,6 +1,6 @@
 # Thiết kế: thu thập và dựng MMKG tiếng Việt (di tích và di sản Việt Nam)
 
-Ngày: 2026-11-16. Người yêu cầu và quyết định: FluteInTheRain. Trạng thái: chờ duyệt.
+Ngày: 2026-11-16. Người yêu cầu và quyết định: FluteInTheRain. Trạng thái: đã duyệt (FluteInTheRain, 2026-11-16).
 Đường dẫn tính từ gốc repo. Số liệu khảo sát đo ngày 2026-11-16 trên Wikidata/Commons, có thể lệch khi đo lại.
 
 ## 1. Mục đích và lý do
@@ -19,7 +19,9 @@ tự xây, vì sao bỏ dữ liệu này".
 **Mục tiêu**
 - Một snapshot gốc (thực thể, triple, danh sách ảnh ứng viên) lấy **toàn bộ** miền, có ngày tải, commit vào repo.
 - Một bộ chính thức theo định dạng ADR-0015 (`mmkg/entities.csv`, `mmkg/triples.csv`, `mmkg/images.csv`), dựng
-  từ snapshot bằng luật lọc đọc từ config; quy mô dự kiến khoảng 190 thực thể, 500 triple, 430 ảnh.
+  từ snapshot bằng luật lọc đọc từ config; quy mô mục tiêu theo ADR-0050 mục 4: **50–150 thực thể** (tính cả
+  `item` lẫn `concept`), 300–1.000 triple, 200–500 ảnh. Ước tính với ngưỡng khái niệm 2 là 191 thực thể, 508 triple,
+  426 ảnh; với ngưỡng 3 (đã chọn) số thực thể dự kiến dưới 150, số chính xác đo ở lần dựng đầu.
 - Kết quả duyệt của thành viên lưu riêng, không mất khi đổi luật lọc và dựng lại.
 - `data_cards/mmkg_vi.md` đủ các mục bắt buộc của ADR-0015, kèm số liệu "gốc → dùng" và lý do từng luật lọc.
 
@@ -90,9 +92,19 @@ snapshot ngày nào.
 - **Triple:** mọi phát biểu trực tiếp (`wdt:P...`) của các thực thể này trỏ tới một item Wikidata khác. Giữ nguyên mã
   quan hệ `P...`; việc đổi sang tên snake_case nằm ở bước dựng.
 - **Thực thể đích:** mọi item được trỏ tới bởi triple trên, lấy nhãn `vi`, `en`.
+- **Triple giữa các thực thể đã có** (quyết định của Claude Code, chưa được nhóm duyệt): thêm mọi triple trực tiếp mà
+  **cả hai đầu** đều đã nằm trong tập thực thể ở trên (ví dụ `Hà Nội –P131→ Đồng bằng sông Hồng` nếu cả hai đã có).
+  Không thêm thực thể mới ở bước này, nên snapshot không phình ra; đổi lại, mô hình hai bước (ADR-0048) và giải thích
+  nhiều bước có sẵn cạnh khái niệm – khái niệm mà không phải tải snapshot thứ hai.
 - **Ảnh ứng viên:** file `P18` và các file nằm **trực tiếp** trong danh mục `P373` (không đi xuống danh mục con).
-  Mỗi file ghi: tên file, URL trang file, URL ảnh, kích thước, loại MIME, giấy phép (`LicenseShortName`), tác giả
-  (`Artist`, bỏ thẻ HTML), sha1, và nguồn (`p18` hay `category`).
+  Mỗi file ghi: tên file, kích thước, loại MIME, giấy phép (`LicenseShortName`), tác giả (`Artist`, bỏ thẻ HTML),
+  người tải lên (`user`), sha1, và nguồn (`p18` hay `category`). URL trang file và URL ảnh **không lưu**, vì suy ra
+  được từ tên file.
+- **Giới hạn 1 MiB mỗi file** (pre-commit `check-added-large-files --maxkb=1024`, hook
+  `.claude/hooks/guard-protected-files.sh`; không được dùng `.gz`): ước tính khoảng 5.000 dòng ảnh ứng viên với đủ cột
+  là khoảng 2 MB. Quyết định của Claude Code: tách cột tác giả và người tải lên sang `image_credits.csv` (khoá theo tên
+  file), và nếu một file vẫn vượt 1 MiB thì chia theo dòng thành `<tên>_000.csv`, `<tên>_001.csv`... Không nới giới hạn
+  của hook. Có test kiểm mọi file trong `mmkg/` nhỏ hơn 1 MiB.
 
 ### 5.3. Luật lọc ở bước dựng (`configs/mmkg_vi_build.yaml`)
 
@@ -108,16 +120,54 @@ Mọi luật là **lựa chọn của nhóm**, không phải yêu cầu của đ
 | Số ảnh tối đa mỗi di tích | 5, chọn tất định: ảnh `P18` trước, sau đó theo tên file | Giữ quy mô gợi ý; không để di tích nhiều ảnh lấn át |
 | Quan hệ giữ lại | danh sách mã `P` trong config, kèm tên snake_case | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục) |
 | Gộp quan hệ | `P276` (location) và `P195` (collection) → `kept_at` khi trỏ cùng đích | Tránh đếm hai lần cùng một bảo tàng |
-| Khái niệm giữ lại | được ≥ 2 di tích (đã giữ) dùng chung | Khái niệm chỉ nối một di tích không tạo đường đi giữa các di tích |
+| Khái niệm giữ lại | được ≥ 3 di tích (đã giữ) dùng chung | Khái niệm chỉ nối một di tích không tạo đường đi giữa các di tích; ngưỡng 3 (thay vì 2) để tổng số thực thể nằm trong 50–150 của ADR-0050 (FluteInTheRain chọn, 2026-11-16). Nếu lần dựng đầu vẫn vượt 150 hoặc dưới 50, nhóm chỉnh ngưỡng trong config và ghi lại trong data card |
 | Triple giữ lại | cả hai đầu đều là thực thể được giữ | Đồ thị không có đầu mút treo |
+
+**Danh sách quan hệ khởi điểm** (quyết định của Claude Code, đúng danh sách đã dùng để ước tính quy mô; nhóm duyệt
+trước lần dựng đầu, sửa được trong config):
+
+| Mã Wikidata | Tên trong MMKG | Nghĩa tiếng Việt |
+|---|---|---|
+| `P31` | `instance_of` | là một (loại) |
+| `P1435` | `heritage_designation` | có danh hiệu di sản |
+| `P276`, `P195` | `kept_at` (gộp, mục trên) | được lưu giữ / đặt tại |
+| `P131` | `located_in` | nằm trong đơn vị hành chính |
+| `P186` | `made_from` | làm bằng chất liệu |
+| `P2348` | `time_period` | thuộc thời kỳ |
+| `P2596` | `culture` | thuộc nền văn hoá |
+| `P180` | `depicts` | khắc hoạ |
+| `P189` | `discovered_at` | phát hiện tại |
+| `P361` | `part_of` | là một phần của |
+| `P527` | `has_part` | gồm có |
+| `P138` | `named_after` | đặt tên theo |
+| `P170` | `creator` | người tạo |
+| `P88` | `commissioned_by` | người đặt làm |
+| `P737` | `influenced_by` | chịu ảnh hưởng từ |
+| `P5422` | `has_pattern` | có hoa văn |
+| `P793` | `significant_event` | sự kiện quan trọng |
+
+**Thực thể của miền có ít hơn 3 ảnh** (quyết định của Claude Code): không làm `item`; nếu được ≥ 3 `item` dùng chung
+(cùng ngưỡng khái niệm ở bảng trên; ví dụ một bảo tàng cũng có danh hiệu di sản) thì giữ làm `concept`, không thì bỏ. Ảnh của nó không vào bộ chính thức.
+Thứ tự áp luật: xác định `item` trước (theo số ảnh hợp lệ), rồi mới đếm khái niệm dùng chung.
+
+**Một file ảnh gắn với nhiều thực thể, hoặc trùng nội dung** (quyết định của Claude Code):
+- File thuộc **hơn một** thực thể của miền (ví dụ là `P18` của thực thể này và nằm trong danh mục của thực thể khác) bị
+  loại khỏi bộ chính thức, vì sau này đáp án truy vấn sẽ không rõ. `build_report.json` ghi số file loại vì lý do này.
+- Các file **trùng sha1**: giữ file có tên nhỏ nhất theo thứ tự chữ cái, loại các file còn lại. Đây là luật tự động ở
+  bước dựng; lý do `duplicate` trong file duyệt dành cho ảnh gần giống nhau mà sha1 khác.
+- Nhờ hai luật trên, mỗi file trong bộ chính thức thuộc đúng một thực thể, nên `review.csv` khoá ảnh theo tên file là đủ.
+
+**Tác giả** (quyết định của Claude Code): ảnh public domain hoặc CC0 được giữ dù `Artist` rỗng hay ghi "Unknown author";
+cột `author` ghi nguyên văn, rỗng thì ghi `unknown`. Ảnh CC BY và CC BY-SA bắt buộc ghi công: nếu `Artist` rỗng thì dùng
+người tải lên (`user`) và ghi `uploader: <tên>`; nếu cả hai rỗng thì loại ảnh. Data card ghi rõ luật này.
 
 Mỗi luật ghi số dòng bị bỏ vào `mmkg/build_report.json`. Script dựng **tất định**: cùng snapshot, cùng config, cùng
 file duyệt thì ra đúng cùng bộ chính thức.
 
 ### 5.4. Duyệt
 
-- Thời điểm duyệt: sau khi chạy dựng lần đầu, chỉ duyệt **những gì nằm trong bộ chính thức** (khoảng 430 ảnh, 500 triple,
-  190 nhãn thực thể), không duyệt toàn bộ snapshot.
+- Thời điểm duyệt: sau khi chạy dựng lần đầu, chỉ duyệt **những gì nằm trong bộ chính thức** (khoảng 430 ảnh, vài trăm triple,
+  dưới 150 nhãn thực thể), không duyệt toàn bộ snapshot.
 - File `mmkg/review.csv`, mỗi dòng một mục, khoá theo mã ổn định:
   `kind` (`image` | `triple` | `entity`), `key` (tên file Commons, hoặc `head|P|tail`, hoặc mã Q), `review_status`
   (`ok` | `drop`), `reason`, `fix_name_vi` (chỉ cho `entity`, nhãn tiếng Việt sửa lại), `reviewer`, `date`.
