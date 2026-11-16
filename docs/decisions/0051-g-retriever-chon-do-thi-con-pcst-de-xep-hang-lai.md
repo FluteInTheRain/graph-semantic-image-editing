@@ -146,6 +146,22 @@ Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. 
 
 **Kết luận theo quy tắc dừng (mục 3):** bậc 1 **không hơn CLIP thuần trên val**. Đây là kết quả âm thật, sẽ báo cáo trung thực. Nguyên nhân nằm ở **cách dùng** đồ thị con (đếm thô), không nằm ở bản thân đồ thị con. Bước tiếp theo là **bậc 2**. Test của bậc 1 để sau: với `alpha` = 1,0, kết quả test sẽ trùng hệt CLIP thuần. Ghi nhận bởi Thuat Nguyen, 2026-11-16.
 
+### Thiết kế bậc 2 (2026-11-16)
+
+Bậc 1 không hơn CLIP vì đếm thô (xem mục trên). Bậc 2 dùng **cùng đồ thị con**, nhưng để GNN **học** cách dùng nó.
+
+| Thành phần | Quy định |
+|---|---|
+| `S_q` | `graph/pcst.py`, **cố định `k = 3`, `C = 0,5`** theo bài gốc (SceneGraphs), không chọn lưới. Lý do: một lượt PCST trên khoảng 200 nghìn câu train mất khoảng 1 giờ (ước tính, phải đo); lưới 9 tổ hợp không khả thi |
+| Cache | `S_q` của mọi câu train dùng để huấn luyện (chỉ câu có ảnh đúng trong top 100 của CLIP, ADR-0047), mọi câu val, mọi câu test. Lưu ở `artifacts/pcst_cache/<experiment>/<split>.npz` + `meta.json` (`k`, `C`, chế độ, seed xáo, sha256 của đồ thị và split). Không ghi đè. Cache test chỉ được tạo và đọc trong bước chấm test |
+| Mô hình `SubgraphSage` | `m_i(q)` = trung bình `x_c` với `c ∈ N(i) ∩ S_q`, rỗng thì là vector 0; `h_i(q) = W_self·x_i + W_nb·m_i(q) + b`; điểm = `cos(q, h_i(q))`. Tham số và khởi tạo giống ADR-0046 (`W_self = I`, `W_nb = 0`, `b = 0`): chưa học thì bằng CLIP. Ảnh không chạm `S_q` chỉ còn `W_self·x_i + b`, giống `clip_nograph` |
+| Huấn luyện, chọn | Như ADR-0047 và `clip_graph_vg_lr1e4`: InfoNCE, 15 hard negative trên train, `τ = 0,05`, `lr = 1e-4`, batch 512, tối đa 10 epoch, patience 2, early stopping theo MRR@100 trên val của điểm đồ thị một mình, rồi chọn `alpha` trên val (hoà thì lấy `alpha` lớn hơn). Test chạy một lần |
+| Bản chạy (3 seed mỗi bản) | `clip_pcst_sage_vg` (chính); `clip_pcst_sage_vg_no_tree` (`S_q` = top-3 khái niệm có thưởng); `clip_pcst_sage_vg_shuffled` (PCST trên cạnh PMI đã xáo, seed xáo = seed chạy) |
+| Đối chứng (quy tắc dừng) | Phải **hơn `clip_nograph_vg_lr1e4` trên val**; so thêm với `clip_graph_vg_lr1e4`. Số trên val của hai mô hình này lấy từ `selection.json` của người đã chạy, hoặc chạy lại `train_graph_rerank.py` (chỉ train + val) |
+| Giải thích | Occlusion chính xác: bỏ lần lượt từng khái niệm trong `N(i) ∩ S_q`, tính lại điểm bằng chính mô hình. Ghi rõ khái niệm nào là cầu nối |
+
+Quyết định bởi Thuat Nguyen (brainstorm với Claude Code), 2026-11-16. Nhóm chưa duyệt.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
