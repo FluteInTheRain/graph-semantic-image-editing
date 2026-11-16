@@ -20,6 +20,7 @@
   "raw_entities": 848,
   "raw_image_candidates": 5093,
   "raw_triples": 3581,
+  "review_keys_unmatched": [],
   "snapshot_dir": "mmkg/raw/20261116",
   "triples": 331,
   "triples_dropped_end_not_kept": 1320,
