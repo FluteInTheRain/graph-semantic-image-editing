@@ -164,6 +164,29 @@ Code (bậc 2): `src/mmxai/graph/pcst_cache.py`, `src/mmxai/models/subgraph_sage
 
 Quyết định bởi Thuat Nguyen (brainstorm với Claude Code), 2026-11-16. Nhóm chưa duyệt.
 
+### Kết quả bậc 2 trên val, seed 0 (2026-11-16)
+
+Chạy trên Colab, commit `4afb770`, chỉ **val**, **chưa chạy test**. Có 69.490 / 490.383 câu train dùng để huấn luyện (câu có ảnh đúng trong top 100 của CLIP, ADR-0047). PCST mất khoảng 8,2 ms mỗi câu. Bậc 2 mất khoảng 5,5 phút mỗi epoch (cả lượt 74 phút); `clip_nograph` mất khoảng 55 giây mỗi epoch (cả lượt 31 phút).
+
+| Val, seed 0 | MRR@100 sau trộn | R@1 | R@5 | R@10 | `alpha` | Epoch tốt nhất | MRR đồ thị một mình |
+|---|---|---|---|---|---|---|---|
+| CLIP thuần | 0,1061 | 0,0559 | 0,1443 | 0,2046 | — | — | — |
+| `clip_nograph_vg_lr1e4` (đối chứng) | **0,1247** | 0,0680 | 0,1736 | 0,2410 | 0,2 | 7 | 0,1241 |
+| `clip_pcst_sage_vg` (bậc 2) | **0,1243** | 0,0682 | 0,1722 | 0,2420 | 0,3 | 6 | 0,1239 |
+
+**Diễn giải:**
+- Bậc 2 và đối chứng gần như bằng nhau: chênh MRR −0,0004, nằm trong nhiễu của một seed. Đường val qua từng epoch của hai mô hình gần trùng nhau.
+- Toàn bộ mức tăng so với CLIP (+0,018) đến từ phần học thêm `W_self` và `b`, phần mà đối chứng cũng có. **Đồ thị con không đóng góp thêm.** Đây là cùng hiện tượng với GraphSAGE ở cấp độ 1 (ADR-0047, ADR-0048).
+
+**Kết luận theo quy tắc dừng (mục 3):** bậc 2 **không hơn `clip_nograph` trên val**. Đây là kết quả âm.
+
+**Việc tiếp theo** (quyết định bởi Thuat Nguyen, 2026-11-16):
+- Chạy seed 1 và 2 cho bậc 2 và đối chứng để xác nhận (≥ 3 seed, mean ± std).
+- **Không chạy** ablation xáo cạnh, vì không có cải thiện nào cần giải thích. Bản không dựng cây là tuỳ chọn.
+- Test chạy một lần khi nhóm đồng ý. AdaMF-MAT chỉ làm nếu còn thời gian.
+
+**Giả thuyết cho báo cáo:** đỉnh khái niệm (vector CLIP text) và cạnh `contains` (CLIP top-16) đều sinh ra từ chính CLIP, nên đồ thị không mang thông tin ngoài CLIP. Cạnh PMI đếm trên train là nguồn duy nhất ngoài CLIP, nhưng nó chỉ quyết định khái niệm nào vào `S_q`, chứ không thêm nội dung vector mới.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
