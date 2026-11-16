@@ -15,6 +15,7 @@ from mmxai.eval.pcst_sage_rerank import (
     build_subgraph_training_data,
     cache_path,
     evaluate_test,
+    load_or_compute_test_rows,
     load_pcst_sage_config,
     prepare_caches,
 )
@@ -150,3 +151,36 @@ def test_committed_stage2_configs_differ_only_where_intended():
     assert configs[2].shuffle_concept_edges is True
     assert len({config.cache_dir for config in configs}) == 3
     assert len({config.model_dir for config in configs}) == 3
+
+
+def test_test_cache_is_computed_once_and_shared_by_seeds(tmp_path, monkeypatch):
+    config = make_config(tmp_path)
+    inputs = SimpleNamespace(graph_meta={"git": {"git_commit": "abc"}})
+    candidates = SimpleNamespace(query_embeddings=np.zeros((2, 3), dtype=np.float32))
+    calls = []
+
+    def fake_compute(*_args):
+        calls.append(1)
+        return np.array([0, 1, 2]), np.array([5, 6])
+
+    monkeypatch.setattr(pcst_sage_rerank, "compute_subgraph_rows", fake_compute)
+    monkeypatch.setattr(pcst_sage_rerank, "file_sha256", lambda _p: "sha")
+
+    first = load_or_compute_test_rows(config, inputs, 0, None, candidates)
+    second = load_or_compute_test_rows(config, inputs, 1, None, candidates)
+
+    assert len(calls) == 1
+    assert np.array_equal(first[1], second[1])
+
+
+def test_test_cache_with_other_settings_is_refused(tmp_path, monkeypatch):
+    config = make_config(tmp_path)
+    inputs = SimpleNamespace(graph_meta={"git": {"git_commit": "abc"}})
+    candidates = SimpleNamespace(query_embeddings=np.zeros((2, 3), dtype=np.float32))
+    rows = (np.array([0, 1, 2]), np.array([5, 6]))
+    monkeypatch.setattr(pcst_sage_rerank, "compute_subgraph_rows", lambda *_a: rows)
+    monkeypatch.setattr(pcst_sage_rerank, "file_sha256", lambda _p: "sha")
+    load_or_compute_test_rows(config, inputs, 0, None, candidates)
+
+    with pytest.raises(ValueError, match="prize_k"):
+        load_or_compute_test_rows(replace(config, prize_k=5), inputs, 1, None, candidates)

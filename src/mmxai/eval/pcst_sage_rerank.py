@@ -382,13 +382,36 @@ def train_and_select(config: PcstSageConfig, seed: int, log=print) -> Path:
     return write_run(config, metrics, seed)
 
 
+def load_or_compute_test_rows(
+    config: PcstSageConfig,
+    inputs: Inputs,
+    seed: int,
+    pairs: np.ndarray,
+    candidates: Candidates,
+    log=print,
+) -> tuple[np.ndarray, np.ndarray]:
+    """S_q of the test texts: read the cache if it exists, otherwise compute and save it.
+
+    Without shuffling the cache folder is shared by all seeds, so seed 1 and 2 reuse the
+    cache seed 0 made. load_cache checks the settings, so a stale cache raises.
+    """
+    folder = cache_path(config, seed)
+    queries = candidates.query_embeddings
+    meta = cache_meta(config, inputs, seed, "test", len(queries))
+    if (folder / "test.npz").exists():
+        return load_cache(folder, "test", meta)
+    offsets, values = compute_subgraph_rows(config, inputs, pairs, queries, log)
+    save_cache(folder, "test", offsets, values, meta)
+    return offsets, values
+
+
 def evaluate_test(config: PcstSageConfig, seed: int, log=print) -> Path:
     """Score TEST once with the saved model and the alpha chosen on val. Chooses nothing.
 
     Decision (ADR-0009, ADR-0051): refuse a second test run of the same experiment and seed.
       Why: test runs once with the locked config; a repeat means test could steer choices.
       Decided by: FluteInTheRain, ADR-0009; same check as graph_rerank.evaluate_test.
-    The test subgraph cache is created here and nowhere else.
+    The test subgraph cache is created and read here and nowhere else.
     """
     if has_test_run(config, seed):
         raise FileExistsError(f"test of {config.experiment} seed {seed} was already run")
@@ -399,18 +422,11 @@ def evaluate_test(config: PcstSageConfig, seed: int, log=print) -> Path:
     if selection["split_sha256"] != file_sha256(config.split_file):
         raise ValueError("selection.json was made with a different split file than the config")
 
-    folder = cache_path(config, seed)
-    if (folder / "test.npz").exists():
-        raise FileExistsError(f"{folder / 'test.npz'} exists; delete it on purpose to redo")
-
     inputs = load_checked_inputs(config)
     pairs = concept_pairs(inputs, config, seed)
     test_graph = build_split_graph(inputs, "test")
     candidates = split_candidates(config, inputs, "test")
-    queries = candidates.query_embeddings
-    offsets, values = compute_subgraph_rows(config, inputs, pairs, queries, log)
-    meta = cache_meta(config, inputs, seed, "test", len(queries))
-    save_cache(folder, "test", offsets, values, meta)
+    offsets, values = load_or_compute_test_rows(config, inputs, seed, pairs, candidates, log)
 
     model = SubgraphSage(test_graph.x.shape[1])
     model.load_state_dict(torch.load(model_dir / MODEL_FILE, weights_only=True))
