@@ -41,7 +41,8 @@ def unit_rows(matrix: np.ndarray) -> np.ndarray:
     return (matrix / np.linalg.norm(matrix, axis=1, keepdims=True)).astype(np.float32)
 
 
-def write_inputs(tmp_path, monkeypatch) -> GraphRerankConfig:
+def write_inputs(tmp_path, monkeypatch, dataset: str = "visual_genome") -> GraphRerankConfig:
+    """Tiny features, split and graph. flickr30k stores caption positions 0, 1 per image."""
     generator = np.random.default_rng(0)
     images = unit_rows(generator.normal(size=(12, DIM)))
     texts = unit_rows(np.repeat(images, 2, axis=0) + generator.normal(scale=0.5, size=(24, DIM)))
@@ -54,10 +55,10 @@ def write_inputs(tmp_path, monkeypatch) -> GraphRerankConfig:
         image_ids=IMAGE_IDS,
         text_embeddings=texts,
         text_image_ids=np.repeat(IMAGE_IDS, 2),
-        text_id_name="text_ids",
-        text_id_values=np.arange(24),
+        text_id_name="caption_index" if dataset == "flickr30k" else "text_ids",
+        text_id_values=np.tile([0, 1], 12) if dataset == "flickr30k" else np.arange(24),
         meta={
-            "dataset": "visual_genome",
+            "dataset": dataset,
             "is_partial": False,
             "code_hash": "abc",
             "model": "ViT-B-32",
@@ -65,7 +66,7 @@ def write_inputs(tmp_path, monkeypatch) -> GraphRerankConfig:
         },
     )
     split_file = tmp_path / "split_seed0.json"
-    split_json = {"dataset": "visual_genome", "seed": 0}
+    split_json = {"dataset": dataset, "seed": 0}
     for name, ids in SPLIT.items():
         split_json[name] = [str(image_id) for image_id in ids.tolist()]
     save_split(split_json, split_file)
@@ -99,7 +100,7 @@ def write_inputs(tmp_path, monkeypatch) -> GraphRerankConfig:
 
     return GraphRerankConfig(
         experiment="clip_graph_tiny",
-        dataset="visual_genome",
+        dataset=dataset,
         split_file=str(split_file),
         features_dir=str(features_dir),
         graph_dir=str(graph_dir),
