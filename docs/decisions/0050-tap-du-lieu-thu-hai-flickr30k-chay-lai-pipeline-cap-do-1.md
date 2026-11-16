@@ -42,7 +42,11 @@ Có hai chỗ không thể chạy y nguyên:
 - `alpha` và epoch vẫn được chọn trên **val Flickr30k** như ADR-0047, vì đó là một phần của quy trình chứ không phải siêu tham số cố định.
 - Test chạy **một lần** cho mỗi seed 0, 1, 2. Báo cáo mọi số, dù kết quả ra sao.
 
-**4. Không chạy** mô hình đồng xuất hiện và giao thức v2 (ADR-0049) trên Flickr30k:
+**4. Giải thích cơ bản của cấp độ 1.** Chạy `scripts/explain.py` trên val như VG: 5 thành công + 5 thất bại, Occlusion và kiểm tra xoá cạnh, trên `clip_graph_flickr30k_lr1e4` seed 0.
+- Code đã được sửa để đọc được id câu của Flickr30k (vị trí caption trong ảnh, `caption_index`).
+- Câu truy vấn được tra theo cặp (ảnh, vị trí caption), đọc từ `dataset_flickr30k.json`.
+
+**5. Không chạy** mô hình đồng xuất hiện và giao thức v2 (ADR-0049) trên Flickr30k:
 - mô hình đồng xuất hiện cần annotation đối tượng;
 - nhóm truy vấn theo vị từ trong ADR-0049 được chốt trên câu VG.
 
