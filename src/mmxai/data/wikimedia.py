@@ -10,6 +10,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta
 
 SPARQL_URL = "https://query.wikidata.org/sparql"
 COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php"
@@ -92,7 +93,14 @@ class WikimediaClient:
                 error.close()
                 # No point sleeping after the final attempt.
                 if attempt < self.max_attempts - 1:
-                    self._sleep(self._retry_delay(error, attempt, url))
+                    delay = self._retry_delay(error, attempt, url)
+                    resume_at = datetime.now() + timedelta(seconds=delay)
+                    host = urllib.parse.urlparse(url).hostname
+                    self._log(
+                        f"{host} {error.code}: waiting {delay:g} s, "
+                        f"resuming at {resume_at:%H:%M:%S}"
+                    )
+                    self._sleep(delay)
         raise RuntimeError(f"HTTP {last_status} after {self.max_attempts} attempts for {url}")
 
     def _wait_for_interval(self) -> None:
@@ -104,10 +112,11 @@ class WikimediaClient:
         self._last_attempt_start = self._clock()
 
     def _retry_delay(self, error: urllib.error.HTTPError, attempt: int, url: str) -> float:
-        """Use Retry-After when it is a sane number, else exponential backoff; then cap it.
+        """Use Retry-After when it is a sane number, else exponential backoff.
 
-        The cap exists because one very long Retry-After stalled the first live run
-        for over 8 minutes; a capped wait plus a retry is still polite.
+        Wikimedia asks clients to honour Retry-After fully; retrying earlier can extend
+        the block. A wait above max_retry_wait_seconds is refused with an error
+        instead, so a run never stalls silently for a very long time.
         """
         delay = self.interval_seconds * 2**attempt
         retry_after = error.headers.get("Retry-After") if error.headers else None
@@ -120,9 +129,9 @@ class WikimediaClient:
             if requested is not None and math.isfinite(requested) and requested >= 0:
                 delay = requested
         if delay > self.max_retry_wait_seconds:
-            self._log(
-                f"warning: {url} asked to wait {delay:g} s; "
-                f"waiting {self.max_retry_wait_seconds:g} s instead"
+            host = urllib.parse.urlparse(url).hostname
+            raise RuntimeError(
+                f"{host} asked to wait {delay:g} s, more than the limit of "
+                f"{self.max_retry_wait_seconds:g} s; try again later"
             )
-            delay = self.max_retry_wait_seconds
         return delay

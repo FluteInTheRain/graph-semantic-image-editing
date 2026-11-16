@@ -1,6 +1,7 @@
 """Tests for the polite Wikimedia client. A fake opener replaces the network."""
 
 import json
+import re
 import urllib.error
 from email.message import Message
 from urllib.parse import parse_qs, urlparse
@@ -76,7 +77,7 @@ def make_client(opener: FakeOpener, fake_time: FakeTime, max_attempts: int = 5, 
         user_agent="test-agent/1.0",
         interval_seconds=2.0,
         max_attempts=max_attempts,
-        max_retry_wait_seconds=120.0,
+        max_retry_wait_seconds=1800.0,
         opener=opener,
         sleep=fake_time.sleep,
         clock=fake_time.clock,
@@ -170,32 +171,42 @@ def test_download_returns_raw_bytes():
     assert client.download("http://example.org/a.png") == b"\x89PNG"
 
 
-def test_retry_after_is_capped_and_warned():
-    opener = FakeOpener([http_error(429, retry_after="3600"), json_response({"ok": True})])
+def test_retry_after_is_honoured_and_logged():
+    opener = FakeOpener([http_error(429, retry_after="1000"), json_response({"ok": True})])
     fake_time = FakeTime()
     messages = []
     client = make_client(opener, fake_time, log=messages.append)
 
     client.commons({"action": "query"})
 
-    assert fake_time.sleeps == [120.0]
+    assert fake_time.sleeps == [1000.0]
     assert len(messages) == 1
-    assert "3600" in messages[0]
-    assert COMMONS_API_URL in messages[0]
+    assert messages[0].startswith("commons.wikimedia.org 429: waiting 1000 s")
+    assert re.search(r"resuming at \d\d:\d\d:\d\d$", messages[0])
+
+
+def test_retry_after_above_limit_raises():
+    opener = FakeOpener([http_error(429, retry_after="3600"), json_response({"ok": True})])
+    fake_time = FakeTime()
+    client = make_client(opener, fake_time)
+
+    with pytest.raises(RuntimeError, match="commons.wikimedia.org.*3600"):
+        client.commons({"action": "query"})
+
+    assert fake_time.sleeps == []
+    assert len(opener.requests) == 1
 
 
 @pytest.mark.parametrize("retry_after", ["-5", "nan", "inf"])
 def test_invalid_retry_after_falls_back_to_backoff(retry_after):
     opener = FakeOpener([http_error(429, retry_after=retry_after), json_response({})])
     fake_time = FakeTime()
-    messages = []
-    client = make_client(opener, fake_time, log=messages.append)
+    client = make_client(opener, fake_time)
 
     client.commons({"action": "query"})
 
     # First backoff step = interval_seconds * 2**0.
     assert fake_time.sleeps == [2.0]
-    assert messages == []
 
 
 def test_retried_error_is_closed():
