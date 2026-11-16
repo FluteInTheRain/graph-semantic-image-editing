@@ -8,6 +8,7 @@ from mmxai.data.mmkg_build import (
     IMAGE_COLUMNS,
     MmkgBuildConfig,
     Review,
+    pick_author,
     read_review,
     select_images,
 )
@@ -225,3 +226,62 @@ def test_repeated_entity_file_pair_is_an_error():
     rows.append(candidate("f0.jpg", "Q1", origin="p18"))
     with pytest.raises(ValueError, match="Q1.*f0.jpg"):
         run(rows, credits_for("f0.jpg", "f1.jpg", "f2.jpg"))
+
+
+# Real Artist strings from the 20261116 snapshot (image_credits.csv).
+GLUED_UNKNOWN = "Unknown authorUnknown author"
+HEREBY = (
+    "​Vietnames Wikipedia user Rungbachduong, the copyright holder of this work, "
+    "hereby publishes it under the following license:"
+)
+
+
+@pytest.mark.parametrize(
+    "artist",
+    [
+        GLUED_UNKNOWN,
+        GLUED_UNKNOWN + ".",
+        "Unknown author Unknown author .",
+        "Unknown",
+        "unknown",
+        "Author unknown",
+        "Anonymous",
+        HEREBY,
+    ],
+)
+def test_no_real_author_under_attribution_falls_back_to_uploader(artist):
+    credit = {"file_name": "a.jpg", "artist": artist, "uploader": "Bob"}
+    assert pick_author("CC BY-SA 3.0", credit, make_config()) == "uploader: Bob"
+
+
+@pytest.mark.parametrize("artist", [GLUED_UNKNOWN, GLUED_UNKNOWN + ".", HEREBY])
+def test_no_real_author_and_no_uploader_under_attribution_is_none(artist):
+    credit = {"file_name": "a.jpg", "artist": artist, "uploader": ""}
+    assert pick_author("CC BY 4.0", credit, make_config()) is None
+
+
+@pytest.mark.parametrize("artist", [GLUED_UNKNOWN, GLUED_UNKNOWN + ".", "Unknown", "Anonymous"])
+def test_no_real_author_in_public_domain_is_unknown(artist):
+    credit = {"file_name": "a.jpg", "artist": artist, "uploader": "Bob"}
+    assert pick_author("Public domain", credit, make_config()) == "unknown"
+    assert pick_author("CC0", credit, make_config()) == "unknown"
+
+
+def test_real_author_is_kept_without_trailing_punctuation():
+    credit = {"file_name": "a.jpg", "artist": "Chainwit.", "uploader": "Bob"}
+    assert pick_author("CC BY 4.0", credit, make_config()) == "Chainwit"
+
+
+def test_unknown_photographer_is_a_real_statement_and_kept():
+    # Only the listed phrases mean "no author"; anything else is the author text.
+    credit = {"file_name": "a.jpg", "artist": "Unknown photographer", "uploader": "Bob"}
+    assert pick_author("Public domain", credit, make_config()) == "Unknown photographer"
+
+
+def test_glued_unknown_author_drops_image_without_uploader():
+    rows = filler("Q1", 3) + [candidate("u.jpg", "Q1", license="CC BY-SA 3.0")]
+    credits = credits_for("f0.jpg", "f1.jpg", "f2.jpg")
+    credits.append({"file_name": "u.jpg", "artist": GLUED_UNKNOWN + ".", "uploader": ""})
+    result, report = run(rows, credits)
+    assert "u.jpg" not in names(result)
+    assert report["images_dropped_no_author"] == 1

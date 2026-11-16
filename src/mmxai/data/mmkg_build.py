@@ -6,6 +6,7 @@ justify every dropped image, triple and entity.
 
 import csv
 import json
+import re
 import urllib.parse
 from collections import Counter
 from dataclasses import dataclass
@@ -51,6 +52,12 @@ DROP_COUNTERS = [
     "triples_dropped_end_not_kept",
 ]
 COMMONS_FILE_URL = "https://commons.wikimedia.org/wiki/File:"
+# Artist texts (after normalize_artist, lower case) that name nobody. Under an
+# attribution licence they cannot serve as the credit the licence requires.
+NO_AUTHOR_TEXTS = {"unknown", "unknown author", "author unknown", "anonymous"}
+# Licence boilerplate pasted into the Artist field ("... hereby publishes it under ...").
+NO_AUTHOR_PHRASE = "hereby publish"
+TRAILING_PUNCTUATION = " .,;:"
 
 
 @dataclass(frozen=True)
@@ -161,10 +168,39 @@ def short_side(row: dict[str, str]) -> int:
         return 0
 
 
+def normalize_artist(text: str) -> str:
+    """Clean an Artist text: drop zero-width spaces, collapse a doubled phrase, strip end dots.
+
+    Snapshots collected before strip_html put a space per tag hold
+    "Unknown authorUnknown author." (the same phrase twice, glued).
+    """
+    cleaned = " ".join(text.replace("\u200b", "").split())
+    cleaned = cleaned.rstrip(TRAILING_PUNCTUATION)
+    # A phrase of at least 4 characters followed by itself; the minimum keeps a
+    # short user name such as "nana" from being cut in half.
+    doubled = re.fullmatch(r"(.{4,}?)\s*\1", cleaned)
+    if doubled is not None:
+        cleaned = doubled.group(1).rstrip(TRAILING_PUNCTUATION)
+    return cleaned
+
+
+def names_an_author(artist: str) -> bool:
+    """False for empty text, "unknown"-like texts and licence boilerplate."""
+    lowered = artist.lower()
+    if lowered == "" or lowered in NO_AUTHOR_TEXTS:
+        return False
+    return NO_AUTHOR_PHRASE not in lowered
+
+
 def pick_author(license_name: str, credit: dict[str, str], config: MmkgBuildConfig) -> str | None:
-    """Author text for the image, or None when attribution is required but unknown."""
-    artist = credit.get("artist", "").strip()
-    if artist:
+    """Author text for the image, or None when attribution is required but unknown.
+
+    A licence like CC BY needs a real name in the credit; when the Artist field
+    names nobody, the uploader is the best name we have, else the image is dropped.
+    Public domain and CC0 need no credit, so "unknown" is enough there.
+    """
+    artist = normalize_artist(credit.get("artist", ""))
+    if names_an_author(artist):
         return artist
     if starts_with_any(license_name, config.attribution_license_prefixes):
         uploader = credit.get("uploader", "").strip()

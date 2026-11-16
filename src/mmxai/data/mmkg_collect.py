@@ -145,8 +145,12 @@ def normalize_file_name(value: str) -> str:
 
 
 def strip_html(value: str) -> str:
-    """Remove tags, unescape entities and collapse whitespace."""
-    without_tags = re.sub(r"<[^>]*>", "", value)
+    """Remove tags, unescape entities and collapse whitespace.
+
+    Each tag becomes a space: Commons puts "Unknown author" in two adjacent tags,
+    and removing the tags outright glued them into "Unknown authorUnknown author".
+    """
+    without_tags = re.sub(r"<[^>]*>", " ", value)
     unescaped = html.unescape(without_tags)
     return " ".join(unescaped.split())
 

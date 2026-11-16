@@ -161,6 +161,13 @@ def test_strip_html_unescapes():
     assert strip_html('<a href="x">Nguyễn&nbsp;Văn&amp;A</a>\n') == "Nguyễn Văn&A"
 
 
+def test_strip_html_keeps_words_of_adjacent_tags_apart():
+    # Commons wraps "Unknown author" twice (one copy hidden); without a space per tag
+    # the two copies were glued into "Unknown authorUnknown author".
+    value = '<span class="a">Unknown author</span><span style="display:none">Unknown author</span>'
+    assert strip_html(value) == "Unknown author Unknown author"
+
+
 def test_collect_keeps_targets_and_concept_triples():
     client = FakeClient(
         domain=[domain_row("Q1", vi="Một"), domain_row("Q2", en="Two")],
