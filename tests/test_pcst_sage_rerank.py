@@ -1,7 +1,7 @@
 """Stage 2 pipeline of ADR-0051: cache, train, test-once guards. Synthetic objects only."""
 
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -133,3 +133,20 @@ def test_training_data_rejects_a_different_image_order(monkeypatch):
 
     with pytest.raises(ValueError, match="different order"):
         build_subgraph_training_data(None, inputs, train_graph, np.zeros((1, 1), dtype=np.int64))
+
+
+def test_committed_stage2_configs_differ_only_where_intended():
+    names = ["clip_pcst_sage_vg", "clip_pcst_sage_vg_no_tree", "clip_pcst_sage_vg_shuffled"]
+    configs = [load_pcst_sage_config(f"configs/{name}.yaml") for name in names]
+    allowed = {"experiment", "subgraph_mode", "shuffle_concept_edges", "cache_dir", "model_dir"}
+
+    main = configs[0]
+    assert main.prize_k == 3
+    assert main.edge_cost == 0.5
+    for other in configs[1:]:
+        different = {key for key, value in asdict(main).items() if asdict(other)[key] != value}
+        assert different <= allowed
+    assert configs[1].subgraph_mode == "top_k_only"
+    assert configs[2].shuffle_concept_edges is True
+    assert len({config.cache_dir for config in configs}) == 3
+    assert len({config.model_dir for config in configs}) == 3
