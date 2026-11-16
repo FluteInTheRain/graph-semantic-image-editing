@@ -16,6 +16,10 @@ max_images_per_item: 5
 min_items_per_concept: 3
 # The repo refuses committed files of 1 MiB or more; bigger tables are split into shards.
 max_file_bytes: 1048576
+# Width of the thumbnails to download. 960 px is a pregenerated thumbnail size that
+# Wikimedia's robot policy allows; downloading originals was throttled (HTTP 429) on
+# 2026-11-16, and CLIP only needs 224 px.
+download_width: 960
 # Decision: relation list proposed by Claude Code, not yet approved by the group.
 # P195 and P276 both become kept_at; their triples are merged.
 relations:

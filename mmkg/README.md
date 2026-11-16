@@ -13,7 +13,7 @@ Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, AD
 2. build     → entities/triples/images.csv, build_report.json, thêm dòng pending vào review.csv
 3. review    → thành viên sửa review.csv (ok / drop)
 4. rebuild   → build lại; lặp 3–4 tới khi --require-reviewed qua
-5. download  → images/ (gitignored), kiểm sha1, đưa lên cloud
+5. download  → images/ (gitignored) + images_manifest.csv, kiểm sha1, đưa lên cloud
 ```
 
 | Bước | Lệnh (chạy từ gốc repo) | Logic |
@@ -26,7 +26,8 @@ Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, AD
 
 - Bước 1 cần mạng, chạy lâu vì nghỉ giữa các request; script từ chối chạy lại trong cùng một ngày để không ghi đè snapshot. Muốn thu thập lại thì đổi `snapshot_dir` trong `configs/mmkg_vi_build.yaml` sang thư mục ngày mới và ghi lý do trong data card.
 - Bước 2 và 4 không cần mạng, tất định (cùng đầu vào ra cùng file). Đổi ngưỡng trong `configs/mmkg_vi_build.yaml` rồi dựng lại không làm mất dòng duyệt nào.
-- Bước 5 in `downloaded / already_present / sha1_mismatch / missing_on_commons`; thoát mã 1 nếu hai số cuối lớn hơn 0. Chỉ tải bản gốc, file sai `sha1` không được lưu.
+- Bước 5 tải thumbnail rộng 960 px từ các kích thước Commons tạo sẵn (`download_width` trong config). Lý do: tải bản gốc bị Wikimedia chặn tốc độ (HTTP 429) ngày 2026-11-16, chính sách robot cho phép thumbnail tạo sẵn, và CLIP chỉ cần 224 px. Bản gốc chỉ được tải khi thumbnail có cạnh ngắn < 224 px, và bản gốc sai `sha1` của Commons không được lưu. Script in `downloaded_thumbnail / downloaded_original / already_present / sha1_mismatch / missing_on_commons`, một dòng tiến độ mỗi 25 file và tổng số byte; thoát mã 1 nếu `sha1_mismatch` hoặc `missing_on_commons` lớn hơn 0.
+- **Kiểm một bản copy ảnh:** `shasum -a 1 images/<file>` rồi so với cột `sha1` của dòng `image_id` tương ứng trong `images_manifest.csv`. Cột `sha1` của `images.csv` là của bản gốc trên Commons nên chỉ khớp file `kind = original`.
 
 ## 2. Các file trong `mmkg/`
 
@@ -42,7 +43,8 @@ Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, AD
 | `images.csv` | `image_id, entity_id, file_name, source_url, license, author, sha1, width, height` | Bước 2 | Có |
 | `build_report.json` | Số dòng gốc, số dòng chính thức, số dòng bị bỏ theo từng luật, số mục `pending` | Bước 2 | Có |
 | `review.csv` | Kết quả duyệt (mục 3) | Bước 2 thêm dòng `pending`; thành viên sửa | Có |
-| `images/` | File ảnh `<image_id><đuôi>` | Bước 5 | **Không** (gitignore, chia sẻ qua link cloud) |
+| `images/` | File ảnh `<image_id><đuôi>`: thumbnail 960 px (bản gốc chỉ khi thumbnail có cạnh ngắn < 224 px) | Bước 5 | **Không** (gitignore, chia sẻ qua link cloud) |
+| `images_manifest.csv` | `image_id, file_name, kind, url, width, height, bytes, sha1` của mọi file trong `images/`; `kind` là `thumbnail` hoặc `original` | Bước 5 | Có |
 
 **Giới hạn 1 MiB:** repo chặn file commit từ 1 MiB trở lên. Bảng nào vượt sẽ được ghi thành nhiều mảnh `<tên>_000.csv`, `<tên>_001.csv`..., mỗi mảnh lặp lại dòng tiêu đề (`write_rows` trong `src/mmxai/data/mmkg_csv.py`); code đọc (`read_rows`) tự ghép lại. Hiện mọi bảng đều nằm trong một file. `tests/test_mmkg_committed.py` kiểm mọi file trong `mmkg/` (trừ `images/`) nhỏ hơn 1 MiB.
 

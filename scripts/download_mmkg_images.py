@@ -3,10 +3,12 @@
 Logic: mmxai.data.mmkg_images.
 
 What it does:
-    Reads images.csv from the build config's output_dir, downloads the ORIGINAL
-    file of every image that is not already on disk with the right sha1, and saves
-    it as <output_dir>/images/<image_id><ext>. A download whose sha1 differs from
-    images.csv is not saved.
+    Reads images.csv from the build config's output_dir and downloads every image
+    that is not already on disk, as a thumbnail of download_width px (960) from
+    Wikimedia's pregenerated sizes; the original only when the thumbnail's short
+    side would be under 224 px. Saves <output_dir>/images/<image_id><ext> and
+    writes <output_dir>/images_manifest.csv (sha1 of every file on disk). An
+    original whose sha1 differs from images.csv is not saved.
 
 Before running:
     uv sync
@@ -19,7 +21,9 @@ Run (from the repo root):
         --build-config configs/mmkg_vi_build.yaml
 
 Output:
-    Prints downloaded / already_present / sha1_mismatch / missing_on_commons.
+    Prints downloaded_thumbnail / downloaded_original / already_present /
+    sha1_mismatch / missing_on_commons, a progress line every 25 files and the
+    total bytes of the manifest.
     Exits with code 1 when sha1_mismatch or missing_on_commons is above 0.
 """
 
@@ -53,10 +57,20 @@ def main() -> None:
         max_attempts=collect_config.max_attempts,
         max_retry_wait_seconds=collect_config.max_retry_wait_seconds,
     )
-    counts = download_images(images, output_dir / "images", client)
+    counts = download_images(
+        images,
+        output_dir / "images",
+        client,
+        output_dir,
+        build_config.download_width,
+        build_config.max_file_bytes,
+        log=print,
+    )
 
     for name, count in counts.items():
         print(f"{name}: {count}")
+    manifest = read_rows(output_dir, "images_manifest")
+    print(f"total_bytes: {sum(int(row['bytes']) for row in manifest)}")
     if counts["sha1_mismatch"] > 0 or counts["missing_on_commons"] > 0:
         sys.exit(1)
 

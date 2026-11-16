@@ -28,6 +28,7 @@ def make_config() -> MmkgBuildConfig:
         min_items_per_concept=2,
         relations={},
         max_file_bytes=1000,
+        download_width=960,
     )
 
 

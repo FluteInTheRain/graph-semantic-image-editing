@@ -87,7 +87,7 @@ Phân bố giấy phép của 403 ảnh (đếm từ `mmkg/images.csv`):
 Điều kiện khi dùng hoặc đăng lại:
 
 - Ảnh CC BY / CC BY-SA: phải ghi tác giả (`author`), giấy phép (`license`) và link trang file (`source_url`). Ảnh CC BY-SA sửa đổi phải giữ cùng giấy phép.
-- Ảnh **không** nằm trong git (`mmkg/images/` đã gitignore, ADR-0008); chia sẻ qua link cloud của nhóm (chưa có link, sẽ điền sau khi duyệt và tải xong). Người nhận kiểm từng file bằng `sha1` trong `mmkg/images.csv`.
+- Ảnh **không** nằm trong git (`mmkg/images/` đã gitignore, ADR-0008); chia sẻ qua link cloud của nhóm (chưa có link, sẽ điền sau khi duyệt và tải xong). Người nhận kiểm từng file bằng `sha1` trong `mmkg/images_manifest.csv` (mục 8).
 - ADR-0015 quy tắc 4: không dùng ảnh có mặt người nhận diện được. Việc này chỉ kiểm được khi duyệt bằng mắt (lý do `identifiable_person`, mục 7).
 
 ## 4. Cách tạo triple
@@ -213,7 +213,9 @@ Nếu duyệt bỏ nhiều tới mức triple dưới 300 hoặc thực thể ra
 
 ## 8. Tải ảnh
 
-Ảnh được tải **bản gốc** (không dùng thumbnail) để so `sha1` với `mmkg/images.csv`; bản tải về sai `sha1` không được lưu (`download_images` trong `src/mmxai/data/mmkg_images.py`). File lưu ở `mmkg/images/<image_id><đuôi file>`.
+Ảnh được tải dưới dạng **thumbnail rộng 960 px** từ các kích thước Wikimedia Commons đã tạo sẵn (`download_width: 960` trong `configs/mmkg_vi_build.yaml`), không tải bản gốc. Lý do: lần tải bản gốc ngày 2026-11-16 bị Wikimedia chặn tốc độ (HTTP 429, rồi phải chờ 600 s sau 11/403 file); chính sách robot của Wikimedia cho phép tải "bản gốc hoặc một trong các kích thước thumbnail tạo sẵn"; CLIP chỉ cần 224 px nên 960 px không mất gì, và dung lượng giảm từ khoảng 1,1 GB xuống vài chục MB. Thiết kế (§6) cho phép thumbnail miễn là cạnh ngắn vẫn ≥ 224 px: nếu thumbnail có cạnh ngắn < 224 px thì tải **bản gốc** và so `sha1` với `mmkg/images.csv`; bản gốc sai `sha1` không được lưu (`download_images` trong `src/mmxai/data/mmkg_images.py`). File lưu ở `mmkg/images/<image_id><đuôi file>`.
+
+Commons không có `sha1` cho thumbnail, nên script tự tính `sha1` của file đã tải và ghi vào **`mmkg/images_manifest.csv`** (đã commit): `image_id, file_name, kind, url, width, height, bytes, sha1`, với `kind` là `thumbnail` hoặc `original`, sắp theo `image_id`, gồm mọi file trong `mmkg/images/`. Cách kiểm một bản copy trên cloud: chạy `shasum -a 1 <file>` rồi so với cột `sha1` của dòng có `image_id` tương ứng (tên file không kèm đuôi). Cột `sha1` trong `mmkg/images.csv` là `sha1` của bản gốc trên Commons, chỉ khớp với file có `kind = original`.
 
 ```bash
 uv run python scripts/download_mmkg_images.py \
@@ -221,18 +223,19 @@ uv run python scripts/download_mmkg_images.py \
     --build-config configs/mmkg_vi_build.yaml
 ```
 
-Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt. Số liệu (`downloaded`, `already_present`, `sha1_mismatch`, `missing_on_commons`) và dung lượng `mmkg/images/` điền khi tải xong:
+Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt. Số liệu (`downloaded_thumbnail`, `downloaded_original`, `already_present`, `sha1_mismatch`, `missing_on_commons`) và dung lượng `mmkg/images/` điền khi tải xong:
 
 | Mục | Giá trị |
 |---|---|
-| `downloaded` | (điền sau) |
+| `downloaded_thumbnail` | (điền sau) |
+| `downloaded_original` | (điền sau) |
 | `already_present` | (điền sau) |
 | `sha1_mismatch` | (điền sau) |
 | `missing_on_commons` | (điền sau) |
 | Dung lượng `mmkg/images/` (`du -sh`) | (điền sau) |
 | Link cloud | (điền sau) |
 
-Sau khi duyệt và dựng lại, chạy lại lệnh trên: file đã có đúng `sha1` được bỏ qua (`already_present`), chỉ tải ảnh mới thay cho ảnh bị `drop`. Script không xoá ảnh cũ; ảnh bị `drop` vẫn nằm trên đĩa nên phải xoá tay trước khi đưa lên cloud.
+Sau khi duyệt và dựng lại, chạy lại lệnh trên: file đã có đúng `sha1` được bỏ qua (`already_present`), (file có dòng trong manifest khớp `sha1`, hoặc bản gốc cũ khớp `sha1` của Commons) chỉ tải ảnh mới thay cho ảnh bị `drop`. Script không xoá ảnh cũ; ảnh bị `drop` vẫn nằm trên đĩa nên phải xoá tay trước khi đưa lên cloud.
 
 ## 9. Split
 

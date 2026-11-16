@@ -47,6 +47,7 @@ def make_config(min_items_per_concept: int = 3) -> MmkgBuildConfig:
         min_items_per_concept=min_items_per_concept,
         relations=RELATIONS,
         max_file_bytes=100000,
+        download_width=960,
     )
 
 
@@ -372,6 +373,7 @@ def test_placeholder_snapshot_dir_is_rejected(tmp_path):
         "max_images_per_item: 5\n"
         "min_items_per_concept: 3\n"
         "max_file_bytes: 1048576\n"
+        "download_width: 960\n"
         "relations: {P131: located_in}\n",
         encoding="utf-8",
     )

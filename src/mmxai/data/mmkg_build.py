@@ -68,6 +68,7 @@ class MmkgBuildConfig:
     min_items_per_concept: int
     relations: dict[str, str]
     max_file_bytes: int
+    download_width: int
 
 
 def load_mmkg_build_config(path: str | Path) -> MmkgBuildConfig:
