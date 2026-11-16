@@ -1,0 +1,13 @@
+# Collection of the Vietnamese heritage MMKG from Wikidata + Wikimedia Commons (ADR-0050).
+# How to run: see the docstring of scripts/collect_mmkg.py.
+# Decision (ADR-0050): the snapshot goes to mmkg/raw/<YYYYMMDD>/ and is never edited.
+output_root: mmkg/raw
+# Decision (ADR-0050): domain = Wikidata items in Vietnam (Q881) with any heritage designation (P1435).
+country_qid: Q881
+designation_property: P1435
+# No personal data in the User-Agent; Wikimedia asks scripts to identify themselves.
+user_agent: "mmxai-course-project/0.1 (research script)"
+request_interval_seconds: 1.5
+max_attempts: 5
+# The repo refuses committed files of 1 MiB or more; bigger tables are split into shards.
+max_file_bytes: 1048576
