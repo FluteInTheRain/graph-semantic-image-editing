@@ -20,8 +20,8 @@ both_directions: false
 top_m_options: [3, 5, 10]
 # Chosen on val (statistics.choose_on_validation) and written here before test; test
 # refuses to run while these are null.
-main_explainer: null
-top_m: null
+main_explainer: integrated_gradients
+top_m: 10
 # Effects too small to show (float noise).
 min_contribution: 1.0e-6
 # Characterization weighs fidelity+ and 1 - fidelity- equally (GraphFramEx default).
