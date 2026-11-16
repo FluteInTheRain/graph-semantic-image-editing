@@ -1,5 +1,6 @@
 """Tests for the MMKG raw snapshot collector. A fake client answers; no network."""
 
+import http.client
 import json
 import os
 import subprocess
@@ -18,6 +19,7 @@ from mmxai.data.mmkg_collect import (
     load_mmkg_collect_config,
     normalize_file_name,
     strip_html,
+    summary_lines,
     write_snapshot,
 )
 from mmxai.data.mmkg_csv import read_rows
@@ -57,6 +59,11 @@ def triple_row(head, prop, tail):
     return {"h": ENTITY + head, "p": PROP + prop, "t": ENTITY + tail}
 
 
+# collect_snapshot refuses an empty triples answer; this one adds no new entity
+# (its tail Q1 is in every test domain), so it changes nothing else.
+ONE_TRIPLE = [triple_row("Q1", "P31", "Q1")]
+
+
 def info_page(name, license_name="CC BY-SA 4.0"):
     return {
         "title": "File:" + name,
@@ -89,6 +96,7 @@ class FakeClient:
         pages=None,
         normalized=None,
         redirects=None,
+        omitted=(),
     ):
         self.domain = list(domain)
         self.triples = list(triples)
@@ -99,11 +107,15 @@ class FakeClient:
         # Like Commons: titles are always normalized, redirects followed only on request.
         self.normalized = normalized or {}
         self.redirects = redirects or {}
+        # Names Commons leaves out of its answer entirely (e.g. a double redirect).
+        self.omitted = omitted
         self.user_agent = "test-agent"
         self.queries = []
+        self.commons_calls = []
         self.stats = {"name-index": "wikidata-2026-11-08"}
 
     def sparql_endpoint_stats(self):
+        self.queries.append("STATS")
         if isinstance(self.stats, Exception):
             raise self.stats
         return self.stats
@@ -119,6 +131,7 @@ class FakeClient:
         return self.triples
 
     def commons(self, params):
+        self.commons_calls.append(params)
         if params.get("list") == "categorymembers":
             pages = self.categories[params["cmtitle"]]
             index = 1 if "cmcontinue" in params else 0
@@ -138,6 +151,8 @@ class FakeClient:
             if params.get("redirects") and name in self.redirects:
                 redirects.append({"from": "File:" + name, "to": "File:" + self.redirects[name]})
                 name = self.redirects[name]
+            if name in self.omitted:
+                continue
             if name in self.pages:
                 result[str(number)] = self.pages[name]
             else:
@@ -191,7 +206,7 @@ def test_collect_keeps_targets_and_concept_triples():
 def test_category_files_follow_continuation():
     client = FakeClient(
         domain=[domain_row("Q1", category="Temple")],
-        triples=[],
+        triples=ONE_TRIPLE,
         categories={"Category:Temple": [["a.jpg"], ["b.jpg"]]},
         pages={"a.jpg": info_page("a.jpg"), "b.jpg": info_page("b.jpg")},
     )
@@ -207,7 +222,7 @@ def test_shared_file_gets_one_row_per_entity():
             domain_row("Q1", image="shared.jpg"),
             domain_row("Q2", category="Cat"),
         ],
-        triples=[],
+        triples=ONE_TRIPLE,
         categories={"Category:Cat": [["shared.jpg"]]},
         pages={"shared.jpg": info_page("shared.jpg")},
     )
@@ -225,7 +240,7 @@ def test_shared_file_gets_one_row_per_entity():
 def test_p18_wins_over_category_for_same_entity():
     client = FakeClient(
         domain=[domain_row("Q1", category="Cat", image="x.jpg")],
-        triples=[],
+        triples=ONE_TRIPLE,
         categories={"Category:Cat": [["x.jpg"]]},
         pages={"x.jpg": info_page("x.jpg")},
     )
@@ -238,12 +253,12 @@ def test_p18_wins_over_category_for_same_entity():
 def test_deleted_file_is_skipped_and_reported():
     client = FakeClient(
         domain=[domain_row("Q1", image="gone.jpg"), domain_row("Q2", image="here.jpg")],
-        triples=[],
+        triples=ONE_TRIPLE,
         pages={"here.jpg": info_page("here.jpg")},
     )
     snapshot = collect_snapshot(client, CONFIG, TODAY)
     assert [r["file_name"] for r in snapshot.image_candidates] == ["here.jpg"]
-    assert snapshot.meta["missing_files"] == ["gone.jpg"]
+    assert snapshot.meta["missing_files"] == [{"name": "gone.jpg", "reason": "missing"}]
 
 
 def test_normalize_file_name_applies_nfc():
@@ -255,7 +270,7 @@ def test_normalize_file_name_applies_nfc():
 def test_redirected_p18_file_is_recorded_under_target_name():
     client = FakeClient(
         domain=[domain_row("Q1", image="Old.jpg")],
-        triples=[],
+        triples=ONE_TRIPLE,
         redirects={"Old.jpg": "New.jpg"},
         pages={"New.jpg": info_page("New.jpg")},
     )
@@ -269,7 +284,7 @@ def test_redirected_p18_file_is_recorded_under_target_name():
 def test_normalized_title_is_not_reported_missing():
     client = FakeClient(
         domain=[domain_row("Q1", image="ngoc%20lu.jpg")],
-        triples=[],
+        triples=ONE_TRIPLE,
         normalized={"ngoc lu.jpg": "Ngoc lu.jpg"},
         pages={"Ngoc lu.jpg": info_page("Ngoc lu.jpg")},
     )
@@ -281,7 +296,7 @@ def test_normalized_title_is_not_reported_missing():
 def test_redirect_into_category_file_keeps_one_p18_row():
     client = FakeClient(
         domain=[domain_row("Q1", category="Cat", image="Old.jpg")],
-        triples=[],
+        triples=ONE_TRIPLE,
         categories={"Category:Cat": [["New.jpg"]]},
         redirects={"Old.jpg": "New.jpg"},
         pages={"New.jpg": info_page("New.jpg")},
@@ -328,7 +343,7 @@ def test_progress_lines_are_logged():
         name = f"f{number}.jpg"
         domain.append(domain_row(f"Q{number}", image=name))
         pages[name] = info_page(name)
-    client = FakeClient(domain=domain, triples=[], pages=pages)
+    client = FakeClient(domain=domain, triples=ONE_TRIPLE, pages=pages)
     messages = []
 
     collect_snapshot(client, CONFIG, TODAY, log=messages.append)
@@ -357,8 +372,9 @@ def test_every_sparql_query_declares_its_prefixes():
     )
     collect_snapshot(client, CONFIG, TODAY, log=[].append)
     # QLever has no built-in prefixes, unlike the Wikidata Query Service.
-    assert len(client.queries) == 4
-    for query in client.queries:
+    sparql_queries = [query for query in client.queries if query != "STATS"]
+    assert len(sparql_queries) == 4
+    for query in sparql_queries:
         assert query.startswith(
             "PREFIX wd: <http://www.wikidata.org/entity/>\n"
             "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n"
@@ -366,15 +382,20 @@ def test_every_sparql_query_declares_its_prefixes():
         )
 
 
+def minimal_client() -> FakeClient:
+    """One item with one statement: the smallest answer collect_snapshot accepts."""
+    return FakeClient(domain=[domain_row("Q1")], triples=[triple_row("Q1", "P31", "Q2")])
+
+
 def test_meta_records_endpoint_and_index():
-    client = FakeClient(domain=[], triples=[])
+    client = minimal_client()
     snapshot = collect_snapshot(client, CONFIG, TODAY, log=[].append)
     assert snapshot.meta["sparql_url"] == "https://example.org/api/wikidata"
     assert snapshot.meta["sparql_index"] == "wikidata-2026-11-08"
 
 
 def test_failed_stats_call_is_recorded_as_unknown():
-    client = FakeClient(domain=[], triples=[])
+    client = minimal_client()
     client.stats = OSError("connection refused")
     messages = []
     snapshot = collect_snapshot(client, CONFIG, TODAY, log=messages.append)
@@ -383,7 +404,7 @@ def test_failed_stats_call_is_recorded_as_unknown():
 
 
 def test_stats_without_index_name_is_recorded_as_unknown():
-    client = FakeClient(domain=[], triples=[])
+    client = minimal_client()
     client.stats = {"num-triples-normal": 7}
     messages = []
     snapshot = collect_snapshot(client, CONFIG, TODAY, log=messages.append)
@@ -453,3 +474,125 @@ def test_write_snapshot_removes_stale_partial(tmp_path):
 def test_committed_config_uses_qlever():
     config = load_mmkg_collect_config(REPO_ROOT / "configs" / "mmkg_vi_collect.yaml")
     assert config.sparql_url == "https://qlever.dev/api/wikidata"
+
+
+def test_stats_are_read_before_any_query():
+    client = minimal_client()
+    collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    assert client.queries[0] == "STATS"
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        http.client.IncompleteRead(b""),
+        TypeError("list indices"),
+        ValueError("bad json"),
+        RuntimeError("HTTP 503 after 5 attempts for qlever.dev/api/wikidata"),
+    ],
+)
+def test_other_stats_failures_are_recorded_as_unknown(error):
+    client = minimal_client()
+    client.stats = error
+    messages = []
+    snapshot = collect_snapshot(client, CONFIG, TODAY, log=messages.append)
+    assert snapshot.meta["sparql_index"] == "unknown"
+    assert any("stats" in message for message in messages)
+
+
+def test_empty_domain_answer_is_an_error():
+    client = FakeClient(domain=[], triples=[triple_row("Q1", "P31", "Q2")])
+    with pytest.raises(RuntimeError, match="0 items"):
+        collect_snapshot(client, CONFIG, TODAY, log=[].append)
+
+
+def test_empty_triples_answer_is_an_error():
+    client = FakeClient(domain=[domain_row("Q1")], triples=[])
+    with pytest.raises(RuntimeError, match="0 rows"):
+        collect_snapshot(client, CONFIG, TODAY, log=[].append)
+
+
+def test_missing_files_are_named_with_a_reason():
+    no_info = {"title": "File:noinfo.jpg"}
+    invalid = {"title": "File:bad<name.jpg", "invalid": ""}
+    client = FakeClient(
+        domain=[
+            domain_row("Q1", image="gone.jpg"),
+            domain_row("Q2", image="noinfo.jpg"),
+            domain_row("Q3", image="bad<name.jpg"),
+            domain_row("Q4", image="Old.jpg"),
+        ],
+        triples=[triple_row("Q1", "P31", "Q2")],
+        pages={"noinfo.jpg": no_info, "bad<name.jpg": invalid},
+        redirects={"Old.jpg": "Older.jpg"},
+        omitted=("Older.jpg",),
+    )
+    snapshot = collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    assert snapshot.meta["missing_files"] == [
+        {"name": "Old.jpg", "reason": "unresolved_redirect"},
+        {"name": "bad<name.jpg", "reason": "invalid"},
+        {"name": "gone.jpg", "reason": "missing"},
+        {"name": "noinfo.jpg", "reason": "no_imageinfo"},
+    ]
+
+
+def test_summary_lists_first_ten_missing_files_and_meta_path(tmp_path):
+    missing = [{"name": f"f{n:02d}.jpg", "reason": "missing"} for n in range(12)]
+    meta = {"row_counts": {"entities_raw": 3}, "missing_files": missing}
+    snapshot = RawSnapshot([], [], [], [], meta)
+
+    lines = summary_lines(snapshot, tmp_path / "20261116")
+
+    text = "\n".join(lines)
+    assert "entities_raw: 3 rows" in text
+    assert "missing files: 12" in text
+    assert "f09.jpg (missing)" in text
+    assert "f10.jpg" not in text
+    assert str(tmp_path / "20261116" / "meta.json") in text
+
+
+def test_git_commit_runs_in_the_repo_root(monkeypatch):
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(kwargs)
+        return subprocess.CompletedProcess(command, 0, stdout="abc123\n", stderr="")
+
+    monkeypatch.setattr(mmkg_collect.subprocess, "run", fake_run)
+    assert mmkg_collect._git_commit([].append) == "abc123"
+    assert Path(calls[0]["cwd"]) == REPO_ROOT
+
+
+def test_git_failure_is_logged_with_stderr(monkeypatch):
+    def fake_run(command, **kwargs):
+        raise subprocess.CalledProcessError(128, command, stderr="fatal: not a git repository")
+
+    monkeypatch.setattr(mmkg_collect.subprocess, "run", fake_run)
+    messages = []
+    assert mmkg_collect._git_commit(messages.append) == "unknown"
+    assert any("not a git repository" in message for message in messages)
+
+
+def test_target_labels_are_batched_by_150():
+    triples = [triple_row("Q1", "P31", f"T{n}") for n in range(151)]
+    client = FakeClient(domain=[domain_row("Q1")], triples=triples)
+    collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    label_queries = [q for q in client.queries if "VALUES" in q and "rdfs:label" in q]
+    sizes = [query.count("wd:T") for query in label_queries]
+    assert sizes == [150, 1]
+
+
+def test_image_info_is_batched_by_50():
+    domain = [domain_row(f"Q{n}", image=f"f{n}.jpg") for n in range(51)]
+    client = FakeClient(domain=domain, triples=[triple_row("Q0", "P31", "Q1")])
+    collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    sizes = [len(call["titles"].split("|")) for call in client.commons_calls]
+    assert sizes == [50, 1]
+
+
+def test_no_sent_query_keeps_a_template_marker():
+    triples = [triple_row("Q1", "P31", "T1")]
+    client = FakeClient(domain=[domain_row("Q1")], triples=triples)
+    collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    for query in client.queries:
+        assert "__" not in query, query

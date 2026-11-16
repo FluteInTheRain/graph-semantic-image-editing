@@ -1,5 +1,6 @@
 """Tests for the polite Wikimedia client. A fake opener replaces the network."""
 
+import http.client
 import json
 import re
 import urllib.error
@@ -248,3 +249,72 @@ def test_sparql_endpoint_stats_reads_cmd_stats():
 
     assert client.sparql_endpoint_stats() == {"name-index": "wikidata"}
     assert opener.requests[0].full_url == "https://example.org/api/wikidata?cmd=stats"
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        urllib.error.URLError("connection refused"),
+        TimeoutError("timed out"),
+        ConnectionResetError("reset by peer"),
+        http.client.IncompleteRead(b"partial"),
+    ],
+)
+def test_transient_network_errors_are_retried_with_backoff(error):
+    opener = FakeOpener([error, json_response({"ok": True})])
+    fake_time = FakeTime()
+    messages = []
+    client = make_client(opener, fake_time, log=messages.append)
+
+    assert client.commons({"action": "query"}) == {"ok": True}
+
+    # First backoff step = interval_seconds * 2**0.
+    assert fake_time.sleeps == [2.0]
+    assert len(messages) == 1
+    assert messages[0].startswith("commons.wikimedia.org network error")
+
+
+def test_network_error_on_last_attempt_names_host_and_path_only():
+    opener = FakeOpener([TimeoutError("timed out") for _ in range(3)])
+    client = make_client(opener, FakeTime(), max_attempts=3)
+
+    with pytest.raises(RuntimeError) as raised:
+        client.commons({"action": "query", "titles": "File:Secret.jpg"})
+
+    message = str(raised.value)
+    assert "commons.wikimedia.org/w/api.php" in message
+    assert "after 3 attempts" in message
+    assert "Secret" not in message
+    assert isinstance(raised.value.__cause__, TimeoutError)
+
+
+def test_http_error_on_last_attempt_names_host_and_path_only():
+    opener = FakeOpener([http_error(503) for _ in range(2)])
+    client = make_client(opener, FakeTime(), max_attempts=2)
+
+    with pytest.raises(RuntimeError) as raised:
+        client.sparql("SELECT ?secret WHERE {}")
+
+    message = str(raised.value)
+    assert "HTTP 503" in message
+    assert "query.wikidata.org/sparql" in message
+    assert "secret" not in message
+
+
+@pytest.mark.parametrize("code", [501, 505, 520])
+def test_other_5xx_codes_are_not_retried(code):
+    opener = FakeOpener([http_error(code), json_response({})])
+    client = make_client(opener, FakeTime())
+
+    with pytest.raises(urllib.error.HTTPError):
+        client.commons({"action": "query"})
+
+    assert len(opener.requests) == 1
+
+
+@pytest.mark.parametrize("code", [429, 500, 502, 503, 504])
+def test_listed_codes_are_retried(code):
+    opener = FakeOpener([http_error(code), json_response({"ok": True})])
+    client = make_client(opener, FakeTime())
+
+    assert client.commons({"action": "query"}) == {"ok": True}

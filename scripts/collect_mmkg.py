@@ -14,9 +14,10 @@ Run (from the repo root):
     uv run python scripts/collect_mmkg.py --config configs/mmkg_vi_collect.yaml
 
 Output:
-    Prints the snapshot folder, the row count of each table and the number of
-    missing (deleted) files. Writes entities_raw, triples_raw, image_candidates,
-    image_credits (CSV) and meta.json.
+    Prints the snapshot folder, the row count of each table, the number of files
+    Commons could not describe with the first 10 and their reason, and the path
+    of meta.json (which lists them all). Writes entities_raw, triples_raw,
+    image_candidates, image_credits (CSV) and meta.json.
 """
 
 import argparse
@@ -24,7 +25,12 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from mmxai.data.mmkg_collect import collect_snapshot, load_mmkg_collect_config, write_snapshot
+from mmxai.data.mmkg_collect import (
+    collect_snapshot,
+    load_mmkg_collect_config,
+    summary_lines,
+    write_snapshot,
+)
 from mmxai.data.wikimedia import WikimediaClient
 
 
@@ -60,10 +66,8 @@ def main() -> None:
     snapshot = collect_snapshot(client, config, today, log=print_now)
     folder = write_snapshot(snapshot, Path(config.output_root), config.max_file_bytes)
 
-    print(f"saved {folder}")
-    for table, count in snapshot.meta["row_counts"].items():
-        print(f"  {table}: {count} rows")
-    print(f"missing files: {len(snapshot.meta['missing_files'])}")
+    for line in summary_lines(snapshot, folder):
+        print(line)
 
 
 if __name__ == "__main__":

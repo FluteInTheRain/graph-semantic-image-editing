@@ -6,6 +6,7 @@ snapshot with explicit rules, so the rules can change without collecting again.
 """
 
 import html
+import http.client
 import json
 import re
 import shutil
@@ -20,6 +21,8 @@ from mmxai.data.mmkg_csv import write_rows
 from mmxai.data.wikimedia import WikimediaClient
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
+# src/mmxai/data/mmkg_collect.py -> the repository root, where git must run.
+REPO_ROOT = Path(__file__).resolve().parents[3]
 ENTITY_PREFIX = "http://www.wikidata.org/entity/"
 PROPERTY_PREFIX = "http://www.wikidata.org/prop/direct/"
 
@@ -197,6 +200,10 @@ def _collect_domain(client, config, queries) -> dict[str, dict]:
             item["categories"].add(row["category"])
         if row.get("image"):
             item["files"].add(normalize_file_name(row["image"]))
+    if not items:
+        # An empty answer means a wrong config or a broken endpoint, never an empty
+        # domain; saving it would freeze an empty snapshot for good.
+        raise RuntimeError(f"the domain query returned 0 items from {config.sparql_url}")
     return items
 
 
@@ -206,6 +213,8 @@ def _collect_domain_triples(client, config, queries) -> set[tuple[str, str, str]
     triples = set()
     for row in client.sparql(query):
         triples.add((_entity_id(row["h"]), _property_id(row["p"]), _entity_id(row["t"])))
+    if not triples:
+        raise RuntimeError(f"the domain triples query returned 0 rows from {config.sparql_url}")
     return triples
 
 
@@ -285,14 +294,19 @@ def _collect_candidate_pairs(client, domain_items, log) -> list[tuple[str, str, 
     return pairs
 
 
-def _fetch_image_info(client, file_names: list[str], log) -> dict[str, tuple[str, dict]]:
-    """Return {requested name: (final name, imageinfo)}; unknown files are left out.
+def _fetch_image_info(
+    client, file_names: list[str], log
+) -> tuple[dict[str, tuple[str, dict]], dict[str, str]]:
+    """Return ({requested name: (final name, imageinfo)}, {requested name: reason missing}).
 
     Commons may answer under another title than the one asked: `normalized` fixes the
     spelling (e.g. a lower-case first letter), then `redirects` follows a renamed file
     to its current page. The final name is the one the file is downloaded under.
+    A file without imageinfo gets a reason: missing (deleted), invalid (bad title),
+    no_imageinfo, or unresolved_redirect (Commons did not answer for the final name).
     """
     resolved = {}
+    reasons = {}
     files_done = 0
     for request_number, batch in enumerate(_batches(file_names, IMAGEINFO_BATCH_SIZE), start=1):
         titles = "|".join("File:" + name for name in batch)
@@ -312,10 +326,17 @@ def _fetch_image_info(client, file_names: list[str], log) -> dict[str, tuple[str
         for change in query.get("redirects", []):
             redirects[normalize_file_name(change["from"])] = normalize_file_name(change["to"])
         info_by_final_name = {}
+        reason_by_final_name = {}
         for page in query["pages"].values():
-            if "missing" in page or "imageinfo" not in page:
-                continue
-            info_by_final_name[normalize_file_name(page["title"])] = page["imageinfo"][0]
+            final_name = normalize_file_name(page["title"])
+            if "missing" in page:
+                reason_by_final_name[final_name] = "missing"
+            elif "invalid" in page:
+                reason_by_final_name[final_name] = "invalid"
+            elif "imageinfo" not in page:
+                reason_by_final_name[final_name] = "no_imageinfo"
+            else:
+                info_by_final_name[final_name] = page["imageinfo"][0]
 
         for name in batch:
             # Normalization happens first, then the redirect is followed (one step only).
@@ -323,10 +344,12 @@ def _fetch_image_info(client, file_names: list[str], log) -> dict[str, tuple[str
             final_name = redirects.get(final_name, final_name)
             if final_name in info_by_final_name:
                 resolved[name] = (final_name, info_by_final_name[final_name])
+            else:
+                reasons[name] = reason_by_final_name.get(final_name, "unresolved_redirect")
         files_done += len(batch)
         if request_number % PROGRESS_EVERY_REQUESTS == 0:
             log(f"image info: {files_done}/{len(file_names)} files")
-    return resolved
+    return resolved, reasons
 
 
 def _metadata_value(info: dict, key: str) -> str:
@@ -344,18 +367,38 @@ def _sparql_index(client: WikimediaClient, log) -> str:
     """
     try:
         return client.sparql_endpoint_stats()["name-index"]
-    except (OSError, RuntimeError, ValueError, KeyError) as error:
+    # RuntimeError is what WikimediaClient raises once its retries are used up.
+    except (
+        OSError,
+        http.client.HTTPException,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        KeyError,
+    ) as error:
         log(f"warning: could not read the SPARQL endpoint stats (name-index): {error!r}")
         return "unknown"
 
 
-def _git_commit() -> str:
-    """Current commit, or "unknown" when git is not available (the only tolerated fallback)."""
+def _git_commit(log) -> str:
+    """Current commit, or "unknown" when git fails (the only tolerated fallback).
+
+    git runs in the repository root, so the answer does not depend on the folder
+    the script was started from.
+    """
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=REPO_ROOT,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except OSError as error:
+        log(f"warning: could not run git to record the commit: {error!r}")
+        return "unknown"
+    except subprocess.CalledProcessError as error:
+        log(f"warning: git rev-parse HEAD failed: {(error.stderr or '').strip()}")
         return "unknown"
     return result.stdout.strip()
 
@@ -368,6 +411,9 @@ def collect_snapshot(
     `log` receives one line when each phase starts and ends, plus progress lines,
     so a run of several minutes can be followed in a log file.
     """
+    # Read first: QLever may load a newer dump during a long run, and the dump
+    # name should describe the data the queries below actually read.
+    sparql_index = _sparql_index(client, log)
     queries: dict[str, str] = {}
     log("domain items: start")
     domain_items = _collect_domain(client, config, queries)
@@ -429,7 +475,7 @@ def collect_snapshot(
     log(f"category files: done, {len(pairs)} entity-file pairs")
     requested_files = sorted({file_name for file_name, _entity, _origin in pairs})
     log(f"image info: start, {len(requested_files)} files")
-    resolved = _fetch_image_info(client, requested_files, log)
+    resolved, missing_reasons = _fetch_image_info(client, requested_files, log)
     log(f"image info: done, {len(resolved)} found")
 
     image_candidates = []
@@ -461,7 +507,9 @@ def collect_snapshot(
     info_by_file_name = {}
     for requested_name in requested_files:
         if requested_name not in resolved:
-            missing_files.append(requested_name)
+            missing_files.append(
+                {"name": requested_name, "reason": missing_reasons[requested_name]}
+            )
             continue
         file_name, info = resolved[requested_name]
         info_by_file_name[file_name] = info
@@ -487,13 +535,28 @@ def collect_snapshot(
             "image_credits": len(image_credits),
         },
         "missing_files": missing_files,
-        "git_commit": _git_commit(),
+        "git_commit": _git_commit(log),
         "user_agent": config.user_agent,
         "sparql_url": config.sparql_url,
-        "sparql_index": _sparql_index(client, log),
+        "sparql_index": sparql_index,
         "config": asdict(config),
     }
     return RawSnapshot(entities, triples, image_candidates, image_credits, meta)
+
+
+def summary_lines(snapshot: RawSnapshot, folder: Path) -> list[str]:
+    """Lines to print after a collect: row counts and the first 10 missing files."""
+    lines = [f"saved {folder}"]
+    for table, count in snapshot.meta["row_counts"].items():
+        lines.append(f"  {table}: {count} rows")
+    missing = snapshot.meta["missing_files"]
+    lines.append(f"missing files: {len(missing)}")
+    for entry in missing[:10]:
+        lines.append(f"  {entry['name']} ({entry['reason']})")
+    if len(missing) > 10:
+        lines.append(f"  ... {len(missing) - 10} more")
+    lines.append(f"full list: {folder / 'meta.json'} (missing_files)")
+    return lines
 
 
 def write_snapshot(snapshot: RawSnapshot, output_root: Path, max_file_bytes: int) -> Path:

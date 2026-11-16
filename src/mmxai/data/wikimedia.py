@@ -4,6 +4,7 @@ This is the only code that touches the network for the MMKG collection.
 Tests replace `opener` with a fake so they never go online.
 """
 
+import http.client
 import json
 import math
 import time
@@ -17,10 +18,22 @@ COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php"
 
 # SPARQL queries can be slow, so the timeout is generous.
 REQUEST_TIMEOUT_SECONDS = 120
+# Rate limit and the server errors that mean "busy, try later". Other 5xx codes
+# (501 Not Implemented, 505 ...) will not change on a retry.
+RETRYABLE_HTTP_CODES = {429, 500, 502, 503, 504}
+# Network failures that usually pass: refused or dropped connections, timeouts and
+# a body cut short. URLError also wraps DNS errors raised by urlopen.
+TRANSIENT_NETWORK_ERRORS = (
+    urllib.error.URLError,
+    TimeoutError,
+    ConnectionResetError,
+    http.client.IncompleteRead,
+)
 
 
 class WikimediaClient:
-    """Sends requests with a User-Agent, a minimum gap, and retry on 429/5xx."""
+    """Sends requests with a User-Agent, a minimum gap, and retry on 429, busy 5xx
+    and transient network errors."""
 
     def __init__(
         self,
@@ -81,7 +94,12 @@ class WikimediaClient:
 
     def _get(self, url: str, accept: str | None = None) -> bytes:
         """GET a URL. Interval and retry rules live here and nowhere else."""
-        last_status = None
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.hostname
+        # Errors name host and path only: the query string can be a whole SPARQL query.
+        where = f"{host}{parsed.path}"
+        last_problem = ""
+        last_error: Exception | None = None
         for attempt in range(self.max_attempts):
             self._wait_for_interval()
             request = urllib.request.Request(url)
@@ -92,23 +110,31 @@ class WikimediaClient:
                 with self._opener(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
                     return response.read()
             except urllib.error.HTTPError as error:
-                is_retryable = error.code == 429 or 500 <= error.code <= 599
-                if not is_retryable:
+                # HTTPError is a URLError, so it must be caught before the network errors.
+                if error.code not in RETRYABLE_HTTP_CODES:
                     raise
-                last_status = error.code
                 # Close the error response so its connection is not held open while we wait.
                 error.close()
-                # No point sleeping after the final attempt.
-                if attempt < self.max_attempts - 1:
-                    delay = self._retry_delay(error, attempt, url)
-                    resume_at = datetime.now() + timedelta(seconds=delay)
-                    host = urllib.parse.urlparse(url).hostname
-                    self._log(
-                        f"{host} {error.code}: waiting {delay:g} s, "
-                        f"resuming at {resume_at:%H:%M:%S}"
-                    )
-                    self._sleep(delay)
-        raise RuntimeError(f"HTTP {last_status} after {self.max_attempts} attempts for {url}")
+                last_problem = f"HTTP {error.code}"
+                log_label = str(error.code)
+                last_error = error
+                retry_after = error.headers.get("Retry-After") if error.headers else None
+            except TRANSIENT_NETWORK_ERRORS as error:
+                last_problem = f"network error {type(error).__name__}"
+                log_label = last_problem
+                last_error = error
+                retry_after = None
+            # No point sleeping after the final attempt.
+            if attempt < self.max_attempts - 1:
+                delay = self._retry_delay(retry_after, attempt, host)
+                resume_at = datetime.now() + timedelta(seconds=delay)
+                self._log(
+                    f"{host} {log_label}: waiting {delay:g} s, resuming at {resume_at:%H:%M:%S}"
+                )
+                self._sleep(delay)
+        raise RuntimeError(
+            f"{last_problem} after {self.max_attempts} attempts for {where}"
+        ) from last_error
 
     def _wait_for_interval(self) -> None:
         """Sleep so attempts start at least interval_seconds apart."""
@@ -118,7 +144,7 @@ class WikimediaClient:
                 self._sleep(self.interval_seconds - elapsed)
         self._last_attempt_start = self._clock()
 
-    def _retry_delay(self, error: urllib.error.HTTPError, attempt: int, url: str) -> float:
+    def _retry_delay(self, retry_after: str | None, attempt: int, host: str | None) -> float:
         """Use Retry-After when it is a sane number, else exponential backoff.
 
         Wikimedia asks clients to honour Retry-After fully; retrying earlier can extend
@@ -126,7 +152,6 @@ class WikimediaClient:
         instead, so a run never stalls silently for a very long time.
         """
         delay = self.interval_seconds * 2**attempt
-        retry_after = error.headers.get("Retry-After") if error.headers else None
         if retry_after is not None:
             try:
                 requested = float(retry_after)
@@ -136,7 +161,6 @@ class WikimediaClient:
             if requested is not None and math.isfinite(requested) and requested >= 0:
                 delay = requested
         if delay > self.max_retry_wait_seconds:
-            host = urllib.parse.urlparse(url).hostname
             raise RuntimeError(
                 f"{host} asked to wait {delay:g} s, more than the limit of "
                 f"{self.max_retry_wait_seconds:g} s; try again later"
