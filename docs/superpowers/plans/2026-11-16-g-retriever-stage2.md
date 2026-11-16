@@ -36,7 +36,7 @@
 
 **Files:** Create `src/mmxai/graph/pcst_cache.py`, Test `tests/test_pcst_cache.py`
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```python
 """Packed per-text PCST subgraphs and their checked cache (ADR-0051, stage 2)."""
@@ -80,8 +80,8 @@ def test_save_refuses_overwrite_and_load_checks_meta(tmp_path):
         load_cache(tmp_path, "val", {"prize_k": 10, "edge_cost": 0.5, "num_texts": 1})
 ```
 
-- [ ] **Step 2: Run, expect FAIL** — `python -m uv run pytest -q tests/test_pcst_cache.py`
-- [ ] **Step 3: Implement** `src/mmxai/graph/pcst_cache.py`
+- [x] **Step 2: Run, expect FAIL** — `python -m uv run pytest -q tests/test_pcst_cache.py`
+- [x] **Step 3: Implement** `src/mmxai/graph/pcst_cache.py`
 
 ```python
 """One PCST subgraph S_q per text, stored once and reused by every training epoch and seed.
@@ -149,7 +149,7 @@ def load_cache(cache_dir, split: str, expected_meta: dict) -> tuple[np.ndarray, 
 ```
 
 Rewrite the `values = ... if rows else ...` line as a plain `if`/`else` block (readability rule). Wrap lines > 100 chars.
-- [ ] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(graph): packed cache of per-text PCST subgraphs`.
+- [x] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(graph): packed cache of per-text PCST subgraphs`.
 
 ---
 
@@ -157,7 +157,7 @@ Rewrite the `values = ... if rows else ...` line as a plain `if`/`else` block (r
 
 **Files:** Modify `src/mmxai/models/train.py`; Test: the existing train test file (`ls tests | grep -i train`).
 
-- [ ] **Step 1: Failing test** — append:
+- [x] **Step 1: Failing test** — append:
 
 ```python
 def test_fit_uses_the_given_loss_function():
@@ -172,9 +172,9 @@ def test_fit_uses_the_given_loss_function():
 ```
 
 Fill `...` with the file's existing tiny-data helper (read the file; use the same builder the current `fit` test uses), call `fit(..., loss_fn=recording_loss)` for 1 epoch and assert `calls` is not empty. Do not invent a new builder if one exists.
-- [ ] **Step 2: Run, expect FAIL** (unexpected keyword `loss_fn`).
-- [ ] **Step 3: Implement** — add a keyword parameter `loss_fn: Callable = batch_loss` to `train_one_epoch` (used instead of the direct `batch_loss` call) and to `fit` (passed through). Type hints: `Callable[..., torch.Tensor]`. Docstring line: "loss_fn: batch loss to minimise; the default is the ADR-0046 loss. Stage 2 of ADR-0051 passes its own." No other behaviour change.
-- [ ] **Step 4: Run** the train test file and `python -m uv run pytest -q tests/test_graph_rerank*.py` (or whatever tests cover `graph_rerank`) → all pass. Ruff. **Commit** `refactor(models): fit accepts a batch loss function`.
+- [x] **Step 2: Run, expect FAIL** (unexpected keyword `loss_fn`).
+- [x] **Step 3: Implement** — add a keyword parameter `loss_fn: Callable = batch_loss` to `train_one_epoch` (used instead of the direct `batch_loss` call) and to `fit` (passed through). Type hints: `Callable[..., torch.Tensor]`. Docstring line: "loss_fn: batch loss to minimise; the default is the ADR-0046 loss. Stage 2 of ADR-0051 passes its own." No other behaviour change.
+- [x] **Step 4: Run** the train test file and `python -m uv run pytest -q tests/test_graph_rerank*.py` (or whatever tests cover `graph_rerank`) → all pass. Ruff. **Commit** `refactor(models): fit accepts a batch loss function`.
 
 ---
 
