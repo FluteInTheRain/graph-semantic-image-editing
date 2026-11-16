@@ -182,7 +182,7 @@ Fill `...` with the file's existing tiny-data helper (read the file; use the sam
 
 **Files:** Create `src/mmxai/models/subgraph_sage.py`, Test `tests/test_subgraph_sage.py`
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```python
 """Stage-2 G-Retriever model: GraphSAGE restricted to the query subgraph (ADR-0051)."""
@@ -233,8 +233,8 @@ def test_untrained_model_returns_the_clip_vector():
     assert torch.allclose(h, image_x)
 ```
 
-- [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Implement** (start of `subgraph_sage.py`):
+- [x] **Step 2: Run, expect FAIL.**
+- [x] **Step 3: Implement** (start of `subgraph_sage.py`):
 
 ```python
 """Stage 2 of the G-Retriever reranker (ADR-0051): GraphSAGE on the query subgraph.
@@ -305,7 +305,7 @@ class SubgraphSage(nn.Module):
 ```
 
 Note the memory of `vectors` is `Q × M × D × dim` floats; callers chunk (Task 5). Wrap long lines; keep `zip(... strict=True)` lines ≤ 100 chars.
-- [ ] **Step 4: Run, expect PASS** (4 tests); ruff. **Commit** `feat(models): GraphSAGE restricted to the query subgraph (G-Retriever stage 2)`.
+- [x] **Step 4: Run, expect PASS** (4 tests); ruff. **Commit** `feat(models): GraphSAGE restricted to the query subgraph (G-Retriever stage 2)`.
 
 ---
 
@@ -313,7 +313,7 @@ Note the memory of `vectors` is `Q × M × D × dim` floats; callers chunk (Task
 
 **Files:** Modify `src/mmxai/models/subgraph_sage.py`, Test `tests/test_subgraph_sage.py`
 
-- [ ] **Step 1: Failing tests** (append):
+- [x] **Step 1: Failing tests** (append):
 
 ```python
 from mmxai.models.subgraph_sage import SubgraphTrainingData, subgraph_batch_loss
@@ -352,8 +352,8 @@ def test_loss_is_finite_and_training_lowers_it():
     assert loss.item() < first.item()
 ```
 
-- [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Implement** (append to `subgraph_sage.py`; import `sample_negatives` from `mmxai.models.train`):
+- [x] **Step 2: Run, expect FAIL.**
+- [x] **Step 3: Implement** (append to `subgraph_sage.py`; import `sample_negatives` from `mmxai.models.train`):
 
 ```python
 @dataclass
@@ -398,7 +398,7 @@ def subgraph_batch_loss(
 ```
 
 (Add `from dataclasses import dataclass`.) Keep the structure identical to `batch_loss` on purpose and say so in a comment, so the two can be compared line by line.
-- [ ] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(models): stage-2 training data and batch loss`.
+- [x] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(models): stage-2 training data and batch loss`.
 
 ---
 
@@ -406,7 +406,7 @@ def subgraph_batch_loss(
 
 **Files:** Modify `src/mmxai/models/subgraph_sage.py`, Test `tests/test_subgraph_sage.py`
 
-- [ ] **Step 1: Failing tests** (append):
+- [x] **Step 1: Failing tests** (append):
 
 ```python
 from mmxai.models.subgraph_sage import candidate_subgraph_scores, explain_candidate
@@ -454,8 +454,8 @@ def test_explanation_drops_each_matched_concept_and_recomputes():
     assert abs(record["matched"][0]["score_without"] - without) < 1e-6
 ```
 
-- [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Implement** (append):
+- [x] **Step 2: Run, expect FAIL.**
+- [x] **Step 3: Implement** (append):
 
 ```python
 def candidate_subgraph_scores(
@@ -526,7 +526,7 @@ def explain_candidate(
 ```
 
 Replace the one-line conditional `return ... if blocks else ...` with an explicit `if`/`else`; wrap long lines.
-- [ ] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(models): stage-2 candidate scores and exact occlusion explanation`.
+- [x] **Step 4: Run, expect PASS**; ruff. **Commit** `feat(models): stage-2 candidate scores and exact occlusion explanation`.
 
 ---
 
