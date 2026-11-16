@@ -2,6 +2,10 @@
 # How to run: see the docstring of scripts/collect_mmkg.py.
 # Decision (ADR-0050): the snapshot goes to mmkg/raw/<YYYYMMDD>/ and is never edited.
 output_root: mmkg/raw
+# SPARQL endpoint. QLever serves the Wikidata dump (updated live) and is much faster than
+# the Wikidata Query Service, whose 429 asked us to wait 1000 s on 2026-11-16.
+# The endpoint and its dump name are recorded in meta.json (sparql_url, sparql_index).
+sparql_url: https://qlever.dev/api/wikidata
 # Decision (ADR-0050): domain = Wikidata items in Vietnam (Q881) with any heritage designation (P1435).
 country_qid: Q881
 designation_property: P1435

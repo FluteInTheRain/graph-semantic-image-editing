@@ -28,6 +28,7 @@ class WikimediaClient:
         interval_seconds: float,
         max_attempts: int,
         max_retry_wait_seconds: float,
+        sparql_url: str = SPARQL_URL,
         opener=urllib.request.urlopen,
         sleep=time.sleep,
         clock=time.monotonic,
@@ -37,6 +38,7 @@ class WikimediaClient:
         self.interval_seconds = interval_seconds
         self.max_attempts = max_attempts
         self.max_retry_wait_seconds = max_retry_wait_seconds
+        self.sparql_url = sparql_url
         self._log = log
         self._opener = opener
         self._sleep = sleep
@@ -47,7 +49,7 @@ class WikimediaClient:
     def sparql(self, query: str) -> list[dict[str, str]]:
         """Run a SPARQL query and return each binding as {variable: value}."""
         query_string = urllib.parse.urlencode({"query": query})
-        url = SPARQL_URL + "?" + query_string
+        url = self.sparql_url + "?" + query_string
         body = self._get(url, accept="application/sparql-results+json")
         payload = json.loads(body)
         rows = []
@@ -57,6 +59,11 @@ class WikimediaClient:
                 row[variable] = cell["value"]
             rows.append(row)
         return rows
+
+    def sparql_endpoint_stats(self) -> dict:
+        """Return the endpoint's `?cmd=stats` JSON (a QLever feature: it names the dump)."""
+        body = self._get(self.sparql_url + "?cmd=stats", accept="application/json")
+        return json.loads(body)
 
     def commons(self, params: dict[str, str]) -> dict:
         """Call the Commons API (format=json is added) and return the JSON."""

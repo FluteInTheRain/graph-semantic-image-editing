@@ -54,6 +54,7 @@ def main() -> None:
         config.request_interval_seconds,
         config.max_attempts,
         config.max_retry_wait_seconds,
+        sparql_url=config.sparql_url,
         log=print_now,
     )
     snapshot = collect_snapshot(client, config, today, log=print_now)

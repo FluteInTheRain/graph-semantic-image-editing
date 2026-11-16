@@ -15,6 +15,7 @@ from mmxai.data.mmkg_collect import (
     MmkgCollectConfig,
     RawSnapshot,
     collect_snapshot,
+    load_mmkg_collect_config,
     normalize_file_name,
     strip_html,
     write_snapshot,
@@ -28,6 +29,7 @@ TODAY = date(2026, 11, 16)
 
 CONFIG = MmkgCollectConfig(
     output_root="mmkg/raw",
+    sparql_url="https://example.org/api/wikidata",
     country_qid="Q881",
     designation_property="P1435",
     user_agent="test-agent",
@@ -98,8 +100,16 @@ class FakeClient:
         self.normalized = normalized or {}
         self.redirects = redirects or {}
         self.user_agent = "test-agent"
+        self.queries = []
+        self.stats = {"name-index": "wikidata-2026-11-08"}
+
+    def sparql_endpoint_stats(self):
+        if isinstance(self.stats, Exception):
+            raise self.stats
+        return self.stats
 
     def sparql(self, query):
+        self.queries.append(query)
         if "?image" in query:
             return self.domain
         if "VALUES" in query and "rdfs:label" in query:
@@ -281,6 +291,7 @@ def test_cli_refuses_when_todays_snapshot_exists(tmp_path):
     config_file = tmp_path / "collect.yaml"
     config_file.write_text(
         f"output_root: {output_root}\n"
+        "sparql_url: https://example.org/api/wikidata\n"
         "country_qid: Q881\n"
         "designation_property: P1435\n"
         "user_agent: test-agent\n"
@@ -329,6 +340,48 @@ def test_progress_lines_are_logged():
     assert "domain items: done, 1300 items" in messages
     # 26 imageinfo requests: one progress line after the 25th.
     assert "image info: 1250/1300 files" in messages
+
+
+def test_every_sparql_query_declares_its_prefixes():
+    client = FakeClient(
+        domain=[domain_row("Q1")],
+        triples=[triple_row("Q1", "P186", "Q9")],
+        labels=[{"item": ENTITY + "Q9", "name_en": "Wood"}],
+    )
+    collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    # QLever has no built-in prefixes, unlike the Wikidata Query Service.
+    assert len(client.queries) == 4
+    for query in client.queries:
+        assert query.startswith(
+            "PREFIX wd: <http://www.wikidata.org/entity/>\n"
+            "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n"
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        )
+
+
+def test_meta_records_endpoint_and_index():
+    client = FakeClient(domain=[], triples=[])
+    snapshot = collect_snapshot(client, CONFIG, TODAY, log=[].append)
+    assert snapshot.meta["sparql_url"] == "https://example.org/api/wikidata"
+    assert snapshot.meta["sparql_index"] == "wikidata-2026-11-08"
+
+
+def test_failed_stats_call_is_recorded_as_unknown():
+    client = FakeClient(domain=[], triples=[])
+    client.stats = OSError("connection refused")
+    messages = []
+    snapshot = collect_snapshot(client, CONFIG, TODAY, log=messages.append)
+    assert snapshot.meta["sparql_index"] == "unknown"
+    assert any("stats" in message and "connection refused" in message for message in messages)
+
+
+def test_stats_without_index_name_is_recorded_as_unknown():
+    client = FakeClient(domain=[], triples=[])
+    client.stats = {"num-triples-normal": 7}
+    messages = []
+    snapshot = collect_snapshot(client, CONFIG, TODAY, log=messages.append)
+    assert snapshot.meta["sparql_index"] == "unknown"
+    assert any("name-index" in message for message in messages)
 
 
 def small_snapshot() -> RawSnapshot:
@@ -388,3 +441,8 @@ def test_write_snapshot_removes_stale_partial(tmp_path):
     (stale / "old.txt").write_text("x")
     folder = write_snapshot(small_snapshot(), tmp_path, 1048576)
     assert not (folder / "old.txt").exists()
+
+
+def test_committed_config_uses_qlever():
+    config = load_mmkg_collect_config(REPO_ROOT / "configs" / "mmkg_vi_collect.yaml")
+    assert config.sparql_url == "https://qlever.dev/api/wikidata"

@@ -42,9 +42,18 @@ CANDIDATE_COLUMNS = [
 ]
 CREDIT_COLUMNS = ["file_name", "artist", "uploader"]
 
+# QLever, unlike the Wikidata Query Service, has no built-in prefixes, so every query
+# declares the ones it uses (harmless on the Wikidata Query Service).
+SPARQL_PREFIXES = (
+    "PREFIX wd: <http://www.wikidata.org/entity/>\n"
+    "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n"
+    "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+)
+
 # __X__ markers are filled with str.replace because SPARQL uses curly braces itself.
-DOMAIN_QUERY = """
-SELECT DISTINCT ?item ?name_vi ?name_en ?category ?image WHERE {
+DOMAIN_QUERY = (
+    SPARQL_PREFIXES
+    + """SELECT DISTINCT ?item ?name_vi ?name_en ?category ?image WHERE {
   ?item wdt:__DESIGNATION__ ?designation ;
         wdt:P17 wd:__COUNTRY__ .
   OPTIONAL { ?item rdfs:label ?name_vi FILTER(LANG(?name_vi) = "vi") }
@@ -53,10 +62,12 @@ SELECT DISTINCT ?item ?name_vi ?name_en ?category ?image WHERE {
   OPTIONAL { ?item wdt:P18 ?image }
 }
 """
+)
 
 # No label service here: it timed out in the survey.
-TRIPLES_QUERY = """
-SELECT DISTINCT ?h ?p ?t WHERE {
+TRIPLES_QUERY = (
+    SPARQL_PREFIXES
+    + """SELECT DISTINCT ?h ?p ?t WHERE {
   ?h wdt:__DESIGNATION__ ?designation ;
      wdt:P17 wd:__COUNTRY__ .
   ?h ?p ?t .
@@ -64,23 +75,28 @@ SELECT DISTINCT ?h ?p ?t WHERE {
   FILTER(STRSTARTS(STR(?t), "http://www.wikidata.org/entity/Q"))
 }
 """
+)
 
-TARGET_LABELS_QUERY = """
-SELECT DISTINCT ?item ?name_vi ?name_en WHERE {
+TARGET_LABELS_QUERY = (
+    SPARQL_PREFIXES
+    + """SELECT DISTINCT ?item ?name_vi ?name_en WHERE {
   VALUES ?item { __IDS__ }
   OPTIONAL { ?item rdfs:label ?name_vi FILTER(LANG(?name_vi) = "vi") }
   OPTIONAL { ?item rdfs:label ?name_en FILTER(LANG(?name_en) = "en") }
 }
 """
+)
 
-CONCEPT_TRIPLES_QUERY = """
-SELECT DISTINCT ?h ?p ?t WHERE {
+CONCEPT_TRIPLES_QUERY = (
+    SPARQL_PREFIXES
+    + """SELECT DISTINCT ?h ?p ?t WHERE {
   VALUES ?h { __IDS__ }
   ?h ?p ?t .
   FILTER(STRSTARTS(STR(?p), "http://www.wikidata.org/prop/direct/P"))
   FILTER(STRSTARTS(STR(?t), "http://www.wikidata.org/entity/Q"))
 }
 """
+)
 
 
 @dataclass(frozen=True)
@@ -88,6 +104,7 @@ class MmkgCollectConfig:
     """Settings of one collection run (configs/mmkg_vi_collect.yaml)."""
 
     output_root: str
+    sparql_url: str
     country_qid: str
     designation_property: str
     user_agent: str
@@ -315,6 +332,19 @@ def _metadata_value(info: dict, key: str) -> str:
     return entry.get("value", "")
 
 
+def _sparql_index(client: WikimediaClient, log) -> str:
+    """Name of the data dump behind the SPARQL endpoint, or "unknown" if it cannot be read.
+
+    QLever serves a Wikidata dump, not live Wikidata, so the dump name tells readers how
+    fresh the data is. It is only provenance, so the run does not fail without it.
+    """
+    try:
+        return client.sparql_endpoint_stats()["name-index"]
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
+        log(f"warning: could not read the SPARQL endpoint stats (name-index): {error!r}")
+        return "unknown"
+
+
 def _git_commit() -> str:
     """Current commit, or "unknown" when git is not available (the only tolerated fallback)."""
     try:
@@ -455,6 +485,8 @@ def collect_snapshot(
         "missing_files": missing_files,
         "git_commit": _git_commit(),
         "user_agent": config.user_agent,
+        "sparql_url": config.sparql_url,
+        "sparql_index": _sparql_index(client, log),
         "config": asdict(config),
     }
     return RawSnapshot(entities, triples, image_candidates, image_credits, meta)

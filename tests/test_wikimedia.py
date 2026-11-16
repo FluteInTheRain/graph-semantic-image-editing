@@ -217,3 +217,34 @@ def test_retried_error_is_closed():
     client.commons({"action": "query"})
 
     assert error.fp.closed
+
+
+def test_sparql_goes_to_the_configured_endpoint():
+    opener = FakeOpener([json_response({"results": {"bindings": []}})])
+    client = WikimediaClient(
+        user_agent="test-agent/1.0",
+        interval_seconds=2.0,
+        max_attempts=1,
+        max_retry_wait_seconds=1800.0,
+        sparql_url="https://example.org/api/wikidata",
+        opener=opener,
+    )
+
+    client.sparql("SELECT ?x WHERE {}")
+
+    assert opener.requests[0].full_url.startswith("https://example.org/api/wikidata?query=")
+
+
+def test_sparql_endpoint_stats_reads_cmd_stats():
+    opener = FakeOpener([json_response({"name-index": "wikidata"})])
+    client = WikimediaClient(
+        user_agent="test-agent/1.0",
+        interval_seconds=2.0,
+        max_attempts=1,
+        max_retry_wait_seconds=1800.0,
+        sparql_url="https://example.org/api/wikidata",
+        opener=opener,
+    )
+
+    assert client.sparql_endpoint_stats() == {"name-index": "wikidata"}
+    assert opener.requests[0].full_url == "https://example.org/api/wikidata?cmd=stats"
