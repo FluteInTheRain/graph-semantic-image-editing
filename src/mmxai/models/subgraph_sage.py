@@ -119,3 +119,81 @@ def subgraph_batch_loss(
     logits = logits.masked_fill(~torch.cat([always_valid, valid], dim=1), float("-inf"))
     targets = torch.zeros(len(text_rows), dtype=torch.long)
     return functional.cross_entropy(logits, targets)
+
+
+def candidate_subgraph_scores(
+    model: SubgraphSage,
+    query_x: torch.Tensor,
+    query_subgraphs: torch.Tensor,
+    candidate_rows: torch.Tensor,
+    image_x: torch.Tensor,
+    image_concepts: torch.Tensor,
+    concept_x: torch.Tensor,
+    chunk: int,
+) -> np.ndarray:
+    """Return (Q, K) cos(q, h_i(q)) for every query and each of its K candidate images.
+
+    chunk is a memory setting (one chunk holds chunk x K x D x dim floats), not a method
+    hyperparameter: it never changes the scores.
+    """
+    num_queries = len(query_x)
+    scores = np.zeros((num_queries, candidate_rows.shape[1]), dtype=np.float32)
+    if num_queries == 0:
+        return scores
+
+    model.eval()
+    with torch.no_grad():
+        for start in range(0, num_queries, chunk):
+            stop = start + chunk
+            rows = candidate_rows[start:stop]
+            mean = masked_concept_mean(concept_x, image_concepts[rows], query_subgraphs[start:stop])
+            h = functional.normalize(model(image_x[rows], mean), dim=-1)
+            query = functional.normalize(query_x[start:stop], dim=-1)
+            scores[start:stop] = (h * query[:, None, :]).sum(dim=-1).numpy()
+    return scores
+
+
+def explain_candidate(
+    model: SubgraphSage,
+    query_vector: torch.Tensor,
+    query_subgraph: torch.Tensor,
+    prized_rows: set[int],
+    image_vector: torch.Tensor,
+    image_concept_rows: torch.Tensor,
+    concept_x: torch.Tensor,
+    concept_keys: np.ndarray,
+) -> dict:
+    """Explain one (query, image) score by removing each matched concept and re-scoring.
+
+    A matched concept is one the image contains and the query subgraph keeps; only
+    those enter the neighbour mean. Exact occlusion (drop the concept from the subgraph,
+    run the same model again) is the real counterfactual of the score (ADR-0016).
+    bridge is True when the concept is not a prized (text-matched) concept, i.e. it
+    came into the subgraph only to connect others.
+    """
+    model.eval()
+
+    def score(subgraph: torch.Tensor) -> float:
+        with torch.no_grad():
+            mean = masked_concept_mean(
+                concept_x, image_concept_rows[None, None, :], subgraph[None, :]
+            )
+            h = model(image_vector[None, None, :], mean)
+            return torch.cosine_similarity(h[0, 0], query_vector, dim=0).item()
+
+    subgraph_rows = set(query_subgraph.tolist())
+    image_rows = set(image_concept_rows.tolist())
+    matched_rows = sorted((subgraph_rows & image_rows) - {PAD})
+
+    matched = []
+    for row in matched_rows:
+        without = query_subgraph.clone()
+        without[without == row] = PAD
+        matched.append(
+            {
+                "concept": str(concept_keys[row]),
+                "bridge": row not in prized_rows,
+                "score_without": score(without),
+            }
+        )
+    return {"score": score(query_subgraph), "matched": matched}
