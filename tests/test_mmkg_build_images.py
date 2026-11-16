@@ -217,3 +217,10 @@ def test_image_id_is_stable():
     assert row["source_url"] == (
         "https://commons.wikimedia.org/wiki/File:" + quote(row["file_name"].replace(" ", "_"))
     )
+
+
+def test_repeated_entity_file_pair_is_an_error():
+    rows = filler("Q1", 3)
+    rows.append(candidate("f0.jpg", "Q1", origin="p18"))
+    with pytest.raises(ValueError, match="Q1.*f0.jpg"):
+        run(rows, credits_for("f0.jpg", "f1.jpg", "f2.jpg"))

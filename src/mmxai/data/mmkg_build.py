@@ -144,6 +144,19 @@ def pick_author(license_name: str, credit: dict[str, str], config: MmkgBuildConf
     return "unknown"
 
 
+def check_no_repeated_pairs(candidates: list[dict[str, str]]) -> None:
+    """Fail on a repeated (entity_id, file_name): the collector never writes one."""
+    seen: set[tuple[str, str]] = set()
+    for row in candidates:
+        pair = (row["entity_id"], row["file_name"])
+        if pair in seen:
+            raise ValueError(
+                f"snapshot repeats entity {pair[0]!r} with file {pair[1]!r}; "
+                "the collector writes one row per pair, so the snapshot is corrupt"
+            )
+        seen.add(pair)
+
+
 def drop_shared_files(rows: list[dict[str, str]], report: Counter) -> list[dict[str, str]]:
     """Drop a file listed under more than one entity: we cannot tell which one it shows."""
     entities_of_file: dict[str, set[str]] = {}
@@ -198,6 +211,7 @@ def select_images(
     Rule order: shared_between_entities, mime, license, too_small, no_author,
     review_drop, duplicate_sha1, then per entity below_min / over_max.
     """
+    check_no_repeated_pairs(candidates)
     credit_of_file = {credit["file_name"]: credit for credit in credits}
 
     rows = drop_shared_files(candidates, report)
