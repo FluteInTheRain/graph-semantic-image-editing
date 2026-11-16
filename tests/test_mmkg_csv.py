@@ -64,3 +64,53 @@ def test_read_rejects_both_plain_and_sharded(tmp_path: Path) -> None:
 def test_read_missing_table_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         read_rows(tmp_path, "t")
+
+
+def _big_rows(count: int) -> list[dict[str, str]]:
+    return [{"id": str(i), "text": "x" * 90} for i in range(count)]
+
+
+def test_rewrite_with_fewer_shards_removes_old_shards(tmp_path: Path) -> None:
+    first_paths = write_rows(tmp_path, "t", HEADER, _big_rows(200), max_file_bytes=2_000)
+    assert len(first_paths) >= 3
+    new_rows = _big_rows(30)
+
+    new_paths = write_rows(tmp_path, "t", HEADER, new_rows, max_file_bytes=2_000)
+
+    assert len(new_paths) == 2
+    assert sorted(tmp_path.glob("t*.csv")) == new_paths
+    assert read_rows(tmp_path, "t") == new_rows
+
+
+def test_rewrite_sharded_table_as_small_leaves_only_plain_file(tmp_path: Path) -> None:
+    write_rows(tmp_path, "t", HEADER, _big_rows(200), max_file_bytes=2_000)
+    new_rows = _big_rows(2)
+
+    paths = write_rows(tmp_path, "t", HEADER, new_rows, max_file_bytes=2_000)
+
+    assert paths == [tmp_path / "t.csv"]
+    assert sorted(tmp_path.glob("t*.csv")) == paths
+    assert read_rows(tmp_path, "t") == new_rows
+
+
+def test_rewrite_leaves_other_tables_untouched(tmp_path: Path) -> None:
+    other_rows = _big_rows(200)
+    other_paths = write_rows(tmp_path, "t_other", HEADER, other_rows, max_file_bytes=2_000)
+    plain_path = tmp_path / "tt.csv"
+    plain_path.write_text("id,text\r\n", encoding="utf-8")
+
+    write_rows(tmp_path, "t", HEADER, _big_rows(2), max_file_bytes=2_000)
+
+    assert all(path.exists() for path in other_paths)
+    assert plain_path.exists()
+    assert read_rows(tmp_path, "t_other") == other_rows
+
+
+def test_failed_write_keeps_old_files(tmp_path: Path) -> None:
+    old_rows = _big_rows(3)
+    write_rows(tmp_path, "t", HEADER, old_rows, max_file_bytes=2_000)
+
+    with pytest.raises(ValueError):
+        write_rows(tmp_path, "t", HEADER, [{"id": "1", "text": "x" * 5_000}], max_file_bytes=2_000)
+
+    assert read_rows(tmp_path, "t") == old_rows

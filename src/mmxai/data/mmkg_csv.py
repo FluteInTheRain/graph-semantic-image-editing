@@ -21,6 +21,20 @@ def _size_in_bytes(text: str) -> int:
     return len(text.encode("utf-8"))
 
 
+def _shard_paths(directory: Path, stem: str) -> list[Path]:
+    """Return the `<stem>_NNN.csv` files in numeric order (three digits sort as strings)."""
+    return sorted(directory.glob(f"{stem}_[0-9][0-9][0-9].csv"))
+
+
+def _delete_table_files(directory: Path, stem: str) -> None:
+    """Delete `<stem>.csv` and `<stem>_NNN.csv`; files of other stems are left alone."""
+    plain_path = directory / f"{stem}.csv"
+    if plain_path.exists():
+        plain_path.unlink()
+    for path in _shard_paths(directory, stem):
+        path.unlink()
+
+
 def write_rows(
     directory: Path,
     stem: str,
@@ -55,6 +69,10 @@ def write_rows(
         current_size += line_size
 
     directory.mkdir(parents=True, exist_ok=True)
+    # Remove this table's old files only now, after every check passed, so a failing
+    # call writes and deletes nothing. Without this, a table that shrank from 3 shards
+    # to 2 would keep a stale `_002` file that read_rows would mix into the new rows.
+    _delete_table_files(directory, stem)
     paths: list[Path] = []
     for index, lines in enumerate(shards):
         if len(shards) == 1:
@@ -82,8 +100,7 @@ def read_rows(directory: Path, stem: str) -> list[dict[str, str]]:
     (it would be unclear which one is current).
     """
     plain_path = directory / f"{stem}.csv"
-    # Three zero-padded digits sort in numeric order as plain strings.
-    shard_paths = sorted(directory.glob(f"{stem}_[0-9][0-9][0-9].csv"))
+    shard_paths = _shard_paths(directory, stem)
 
     if plain_path.exists() and shard_paths:
         raise ValueError(f"Both {plain_path.name} and shards of {stem} exist in {directory}.")
