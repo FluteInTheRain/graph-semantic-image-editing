@@ -1,0 +1,39 @@
+# Build of the official Vietnamese heritage MMKG from a raw snapshot (ADR-0050).
+# How to run: see the docstring of scripts/build_mmkg.py.
+# Decision (design 5.3): thresholds and the relation list are the group's choices.
+# Set to the collected snapshot folder (Task 7); the loader rejects the placeholder.
+snapshot_dir: mmkg/raw/YYYYMMDD
+review_file: mmkg/review.csv
+output_dir: mmkg
+allowed_mime_types: [image/jpeg, image/png, image/webp]
+allowed_license_names: ["Public domain", "CC0"]
+allowed_license_prefixes: ["CC BY ", "CC BY-SA "]
+attribution_license_prefixes: ["CC BY ", "CC BY-SA "]
+min_short_side_px: 224
+min_images_per_item: 3
+max_images_per_item: 5
+# Decision (ADR-0050): 3, chosen by FluteInTheRain on 2026-11-16 to keep 50-150 entities.
+min_items_per_concept: 3
+# The repo refuses committed files of 1 MiB or more; bigger tables are split into shards.
+max_file_bytes: 1048576
+# Decision: relation list proposed by Claude Code, not yet approved by the group.
+# P195 and P276 both become kept_at; their triples are merged.
+relations:
+  P31: instance_of
+  P1435: heritage_designation
+  P276: kept_at
+  P195: kept_at
+  P131: located_in
+  P186: made_from
+  P2348: time_period
+  P2596: culture
+  P180: depicts
+  P189: discovered_at
+  P361: part_of
+  P527: has_part
+  P138: named_after
+  P170: creator
+  P88: commissioned_by
+  P737: influenced_by
+  P5422: has_pattern
+  P793: significant_event

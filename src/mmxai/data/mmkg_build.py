@@ -1,15 +1,17 @@
-"""Build the Vietnamese heritage MMKG from a raw snapshot: image selection rules (no network).
+"""Build the Vietnamese heritage MMKG from a raw snapshot (no network).
 
-Every rule removes images and counts each removal in a report, so the team can
-justify every dropped image.
+Every rule removes rows and counts each removal in a report, so the team can
+justify every dropped image, triple and entity.
 """
 
 import csv
+import json
 import urllib.parse
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from mmxai.data.mmkg_csv import read_rows, write_rows
 from mmxai.utils.yaml_config import load_yaml_dataclass
 
 IMAGE_COLUMNS = [
@@ -27,6 +29,27 @@ IMAGE_COLUMNS = [
 REVIEW_KINDS = {"image", "triple", "entity"}
 REVIEW_STATUSES = {"ok", "drop", "pending"}
 IMAGE_DROP_REASONS = {"not_the_object", "identifiable_person", "duplicate", "other"}
+ENTITY_COLUMNS = ["entity_id", "name_vi", "name_en", "type", "source_url"]
+TRIPLE_COLUMNS = ["head_id", "relation", "tail_id", "source", "wikidata_property"]
+REVIEW_COLUMNS = ["kind", "key", "review_status", "reason", "fix_name_vi", "reviewer", "date"]
+WIKIDATA_ENTITY_URL = "https://www.wikidata.org/wiki/"
+# Every counter the report always shows (0 when nothing was dropped).
+DROP_COUNTERS = [
+    "images_dropped_shared_between_entities",
+    "images_dropped_mime",
+    "images_dropped_license",
+    "images_dropped_too_small",
+    "images_dropped_no_author",
+    "images_dropped_review_drop",
+    "images_dropped_duplicate_sha1",
+    "images_dropped_below_min_per_item",
+    "images_dropped_over_max_per_item",
+    "images_dropped_entity_review_drop",
+    "entities_dropped_review",
+    "triples_dropped_unknown_relation",
+    "triples_dropped_review",
+    "triples_dropped_end_not_kept",
+]
 COMMONS_FILE_URL = "https://commons.wikimedia.org/wiki/File:"
 
 
@@ -49,7 +72,13 @@ class MmkgBuildConfig:
 
 def load_mmkg_build_config(path: str | Path) -> MmkgBuildConfig:
     """Read the build config YAML (a mistyped key is an error)."""
-    return load_yaml_dataclass(path, MmkgBuildConfig)
+    config = load_yaml_dataclass(path, MmkgBuildConfig)
+    if "YYYYMMDD" in config.snapshot_dir:
+        raise ValueError(
+            f"snapshot_dir {config.snapshot_dir!r} is still the placeholder; "
+            "set it to the collected snapshot folder in the build config"
+        )
+    return config
 
 
 @dataclass(frozen=True)
@@ -256,3 +285,220 @@ def select_images(
             make_image_row(r, author_of_row[(entity_id, r["file_name"])]) for r in kept
         ]
     return chosen
+
+
+@dataclass(frozen=True)
+class BuiltMmkg:
+    """The official tables, the report, and review rows still to be appended."""
+
+    entities: list[dict[str, str]]
+    triples: list[dict[str, str]]
+    images: list[dict[str, str]]
+    report: dict
+    pending: list[dict[str, str]]
+
+
+def review_dropped_entities(
+    raw_entities: list[dict[str, str]], review: Review, report: Counter
+) -> set[str]:
+    """Entity ids a member removed; they can be neither an item nor a concept."""
+    dropped: set[str] = set()
+    for row in raw_entities:
+        if review.status.get(("entity", row["entity_id"])) == "drop":
+            dropped.add(row["entity_id"])
+    report["entities_dropped_review"] = len(dropped)
+    return dropped
+
+
+def merge_triples(
+    raw_triples: list[dict[str, str]], review: Review, config: MmkgBuildConfig, report: Counter
+) -> dict[tuple[str, str, str], set[str]]:
+    """Drop unknown/review-dropped rows, rename properties, merge on (head, relation, tail)."""
+    codes_of_triple: dict[tuple[str, str, str], set[str]] = {}
+    for row in raw_triples:
+        code = row["property"]
+        head = row["head_id"]
+        tail = row["tail_id"]
+        if code not in config.relations:
+            report["triples_dropped_unknown_relation"] += 1
+            continue
+        if review.status.get(("triple", f"{head}|{code}|{tail}")) == "drop":
+            report["triples_dropped_review"] += 1
+            continue
+        key = (head, config.relations[code], tail)
+        codes_of_triple.setdefault(key, set()).add(code)
+    return codes_of_triple
+
+
+def find_concepts(
+    codes_of_triple: dict[tuple[str, str, str], set[str]],
+    items: set[str],
+    excluded: set[str],
+    min_items: int,
+) -> set[str]:
+    """Non-item entities that are the tail of triples from at least `min_items` distinct items."""
+    heads_of_tail: dict[str, set[str]] = {}
+    for head, _relation, tail in codes_of_triple:
+        if head in items and tail not in items and tail not in excluded and head != tail:
+            heads_of_tail.setdefault(tail, set()).add(head)
+    return {tail for tail, heads in heads_of_tail.items() if len(heads) >= min_items}
+
+
+def keep_triples(
+    codes_of_triple: dict[tuple[str, str, str], set[str]], kept_ids: set[str], report: Counter
+) -> dict[tuple[str, str, str], set[str]]:
+    """Keep triples whose both ends are kept entities and that are not self-loops."""
+    kept: dict[tuple[str, str, str], set[str]] = {}
+    for (head, relation, tail), codes in codes_of_triple.items():
+        if head == tail or head not in kept_ids or tail not in kept_ids:
+            report["triples_dropped_end_not_kept"] += 1
+        else:
+            kept[(head, relation, tail)] = codes
+    return kept
+
+
+def make_entity_rows(
+    raw_by_id: dict[str, dict[str, str]],
+    items: set[str],
+    concepts: set[str],
+    review: Review,
+    report: Counter,
+) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for entity_id in sorted(items | concepts):
+        raw = raw_by_id[entity_id]
+        name_vi = review.fix_name_vi.get(entity_id, raw["name_vi"])
+        if not name_vi:
+            report["entities_missing_name_vi"] += 1
+        rows.append(
+            {
+                "entity_id": entity_id,
+                "name_vi": name_vi,
+                "name_en": raw["name_en"],
+                "type": "item" if entity_id in items else "concept",
+                "source_url": WIKIDATA_ENTITY_URL + entity_id,
+            }
+        )
+    return rows
+
+
+def make_triple_rows(kept: dict[tuple[str, str, str], set[str]]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for head, relation, tail in sorted(kept):
+        rows.append(
+            {
+                "head_id": head,
+                "relation": relation,
+                "tail_id": tail,
+                "source": WIKIDATA_ENTITY_URL + head,
+                "wikidata_property": "|".join(sorted(kept[(head, relation, tail)])),
+            }
+        )
+    return rows
+
+
+def official_review_keys(
+    entities: list[dict[str, str]],
+    kept: dict[tuple[str, str, str], set[str]],
+    images: list[dict[str, str]],
+) -> list[tuple[str, str]]:
+    """Every (kind, key) a member should review, sorted."""
+    keys: set[tuple[str, str]] = set()
+    for row in images:
+        keys.add(("image", row["file_name"]))
+    for row in entities:
+        keys.add(("entity", row["entity_id"]))
+    for (head, _relation, tail), codes in kept.items():
+        for code in codes:
+            keys.add(("triple", f"{head}|{code}|{tail}"))
+    return sorted(keys)
+
+
+def build_mmkg(snapshot_dir: Path, review: Review, config: MmkgBuildConfig) -> BuiltMmkg:
+    """Build the official tables from a raw snapshot. Reads files, writes nothing."""
+    raw_entities = read_rows(snapshot_dir, "entities_raw")
+    raw_triples = read_rows(snapshot_dir, "triples_raw")
+    raw_candidates = read_rows(snapshot_dir, "image_candidates")
+    credits = read_rows(snapshot_dir, "image_credits")
+    report: Counter = Counter()
+
+    dropped_entities = review_dropped_entities(raw_entities, review, report)
+    candidates = [r for r in raw_candidates if r["entity_id"] not in dropped_entities]
+    report["images_dropped_entity_review_drop"] = len(raw_candidates) - len(candidates)
+
+    raw_by_id = {row["entity_id"]: row for row in raw_entities}
+    chosen = select_images(candidates, credits, review, config, report)
+    items = {entity_id for entity_id in chosen if entity_id in raw_by_id}
+
+    codes_of_triple = merge_triples(raw_triples, review, config, report)
+    concepts = find_concepts(codes_of_triple, items, dropped_entities, config.min_items_per_concept)
+    concepts = {entity_id for entity_id in concepts if entity_id in raw_by_id}
+    kept = keep_triples(codes_of_triple, items | concepts, report)
+
+    entities = make_entity_rows(raw_by_id, items, concepts, review, report)
+    triples = make_triple_rows(kept)
+    images: list[dict[str, str]] = []
+    for entity_id in sorted(items):
+        images.extend(chosen[entity_id])
+
+    pending: list[dict[str, str]] = []
+    pending_count = {"image": 0, "triple": 0, "entity": 0}
+    for kind, key in official_review_keys(entities, kept, images):
+        status = review.status.get((kind, key))
+        if status is None:
+            pending.append(
+                {
+                    "kind": kind,
+                    "key": key,
+                    "review_status": "pending",
+                    "reason": "",
+                    "fix_name_vi": "",
+                    "reviewer": "",
+                    "date": "",
+                }
+            )
+        if status is None or status == "pending":
+            pending_count[kind] += 1
+
+    full_report: dict = {name: report[name] for name in DROP_COUNTERS}
+    full_report.update(
+        {
+            "snapshot_dir": str(snapshot_dir),
+            "raw_entities": len(raw_entities),
+            "raw_triples": len(raw_triples),
+            "raw_image_candidates": len(raw_candidates),
+            "entities_item": len(items),
+            "entities_concept": len(concepts),
+            "triples": len(triples),
+            "images": len(images),
+            "pending_image": pending_count["image"],
+            "pending_triple": pending_count["triple"],
+            "pending_entity": pending_count["entity"],
+            "entities_missing_name_vi": report["entities_missing_name_vi"],
+        }
+    )
+    return BuiltMmkg(entities, triples, images, full_report, pending)
+
+
+def append_pending(review_file: Path, pending: list[dict[str, str]]) -> None:
+    """Append pending rows to review.csv; existing bytes are never rewritten."""
+    is_new = not review_file.exists()
+    review_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(review_file, "a", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=REVIEW_COLUMNS)
+        if is_new:
+            writer.writeheader()
+        writer.writerows(pending)
+
+
+def write_built_mmkg(
+    built: BuiltMmkg, output_dir: Path, review_file: Path, max_file_bytes: int
+) -> None:
+    """Write the three tables and build_report.json, then append pending review rows."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    write_rows(output_dir, "entities", ENTITY_COLUMNS, built.entities, max_file_bytes)
+    write_rows(output_dir, "triples", TRIPLE_COLUMNS, built.triples, max_file_bytes)
+    write_rows(output_dir, "images", IMAGE_COLUMNS, built.images, max_file_bytes)
+    report_text = json.dumps(built.report, indent=2, sort_keys=True, ensure_ascii=False)
+    (output_dir / "build_report.json").write_text(report_text + "\n", encoding="utf-8")
+    append_pending(review_file, built.pending)
