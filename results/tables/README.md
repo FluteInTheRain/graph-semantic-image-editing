@@ -61,5 +61,5 @@ Quy tắc:
 
 - Explainer và `m` chọn trên **val** bằng characterization trung bình (`statistics.choose_on_validation`): `integrated_gradients`, `m = 10`. Ghi vào `configs/explain_vg.yaml` ở commit `2ba21cf`, **trước** khi chạy test.
 - Test chạy **đúng một lần** (`results/runs/20261116-2245_explain_vg_test`, commit `8a2f137`, `git_dirty: false`). Script từ chối lần chạy test thứ hai.
-- Lần val chạy trên Kaggle với mô hình train lại ở đó; lần test chạy trên máy thành viên với checkpoint train lại tại máy (cùng config, cùng split). `alpha` (0, 0, 0,1) và epoch tốt nhất (6, 8, 6) trùng nhau; MRR@100 val lệch khoảng 1e-5.
-- Bản sao hai run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của hai run này, không sửa tay số.
+- Dòng `val` lấy từ lần chạy lại trên val (`20261116-2252_explain_vg_val`, commit `59d088c`) với **đúng checkpoint của lần test**, nên val và test dùng cùng mô hình. Lần chạy lại cho cùng lựa chọn (`integrated_gradients`, `m = 10`) như lần val đầu trên Kaggle (`20261114-0453_explain_vg_val`, checkpoint train lại trên Kaggle); hai lần lệch nhau ≤ 0,001 ở hạng tụt ngẫu nhiên, các cột khác trùng tới 4 chữ số.
+- Bản sao các run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của `20261116-2252_explain_vg_val` và `20261116-2245_explain_vg_test`, không sửa tay số.

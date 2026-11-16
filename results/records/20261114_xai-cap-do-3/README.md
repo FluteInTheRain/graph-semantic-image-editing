@@ -6,6 +6,7 @@ Bằng chứng truy vết cho kết quả val của xAI cấp độ 3. Chạy tr
 | Thư mục trong `run_copies/` | Là gì |
 |---|---|
 | `20261114-0453_explain_vg_val/` | Đánh giá giải thích trên val: `summary.md` (bảng mean ± std qua 3 seed), `evaluation.json` (540 bản ghi), `config.yaml`, `env.json` |
+| `20261116-2252_explain_vg_val/` | Chạy lại val trên máy thành viên với **đúng checkpoint của lần test** (commit `59d088c`). Cùng lựa chọn, số trùng lần Kaggle tới 4 chữ số (hạng tụt ngẫu nhiên lệch ≤ 0,001). Đây là nguồn dòng `val` trong `results/tables/xai_level3.csv` |
 | `20261116-2245_explain_vg_test/` | Lần chạy test **duy nhất** với `integrated_gradients`, `m = 10` (chốt trên val, commit `2ba21cf`); chạy trên máy thành viên, commit `8a2f137` |
 | `20261114-04xx_clip_graph_vg_lr1e4_seed{0,1,2}/` | Lần train lại mô hình `clip_graph_vg_lr1e4` trên Kaggle (chỉ val) |
 

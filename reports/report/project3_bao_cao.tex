@@ -718,7 +718,7 @@ Validity & Mọi cạnh của $E_x$ có thật trong đồ thị đã chấm và
 Fid$^\pm$ dùng hiệu điểm chưa chia thay vì hiệu xác suất như bài gốc, vì bài toán là xếp hạng và điểm cosine có thể bằng 0 hoặc âm; đây là điều chỉnh của nhóm.
 
 \subsubsection{Quy trình}
-Trên val, 20 truy vấn được bốc ngẫu nhiên \textbf{một lần} (không nhìn thứ hạng), giống nhau cho cả 3 seed. Ảnh được giải thích là ảnh hạng 1 theo CLIP + Graph, vì đó là ảnh hệ thống đưa cho người dùng. Ba explainer (Occlusion, IG, GNNExplainer) với $m\in\{3,5,10\}$, tổng 540 bản ghi (20 truy vấn × 3 explainer × 3 giá trị $m$ × 3 seed). Explainer và $m$ chọn trên val, sau đó test chạy đúng một lần. Lần chạy val dùng mô hình huấn luyện lại trên Kaggle; $\alpha$ (0, 0, 0.1) và epoch tốt nhất (6, 8, 6) trùng lần huấn luyện gốc, \mrr{} val lệch $\le 2\cdot10^{-5}$.
+Trên val, 20 truy vấn được bốc ngẫu nhiên \textbf{một lần} (không nhìn thứ hạng), giống nhau cho cả 3 seed. Ảnh được giải thích là ảnh hạng 1 theo CLIP + Graph, vì đó là ảnh hệ thống đưa cho người dùng. Ba explainer (Occlusion, IG, GNNExplainer) với $m\in\{3,5,10\}$, tổng 540 bản ghi (20 truy vấn × 3 explainer × 3 giá trị $m$ × 3 seed). Explainer và $m$ chọn trên val, sau đó test chạy đúng một lần. Val và test dùng cùng checkpoint (huấn luyện lại trên máy thành viên; $\alpha$ (0, 0, 0.1) và epoch tốt nhất (6, 8, 6) trùng lần huấn luyện gốc). Lần val đầu tiên chạy trên Kaggle với một bản huấn luyện lại khác cho cùng lựa chọn và số trùng tới 4 chữ số.
 
 \subsubsection{Kết quả trên val}
 \begin{itemize}
@@ -752,7 +752,7 @@ val & GNNExplainer & .0022\pmm.0007 & .0004\pmm.0003 & 0.45\pmm0.30 & 0.22\pmm0.
 \item \textbf{Validity và sparsity:} mọi cạnh giải thích có thật trong đồ thị đã chấm, nằm trong vùng ảnh hưởng của ảnh và nối được tới ảnh (100\%). Sparsity 0.375: giải thích dùng 10 trên 16 cạnh của ảnh.
 \item \textbf{Fid$^-<0$:} chỉ giữ 10 cạnh giải thích thì điểm còn \emph{cao hơn} khi đủ 16 cạnh, tức 6 cạnh còn lại kéo ảnh xuống. Điều này khớp với phân tích 5 + 5: có những cạnh có đóng góp âm.
 \item \textbf{Mức độ:} Fid$^+$ tuyệt đối nhỏ, vì phần lớn điểm đến từ vectơ của chính ảnh. Giải thích trung thực với nhánh đồ thị, nhưng nhánh đồ thị chỉ là một phần của điểm.
-\item \textbf{Tái lập:} lần val chạy trên Kaggle, lần test chạy trên máy thành viên; cả hai dùng mô hình train lại với cùng config và split. $\alpha$ và epoch tốt nhất trùng nhau, \mrr{} val lệch khoảng $10^{-5}$.
+\item \textbf{Tái lập:} lựa chọn trên val giữ nguyên khi đổi giữa hai bản huấn luyện lại (Kaggle và máy thành viên), nên không phụ thuộc vào một checkpoint cụ thể.
 \end{itemize}
 
 % ================= 8. MMKG =================
