@@ -360,3 +360,39 @@ def test_report_counts_raw_and_official(tmp_path):
 def test_placeholder_snapshot_dir_is_rejected():
     with pytest.raises(ValueError, match="placeholder"):
         load_mmkg_build_config("configs/mmkg_vi_build.yaml")
+
+
+def test_candidate_entity_missing_from_raw_entities_fails(tmp_path):
+    write_snapshot(tmp_path, [entity("Q1")], [], {"Q1": 3, "Q7": 3})
+
+    with pytest.raises(ValueError, match="Q7"):
+        build(tmp_path)
+
+
+def test_triple_end_missing_from_raw_entities_fails(tmp_path):
+    write_snapshot(tmp_path, [entity("Q1")], [("Q1", "P131", "Q8")], {"Q1": 3})
+
+    with pytest.raises(ValueError, match="Q8"):
+        build(tmp_path)
+
+
+def test_append_after_file_without_final_newline_keeps_human_row(tmp_path):
+    snapshot = tmp_path / "snap"
+    three_items_snapshot(snapshot)
+    review_file = tmp_path / "review.csv"
+    human = ",".join(REVIEW_HEADER) + "\r\nentity,Q1,ok,,,,2026-11-16"
+    review_file.write_bytes(human.encode("utf-8"))
+
+    built = build(snapshot, read_review(review_file))
+    write_built_mmkg(built, tmp_path / "out", review_file, 100000)
+
+    data = review_file.read_bytes()
+    assert data.startswith(human.encode("utf-8") + b"\r\n")
+    with open(review_file, encoding="utf-8", newline="") as file:
+        rows = list(csv.DictReader(file))
+    human_row = [r for r in rows if r["kind"] == "entity" and r["key"] == "Q1"]
+    assert len(human_row) == 1
+    assert human_row[0]["date"] == "2026-11-16"
+    assert human_row[0]["review_status"] == "ok"
+    assert len(rows) == 1 + len(built.pending)
+    assert read_review(review_file).status[("entity", "Q1")] == "ok"

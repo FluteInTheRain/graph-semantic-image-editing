@@ -414,6 +414,30 @@ def official_review_keys(
     return sorted(keys)
 
 
+def check_entities_exist(
+    raw_by_id: dict[str, dict[str, str]],
+    candidates: list[dict[str, str]],
+    triples: list[dict[str, str]],
+) -> None:
+    """Fail when a candidate or triple names an entity missing from entities_raw.
+
+    The collector always writes these entities, so a gap means a corrupt snapshot;
+    dropping the rows silently would break the counts in the report.
+    """
+    referenced: set[str] = set()
+    for row in candidates:
+        referenced.add(row["entity_id"])
+    for row in triples:
+        referenced.add(row["head_id"])
+        referenced.add(row["tail_id"])
+    missing = sorted(referenced - set(raw_by_id))
+    if missing:
+        raise ValueError(
+            f"{len(missing)} entity ids are used but missing from entities_raw "
+            f"(first 10: {missing[:10]}); the snapshot is corrupt"
+        )
+
+
 def build_mmkg(snapshot_dir: Path, review: Review, config: MmkgBuildConfig) -> BuiltMmkg:
     """Build the official tables from a raw snapshot. Reads files, writes nothing."""
     raw_entities = read_rows(snapshot_dir, "entities_raw")
@@ -427,12 +451,12 @@ def build_mmkg(snapshot_dir: Path, review: Review, config: MmkgBuildConfig) -> B
     report["images_dropped_entity_review_drop"] = len(raw_candidates) - len(candidates)
 
     raw_by_id = {row["entity_id"]: row for row in raw_entities}
+    check_entities_exist(raw_by_id, raw_candidates, raw_triples)
     chosen = select_images(candidates, credits, review, config, report)
-    items = {entity_id for entity_id in chosen if entity_id in raw_by_id}
+    items = set(chosen)
 
     codes_of_triple = merge_triples(raw_triples, review, config, report)
     concepts = find_concepts(codes_of_triple, items, dropped_entities, config.min_items_per_concept)
-    concepts = {entity_id for entity_id in concepts if entity_id in raw_by_id}
     kept = keep_triples(codes_of_triple, items | concepts, report)
 
     entities = make_entity_rows(raw_by_id, items, concepts, review, report)
@@ -484,7 +508,16 @@ def append_pending(review_file: Path, pending: list[dict[str, str]]) -> None:
     """Append pending rows to review.csv; existing bytes are never rewritten."""
     is_new = not review_file.exists()
     review_file.parent.mkdir(parents=True, exist_ok=True)
+    # A hand-saved file may lack the final newline; without one, our first row
+    # would be glued onto the reviewer's last row and change their last cell.
+    needs_terminator = False
+    if not is_new and review_file.stat().st_size > 0:
+        with open(review_file, "rb") as existing:
+            existing.seek(-1, 2)
+            needs_terminator = existing.read(1) != b"\n"
     with open(review_file, "a", encoding="utf-8", newline="") as file:
+        if needs_terminator:
+            file.write("\r\n")
         writer = csv.DictWriter(file, fieldnames=REVIEW_COLUMNS)
         if is_new:
             writer.writeheader()
