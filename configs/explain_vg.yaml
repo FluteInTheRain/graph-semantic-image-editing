@@ -4,7 +4,7 @@ experiment: explain_vg
 # The model chosen in results/tables/main.csv (one-layer GraphSAGE, ADR-0046); its weights
 # and val-chosen alpha per seed are read from that config's model_dir.
 ranking_config: configs/clip_graph_vg_lr1e4.yaml
-eval_split: test
+eval_split: val
 # Rule fixed before any run: draw num_queries query rows of the split at random with
 # query_sample_seed, the same rows for every seed; explain the image CLIP + Graph ranks first.
 num_queries: 20
