@@ -2,7 +2,7 @@
 # How to run: see the docstring of scripts/build_mmkg.py.
 # Decision (design 5.3): thresholds and the relation list are the group's choices.
 # Set to the collected snapshot folder (Task 7); the loader rejects the placeholder.
-snapshot_dir: mmkg/raw/YYYYMMDD
+snapshot_dir: mmkg/raw/20261116
 review_file: mmkg/review.csv
 output_dir: mmkg
 allowed_mime_types: [image/jpeg, image/png, image/webp]
