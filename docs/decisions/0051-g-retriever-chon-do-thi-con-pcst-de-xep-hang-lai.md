@@ -115,6 +115,37 @@ Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. 
   - Kế hoạch 1: ADR này, `pcst.py`, bậc 1, chọn trên val, ablation 1–2.
   - Kế hoạch 2: bậc 2, ablation 3–4, đánh giá trên bộ truy vấn v2.
 
+### Kết quả bậc 1 trên val (2026-11-16)
+
+**Đã chạy:** cả 3 config (`clip_pcst_vg`, `clip_pcst_vg_no_tree`, `clip_pcst_vg_shuffled`) × seed 0, 1, 2, chỉ trên **val**, commit `21e68d9`, không `git_dirty`, trên Colab (Linux, Python 3.11.18, numpy 1.26.4).
+- Một lượt chọn của bản chính mất khoảng 50 phút: 25.000 câu × 9 tổ hợp.
+- Bản không dựng cây mất khoảng 1 phút, vì không gọi PCST.
+- **Chưa chạy test.**
+
+**Kết quả:** ở **cả 9 lượt**, mọi tổ hợp `(k, C)` đều chọn `alpha = 1,0`, tức CLIP thuần. Val MRR@100 = 0,1061, R@10 = 0,2046, đúng bằng CLIP thuần trên val.
+
+**Chẩn đoán** để phân biệt lỗi với kết quả thật (3.000 câu đầu của val, đồ thị PMI thật có 16.334 cặp, chỉ đọc val, không ghi file):
+- Không có lỗi: không ứng viên nào thiếu tập khái niệm; 5.000/5.000 ảnh val có ít nhất một khái niệm; 29–48% ứng viên có `g > 0`.
+- Chênh lệch điểm CLIP giữa hai ứng viên liền nhau có trung vị **0,00037**. Điểm top-1 trừ điểm top-100 có trung vị 0,097.
+
+| `alpha` | k=3, C=0,5 (\|S_q\| trung vị 3): MRR@100 / R@10 | k=10, C=0,25 (\|S_q\| trung vị 12): MRR@100 / R@10 |
+|---|---|---|
+| 1,0 (CLIP thuần) | 0,0947 / 0,1697 | 0,0947 / 0,1697 |
+| 0,99 | 0,0948 / 0,1707 | 0,0945 / 0,1703 |
+| 0,98 | 0,0949 / 0,1717 | 0,0941 / 0,1710 |
+| 0,95 | 0,0920 / 0,1720 | 0,0941 / 0,1720 |
+| 0,9 | 0,0864 / 0,1717 | 0,0911 / 0,1730 |
+| 0,8 | 0,0793 / 0,1603 | 0,0825 / 0,1627 |
+| 0,0 (chỉ đồ thị) | 0,0736 / 0,1530 | 0,0607 / 0,1197 |
+
+**Diễn giải:**
+1. Điểm đồ thị một mình kém CLIP nhiều. Biết ảnh có chạm vào đồ thị con hay không là chưa đủ để xếp hạng.
+2. `g` nhận giá trị theo bậc `1/|S_q|`, từ 0,08 đến 0,33, thô hơn hàng trăm lần so với chênh lệch giữa các điểm CLIP. Vì vậy từ `alpha` = 0,9 trở xuống, đồ thị lấn át CLIP và làm MRR giảm.
+3. R@10 tăng nhẹ (+0,2 đến +0,3 điểm %) ở `alpha` 0,9–0,95, nhưng MRR không tăng. Mức chênh này nằm trong nhiễu của mẫu 3.000 câu.
+4. Lưới `alpha` bước 0,1 bỏ qua vùng 0,95–0,99. Nhưng ngay trong vùng đó, MRR cũng chỉ tăng khoảng +0,0002, không có ý nghĩa. **Không đổi lưới của bậc 1.**
+
+**Kết luận theo quy tắc dừng (mục 3):** bậc 1 **không hơn CLIP thuần trên val**. Đây là kết quả âm thật, sẽ báo cáo trung thực. Nguyên nhân nằm ở **cách dùng** đồ thị con (đếm thô), không nằm ở bản thân đồ thị con. Bước tiếp theo là **bậc 2**. Test của bậc 1 để sau: với `alpha` = 1,0, kết quả test sẽ trùng hệt CLIP thuần. Ghi nhận bởi Thuat Nguyen, 2026-11-16.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
