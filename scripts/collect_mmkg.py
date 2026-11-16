@@ -20,6 +20,7 @@ Output:
 """
 
 import argparse
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -35,10 +36,18 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_mmkg_collect_config(args.config)
+    today = date.today()
+    # Refuse before any request: the collect takes minutes and its result could not be
+    # saved anyway (write_snapshot never overwrites a snapshot).
+    existing = Path(config.output_root) / today.strftime("%Y%m%d")
+    if existing.exists():
+        print(f"snapshot already exists: {existing}; it is never overwritten", file=sys.stderr)
+        sys.exit(1)
+
     client = WikimediaClient(
         config.user_agent, config.request_interval_seconds, config.max_attempts
     )
-    snapshot = collect_snapshot(client, config, date.today())
+    snapshot = collect_snapshot(client, config, today)
     folder = write_snapshot(snapshot, Path(config.output_root), config.max_file_bytes)
 
     print(f"saved {folder}")

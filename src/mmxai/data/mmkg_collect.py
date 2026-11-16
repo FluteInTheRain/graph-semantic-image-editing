@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import subprocess
+import unicodedata
 import urllib.parse
 from dataclasses import asdict, dataclass
 from datetime import date
@@ -117,6 +118,9 @@ def normalize_file_name(value: str) -> str:
         name = urllib.parse.unquote(name.rsplit("/", 1)[-1])
     if name.startswith("File:"):
         name = name[len("File:") :]
+    # Vietnamese diacritics can arrive decomposed (NFD) from one source and composed
+    # from another; NFC makes both spellings the same string.
+    name = unicodedata.normalize("NFC", name)
     return name.replace("_", " ")
 
 
@@ -249,9 +253,14 @@ def _collect_candidate_pairs(client, domain_items) -> list[tuple[str, str, str]]
     return pairs
 
 
-def _fetch_image_info(client, file_names: list[str]) -> dict[str, dict]:
-    """Return imageinfo per file name; files that Commons does not know are left out."""
-    info_by_name = {}
+def _fetch_image_info(client, file_names: list[str]) -> dict[str, tuple[str, dict]]:
+    """Return {requested name: (final name, imageinfo)}; unknown files are left out.
+
+    Commons may answer under another title than the one asked: `normalized` fixes the
+    spelling (e.g. a lower-case first letter), then `redirects` follows a renamed file
+    to its current page. The final name is the one the file is downloaded under.
+    """
+    resolved = {}
     for batch in _batches(file_names, IMAGEINFO_BATCH_SIZE):
         titles = "|".join("File:" + name for name in batch)
         params = {
@@ -259,13 +268,29 @@ def _fetch_image_info(client, file_names: list[str]) -> dict[str, dict]:
             "prop": "imageinfo",
             "iiprop": "extmetadata|size|sha1|mime|user",
             "titles": titles,
+            "redirects": "1",
         }
         answer = client.commons(params)
-        for page in answer["query"]["pages"].values():
+        query = answer["query"]
+        normalized = {}
+        for change in query.get("normalized", []):
+            normalized[normalize_file_name(change["from"])] = normalize_file_name(change["to"])
+        redirects = {}
+        for change in query.get("redirects", []):
+            redirects[normalize_file_name(change["from"])] = normalize_file_name(change["to"])
+        info_by_final_name = {}
+        for page in query["pages"].values():
             if "missing" in page or "imageinfo" not in page:
                 continue
-            info_by_name[normalize_file_name(page["title"])] = page["imageinfo"][0]
-    return info_by_name
+            info_by_final_name[normalize_file_name(page["title"])] = page["imageinfo"][0]
+
+        for name in batch:
+            # Normalization happens first, then the redirect is followed (one step only).
+            final_name = normalized.get(name, name)
+            final_name = redirects.get(final_name, final_name)
+            if final_name in info_by_final_name:
+                resolved[name] = (final_name, info_by_final_name[final_name])
+    return resolved
 
 
 def _metadata_value(info: dict, key: str) -> str:
@@ -339,14 +364,21 @@ def collect_snapshot(
         triples.append({"head_id": head, "property": property_id, "tail_id": tail})
 
     pairs = _collect_candidate_pairs(client, domain_items)
-    all_files = sorted({file_name for file_name, _entity, _origin in pairs})
-    info_by_name = _fetch_image_info(client, all_files)
+    requested_files = sorted({file_name for file_name, _entity, _origin in pairs})
+    resolved = _fetch_image_info(client, requested_files)
 
     image_candidates = []
-    for file_name, entity_id, origin in pairs:
-        info = info_by_name.get(file_name)
-        if info is None:
+    seen_pairs = set()
+    # Rows are recorded under the final (canonical) name, so a redirect can make two
+    # rows of one entity point at the same file. `pairs` lists each entity's P18 files
+    # before its category files, so keeping the first row lets P18 win.
+    for requested_name, entity_id, origin in pairs:
+        if requested_name not in resolved:
             continue
+        file_name, info = resolved[requested_name]
+        if (file_name, entity_id) in seen_pairs:
+            continue
+        seen_pairs.add((file_name, entity_id))
         image_candidates.append(
             {
                 "file_name": file_name,
@@ -360,13 +392,18 @@ def collect_snapshot(
             }
         )
 
-    image_credits = []
     missing_files = []
-    for file_name in all_files:
-        info = info_by_name.get(file_name)
-        if info is None:
-            missing_files.append(file_name)
+    info_by_file_name = {}
+    for requested_name in requested_files:
+        if requested_name not in resolved:
+            missing_files.append(requested_name)
             continue
+        file_name, info = resolved[requested_name]
+        info_by_file_name[file_name] = info
+
+    image_credits = []
+    for file_name in sorted(info_by_file_name):
+        info = info_by_file_name[file_name]
         image_credits.append(
             {
                 "file_name": file_name,

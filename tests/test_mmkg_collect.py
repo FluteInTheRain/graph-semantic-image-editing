@@ -1,6 +1,10 @@
 """Tests for the MMKG raw snapshot collector. A fake client answers; no network."""
 
 import json
+import os
+import subprocess
+import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -17,6 +21,7 @@ from mmxai.data.mmkg_collect import (
 )
 from mmxai.data.mmkg_csv import read_rows
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
 ENTITY = "http://www.wikidata.org/entity/"
 PROP = "http://www.wikidata.org/prop/direct/"
 TODAY = date(2026, 11, 16)
@@ -71,13 +76,26 @@ def info_page(name, license_name="CC BY-SA 4.0"):
 class FakeClient:
     """Answers `sparql` and `commons` from canned data."""
 
-    def __init__(self, domain, triples, labels=(), concepts=(), categories=None, pages=None):
+    def __init__(
+        self,
+        domain,
+        triples,
+        labels=(),
+        concepts=(),
+        categories=None,
+        pages=None,
+        normalized=None,
+        redirects=None,
+    ):
         self.domain = list(domain)
         self.triples = list(triples)
         self.labels = list(labels)
         self.concepts = list(concepts)
         self.categories = categories or {}
         self.pages = pages or {}
+        # Like Commons: titles are always normalized, redirects followed only on request.
+        self.normalized = normalized or {}
+        self.redirects = redirects or {}
         self.user_agent = "test-agent"
 
     def sparql(self, query):
@@ -99,13 +117,26 @@ class FakeClient:
                 answer["continue"] = {"cmcontinue": "next", "continue": "-||"}
             return answer
         names = [title[len("File:") :] for title in params["titles"].split("|")]
+        normalized = []
+        redirects = []
         result = {}
         for number, name in enumerate(names):
+            if name in self.normalized:
+                normalized.append({"from": "File:" + name, "to": "File:" + self.normalized[name]})
+                name = self.normalized[name]
+            if params.get("redirects") and name in self.redirects:
+                redirects.append({"from": "File:" + name, "to": "File:" + self.redirects[name]})
+                name = self.redirects[name]
             if name in self.pages:
                 result[str(number)] = self.pages[name]
             else:
                 result["-" + str(number + 1)] = {"title": "File:" + name, "missing": ""}
-        return {"query": {"pages": result}}
+        query = {"pages": result}
+        if normalized:
+            query["normalized"] = normalized
+        if redirects:
+            query["redirects"] = redirects
+        return {"query": query}
 
 
 def test_file_names_from_p18_and_category_match():
@@ -195,6 +226,79 @@ def test_deleted_file_is_skipped_and_reported():
     snapshot = collect_snapshot(client, CONFIG, TODAY)
     assert [r["file_name"] for r in snapshot.image_candidates] == ["here.jpg"]
     assert snapshot.meta["missing_files"] == ["gone.jpg"]
+
+
+def test_normalize_file_name_applies_nfc():
+    decomposed = unicodedata.normalize("NFD", "Trống.jpg")
+    assert decomposed != "Trống.jpg"
+    assert normalize_file_name(decomposed) == "Trống.jpg"
+
+
+def test_redirected_p18_file_is_recorded_under_target_name():
+    client = FakeClient(
+        domain=[domain_row("Q1", image="Old.jpg")],
+        triples=[],
+        redirects={"Old.jpg": "New.jpg"},
+        pages={"New.jpg": info_page("New.jpg")},
+    )
+    snapshot = collect_snapshot(client, CONFIG, TODAY)
+    rows = [(r["file_name"], r["entity_id"], r["origin"]) for r in snapshot.image_candidates]
+    assert rows == [("New.jpg", "Q1", "p18")]
+    assert [credit["file_name"] for credit in snapshot.image_credits] == ["New.jpg"]
+    assert snapshot.meta["missing_files"] == []
+
+
+def test_normalized_title_is_not_reported_missing():
+    client = FakeClient(
+        domain=[domain_row("Q1", image="ngoc%20lu.jpg")],
+        triples=[],
+        normalized={"ngoc lu.jpg": "Ngoc lu.jpg"},
+        pages={"Ngoc lu.jpg": info_page("Ngoc lu.jpg")},
+    )
+    snapshot = collect_snapshot(client, CONFIG, TODAY)
+    assert [r["file_name"] for r in snapshot.image_candidates] == ["Ngoc lu.jpg"]
+    assert snapshot.meta["missing_files"] == []
+
+
+def test_redirect_into_category_file_keeps_one_p18_row():
+    client = FakeClient(
+        domain=[domain_row("Q1", category="Cat", image="Old.jpg")],
+        triples=[],
+        categories={"Category:Cat": [["New.jpg"]]},
+        redirects={"Old.jpg": "New.jpg"},
+        pages={"New.jpg": info_page("New.jpg")},
+    )
+    snapshot = collect_snapshot(client, CONFIG, TODAY)
+    rows = [(r["file_name"], r["entity_id"], r["origin"]) for r in snapshot.image_candidates]
+    assert rows == [("New.jpg", "Q1", "p18")]
+    assert len(snapshot.image_credits) == 1
+
+
+def test_cli_refuses_when_todays_snapshot_exists(tmp_path):
+    output_root = tmp_path / "raw"
+    (output_root / date.today().strftime("%Y%m%d")).mkdir(parents=True)
+    config_file = tmp_path / "collect.yaml"
+    config_file.write_text(
+        f"output_root: {output_root}\n"
+        "country_qid: Q881\n"
+        "designation_property: P1435\n"
+        "user_agent: test-agent\n"
+        "request_interval_seconds: 0\n"
+        "max_attempts: 1\n"
+        "max_file_bytes: 1048576\n",
+        encoding="utf-8",
+    )
+    # A dead proxy guarantees this test never reaches Wikimedia, even if the check breaks.
+    env = dict(os.environ, HTTPS_PROXY="http://127.0.0.1:9", HTTP_PROXY="http://127.0.0.1:9")
+
+    command = [sys.executable, str(REPO_ROOT / "scripts" / "collect_mmkg.py")]
+    command += ["--config", str(config_file)]
+    result = subprocess.run(
+        command, capture_output=True, text=True, cwd=REPO_ROOT, env=env, check=False
+    )
+
+    assert result.returncode == 1
+    assert "already exists" in result.stderr
 
 
 def small_snapshot() -> RawSnapshot:

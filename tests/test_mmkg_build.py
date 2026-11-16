@@ -357,9 +357,26 @@ def test_report_counts_raw_and_official(tmp_path):
     assert report["pending_entity"] == 4
 
 
-def test_placeholder_snapshot_dir_is_rejected():
+def test_placeholder_snapshot_dir_is_rejected(tmp_path):
+    config_file = tmp_path / "build.yaml"
+    config_file.write_text(
+        "snapshot_dir: mmkg/raw/YYYYMMDD\n"
+        "review_file: mmkg/review.csv\n"
+        "output_dir: mmkg\n"
+        "allowed_mime_types: [image/jpeg]\n"
+        "allowed_license_names: [CC0]\n"
+        "allowed_license_prefixes: ['CC BY ']\n"
+        "attribution_license_prefixes: ['CC BY ']\n"
+        "min_short_side_px: 224\n"
+        "min_images_per_item: 3\n"
+        "max_images_per_item: 5\n"
+        "min_items_per_concept: 3\n"
+        "max_file_bytes: 1048576\n"
+        "relations: {P131: located_in}\n",
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="placeholder"):
-        load_mmkg_build_config("configs/mmkg_vi_build.yaml")
+        load_mmkg_build_config(config_file)
 
 
 def test_candidate_entity_missing_from_raw_entities_fails(tmp_path):
