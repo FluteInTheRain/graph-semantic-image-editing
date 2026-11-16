@@ -13,11 +13,15 @@ Initialisation is W_self = I, W_nb = 0, b = 0, so the untrained model returns x_
 and the score equals plain CLIP.
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional
 
 from mmxai.graph.contains import ContainsGraph
+from mmxai.models.train import sample_negatives
 
 PAD = -1  # marks an unused slot in the padded concept / subgraph tables
 
@@ -70,3 +74,48 @@ class SubgraphSage(nn.Module):
 
     def forward(self, image_x: torch.Tensor, mean: torch.Tensor) -> torch.Tensor:
         return self.self_weight(image_x) + self.neighbor_weight(mean)
+
+
+@dataclass(frozen=True)
+class SubgraphTrainingData:
+    """Train images, train texts, and each text's PCST subgraph (padded with PAD)."""
+
+    image_x: torch.Tensor  # (num_images, dim) CLIP vectors of train images
+    image_concepts: torch.Tensor  # (num_images, D) concept rows per image, padded with PAD
+    concept_x: torch.Tensor  # (C, dim) CLIP vectors of concepts
+    text_x: torch.Tensor  # (num_texts, dim) CLIP vectors of train texts
+    text_image_row: torch.Tensor  # (num_texts,) row of the image each text describes
+    candidate_rows: torch.Tensor  # (num_texts, top_k) CLIP's top-k image rows per text
+    is_negative: torch.Tensor  # (num_texts, top_k) False for the own image and duplicates
+    text_subgraphs: torch.Tensor  # (num_texts, L) concept rows of each text's subgraph
+
+
+def subgraph_batch_loss(
+    model: SubgraphSage,
+    data: SubgraphTrainingData,
+    text_rows: torch.Tensor,
+    num_negatives: int,
+    temperature: float,
+    generator: torch.Generator,
+) -> torch.Tensor:
+    """InfoNCE loss of one batch of texts; the correct image is always column 0.
+
+    Kept line by line identical to mmxai.models.train.batch_loss on purpose: only the
+    way h is computed differs, so stage 1 and stage 2 can be compared fairly.
+    """
+    columns, valid = sample_negatives(data.is_negative[text_rows], num_negatives, generator)
+    negative_rows = torch.gather(data.candidate_rows[text_rows], 1, columns)
+    image_rows = torch.cat([data.text_image_row[text_rows, None], negative_rows], dim=1)
+
+    mean = masked_concept_mean(
+        data.concept_x, data.image_concepts[image_rows], data.text_subgraphs[text_rows]
+    )
+    h = model(data.image_x[image_rows], mean)
+    query = functional.normalize(data.text_x[text_rows], dim=-1)
+    cosine = (functional.normalize(h, dim=-1) * query[:, None, :]).sum(dim=-1)
+
+    logits = cosine / temperature
+    always_valid = torch.ones(len(text_rows), 1, dtype=torch.bool)
+    logits = logits.masked_fill(~torch.cat([always_valid, valid], dim=1), float("-inf"))
+    targets = torch.zeros(len(text_rows), dtype=torch.long)
+    return functional.cross_entropy(logits, targets)

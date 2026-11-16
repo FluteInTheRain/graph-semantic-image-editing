@@ -4,9 +4,12 @@ import torch
 from mmxai.graph.contains import ContainsGraph
 from mmxai.models.subgraph_sage import (
     SubgraphSage,
+    SubgraphTrainingData,
     image_concept_matrix,
     masked_concept_mean,
+    subgraph_batch_loss,
 )
+from mmxai.models.train import TrainingData, batch_loss
 
 CONCEPT_X = torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
 
@@ -44,3 +47,56 @@ def test_untrained_model_returns_the_clip_vector():
     image_x = torch.tensor([[[0.3, 0.4]]])
     output = SubgraphSage(2)(image_x, torch.tensor([[[5.0, 5.0]]]))
     assert torch.allclose(output, image_x)
+
+
+def tiny_training_data():
+    return SubgraphTrainingData(
+        image_x=torch.tensor([[1.0, 0.0], [0.9, 0.1], [0.8, 0.2]]),
+        image_concepts=torch.tensor([[2, -1], [0, -1], [1, -1]]),
+        concept_x=torch.tensor([[1.0, 0.0], [0.0, 1.0], [0.0, 1.0]]),
+        text_x=torch.tensor([[0.6, 0.8]]),
+        text_image_row=torch.tensor([0]),
+        candidate_rows=torch.tensor([[0, 1, 2]]),
+        is_negative=torch.tensor([[False, True, True]]),
+        text_subgraphs=torch.tensor([[2]]),
+    )
+
+
+def test_loss_is_finite_and_training_lowers_it():
+    torch.manual_seed(0)
+    data = tiny_training_data()
+    model = SubgraphSage(2)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.05)
+    generator = torch.Generator().manual_seed(0)
+    rows = torch.tensor([0])
+    first = subgraph_batch_loss(model, data, rows, 2, 0.05, generator)
+    for _ in range(30):
+        loss = subgraph_batch_loss(model, data, rows, 2, 0.05, generator)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    assert torch.isfinite(first)
+    assert loss.item() < first.item()
+
+
+def test_untrained_loss_equals_the_stage_one_loss():
+    data = tiny_training_data()
+    # With W_nb = 0 the neighbour mean is ignored, so any values give the same loss.
+    stage_one = TrainingData(
+        image_x=data.image_x,
+        neighbor_mean=torch.zeros(3, 2),
+        text_x=data.text_x,
+        text_image_row=data.text_image_row,
+        candidate_rows=data.candidate_rows,
+        is_negative=data.is_negative,
+    )
+
+    class CloneOfClip(SubgraphSage):
+        def forward_from_neighbor_mean(self, image_x, neighbor_mean):
+            return self.forward(image_x, neighbor_mean)
+
+    rows = torch.tensor([0])
+    model = CloneOfClip(2)
+    new_loss = subgraph_batch_loss(model, data, rows, 2, 0.05, torch.Generator().manual_seed(3))
+    old_loss = batch_loss(model, stage_one, rows, 2, 0.05, torch.Generator().manual_seed(3))
+    assert torch.allclose(new_loss, old_loss)
