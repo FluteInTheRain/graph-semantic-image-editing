@@ -584,14 +584,14 @@ Functions (small, docstrings, reuse instead of copy):
 - `train_and_select(config, seed, log) -> Path`: refuse if `model_dir/seed{k}` exists; `set_seed(seed)`; load inputs (checked), training data, caches (`load_cache` with `cache_meta` expectations incl. `num_texts`); `SubgraphSage(dim)`; `fit(model, data, validate, ..., loss_fn=subgraph_batch_loss)` where `validate` = MRR@100 of graph score alone on val (as `graph_only_val_score`); load best state; `sweep_alpha` → `choose_alpha`; save `model.pt` and `selection.json` (alpha, best_epoch, history, alpha_sweep, git, split_sha256, cache meta); write a val run (`run_facts` from `pcst_rerank` + `prize_k`, `edge_cost`, `best_epoch`, `alpha`).
 - `evaluate_test(config, seed, log) -> Path`: refuse a second test run; read selection; refuse if split sha differs; load model; test candidates; compute test S_q (save cache split `"test"` under `cache_path`, refusing overwrite); scores → `fuse_scores` with saved alpha → `compute_metrics(rerank_ranks(...))`; write run. Chooses nothing.
 
-- [ ] **Step 1: Failing tests** `tests/test_pcst_sage_rerank.py`:
+- [x] **Step 1: Failing tests** `tests/test_pcst_sage_rerank.py`:
   1. `load_pcst_sage_config` rejects a bad `subgraph_mode` (YAML in `tmp_path`).
   2. `cache_path` is `shared` for the main config and `seed1` for the shuffled one with seed 1.
   3. `prepare_caches` never asks for the test split: monkeypatch `load_checked_inputs`, `concept_pairs`, `build_split_graph`, `build_training_data`, `split_candidates`, `compute_subgraph_rows`, `save_cache` in `mmxai.eval.pcst_sage_rerank` with recorders returning tiny objects; assert recorded split names ⊆ {"train", "val"}.
   4. `evaluate_test` refuses when a test run exists and when the selection's `split_sha256` differs (monkeypatch `has_test_run`, `file_sha256`, write a fake `selection.json` in `tmp_path`).
-- [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Implement** the module as specified above.
-- [ ] **Step 4: Run, expect PASS**: `python -m uv run pytest -q tests/test_pcst_cache.py tests/test_subgraph_sage.py tests/test_pcst_sage_rerank.py tests/test_pcst_rerank.py`; `python -m uv run python -c "import mmxai.eval.pcst_sage_rerank"`. Ruff. **Commit** `feat(eval): prepare caches, train and select stage 2 on val, evaluate test once`.
+- [x] **Step 2: Run, expect FAIL.**
+- [x] **Step 3: Implement** the module as specified above.
+- [x] **Step 4: Run, expect PASS**: `python -m uv run pytest -q tests/test_pcst_cache.py tests/test_subgraph_sage.py tests/test_pcst_sage_rerank.py tests/test_pcst_rerank.py`; `python -m uv run python -c "import mmxai.eval.pcst_sage_rerank"`. Ruff. **Commit** `feat(eval): prepare caches, train and select stage 2 on val, evaluate test once`.
 
 ---
 
@@ -599,9 +599,9 @@ Functions (small, docstrings, reuse instead of copy):
 
 **Files:** `scripts/prepare_pcst_cache.py`, `scripts/train_pcst_sage.py`, `scripts/evaluate_pcst_sage.py`, `configs/clip_pcst_sage_vg.yaml`, `configs/clip_pcst_sage_vg_no_tree.yaml`, `configs/clip_pcst_sage_vg_shuffled.yaml`, `configs/README.md`, `scripts/README.md`, test in `tests/test_pcst_sage_rerank.py`
 
-- [ ] **Step 1: Failing test**: the three configs load and differ only in `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `cache_dir`, `model_dir`; main has `prize_k == 3`, `edge_cost == 0.5`.
-- [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Configs.** `configs/clip_pcst_sage_vg.yaml` — copy paths and training values from `configs/clip_graph_vg_lr1e4.yaml` (`num_hard_negatives: 15`, `temperature: 0.05`, `learning_rate: 0.0001`, `batch_size: 512`, `max_epochs: 10`, `patience: 2`, `alpha_grid` 0.0..1.0 step 0.1, `selection_metric: MRR@100`, `top_k: 100`, `recall_ks: [1, 5, 10]`, `same_text_threshold: 0.9999`), plus:
+- [x] **Step 1: Failing test**: the three configs load and differ only in `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `cache_dir`, `model_dir`; main has `prize_k == 3`, `edge_cost == 0.5`.
+- [x] **Step 2: Run, expect FAIL.**
+- [x] **Step 3: Configs.** `configs/clip_pcst_sage_vg.yaml` — copy paths and training values from `configs/clip_graph_vg_lr1e4.yaml` (`num_hard_negatives: 15`, `temperature: 0.05`, `learning_rate: 0.0001`, `batch_size: 512`, `max_epochs: 10`, `patience: 2`, `alpha_grid` 0.0..1.0 step 0.1, `selection_metric: MRR@100`, `top_k: 100`, `recall_ks: [1, 5, 10]`, `same_text_threshold: 0.9999`), plus:
 
 ```yaml
 # Decision (ADR-0051, stage 2): fixed G-Retriever SceneGraphs values, no grid.
@@ -617,12 +617,12 @@ score_chunk: 128
 ```
 
 `_no_tree`: `subgraph_mode: top_k_only` (ablation 1), own `cache_dir`/`model_dir`. `_shuffled`: `shuffle_concept_edges: true` (ablation 2, seed = run seed), own dirs.
-- [ ] **Step 4: CLIs** (docstring style of `scripts/train_graph_rerank.py`; raw docstrings if lines end with `\`):
+- [x] **Step 4: CLIs** (docstring style of `scripts/train_graph_rerank.py`; raw docstrings if lines end with `\`):
   - `prepare_pcst_cache.py --config --seed [--estimate N]`: with `--estimate N` call `estimate_pcst_time` and write nothing; else `prepare_caches`. Docstring: run `--estimate 1000` first; for main/no_tree one cache serves all seeds (run with seed 0); shuffled needs seeds 0 1 2.
   - `train_pcst_sage.py --config --seed`: `train_and_select`.
   - `evaluate_pcst_sage.py --config --seed`: `evaluate_test` (only after the team approved ADR-0051 and all val runs are done).
   - Add rows to `configs/README.md` and `scripts/README.md`.
-- [ ] **Step 5: Run, expect PASS**; `--help` of each script; ruff. **Commit** `feat(eval): CLIs and configs for G-Retriever stage 2 and its ablations`.
+- [x] **Step 5: Run, expect PASS**; `--help` of each script; ruff. **Commit** `feat(eval): CLIs and configs for G-Retriever stage 2 and its ablations`.
 
 ---
 
