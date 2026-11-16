@@ -724,12 +724,36 @@ Trên val, 20 truy vấn được bốc ngẫu nhiên \textbf{một lần} (khô
 \begin{itemize}
 \item \textbf{Occlusion} và \textbf{Integrated Gradients}: bỏ cạnh giải thích làm điểm giảm và ảnh tụt hạng nhiều hơn rõ so với xoá cùng số cạnh ngẫu nhiên, ở mọi $m$ (Wilcoxon một phía, $p\le 0.002$). Như vậy, ít nhất trên val, câu trả lời cho RQ3 là có: các cạnh được chọn làm giải thích thật sự ảnh hưởng tới thứ hạng.
 \item \textbf{GNNExplainer} không tốt hơn đối chứng ngẫu nhiên.
-\item Đề xuất trên val là Integrated Gradients với $m=10$. Nhóm \textbf{chưa chốt}: IG hoà với Occlusion, và quy tắc chọn bằng characterization có xu hướng ưu tiên $m$ lớn.
+\item Explainer chính được chọn bằng characterization trung bình cao nhất (\code{statistics.choose\_on\_validation}): \textbf{Integrated Gradients với $m=10$}. IG gần như hoà Occlusion: mô hình một lớp không có hàm kích hoạt nên gần tuyến tính, và hai cách cho số gần như trùng nhau. Quy tắc này nghiêng về $m$ lớn, vì giữ nhiều cạnh hơn thì Fid$^-$ tốt hơn. Lựa chọn được ghi vào \code{configs/explain\_vg.yaml} (commit \code{2ba21cf}) trước khi chạy test.
 \end{itemize}
 
-\begin{chualam}{Bảng số đánh giá giải thích (val) và kết quả test}
-Còn thiếu: (1) đưa \code{summary.md} của lần chạy val (Kaggle, 14/11) vào \code{results/records/20261114\_xai-cap-do-3/} và điền bảng Fid$^+$, Fid$^-$, characterization, robust Fid, sparsity, validity, hạng tụt (mean \pmm{} std qua 3 seed) cho từng explainer và $m$, kèm $p$-value so với ngẫu nhiên; (2) nhóm chốt \code{main\_explainer} và \code{top\_m} trong \code{configs/explain\_vg.yaml}; (3) chạy test một lần và báo cáo bằng chứng cụ thể cho $\ge$10 truy vấn; (4) nếu có bộ truy vấn ở mục~\ref{sec:level2}, tách kết quả theo trực tiếp/gián tiếp (RQ4 trong \code{docs/research/xai-method-proposal.md}).
-\end{chualam}
+\begin{table}[H]
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\caption{Đánh giá giải thích, $m=10$, 20 truy vấn, mean \pmm{} std qua 3 seed (\code{results/tables/xai\_level3.csv}; đủ $m\in\{3,5,10\}$ trong file). ``ngẫu nhiên'': xoá cùng số cạnh chọn ngẫu nhiên. $p$: Wilcoxon một phía, hạng tụt lớn hơn ngẫu nhiên. Validity: 100\% cạnh có thật, nằm trong vùng ảnh hưởng và nối được tới ảnh ở mọi dòng.}
+\label{tab:xai}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{l l c c c c c c c}
+\toprule
+\textbf{Tập} & \textbf{Explainer} & \textbf{Fid$^+$} & \textbf{Fid$^+$ n.nhiên} & \textbf{Hạng tụt} & \textbf{Hạng tụt n.nhiên} & \textbf{Fid$^-$} & \textbf{Charact.} & \textbf{$p$} \\
+\midrule
+val & Occlusion & .0192\pmm.0010 & .0004\pmm.0003 & 3.47\pmm0.46 & 0.22\pmm0.03 & $-$.0107 & .467 & $3\cdot10^{-5}$ \\
+val & IG & .0192\pmm.0010 & .0004\pmm.0003 & 3.47\pmm0.46 & 0.22\pmm0.03 & $-$.0107 & .467 & $3\cdot10^{-5}$ \\
+val & GNNExplainer & .0022\pmm.0007 & .0004\pmm.0003 & 0.45\pmm0.30 & 0.22\pmm0.03 & $-$.0008 & .297 & 0.29 \\
+\midrule
+\textbf{test} & \textbf{IG} & \textbf{.0225\pmm.0010} & .0006\pmm.0002 & \textbf{2.57\pmm0.29} & 0.26\pmm0.08 & $-$.0124 & .504 & $5\cdot10^{-4}$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsubsection{Kết quả trên test (chạy một lần)}
+\begin{itemize}
+\item \textbf{Fidelity:} bỏ 10 cạnh do IG chọn làm điểm đồ thị giảm 0.0225, gấp khoảng 35 lần xoá 10 cạnh ngẫu nhiên (0.0006), và làm ảnh tụt trung bình 2.57 bậc so với 0.26 bậc ($p=0.0005$). Kết quả test nhất quán với val: giải thích thật sự ảnh hưởng tới thứ hạng (RQ3).
+\item \textbf{Bằng chứng theo truy vấn} (\code{results/tables/xai\_level3\_test\_queries.csv}, trung bình 3 seed): ở \textbf{cả 20/20 truy vấn}, Fid$^+$ của giải thích lớn hơn Fid$^+$ khi xoá ngẫu nhiên. Ở 11/20 truy vấn ảnh tụt hạng (tối đa 11 bậc); 9 truy vấn còn lại ảnh vẫn hạng 1, vì cách biệt điểm với ảnh hạng 2 lớn hơn phần mà 10 cạnh đóng góp.
+\item \textbf{Validity và sparsity:} mọi cạnh giải thích có thật trong đồ thị đã chấm, nằm trong vùng ảnh hưởng của ảnh và nối được tới ảnh (100\%). Sparsity 0.375: giải thích dùng 10 trên 16 cạnh của ảnh.
+\item \textbf{Fid$^-<0$:} chỉ giữ 10 cạnh giải thích thì điểm còn \emph{cao hơn} khi đủ 16 cạnh, tức 6 cạnh còn lại kéo ảnh xuống. Điều này khớp với phân tích 5 + 5: có những cạnh có đóng góp âm.
+\item \textbf{Mức độ:} Fid$^+$ tuyệt đối nhỏ, vì phần lớn điểm đến từ vectơ của chính ảnh. Giải thích trung thực với nhánh đồ thị, nhưng nhánh đồ thị chỉ là một phần của điểm.
+\item \textbf{Tái lập:} lần val chạy trên Kaggle, lần test chạy trên máy thành viên; cả hai dùng mô hình train lại với cùng config và split. $\alpha$ và epoch tốt nhất trùng nhau, \mrr{} val lệch khoảng $10^{-5}$.
+\end{itemize}
 
 % ================= 8. MMKG =================
 \section{MMKG tiếng Việt tự xây}
@@ -757,14 +781,12 @@ Thiết kế đã chốt về định dạng (ADR-0015, \code{mmkg/README.md}): 
 % ================= 10. KẾT LUẬN =================
 \section{Kết luận và hướng phát triển}
 \label{sec:future}
-Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chống rò rỉ chặt chẽ: CLIP + GraphSAGE nâng \mrr{} test từ 0.1076 lên 0.1284. Các đối chứng cho thấy phần lớn mức tăng đến từ phép chiếu học được; cấu trúc ảnh -- khái niệm thật đóng góp một phần nhỏ nhưng nhất quán qua 3 seed, và rõ nhất ở nhóm truy vấn chung chung. Giải thích được tính trên chính mô hình xếp hạng, có chốt chặn khớp mô hình, và trên val Occlusion và IG vượt đối chứng ngẫu nhiên có ý nghĩa thống kê.
+Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chống rò rỉ chặt chẽ: CLIP + GraphSAGE nâng \mrr{} test từ 0.1076 lên 0.1284. Các đối chứng cho thấy phần lớn mức tăng đến từ phép chiếu học được; cấu trúc ảnh -- khái niệm thật đóng góp một phần nhỏ nhưng nhất quán qua 3 seed, và rõ nhất ở nhóm truy vấn chung chung. Giải thích được tính trên chính mô hình xếp hạng, có chốt chặn khớp mô hình. Explainer chọn trên val (Integrated Gradients, $m=10$), và trên test bỏ cạnh giải thích làm ảnh tụt 2.57 bậc so với 0.26 bậc khi xoá ngẫu nhiên ($p=0.0005$). Demo nhập truy vấn hiển thị đường đi truy vấn $\to$ khái niệm $\to$ ảnh cho từng kết quả.
 
 Việc cần làm tiếp, theo thứ tự ưu tiên của đề:
 \begin{enumerate}
-\item Hoàn tất cấp độ 3 phần giải thích: điền bảng val, chốt explainer, chạy test.
-\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+.
+\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
 \item Cấp độ 3: MMKG tiếng Việt.
-\item Notebook demo: nhập truy vấn, trả về top-$k$ kèm cạnh giải thích (PDF §8).
 \end{enumerate}
 
 \begin{chualam}{Cấp độ 4 -- cải tiến của nhóm}
