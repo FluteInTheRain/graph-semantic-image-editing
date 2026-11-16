@@ -14,4 +14,4 @@ Quy tắc (chi tiết: `docs/decisions/0012-chinh-sach-notebook.md`):
 | Notebook | Làm gì | Chạy ở đâu |
 |---|---|---|
 | `10_prepare_clip_embeddings.ipynb` | Trích embedding CLIP (ADR-0041); chứa bản sao code | Kaggle |
-| `20_xai_level3_kaggle.ipynb` | **xAI cấp độ 3** trên mô hình đã chốt `clip_graph_vg_lr1e4`: lấy embedding, đồ thị, checkpoint từ Kaggle input (thiếu thì dựng/train), chạy `scripts/evaluate_explanations.py` trên val, hiện bảng fidelity/validity/sparsity, rồi chạy test **một lần** sau khi nhóm đã commit lựa chọn. Notebook mỏng: chỉ gọi script | Kaggle |
+| `20_xai_level3_kaggle.ipynb` | **xAI cấp độ 3** trên mô hình đã chốt `clip_graph_vg_lr1e4`: lấy embedding, đồ thị, checkpoint từ Kaggle input (thiếu thì dựng/train), chạy `scripts/evaluate_explanations.py` trên val, hiện bảng fidelity/validity/sparsity, rồi chạy test **một lần** sau khi nhóm đã commit lựa chọn. Đặt `DATASET = "flickr30k"` để chạy lại pipeline cấp độ 1 trên tập thứ hai (ADR-0050): dựng đồ thị, train 3 mô hình, test một lần (mục 4b). Notebook mỏng: chỉ gọi script | Kaggle |
