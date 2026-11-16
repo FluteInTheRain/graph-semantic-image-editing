@@ -160,6 +160,8 @@ Bậc 1 không hơn CLIP vì đếm thô (xem mục trên). Bậc 2 dùng **cùn
 | Đối chứng (quy tắc dừng) | Phải **hơn `clip_nograph_vg_lr1e4` trên val**; so thêm với `clip_graph_vg_lr1e4`. Số trên val của hai mô hình này lấy từ `selection.json` của người đã chạy, hoặc chạy lại `train_graph_rerank.py` (chỉ train + val) |
 | Giải thích | Occlusion chính xác: bỏ lần lượt từng khái niệm trong `N(i) ∩ S_q`, tính lại điểm bằng chính mô hình. Ghi rõ khái niệm nào là cầu nối |
 
+Code (bậc 2): `src/mmxai/graph/pcst_cache.py`, `src/mmxai/models/subgraph_sage.py`, `src/mmxai/models/train.py` (`loss_fn`), `src/mmxai/eval/pcst_sage_rerank.py`, `scripts/prepare_pcst_cache.py`, `scripts/train_pcst_sage.py`, `scripts/evaluate_pcst_sage.py`, `configs/clip_pcst_sage_vg.yaml`, `configs/clip_pcst_sage_vg_no_tree.yaml`, `configs/clip_pcst_sage_vg_shuffled.yaml`.
+
 Quyết định bởi Thuat Nguyen (brainstorm với Claude Code), 2026-11-16. Nhóm chưa duyệt.
 
 ## Nguồn tham khảo
