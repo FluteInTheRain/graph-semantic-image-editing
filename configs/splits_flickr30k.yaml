@@ -1,0 +1,18 @@
+# Fixed train/val/test split of Flickr30k images: the Visual Genome procedure unchanged (ADR-0042, ADR-0050).
+# How to run: see the docstring of scripts/make_splits.py.
+dataset: flickr30k
+# Image ids and embeddings come from the CLIP feature set (ADR-0041).
+features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k
+output_dir: splits/flickr30k
+# Decision (ADR-0011): one fixed split; training seeds are separate.
+#   Decided by: FluteInTheRain, ADR-0011.
+split_seed: 0
+# Decision (ADR-0042): 5000 val + 5000 test images (MS-COCO 5k convention), the rest is train.
+#   Decided by: FluteInTheRain, 2026-11-05 (proposed by Claude Code).
+num_val: 5000
+num_test: 5000
+# Decision (ADR-0042): images with cosine >= this are copies of one picture and stay in one set.
+#   Why: exact equality missed re-encoded copies; grouping too much is harmless.
+#   Fixed from pair counts before any retrieval result.
+#   Decided by: FluteInTheRain, 2026-11-05 (raised by leakage-auditor, proposed by Claude Code).
+duplicate_threshold: 0.99
