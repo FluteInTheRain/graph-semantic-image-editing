@@ -1,15 +1,10 @@
-# Image-concept graph of Flickr30k for the level-2 second dataset (ADR-0050).
-# Same as configs/graph_vg_clip_topk.yaml except the images: Flickr30k has no object
-# annotations, so the concept nodes (3880 synsets counted on VG TRAIN, ADR-0045) are
-# copied from the VG main graph. Edges: each image's k nearest concepts by CLIP cosine.
-# How to run: see the docstring of scripts/build_graph_from_vocabulary.py.
+# Flickr30k (ADR-0050): image-concept graph. Run: scripts/build_graph_from_vocabulary.py.
+# Flickr30k has no object annotations, so the concept nodes are copied from the VG main graph;
+# edges are each image's k nearest concepts by CLIP cosine, as in configs/graph_vg_clip_topk.yaml.
 dataset: flickr30k
 split_file: splits/flickr30k/split_seed0.json
 features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k
-# Decision (ADR-0050): reuse the VG vocabulary so only the dataset changes.
-#   Decided by: FluteInTheRain, 2026-11-17 (proposed by Claude Code).
 vocabulary_graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
-# Same k as the VG main graph (ADR-0046); not tuned again.
 clip_topk_k: 16
 model: ViT-B-32
 pretrained: laion2b_s34b_b79k

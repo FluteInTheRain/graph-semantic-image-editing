@@ -1,13 +1,8 @@
 """Build a CLIP top-k contains graph for a dataset that has no object annotations.
 
-Flickr30k has captions only, so its concept vocabulary cannot be counted the way
-Visual Genome's is (ADR-0045). Instead the concept nodes (keys, names and CLIP text
-vectors) are copied from an existing graph, and each image of the new split is linked
-to its k nearest concepts by CLIP cosine, exactly as in the main model (ADR-0046).
-
-Decision (ADR-0050): reuse the Visual Genome vocabulary for the second dataset.
-  Why: keeps everything of the level-1 pipeline identical except the images and texts.
-  The vocabulary was counted on VG train only, so it holds no Flickr30k information.
+Concept nodes (keys, names, CLIP text vectors) are copied from an existing graph;
+each image is linked to its k nearest concepts by CLIP cosine, as in ADR-0046.
+Used for Flickr30k with the VG vocabulary (ADR-0050).
 """
 
 from dataclasses import asdict, dataclass
@@ -106,7 +101,7 @@ def run_vocabulary_transfer(config: VocabularyTransferConfig) -> dict:
         "split_sha256": file_sha256(config.split_file),
         "git": git_state(),
         "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        # Keys read by downstream code from every graph's meta (model, pretrained).
+        # to_pyg_data reads model and pretrained from here.
         "config": asdict(config),
     }
     save_contains_graph(config.output_dir, graph, concept_names, concept_features, meta)
