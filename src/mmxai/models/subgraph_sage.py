@@ -30,7 +30,9 @@ def image_concept_matrix(graph: ContainsGraph) -> np.ndarray:
     matrix = np.full((num_images, width), PAD, dtype=np.int64)
     filled = np.zeros(num_images, dtype=np.int64)
     # Edges are stored image by image with sorted concepts, so graph row order is kept.
-    for image_row, concept_row in zip(graph.edge_image.tolist(), graph.edge_concept.tolist()):
+    image_rows = graph.edge_image.tolist()
+    concept_rows = graph.edge_concept.tolist()
+    for image_row, concept_row in zip(image_rows, concept_rows, strict=True):
         matrix[image_row, filled[image_row]] = concept_row
         filled[image_row] += 1
     return matrix
