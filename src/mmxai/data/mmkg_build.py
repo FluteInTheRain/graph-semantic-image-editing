@@ -100,16 +100,48 @@ class Review:
     fix_name_vi: dict[str, str]
 
 
+def check_review_header(path: Path, header: list[str]) -> None:
+    """Fail unless the header has exactly the REVIEW_COLUMNS (in any order)."""
+    missing = sorted(set(REVIEW_COLUMNS) - set(header))
+    extra = sorted(set(header) - set(REVIEW_COLUMNS))
+    if missing or extra:
+        raise ValueError(
+            f"{path}: wrong review header; missing columns {missing}, extra columns {extra} "
+            f"(expected {REVIEW_COLUMNS})"
+        )
+
+
+def read_review_header(path: Path) -> list[str]:
+    """Column names of an existing review file, stripped and without a byte order mark."""
+    # utf-8-sig drops the byte order mark Excel writes before the first column name.
+    with open(path, encoding="utf-8-sig", newline="") as file:
+        first_row = next(csv.reader(file), [])
+    return [name.strip() for name in first_row]
+
+
 def read_review(path: Path) -> Review:
-    """Read and validate review.csv. A missing file means no decisions yet."""
-    if not path.exists():
+    """Read and validate review.csv. A missing or empty file means no decisions yet.
+
+    A sheet re-saved by Excel or Google Sheets may gain a byte order mark, stray
+    spaces or a new column order; all three are accepted. A missing or unknown
+    column is an error, because every decision would otherwise be read wrongly.
+    """
+    if not path.exists() or path.stat().st_size == 0:
         return Review({}, {})
 
+    header = read_review_header(path)
+    check_review_header(path, header)
     status: dict[tuple[str, str], str] = {}
     fix_name_vi: dict[str, str] = {}
-    with open(path, encoding="utf-8", newline="") as file:
+    with open(path, encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file, fieldnames=header)
+        next(reader)  # the header row, already read and checked above
         # Row 1 is the header, so the first data row is row 2 (matches a spreadsheet).
-        for row_number, row in enumerate(csv.DictReader(file), start=2):
+        for row_number, raw_row in enumerate(reader, start=2):
+            if None in raw_row:
+                raise ValueError(f"{path.name} row {row_number}: more cells than columns")
+            # A short row gives None for its last cells; treat them as empty.
+            row = {column: (raw_row[column] or "").strip() for column in REVIEW_COLUMNS}
             kind = row["kind"]
             key = row["key"]
             review_status = row["review_status"]
@@ -475,6 +507,31 @@ def check_entities_exist(
         )
 
 
+def unmatched_review_keys(
+    review: Review,
+    raw_entities: list[dict[str, str]],
+    raw_triples: list[dict[str, str]],
+    raw_candidates: list[dict[str, str]],
+) -> list[str]:
+    """Review rows whose key names nothing in the raw snapshot, as sorted "kind:key".
+
+    Such a row is usually a typo in a file name or QID: its decision would be
+    ignored without a word, so the build lists it instead.
+    """
+    known: set[tuple[str, str]] = set()
+    for row in raw_candidates:
+        known.add(("image", row["file_name"]))
+    for row in raw_triples:
+        known.add(("triple", f"{row['head_id']}|{row['property']}|{row['tail_id']}"))
+    for row in raw_entities:
+        known.add(("entity", row["entity_id"]))
+    unmatched = []
+    for kind, key in review.status:
+        if (kind, key) not in known:
+            unmatched.append(f"{kind}:{key}")
+    return sorted(unmatched)
+
+
 def build_mmkg(snapshot_dir: Path, review: Review, config: MmkgBuildConfig) -> BuiltMmkg:
     """Build the official tables from a raw snapshot. Reads files, writes nothing."""
     raw_entities = read_rows(snapshot_dir, "entities_raw")
@@ -536,26 +593,36 @@ def build_mmkg(snapshot_dir: Path, review: Review, config: MmkgBuildConfig) -> B
             "pending_triple": pending_count["triple"],
             "pending_entity": pending_count["entity"],
             "entities_missing_name_vi": report["entities_missing_name_vi"],
+            "review_keys_unmatched": unmatched_review_keys(
+                review, raw_entities, raw_triples, raw_candidates
+            ),
         }
     )
     return BuiltMmkg(entities, triples, images, full_report, pending)
 
 
 def append_pending(review_file: Path, pending: list[dict[str, str]]) -> None:
-    """Append pending rows to review.csv; existing bytes are never rewritten."""
-    is_new = not review_file.exists()
+    """Append pending rows to review.csv; existing bytes are never rewritten.
+
+    Rows follow the file's own column order, so a sheet re-saved with its columns
+    moved stays aligned. A missing or empty (0-byte) file first gets the header.
+    """
+    is_new = not review_file.exists() or review_file.stat().st_size == 0
     review_file.parent.mkdir(parents=True, exist_ok=True)
+    columns = REVIEW_COLUMNS
     # A hand-saved file may lack the final newline; without one, our first row
     # would be glued onto the reviewer's last row and change their last cell.
     needs_terminator = False
-    if not is_new and review_file.stat().st_size > 0:
+    if not is_new:
+        columns = read_review_header(review_file)
+        check_review_header(review_file, columns)
         with open(review_file, "rb") as existing:
             existing.seek(-1, 2)
             needs_terminator = existing.read(1) != b"\n"
     with open(review_file, "a", encoding="utf-8", newline="") as file:
         if needs_terminator:
             file.write("\r\n")
-        writer = csv.DictWriter(file, fieldnames=REVIEW_COLUMNS)
+        writer = csv.DictWriter(file, fieldnames=columns)
         if is_new:
             writer.writeheader()
         writer.writerows(pending)

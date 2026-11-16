@@ -415,3 +415,66 @@ def test_append_after_file_without_final_newline_keeps_human_row(tmp_path):
     assert human_row[0]["review_status"] == "ok"
     assert len(rows) == 1 + len(built.pending)
     assert read_review(review_file).status[("entity", "Q1")] == "ok"
+
+
+def test_existing_empty_review_file_gets_a_header(tmp_path):
+    three_items_snapshot(tmp_path / "snap")
+    review_file = tmp_path / "review.csv"
+    review_file.write_bytes(b"")
+
+    built = build(tmp_path / "snap")
+    write_built_mmkg(built, tmp_path / "out", review_file, 100000)
+
+    lines = review_file.read_text(encoding="utf-8").splitlines()
+    assert lines[0] == ",".join(REVIEW_HEADER)
+    assert len(lines) == 1 + len(built.pending)
+
+
+def test_append_follows_the_column_order_of_the_existing_file(tmp_path):
+    snapshot = tmp_path / "snap"
+    three_items_snapshot(snapshot)
+    review_file = tmp_path / "review.csv"
+    reordered = ["key", "kind", "date", "review_status", "reason", "fix_name_vi", "reviewer"]
+    with open(review_file, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=reordered)
+        writer.writeheader()
+        writer.writerow(review_row("entity", "Q1", "ok"))
+
+    built = build(snapshot, read_review(review_file))
+    write_built_mmkg(built, tmp_path / "out", review_file, 100000)
+
+    review = read_review(review_file)
+    assert review.status[("entity", "Q1")] == "ok"
+    assert review.status[("image", "Q2_0.jpg")] == "pending"
+    assert len(review.status) == 1 + len(built.pending)
+
+
+def test_review_keys_matching_nothing_raw_are_reported(tmp_path):
+    three_items_snapshot(tmp_path)
+    review = Review(
+        {
+            ("image", "Q1_0.jpg"): "ok",
+            ("entity", "Q9"): "ok",
+            ("triple", "Q1|P131|Q9"): "ok",
+            ("image", "Q1_0 typo.jpg"): "drop",
+            ("entity", "Q404"): "ok",
+            ("triple", "Q1|P131|Q8"): "drop",
+            # A real file name under the wrong kind does not match either.
+            ("entity", "Q1_1.jpg"): "ok",
+        },
+        {},
+    )
+
+    built = build(tmp_path, review)
+
+    assert built.report["review_keys_unmatched"] == [
+        "entity:Q1_1.jpg",
+        "entity:Q404",
+        "image:Q1_0 typo.jpg",
+        "triple:Q1|P131|Q8",
+    ]
+
+
+def test_no_unmatched_review_keys_gives_an_empty_list(tmp_path):
+    three_items_snapshot(tmp_path)
+    assert build(tmp_path).report["review_keys_unmatched"] == []

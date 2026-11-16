@@ -285,3 +285,44 @@ def test_glued_unknown_author_drops_image_without_uploader():
     result, report = run(rows, credits)
     assert "u.jpg" not in names(result)
     assert report["images_dropped_no_author"] == 1
+
+
+def test_read_review_accepts_excel_bom_and_strips_cells(tmp_path):
+    path = tmp_path / "review.csv"
+    text = (
+        "kind,key,review_status,reason,fix_name_vi,reviewer,date\r\n"
+        " entity , Q5 , ok ,, Chùa Một Cột ,k,2026-01-01\r\n"
+    )
+    # Excel saves "CSV UTF-8" with a byte order mark before the first header.
+    path.write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
+    review = read_review(path)
+    assert review.status == {("entity", "Q5"): "ok"}
+    assert review.fix_name_vi == {"Q5": "Chùa Một Cột"}
+
+
+def test_read_review_accepts_reordered_columns(tmp_path):
+    path = tmp_path / "review.csv"
+    path.write_text(
+        "key,kind,review_status,reason,fix_name_vi,reviewer,date\na.jpg,image,ok,,,k,\n",
+        encoding="utf-8",
+    )
+    assert read_review(path).status == {("image", "a.jpg"): "ok"}
+
+
+def test_read_review_names_missing_and_extra_columns(tmp_path):
+    path = tmp_path / "review.csv"
+    path.write_text("kind,key,status,reason,fix_name_vi,reviewer,date\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"review\.csv.*review_status.*status"):
+        read_review(path)
+
+
+def test_read_review_of_empty_file_has_no_decisions(tmp_path):
+    path = tmp_path / "review.csv"
+    path.write_bytes(b"")
+    assert read_review(path) == Review({}, {})
+
+
+def test_read_review_rejects_row_with_extra_cells(tmp_path):
+    path = write_review(tmp_path / "review.csv", "image,a.jpg,ok,,,k,2026-01-01,surplus")
+    with pytest.raises(ValueError, match="row 2.*more cells"):
+        read_review(path)
