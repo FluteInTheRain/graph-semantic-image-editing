@@ -33,6 +33,7 @@ CONFIG = MmkgCollectConfig(
     user_agent="test-agent",
     request_interval_seconds=0.0,
     max_attempts=1,
+    max_retry_wait_seconds=1.0,
     max_file_bytes=1048576,
 )
 
@@ -285,6 +286,7 @@ def test_cli_refuses_when_todays_snapshot_exists(tmp_path):
         "user_agent: test-agent\n"
         "request_interval_seconds: 0\n"
         "max_attempts: 1\n"
+        "max_retry_wait_seconds: 1\n"
         "max_file_bytes: 1048576\n",
         encoding="utf-8",
     )
@@ -299,6 +301,34 @@ def test_cli_refuses_when_todays_snapshot_exists(tmp_path):
 
     assert result.returncode == 1
     assert "already exists" in result.stderr
+
+
+def test_progress_lines_are_logged():
+    domain = []
+    pages = {}
+    for number in range(26 * mmkg_collect.IMAGEINFO_BATCH_SIZE):
+        name = f"f{number}.jpg"
+        domain.append(domain_row(f"Q{number}", image=name))
+        pages[name] = info_page(name)
+    client = FakeClient(domain=domain, triples=[], pages=pages)
+    messages = []
+
+    collect_snapshot(client, CONFIG, TODAY, log=messages.append)
+
+    phases = [
+        "domain items",
+        "triples",
+        "target labels",
+        "concept triples",
+        "category files",
+        "image info",
+    ]
+    for phase in phases:
+        assert any(m.startswith(phase + ": start") for m in messages), phase
+        assert any(m.startswith(phase + ": done") for m in messages), phase
+    assert "domain items: done, 1300 items" in messages
+    # 26 imageinfo requests: one progress line after the 25th.
+    assert "image info: 1250/1300 files" in messages
 
 
 def small_snapshot() -> RawSnapshot:

@@ -5,6 +5,7 @@ Tests replace `opener` with a fake so they never go online.
 """
 
 import json
+import math
 import time
 import urllib.error
 import urllib.parse
@@ -25,13 +26,17 @@ class WikimediaClient:
         user_agent: str,
         interval_seconds: float,
         max_attempts: int,
+        max_retry_wait_seconds: float,
         opener=urllib.request.urlopen,
         sleep=time.sleep,
         clock=time.monotonic,
+        log=print,
     ) -> None:
         self.user_agent = user_agent
         self.interval_seconds = interval_seconds
         self.max_attempts = max_attempts
+        self.max_retry_wait_seconds = max_retry_wait_seconds
+        self._log = log
         self._opener = opener
         self._sleep = sleep
         self._clock = clock
@@ -83,9 +88,11 @@ class WikimediaClient:
                 if not is_retryable:
                     raise
                 last_status = error.code
+                # Close the error response so its connection is not held open while we wait.
+                error.close()
                 # No point sleeping after the final attempt.
                 if attempt < self.max_attempts - 1:
-                    self._sleep(self._retry_delay(error, attempt))
+                    self._sleep(self._retry_delay(error, attempt, url))
         raise RuntimeError(f"HTTP {last_status} after {self.max_attempts} attempts for {url}")
 
     def _wait_for_interval(self) -> None:
@@ -96,12 +103,26 @@ class WikimediaClient:
                 self._sleep(self.interval_seconds - elapsed)
         self._last_attempt_start = self._clock()
 
-    def _retry_delay(self, error: urllib.error.HTTPError, attempt: int) -> float:
-        """Use Retry-After when it is a number, else exponential backoff."""
+    def _retry_delay(self, error: urllib.error.HTTPError, attempt: int, url: str) -> float:
+        """Use Retry-After when it is a sane number, else exponential backoff; then cap it.
+
+        The cap exists because one very long Retry-After stalled the first live run
+        for over 8 minutes; a capped wait plus a retry is still polite.
+        """
+        delay = self.interval_seconds * 2**attempt
         retry_after = error.headers.get("Retry-After") if error.headers else None
         if retry_after is not None:
             try:
-                return float(retry_after)
+                requested = float(retry_after)
             except ValueError:
-                pass
-        return self.interval_seconds * 2**attempt
+                requested = None
+            # "nan", "inf" and negative values parse as floats but are not real waits.
+            if requested is not None and math.isfinite(requested) and requested >= 0:
+                delay = requested
+        if delay > self.max_retry_wait_seconds:
+            self._log(
+                f"warning: {url} asked to wait {delay:g} s; "
+                f"waiting {self.max_retry_wait_seconds:g} s instead"
+            )
+            delay = self.max_retry_wait_seconds
+        return delay

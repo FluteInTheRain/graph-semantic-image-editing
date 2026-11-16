@@ -25,6 +25,8 @@ PROPERTY_PREFIX = "http://www.wikidata.org/prop/direct/"
 
 SPARQL_BATCH_SIZE = 150
 IMAGEINFO_BATCH_SIZE = 50
+# A live run makes a few hundred Commons requests; a line every 25 shows it is alive.
+PROGRESS_EVERY_REQUESTS = 25
 
 ENTITY_COLUMNS = ["entity_id", "name_vi", "name_en", "in_domain", "commons_category", "p18_files"]
 TRIPLE_COLUMNS = ["head_id", "property", "tail_id"]
@@ -91,6 +93,7 @@ class MmkgCollectConfig:
     user_agent: str
     request_interval_seconds: float
     max_attempts: int
+    max_retry_wait_seconds: float
     max_file_bytes: int
 
 
@@ -235,9 +238,14 @@ def _category_files(client: WikimediaClient, category: str) -> list[str]:
         params.update(answer["continue"])
 
 
-def _collect_candidate_pairs(client, domain_items) -> list[tuple[str, str, str]]:
+def _collect_candidate_pairs(client, domain_items, log) -> list[tuple[str, str, str]]:
     """Return (file_name, entity_id, origin); P18 wins when a file is both P18 and category."""
     pairs = []
+    category_total = 0
+    for item in domain_items.values():
+        if item["categories"]:
+            category_total += 1
+    categories_done = 0
     for entity_id in sorted(domain_items):
         item = domain_items[entity_id]
         seen = set()
@@ -250,10 +258,13 @@ def _collect_candidate_pairs(client, domain_items) -> list[tuple[str, str, str]]
                 if file_name not in seen:
                     pairs.append((file_name, entity_id, "category"))
                     seen.add(file_name)
+            categories_done += 1
+            if categories_done % PROGRESS_EVERY_REQUESTS == 0:
+                log(f"category files: {categories_done}/{category_total} categories")
     return pairs
 
 
-def _fetch_image_info(client, file_names: list[str]) -> dict[str, tuple[str, dict]]:
+def _fetch_image_info(client, file_names: list[str], log) -> dict[str, tuple[str, dict]]:
     """Return {requested name: (final name, imageinfo)}; unknown files are left out.
 
     Commons may answer under another title than the one asked: `normalized` fixes the
@@ -261,7 +272,8 @@ def _fetch_image_info(client, file_names: list[str]) -> dict[str, tuple[str, dic
     to its current page. The final name is the one the file is downloaded under.
     """
     resolved = {}
-    for batch in _batches(file_names, IMAGEINFO_BATCH_SIZE):
+    files_done = 0
+    for request_number, batch in enumerate(_batches(file_names, IMAGEINFO_BATCH_SIZE), start=1):
         titles = "|".join("File:" + name for name in batch)
         params = {
             "action": "query",
@@ -290,6 +302,9 @@ def _fetch_image_info(client, file_names: list[str]) -> dict[str, tuple[str, dic
             final_name = redirects.get(final_name, final_name)
             if final_name in info_by_final_name:
                 resolved[name] = (final_name, info_by_final_name[final_name])
+        files_done += len(batch)
+        if request_number % PROGRESS_EVERY_REQUESTS == 0:
+            log(f"image info: {files_done}/{len(file_names)} files")
     return resolved
 
 
@@ -312,12 +327,20 @@ def _git_commit() -> str:
 
 
 def collect_snapshot(
-    client: WikimediaClient, config: MmkgCollectConfig, today: date
+    client: WikimediaClient, config: MmkgCollectConfig, today: date, log=print
 ) -> RawSnapshot:
-    """Query Wikidata and Commons and return the raw tables, without any filtering."""
+    """Query Wikidata and Commons and return the raw tables, without any filtering.
+
+    `log` receives one line when each phase starts and ends, plus progress lines,
+    so a run of several minutes can be followed in a log file.
+    """
     queries: dict[str, str] = {}
+    log("domain items: start")
     domain_items = _collect_domain(client, config, queries)
+    log(f"domain items: done, {len(domain_items)} items")
+    log("triples: start")
     domain_triples = _collect_domain_triples(client, config, queries)
+    log(f"triples: done, {len(domain_triples)} triples")
 
     domain_ids = set(domain_items)
     target_ids = set()
@@ -326,9 +349,13 @@ def collect_snapshot(
             target_ids.add(tail)
     sorted_targets = sorted(target_ids)
 
+    log(f"target labels: start, {len(sorted_targets)} targets")
     labels = _collect_target_labels(client, sorted_targets, queries)
+    log(f"target labels: done, {len(labels)} labelled")
     entity_ids = domain_ids | target_ids
+    log("concept triples: start")
     concept_triples = _collect_concept_triples(client, sorted_targets, entity_ids, queries)
+    log(f"concept triples: done, {len(concept_triples)} triples")
 
     entities = []
     for entity_id in sorted(domain_items):
@@ -363,9 +390,13 @@ def collect_snapshot(
     for head, property_id, tail in sorted(domain_triples | concept_triples):
         triples.append({"head_id": head, "property": property_id, "tail_id": tail})
 
-    pairs = _collect_candidate_pairs(client, domain_items)
+    log("category files: start")
+    pairs = _collect_candidate_pairs(client, domain_items, log)
+    log(f"category files: done, {len(pairs)} entity-file pairs")
     requested_files = sorted({file_name for file_name, _entity, _origin in pairs})
-    resolved = _fetch_image_info(client, requested_files)
+    log(f"image info: start, {len(requested_files)} files")
+    resolved = _fetch_image_info(client, requested_files, log)
+    log(f"image info: done, {len(resolved)} found")
 
     image_candidates = []
     seen_pairs = set()

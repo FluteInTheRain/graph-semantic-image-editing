@@ -28,6 +28,11 @@ from mmxai.data.mmkg_collect import collect_snapshot, load_mmkg_collect_config, 
 from mmxai.data.wikimedia import WikimediaClient
 
 
+def print_now(message: str) -> None:
+    """Print and flush at once, so progress shows up in a redirected log file."""
+    print(message, flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -45,9 +50,13 @@ def main() -> None:
         sys.exit(1)
 
     client = WikimediaClient(
-        config.user_agent, config.request_interval_seconds, config.max_attempts
+        config.user_agent,
+        config.request_interval_seconds,
+        config.max_attempts,
+        config.max_retry_wait_seconds,
+        log=print_now,
     )
-    snapshot = collect_snapshot(client, config, today)
+    snapshot = collect_snapshot(client, config, today, log=print_now)
     folder = write_snapshot(snapshot, Path(config.output_root), config.max_file_bytes)
 
     print(f"saved {folder}")

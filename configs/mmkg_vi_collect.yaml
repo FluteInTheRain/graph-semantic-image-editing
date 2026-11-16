@@ -9,5 +9,8 @@ designation_property: P1435
 user_agent: "mmxai-course-project/0.1 (research script)"
 request_interval_seconds: 1.5
 max_attempts: 5
+# Longest wait honoured from a Retry-After header (longer ones are capped, with a warning).
+# Why: a single Retry-After stalled the first live run for over 8 minutes (2026-11-16).
+max_retry_wait_seconds: 120
 # The repo refuses committed files of 1 MiB or more; bigger tables are split into shards.
 max_file_bytes: 1048576

@@ -51,6 +51,7 @@ def main() -> None:
         user_agent=collect_config.user_agent,
         interval_seconds=collect_config.request_interval_seconds,
         max_attempts=collect_config.max_attempts,
+        max_retry_wait_seconds=collect_config.max_retry_wait_seconds,
     )
     counts = download_images(images, output_dir / "images", client)
 
