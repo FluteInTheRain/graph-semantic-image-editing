@@ -49,3 +49,17 @@ Quy tắc, ghi lại trước khi có bất kỳ số nào của `_eval2`:
 - Luật chia nhóm đã chốt trên val (ADR-0049, mục 3); không đổi sau thời điểm này.
 - Các dòng cũ trong `main.csv` giữ nguyên. Nếu R@K/MRR của `_eval2` lệch so với dòng cũ, ghi mức lệch và lý do (huấn luyện lại, khác máy) vào hồ sơ `results/records/<ngày>_cap-do-1-mo-rong/`.
 - Ba bảng sinh bằng `scripts/summarize_runs.py --experiment-suffix _eval2` (tham số `--kind main | groups | image_to_text`), không sửa tay.
+
+## xAI cấp độ 3: đánh giá giải thích (chốt explainer trên val 2026-11-16, trước khi chạy test)
+
+| Bảng | Nội dung |
+|---|---|
+| `xai_level3.csv` | Mỗi dòng là một (explainer, `m`): Fid+, Fid+ ngẫu nhiên, hạng tụt, hạng tụt ngẫu nhiên, Fid−, characterization, robust Fid+, sparsity, validity (`connected_share`, `all_in_reach_share`), p-value Wilcoxon so với ngẫu nhiên. Mean ± std qua 3 seed, 20 truy vấn. 9 dòng `val` (3 explainer × `m` ∈ {3, 5, 10}) và 1 dòng `test` |
+| `xai_level3_test_queries.csv` | Bằng chứng theo từng truy vấn trên test (20 truy vấn, trung bình 3 seed): Fid+, hạng tụt, cùng số đó khi xoá ngẫu nhiên |
+
+Quy tắc:
+
+- Explainer và `m` chọn trên **val** bằng characterization trung bình (`statistics.choose_on_validation`): `integrated_gradients`, `m = 10`. Ghi vào `configs/explain_vg.yaml` ở commit `2ba21cf`, **trước** khi chạy test.
+- Test chạy **đúng một lần** (`results/runs/20261116-2245_explain_vg_test`, commit `8a2f137`, `git_dirty: false`). Script từ chối lần chạy test thứ hai.
+- Lần val chạy trên Kaggle với mô hình train lại ở đó; lần test chạy trên máy thành viên với checkpoint train lại tại máy (cùng config, cùng split). `alpha` (0, 0, 0,1) và epoch tốt nhất (6, 8, 6) trùng nhau; MRR@100 val lệch khoảng 1e-5.
+- Bản sao hai run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của hai run này, không sửa tay số.

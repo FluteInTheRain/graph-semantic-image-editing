@@ -1,0 +1,33 @@
+experiment: explain_vg
+ranking_config: configs/clip_graph_vg_lr1e4.yaml
+eval_split: test
+num_queries: 20
+query_sample_seed: 0
+seeds:
+- 0
+- 1
+- 2
+explainers:
+- occlusion
+- integrated_gradients
+- gnn_explainer
+num_layers: 1
+both_directions: false
+top_m_options:
+- 3
+- 5
+- 10
+main_explainer: integrated_gradients
+top_m: 10
+min_contribution: 1.0e-06
+plus_weight: 0.5
+random_repeats: 20
+robust_remove_prob: 0.1
+robust_add_back_prob: 0.9
+robust_repeats: 20
+ig_steps: 50
+gnn_explainer_epochs: 200
+gnn_explainer_learning_rate: 1.0
+gnn_explainer_size_weight: 0.005
+gnn_explainer_entropy_weight: 1.0
+output_dir: results/runs
