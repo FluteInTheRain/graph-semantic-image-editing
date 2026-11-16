@@ -630,11 +630,11 @@ score_chunk: 128
 
 **Files:** ADR-0051, `docs/guides/huan-luyen-va-xep-hang-lai.md`, `docs/ai-usage-log.md`
 
-- [ ] **Step 1:** ADR-0051, section "Thiết kế bậc 2": add a "Code (bậc 2):" line listing this plan's files.
-- [ ] **Step 2:** Guide: new section "10. G-Retriever bậc 2" (Vietnamese, beginner-first, match section 9's style): công thức; vì sao bậc 1 thua (link mục kết quả trong ADR) và bậc 2 khác ở đâu; thứ tự chạy trên Colab: `prepare_pcst_cache --estimate 1000` → `prepare_pcst_cache` (seed 0 cho bản chính và no_tree; 0 1 2 cho shuffled) → `train_pcst_sage` seed 0 1 2 cho 3 config → so với `clip_nograph_vg_lr1e4` trên val → chỉ khi nhóm duyệt: `evaluate_pcst_sage`; cache và model nằm trong `artifacts/` (symlink sang Drive); giải thích bằng `explain_candidate`; rò rỉ.
-- [ ] **Step 3:** One row in `docs/ai-usage-log.md` (member column: leave the marked blank `(điền tên thành viên)`, self-checked `Chưa`).
-- [ ] **Step 4:** `python -m uv run ruff check`, `python -m uv run ruff format --check src tests scripts`, `python -m uv run pytest -q` (only the 2 known failures). Paste tails.
-- [ ] **Step 5: Commit** `docs: G-Retriever stage 2 guide and ADR code line`.
+- [x] **Step 1:** ADR-0051, section "Thiết kế bậc 2": add a "Code (bậc 2):" line listing this plan's files.
+- [x] **Step 2:** Guide: new section "10. G-Retriever bậc 2" (Vietnamese, beginner-first, match section 9's style): công thức; vì sao bậc 1 thua (link mục kết quả trong ADR) và bậc 2 khác ở đâu; thứ tự chạy trên Colab: `prepare_pcst_cache --estimate 1000` → `prepare_pcst_cache` (seed 0 cho bản chính và no_tree; 0 1 2 cho shuffled) → `train_pcst_sage` seed 0 1 2 cho 3 config → so với `clip_nograph_vg_lr1e4` trên val → chỉ khi nhóm duyệt: `evaluate_pcst_sage`; cache và model nằm trong `artifacts/` (symlink sang Drive); giải thích bằng `explain_candidate`; rò rỉ.
+- [x] **Step 3:** One row in `docs/ai-usage-log.md` (member column: leave the marked blank `(điền tên thành viên)`, self-checked `Chưa`).
+- [x] **Step 4:** `python -m uv run ruff check`, `python -m uv run ruff format --check src tests scripts`, `python -m uv run pytest -q` (only the 2 known failures). Paste tails.
+- [x] **Step 5: Commit** `docs: G-Retriever stage 2 guide and ADR code line`.
 
 ---
 
