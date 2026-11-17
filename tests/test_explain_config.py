@@ -53,7 +53,9 @@ def test_config_is_frozen():
 
 def test_test_split_needs_the_choices_made_on_val(tmp_path):
     with pytest.raises(ValueError, match="on val before running test"):
-        load_explain_config(write_config(tmp_path, eval_split="test"))
+        load_explain_config(
+            write_config(tmp_path, eval_split="test", main_explainer=None, top_m=None)
+        )
 
 
 def test_test_split_runs_with_choices_made_on_val(tmp_path):

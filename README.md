@@ -402,7 +402,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 3 – trần 10
 
-- [ ] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**.
+- [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016)
   - Fidelity theo đề: bỏ hoặc làm nhiễu cạnh/đường đi dùng làm giải thích thì điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý.
 - [ ] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**.
 - [ ] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này.
