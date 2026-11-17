@@ -9,8 +9,10 @@ sparql_url: https://qlever.dev/api/wikidata
 # Decision (ADR-0050): domain = Wikidata items in Vietnam (Q881) with any heritage designation (P1435).
 country_qid: Q881
 designation_property: P1435
-# No personal data in the User-Agent; Wikimedia asks scripts to identify themselves.
-user_agent: "mmxai-course-project/0.1 (research script)"
+# Wikimedia's User-Agent policy asks scripts for "name/version (contact)". Without a contact,
+# upload.wikimedia.org answered HTTP 429 on every request (2026-11-17), asking us to contact
+# Wikimedia. Contact email approved by FluteInTheRain (Khang), 2026-11-17.
+user_agent: "mmxai-course-project/0.1 (khangnl2000@gmail.com)"
 request_interval_seconds: 1.5
 max_attempts: 5
 # Honour server waits (Retry-After) fully, per Wikimedia policy; fail instead of waiting
