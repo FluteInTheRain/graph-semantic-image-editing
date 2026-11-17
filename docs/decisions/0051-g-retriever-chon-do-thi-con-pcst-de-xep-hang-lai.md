@@ -187,6 +187,25 @@ Chạy trên Colab, commit `4afb770`, chỉ **val**, **chưa chạy test**. Có 
 
 **Giả thuyết cho báo cáo:** đỉnh khái niệm (vector CLIP text) và cạnh `contains` (CLIP top-16) đều sinh ra từ chính CLIP, nên đồ thị không mang thông tin ngoài CLIP. Cạnh PMI đếm trên train là nguồn duy nhất ngoài CLIP, nhưng nó chỉ quyết định khái niệm nào vào `S_q`, chứ không thêm nội dung vector mới.
 
+### Kết quả bậc 2 trên val, 3 seed (2026-11-17)
+
+Chạy trên Colab, commit `4afb770`, chỉ **val**, **chưa chạy test**. Cache `S_q` được tạo lại cho seed 2 (PCST tất định, `meta` khớp). Std là std mẫu (`ddof = 1`, ADR-0011).
+
+| Val (mean ± std, 3 seed) | MRR@100 | R@1 | R@5 | R@10 | `alpha` (seed 0/1/2) | Epoch tốt nhất |
+|---|---|---|---|---|---|---|
+| CLIP thuần | 0,1061 | 0,0559 | 0,1443 | 0,2046 | — | — |
+| `clip_nograph_vg_lr1e4` (đối chứng) | **0,1246 ± 0,0003** | 0,0680 ± 0,0000 | 0,1731 ± 0,0011 | 0,2406 ± 0,0005 | 0,2 / 0,2 / 0,1 | 7 / 7 / 8 |
+| `clip_pcst_sage_vg` (bậc 2) | **0,1244 ± 0,0003** | 0,0680 ± 0,0003 | 0,1731 ± 0,0008 | 0,2423 ± 0,0012 | 0,3 / 0,3 / 0,2 | 6 / 7 / 6 |
+
+Run: `20261116-0809/1041/1808_clip_pcst_sage_vg_seed0/1/2`, `20261116-0919/1457/1553_clip_nograph_vg_lr1e4_seed0/1/2` (lưu trên Drive, chưa đưa vào `results/tables/`).
+
+**Kết luận:**
+- Xác nhận kết quả của seed 0. Bậc 2 và đối chứng **bằng nhau trong khoảng std**: MRR chênh −0,0002, R@1 và R@5 bằng nhau.
+- R@10 cao hơn +0,0017. Mức này cỡ một std và chỉ có 3 seed, nên **không đủ để kết luận**.
+- Toàn bộ mức tăng so với CLIP (+0,018 MRR) đến từ phần học thêm `W_self` và `b`. Đồ thị con của G-Retriever **không đóng góp đo được** trên val.
+
+**Theo quy tắc dừng (mục 3):** bậc 2 không hơn `clip_nograph` trên val. G-Retriever trên đồ thị khái niệm sinh từ CLIP **không cải thiện** truy vấn so với đối chứng không đồ thị. Báo cáo trung thực, kèm giả thuyết ở mục trên. Test chạy một lần cho cả hai mô hình khi nhóm đồng ý, để có bảng báo cáo.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
