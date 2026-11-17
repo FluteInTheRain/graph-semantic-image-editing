@@ -79,6 +79,7 @@ Lưu ý:
 - `drop` một thực thể sẽ bỏ luôn mọi ảnh và triple của nó.
 - Script dựng chỉ **thêm** dòng vào cuối `review.csv`, không bao giờ ghi đè dòng đã có.
 - Mở `review.csv` bằng Excel hay Google Sheets rồi lưu lại vẫn đọc được (BOM, khoảng trắng thừa, cột đổi thứ tự đều được chấp nhận), nhưng **không đổi tên hay xoá cột**: thiếu hoặc thừa cột thì bước dựng báo lỗi nêu tên cột.
+- **Đừng mở CSV bằng cách nhấp đúp vào Excel.** Tên file, tác giả, nhãn lấy từ Wikimedia (ai cũng sửa được), nên một ô bắt đầu bằng `=`, `+`, `-`, `@` sẽ bị Excel chạy như công thức (CSV/formula injection). Hiện có một tên file thật như vậy: `-i---i- (39312478014).jpg`. Hãy dùng trình soạn văn bản (VS Code), hoặc trong Excel chọn *Data → From Text/CSV* và đặt mọi cột là *Text*. Code không thêm dấu `'` vào ô, vì tên file là khoá để khớp `review.csv`, manifest và Commons.
 - `key` gõ sai (không khớp file, triple hay thực thể nào trong snapshot) không bị bỏ qua im lặng: nó hiện trong `review_keys_unmatched` và làm `--require-reviewed` thất bại.
 
 **Quy trình nhóm** (tránh xung đột git ở cuối `review.csv`):
