@@ -1,6 +1,6 @@
 # ADR-0050: Sinh truy vấn gián tiếp bằng cách mô tả khái niệm bị giấu qua tri thức ConceptNet
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Chấp nhận (nhóm chấp nhận 2026-11-17)
 - **Ngày:** 2026-11-15
 
 ## Bối cảnh
