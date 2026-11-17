@@ -1,8 +1,8 @@
 {
   "counts": {
-    "already_present": 348,
-    "downloaded_original": 5,
-    "downloaded_thumbnail": 50,
+    "already_present": 382,
+    "downloaded_original": 0,
+    "downloaded_thumbnail": 0,
     "missing_on_commons": 0,
     "relabelled_as_original": 0,
     "removed_bad_file": 0,

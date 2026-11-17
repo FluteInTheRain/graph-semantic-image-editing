@@ -6,15 +6,10 @@ Q102128030,kept_at,Q5370414,https://www.wikidata.org/wiki/Q102128030,P195|P276
 Q102128030,located_in,Q1858,https://www.wikidata.org/wiki/Q102128030,P131
 Q102128030,made_from,Q34095,https://www.wikidata.org/wiki/Q102128030,P186
 Q102142197,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q102142197,P1435
-Q102142197,instance_of,Q11404,https://www.wikidata.org/wiki/Q102142197,P31
 Q102142197,instance_of,Q220659,https://www.wikidata.org/wiki/Q102142197,P31
 Q102142197,kept_at,Q5370414,https://www.wikidata.org/wiki/Q102142197,P195|P276
 Q102142197,kept_at,Q6941045,https://www.wikidata.org/wiki/Q102142197,P195
 Q102142197,made_from,Q34095,https://www.wikidata.org/wiki/Q102142197,P186
-Q102146607,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q102146607,P1435
-Q102146607,instance_of,Q220659,https://www.wikidata.org/wiki/Q102146607,P31
-Q102146607,kept_at,Q5370414,https://www.wikidata.org/wiki/Q102146607,P195|P276
-Q102146607,made_from,Q34095,https://www.wikidata.org/wiki/Q102146607,P186
 Q106653085,culture,Q18461327,https://www.wikidata.org/wiki/Q106653085,P2596
 Q106653085,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q106653085,P1435
 Q106653085,influenced_by,Q9089,https://www.wikidata.org/wiki/Q106653085,P737
@@ -48,7 +43,6 @@ Q106654819,instance_of,Q386724,https://www.wikidata.org/wiki/Q106654819,P31
 Q106654819,kept_at,Q3654706,https://www.wikidata.org/wiki/Q106654819,P195
 Q106654819,kept_at,Q6941045,https://www.wikidata.org/wiki/Q106654819,P195|P276
 Q106654819,made_from,Q13085,https://www.wikidata.org/wiki/Q106654819,P186
-Q106654819,named_after,Q532,https://www.wikidata.org/wiki/Q106654819,P138
 Q106654903,culture,Q18461327,https://www.wikidata.org/wiki/Q106654903,P2596
 Q106654903,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q106654903,P1435
 Q106654903,influenced_by,Q748,https://www.wikidata.org/wiki/Q106654903,P737
@@ -63,8 +57,6 @@ Q106656518,instance_of,Q220659,https://www.wikidata.org/wiki/Q106656518,P31
 Q106656518,kept_at,Q3654706,https://www.wikidata.org/wiki/Q106656518,P195
 Q106656518,kept_at,Q5370414,https://www.wikidata.org/wiki/Q106656518,P195
 Q106656518,kept_at,Q6941045,https://www.wikidata.org/wiki/Q106656518,P195
-Q106656518,significant_event,Q106379705,https://www.wikidata.org/wiki/Q106656518,P793
-Q106656518,significant_event,Q830393,https://www.wikidata.org/wiki/Q106656518,P793
 Q10739843,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q10739843,P1435
 Q10739843,instance_of,Q178743,https://www.wikidata.org/wiki/Q10739843,P31
 Q10739843,instance_of,Q220659,https://www.wikidata.org/wiki/Q10739843,P31
@@ -73,7 +65,6 @@ Q10748470,heritage_designation,Q10755061,https://www.wikidata.org/wiki/Q10748470
 Q10748567,has_part,Q111079381,https://www.wikidata.org/wiki/Q10748567,P527
 Q10748567,heritage_designation,Q10755057,https://www.wikidata.org/wiki/Q10748567,P1435
 Q10748567,heritage_designation,Q10755061,https://www.wikidata.org/wiki/Q10748567,P1435
-Q10748567,significant_event,Q830393,https://www.wikidata.org/wiki/Q10748567,P793
 Q10752804,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q10752804,P1435
 Q10752804,kept_at,Q5929149,https://www.wikidata.org/wiki/Q10752804,P195
 Q10752804,time_period,Q6500483,https://www.wikidata.org/wiki/Q10752804,P2348
@@ -84,12 +75,10 @@ Q10752805,made_from,Q34095,https://www.wikidata.org/wiki/Q10752805,P186
 Q10752805,time_period,Q6500483,https://www.wikidata.org/wiki/Q10752805,P2348
 Q10768928,culture,Q996912,https://www.wikidata.org/wiki/Q10768928,P2596
 Q10768928,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q10768928,P1435
-Q10768928,instance_of,Q11404,https://www.wikidata.org/wiki/Q10768928,P31
 Q10768928,instance_of,Q220659,https://www.wikidata.org/wiki/Q10768928,P31
 Q10768928,kept_at,Q5370414,https://www.wikidata.org/wiki/Q10768928,P195|P276
 Q10768928,located_in,Q1858,https://www.wikidata.org/wiki/Q10768928,P131
 Q10768928,made_from,Q34095,https://www.wikidata.org/wiki/Q10768928,P186
-Q10768928,named_after,Q532,https://www.wikidata.org/wiki/Q10768928,P138
 Q10784247,heritage_designation,Q10755057,https://www.wikidata.org/wiki/Q10784247,P1435
 Q10784247,heritage_designation,Q10755061,https://www.wikidata.org/wiki/Q10784247,P1435
 Q10784247,instance_of,Q4989906,https://www.wikidata.org/wiki/Q10784247,P31
@@ -102,7 +91,6 @@ Q10788196,located_in,Q36167,https://www.wikidata.org/wiki/Q10788196,P131
 Q10788196,part_of,Q10769129,https://www.wikidata.org/wiki/Q10788196,P361
 Q10801136,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q10801136,P1435
 Q10810559,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q10810559,P1435
-Q10810559,significant_event,Q29778318,https://www.wikidata.org/wiki/Q10810559,P793
 Q10831449,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q10831449,P1435
 Q10831449,influenced_by,Q748,https://www.wikidata.org/wiki/Q10831449,P737
 Q10831449,instance_of,Q179700,https://www.wikidata.org/wiki/Q10831449,P31
@@ -110,7 +98,6 @@ Q10831449,instance_of,Q220659,https://www.wikidata.org/wiki/Q10831449,P31
 Q10831449,kept_at,Q3654706,https://www.wikidata.org/wiki/Q10831449,P195
 Q10831449,kept_at,Q5370414,https://www.wikidata.org/wiki/Q10831449,P195
 Q10831449,kept_at,Q6941045,https://www.wikidata.org/wiki/Q10831449,P195
-Q10831449,significant_event,Q106379705,https://www.wikidata.org/wiki/Q10831449,P793
 Q10833485,heritage_designation,Q43113623,https://www.wikidata.org/wiki/Q10833485,P1435
 Q10833485,located_in,Q36167,https://www.wikidata.org/wiki/Q10833485,P131
 Q10833485,part_of,Q10769129,https://www.wikidata.org/wiki/Q10833485,P361
@@ -132,10 +119,6 @@ Q108859850,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q1088598
 Q108860598,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q108860598,P1435
 Q108865105,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q108865105,P1435
 Q108865176,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q108865176,P1435
-Q108866893,culture,Q996912,https://www.wikidata.org/wiki/Q108866893,P2596
-Q108866893,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q108866893,P1435
-Q108866893,instance_of,Q11404,https://www.wikidata.org/wiki/Q108866893,P31
-Q108866893,made_from,Q34095,https://www.wikidata.org/wiki/Q108866893,P186
 Q108881843,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q108881843,P1435
 Q108881843,influenced_by,Q748,https://www.wikidata.org/wiki/Q108881843,P737
 Q108881843,instance_of,Q220659,https://www.wikidata.org/wiki/Q108881843,P31
@@ -178,14 +161,11 @@ Q111188049,influenced_by,Q9089,https://www.wikidata.org/wiki/Q111188049,P737
 Q111188049,instance_of,Q101687,https://www.wikidata.org/wiki/Q111188049,P31
 Q111188049,instance_of,Q220659,https://www.wikidata.org/wiki/Q111188049,P31
 Q111188049,made_from,Q13085,https://www.wikidata.org/wiki/Q111188049,P186
-Q111188049,named_after,Q532,https://www.wikidata.org/wiki/Q111188049,P138
 Q1202019,has_part,Q7619083,https://www.wikidata.org/wiki/Q1202019,P527
 Q1202019,heritage_designation,Q10755057,https://www.wikidata.org/wiki/Q1202019,P1435
 Q1202019,heritage_designation,Q10755061,https://www.wikidata.org/wiki/Q1202019,P1435
 Q1202019,instance_of,Q4989906,https://www.wikidata.org/wiki/Q1202019,P31
 Q1202019,located_in,Q1858,https://www.wikidata.org/wiki/Q1202019,P131
-Q1202019,significant_event,Q106379705,https://www.wikidata.org/wiki/Q1202019,P793
-Q1202019,significant_event,Q830393,https://www.wikidata.org/wiki/Q1202019,P793
 Q120835889,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q120835889,P1435
 Q120835889,instance_of,Q220659,https://www.wikidata.org/wiki/Q120835889,P31
 Q120835889,kept_at,Q206219,https://www.wikidata.org/wiki/Q120835889,P195
@@ -198,9 +178,6 @@ Q130218170,part_of,Q391406,https://www.wikidata.org/wiki/Q130218170,P361
 Q131914016,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q131914016,P1435
 Q131914172,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q131914172,P1435
 Q131914172,made_from,Q287,https://www.wikidata.org/wiki/Q131914172,P186
-Q131914511,depicts,Q7559,https://www.wikidata.org/wiki/Q131914511,P180
-Q131914511,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q131914511,P1435
-Q131914511,kept_at,Q5929149,https://www.wikidata.org/wiki/Q131914511,P195|P276
 Q131914762,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q131914762,P1435
 Q131914762,instance_of,Q179700,https://www.wikidata.org/wiki/Q131914762,P31
 Q131914762,located_in,Q1858,https://www.wikidata.org/wiki/Q131914762,P131
@@ -256,7 +233,6 @@ Q135479494,made_from,Q13085,https://www.wikidata.org/wiki/Q135479494,P186
 Q1421202,heritage_designation,Q1459900,https://www.wikidata.org/wiki/Q1421202,P1435
 Q1421202,heritage_designation,Q19683138,https://www.wikidata.org/wiki/Q1421202,P1435
 Q1421202,instance_of,Q46169,https://www.wikidata.org/wiki/Q1421202,P31
-Q1459900,part_of,Q9259,https://www.wikidata.org/wiki/Q1459900,P361
 Q1583627,heritage_designation,Q19683138,https://www.wikidata.org/wiki/Q1583627,P1435
 Q1583627,instance_of,Q46169,https://www.wikidata.org/wiki/Q1583627,P31
 Q16511573,heritage_designation,Q43113623,https://www.wikidata.org/wiki/Q16511573,P1435
@@ -265,7 +241,6 @@ Q16511573,part_of,Q10769129,https://www.wikidata.org/wiki/Q16511573,P361
 Q178743,made_from,Q287,https://www.wikidata.org/wiki/Q178743,P186
 Q190060,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q190060,P1435
 Q190128,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q190128,P1435
-Q190128,significant_event,Q29778318,https://www.wikidata.org/wiki/Q190128,P793
 Q1968747,heritage_designation,Q1459900,https://www.wikidata.org/wiki/Q1968747,P1435
 Q1968747,heritage_designation,Q19683138,https://www.wikidata.org/wiki/Q1968747,P1435
 Q1968747,instance_of,Q46169,https://www.wikidata.org/wiki/Q1968747,P31
@@ -274,7 +249,6 @@ Q206219,located_in,Q1858,https://www.wikidata.org/wiki/Q206219,P131
 Q2344822,heritage_designation,Q1459900,https://www.wikidata.org/wiki/Q2344822,P1435
 Q2344822,instance_of,Q839954,https://www.wikidata.org/wiki/Q2344822,P31
 Q23513,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q23513,P1435
-Q23513,significant_event,Q29778318,https://www.wikidata.org/wiki/Q23513,P793
 Q30920268,culture,Q996912,https://www.wikidata.org/wiki/Q30920268,P2596
 Q30920268,heritage_designation,Q10753291,https://www.wikidata.org/wiki/Q30920268,P1435
 Q30920268,kept_at,Q5370414,https://www.wikidata.org/wiki/Q30920268,P195|P276
@@ -282,13 +256,11 @@ Q30920268,made_from,Q34095,https://www.wikidata.org/wiki/Q30920268,P186
 Q3096348,heritage_designation,Q10755061,https://www.wikidata.org/wiki/Q3096348,P1435
 Q36160,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q36160,P1435
 Q3654706,located_in,Q1858,https://www.wikidata.org/wiki/Q3654706,P131
-Q386724,part_of,Q2668072,https://www.wikidata.org/wiki/Q386724,P361
 Q391406,culture,Q18461327,https://www.wikidata.org/wiki/Q391406,P2596
 Q391406,heritage_designation,Q9259,https://www.wikidata.org/wiki/Q391406,P1435
 Q391406,instance_of,Q839954,https://www.wikidata.org/wiki/Q391406,P31
 Q391406,located_in,Q25282,https://www.wikidata.org/wiki/Q391406,P131
 Q41179,heritage_designation,Q19683138,https://www.wikidata.org/wiki/Q41179,P1435
-Q43113623,part_of,Q9259,https://www.wikidata.org/wiki/Q43113623,P361
 Q4361432,heritage_designation,Q1459900,https://www.wikidata.org/wiki/Q4361432,P1435
 Q49054330,heritage_designation,Q10755057,https://www.wikidata.org/wiki/Q49054330,P1435
 Q586985,heritage_designation,Q19683138,https://www.wikidata.org/wiki/Q586985,P1435
@@ -325,7 +297,6 @@ Q7928443,instance_of,Q839954,https://www.wikidata.org/wiki/Q7928443,P31
 Q7928443,kept_at,Q5370414,https://www.wikidata.org/wiki/Q7928443,P195
 Q7928443,kept_at,Q6941045,https://www.wikidata.org/wiki/Q7928443,P195
 Q7928443,made_from,Q287,https://www.wikidata.org/wiki/Q7928443,P186
-Q7928443,named_after,Q532,https://www.wikidata.org/wiki/Q7928443,P138
 Q975568,heritage_designation,Q43113623,https://www.wikidata.org/wiki/Q975568,P1435
 Q975568,part_of,Q10769129,https://www.wikidata.org/wiki/Q975568,P361
 Q993402,heritage_designation,Q1459900,https://www.wikidata.org/wiki/Q993402,P1435

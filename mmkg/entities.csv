@@ -2,8 +2,6 @@ entity_id,name_vi,name_en,type,source_url
 Q101687,bàn thờ,altar,concept,https://www.wikidata.org/wiki/Q101687
 Q102128030,Cây đèn hình người quỳ,Bronze Lamp in the Shape of a Kneeling Man,item,https://www.wikidata.org/wiki/Q102128030
 Q102142197,Trống đồng Cảnh Thịnh,Cảnh Thịnh bronze drum,item,https://www.wikidata.org/wiki/Q102142197
-Q102146607,Môn Hạ Sảnh ấn,Sảnh Môn Hạ Seal,item,https://www.wikidata.org/wiki/Q102146607
-Q106379705,,damaged,concept,https://www.wikidata.org/wiki/Q106379705
 Q106653085,Đài thờ Mỹ Sơn E1,Mỹ Sơn E1 Pedestal,item,https://www.wikidata.org/wiki/Q106653085
 Q106653114,Đài thờ Trà Kiệu,Trà Kiệu altar,item,https://www.wikidata.org/wiki/Q106653114
 Q106654643,Tượng Phật Đồng Dương,Buddha,item,https://www.wikidata.org/wiki/Q106654643
@@ -34,7 +32,6 @@ Q108859850,Pháo cao xạ 37mm trong Chiến dịch Điện Biên Phủ,The 37mm
 Q108860598,"Máy bay MiG 21 F96, số hiệu 5121","The MiG 21 F96, No. 5121",item,https://www.wikidata.org/wiki/Q108860598
 Q108865105,"Xe tăng T-54B, số hiệu 843",The T-54 tank No. 843,item,https://www.wikidata.org/wiki/Q108865105
 Q108865176,"Xe tăng T-59, số hiệu 390",The T-58 tank No. 390,item,https://www.wikidata.org/wiki/Q108865176
-Q108866893,Trống đồng Cẩm Giang I,Cam Giang I bronze drum,item,https://www.wikidata.org/wiki/Q108866893
 Q108881843,Đại hồng chung chùa Thiên Mụ,The Grand Bell in Pagoda of the Celestial Lady,item,https://www.wikidata.org/wiki/Q108881843
 Q108884966,Bia Ngự kiến Thiên Mụ tự,Ngự kiến Thiên Mụ tự stele,item,https://www.wikidata.org/wiki/Q108884966
 Q109317842,Tượng Phật Sa Đéc,Sa Dec Buddha statue,item,https://www.wikidata.org/wiki/Q109317842
@@ -43,14 +40,12 @@ Q111033900,Bộ tượng Di Đà Tam Tôn chùa Thầy,The Amitabha Triad statue
 Q111079381,Tượng Phật giáo thời Tây Sơn chùa Tây Phương,Collection of Buddhist statues at Tay Phuong temple,item,https://www.wikidata.org/wiki/Q111079381
 Q111148688,Bia Khiêm Cung Ký,Khiêm Cung Ký stele,item,https://www.wikidata.org/wiki/Q111148688
 Q111188049,Bệ thờ Vân Trạch Hòa,Van Trach Hoa altar,item,https://www.wikidata.org/wiki/Q111188049
-Q11404,trống,drum,concept,https://www.wikidata.org/wiki/Q11404
 Q1202019,Văn Miếu – Quốc Tử Giám,Temple of Literature,item,https://www.wikidata.org/wiki/Q1202019
-Q120835889,,The set of steps of Kinh Thien Palace,item,https://www.wikidata.org/wiki/Q120835889
+Q120835889,Bậc thềm điện Kính Thiên,The set of steps of Kinh Thien Palace,item,https://www.wikidata.org/wiki/Q120835889
 Q130218170,Đài thờ Mỹ Sơn A10,My Son A10 altar,item,https://www.wikidata.org/wiki/Q130218170
 Q13085,cát kết,sandstone,concept,https://www.wikidata.org/wiki/Q13085
 Q131914016,Hoàng đế chi bảo,Hoàng đế chi bảo,item,https://www.wikidata.org/wiki/Q131914016
 Q131914172,Ngai vua triều Nguyễn,The throne of the Nguyen Dynasty,item,https://www.wikidata.org/wiki/Q131914172
-Q131914511,Áo tế giao,Sacrifice to Heaven Robe,item,https://www.wikidata.org/wiki/Q131914511
 Q131914762,Tượng Trấn Vũ đền Quán Thánh,Statue of Zhenwu at Quán Thánh Temple,item,https://www.wikidata.org/wiki/Q131914762
 Q131920509,Hương án chùa Bút Tháp,Incense altar of But Thap Temple,item,https://www.wikidata.org/wiki/Q131920509
 Q131925836,Đài thờ Đồng Dương,Dong Duong pedestal,item,https://www.wikidata.org/wiki/Q131925836
@@ -64,7 +59,7 @@ Q1328473,Hồ Ba Bể,Ba Bể Lake,item,https://www.wikidata.org/wiki/Q1328473
 Q135336978,Cột đá Chùa Dạm,Column engraved with dragons from Dam Pagoda,item,https://www.wikidata.org/wiki/Q135336978
 Q135479494,Tượng rồng Tháp Mẫm,Thap Mam Dragon statue,item,https://www.wikidata.org/wiki/Q135479494
 Q1421202,Vườn quốc gia Cát Tiên,Cát Tiên National Park,item,https://www.wikidata.org/wiki/Q1421202
-Q1459900,,Tentative World Heritage Site,concept,https://www.wikidata.org/wiki/Q1459900
+Q1459900,Di sản thế giới dự kiến,Tentative World Heritage Site,concept,https://www.wikidata.org/wiki/Q1459900
 Q1583627,Vườn quốc gia Xuân Thủy,Xuan Thuy National Park,item,https://www.wikidata.org/wiki/Q1583627
 Q162875,lăng,mausoleum,concept,https://www.wikidata.org/wiki/Q162875
 Q16511573,Lăng Thiệu Trị,Tomb of Emperor Thiệu Trị,item,https://www.wikidata.org/wiki/Q16511573
@@ -74,7 +69,7 @@ Q18461327,văn hóa Chăm Pa,Cham culture,concept,https://www.wikidata.org/wiki/
 Q1858,Hà Nội,Hanoi,concept,https://www.wikidata.org/wiki/Q1858
 Q190060,Thành nhà Hồ,Citadel of the Hồ Dynasty,item,https://www.wikidata.org/wiki/Q190060
 Q190128,Vịnh Hạ Long,Ha Long Bay,item,https://www.wikidata.org/wiki/Q190128
-Q19683138,,Ramsar site,concept,https://www.wikidata.org/wiki/Q19683138
+Q19683138,Khu Ramsar,Ramsar site,concept,https://www.wikidata.org/wiki/Q19683138
 Q1968747,Vườn quốc gia Ba Bể,Ba Bể National Park,item,https://www.wikidata.org/wiki/Q1968747
 Q206219,Hoàng thành Thăng Long,Imperial Citadel of Thang Long,item,https://www.wikidata.org/wiki/Q206219
 Q220659,di vật khảo cổ,archaeological artefact,concept,https://www.wikidata.org/wiki/Q220659
@@ -84,10 +79,9 @@ Q245117,phù điêu,relief sculpture,concept,https://www.wikidata.org/wiki/Q2451
 Q25282,Đà Nẵng,Da Nang,concept,https://www.wikidata.org/wiki/Q25282
 Q2668072,bộ sưu tập,collection,concept,https://www.wikidata.org/wiki/Q2668072
 Q287,gỗ,wood,concept,https://www.wikidata.org/wiki/Q287
-Q29778318,,UNESCO World Heritage Site record modification,concept,https://www.wikidata.org/wiki/Q29778318
 Q30920268,Thạp đồng Đào Thịnh,Đào Thịnh bronze jar,item,https://www.wikidata.org/wiki/Q30920268
 Q3096348,Ga Đà Lạt,Da Lat Railway Station,item,https://www.wikidata.org/wiki/Q3096348
-Q34095,đồng điếu,bronze,concept,https://www.wikidata.org/wiki/Q34095
+Q34095,đồng thanh,bronze,concept,https://www.wikidata.org/wiki/Q34095
 Q36160,Hội An,Hội An,item,https://www.wikidata.org/wiki/Q36160
 Q36167,Huế,Huế,concept,https://www.wikidata.org/wiki/Q36167
 Q3654706,Bảo tàng Mỹ thuật Việt Nam,Vietnam National Museum of Fine Arts,concept,https://www.wikidata.org/wiki/Q3654706
@@ -95,12 +89,11 @@ Q381885,ngôi mộ,tomb,concept,https://www.wikidata.org/wiki/Q381885
 Q386724,tác phẩm,work,concept,https://www.wikidata.org/wiki/Q386724
 Q391406,Thánh địa Mỹ Sơn,My Son Sanctuary,item,https://www.wikidata.org/wiki/Q391406
 Q41179,Mê Kông,Mekong River,item,https://www.wikidata.org/wiki/Q41179
-Q43113623,,part of UNESCO World Heritage Site,concept,https://www.wikidata.org/wiki/Q43113623
+Q43113623,một phần của Di sản thế giới UNESCO,part of UNESCO World Heritage Site,concept,https://www.wikidata.org/wiki/Q43113623
 Q4361432,Bãi đá cổ Chapa,The Area of Old Carved Stone in Chapa,item,https://www.wikidata.org/wiki/Q4361432
 Q46169,vườn quốc gia,national park,concept,https://www.wikidata.org/wiki/Q46169
 Q49054330,Đền Nội Bình Đà,Noi temple,item,https://www.wikidata.org/wiki/Q49054330
 Q4989906,tượng đài,monument,concept,https://www.wikidata.org/wiki/Q4989906
-Q532,làng,Village,concept,https://www.wikidata.org/wiki/Q532
 Q5370414,Bảo tàng Lịch sử Việt Nam,National Museum of Vietnamese History,concept,https://www.wikidata.org/wiki/Q5370414
 Q586985,Vườn quốc gia Tràm Chim,Tram Chim National Park,item,https://www.wikidata.org/wiki/Q586985
 Q5929149,Bảo tàng Mỹ thuật Cung đình Huế,Hue Museum of Royal Fine Arts,concept,https://www.wikidata.org/wiki/Q5929149
@@ -116,9 +109,7 @@ Q7619083,Bia tiến sĩ Văn Miếu Thăng Long,Stone stele records of imperial 
 Q7818615,Lăng Gia Long,Tomb of Gia Long,item,https://www.wikidata.org/wiki/Q7818615
 Q7818621,Lăng Khải Định,Tomb of Khai Dinh,item,https://www.wikidata.org/wiki/Q7818621
 Q7928443,Mộ thuyền Việt Khê,Viet Khe boat grave,item,https://www.wikidata.org/wiki/Q7928443
-Q8032387,Mộc bản triều Nguyễn,Woodblocks of the Nguyễn Dynasty,item,https://www.wikidata.org/wiki/Q8032387
 Q8086,thế kỷ 8,8th century,concept,https://www.wikidata.org/wiki/Q8086
-Q830393,,preservation,concept,https://www.wikidata.org/wiki/Q830393
 Q839954,di chỉ,archaeological site,concept,https://www.wikidata.org/wiki/Q839954
 Q9089,Ấn Độ giáo,Hinduism,concept,https://www.wikidata.org/wiki/Q9089
 Q910146,Ngưu Lang Chức Nữ,The Weaver Girl and the Cowherd,item,https://www.wikidata.org/wiki/Q910146
