@@ -1,0 +1,2 @@
+# fontspec needs XeLaTeX (or LuaLaTeX); pdflatex cannot build these files.
+$pdf_mode = 5;
