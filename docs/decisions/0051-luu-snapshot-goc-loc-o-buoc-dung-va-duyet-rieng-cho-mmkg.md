@@ -46,23 +46,26 @@ Vì sao tách: đổi một ngưỡng (ví dụ số ảnh tối đa) chỉ cầ
 
 ### 2. Luật lọc và ngưỡng (`configs/mmkg_vi_build.yaml`)
 
-Mọi luật là **lựa chọn của nhóm**. Thứ tự áp dụng theo `select_images` trong `src/mmxai/data/mmkg_build.py`.
+Mọi luật là **lựa chọn của nhóm**. Bảng xếp đúng thứ tự code áp dụng: luật đầu nằm trong `build_mmkg`, các luật ảnh tiếp theo trong `select_images` (`src/mmxai/data/mmkg_build.py`).
 
 | Luật | Giá trị | Lý do |
 |---|---|---|
+| Thực thể bị duyệt `drop` | bỏ mọi ảnh của thực thể đó | Kết quả duyệt; thực thể bị bỏ không được làm `item` hay `concept` |
 | File thuộc hơn một thực thể | bỏ | Không biết ảnh cho thấy thực thể nào; sau này đáp án truy vấn sẽ không rõ |
 | Loại file (MIME) | chỉ `image/jpeg`, `image/png`, `image/webp` | CLIP chỉ đọc ảnh raster (bỏ SVG, GIF, PDF, âm thanh, video) |
 | Giấy phép | `Public domain`, `CC0`, mọi bản `CC BY ` và `CC BY-SA ` | PDF §9, ADR-0015 quy tắc 3 |
-| Ghi công | CC BY / CC BY-SA bắt buộc có tác giả: `Artist` rỗng thì ghi `uploader: <tên người tải lên>`; cả hai rỗng thì bỏ ảnh. Public domain / CC0 rỗng tác giả thì ghi `unknown` | Giấy phép CC BY / CC BY-SA yêu cầu ghi công (`pick_author`) |
 | Kích thước | cạnh ngắn ≥ 224 px | Kích thước đầu vào của CLIP ViT-B-32 |
+| Ghi công | CC BY / CC BY-SA bắt buộc có tác giả thật: nếu `Artist` không nêu ai (xem dưới bảng) thì ghi `uploader: <tên người tải lên>`; không có người tải lên thì bỏ ảnh. Public domain / CC0 thì ghi `unknown` | Giấy phép CC BY / CC BY-SA yêu cầu ghi công (`pick_author`) |
 | Ảnh bị duyệt `drop` | bỏ | Kết quả duyệt |
 | Trùng `sha1` | giữ file có tên nhỏ nhất theo thứ tự chữ cái | Hai file giống hệt nhau từng byte |
 | Số ảnh mỗi di tích | 3–5; dưới 3 thì di tích không thành `item`; trên 5 thì chọn ảnh `P18` trước, rồi theo tên file | Đủ ảnh để chia train/val/test sau này; không để di tích nhiều ảnh lấn át |
 | Khái niệm (`concept`) | được ≥ 3 `item` cùng trỏ tới | Khái niệm chỉ nối một di tích không tạo đường đi giữa các di tích. FluteInTheRain chọn 3 (thay vì 2) để tổng số thực thể nằm trong 50–150 (ADR-0050) |
-| Quan hệ | 18 mã `P` trong config, đổi sang tên snake_case; `P276` và `P195` cùng thành `kept_at` và gộp lại khi trỏ cùng đích | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục). **Danh sách do Claude Code đề xuất, nhóm chưa duyệt** |
+| Quan hệ | 18 mã `P` trong config, đổi sang 17 tên snake_case; `P276` và `P195` cùng thành `kept_at` và gộp lại khi trỏ cùng đích | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục). **Danh sách do Claude Code đề xuất, nhóm chưa duyệt** |
 | Triple | cả hai đầu là thực thể được giữ, không tự trỏ về chính nó | Đồ thị không có đầu mút treo |
 
-Danh sách 18 mã quan hệ và nghĩa tiếng Việt nằm trong `data_cards/mmkg_vi.md`. Các quyết định nhỏ khác của Claude Code (chưa được nhóm duyệt, ghi trong design §5.2–5.3): thu thêm triple giữa các thực thể đích đã có; thực thể của miền có dưới 3 ảnh vẫn được làm `concept` nếu đủ 3 `item` trỏ tới.
+**Chuẩn hoá tác giả** (`normalize_artist`, `names_an_author` trong `src/mmxai/data/mmkg_build.py`): trước khi áp luật ghi công, chữ `Artist` được làm sạch: bỏ ký tự rộng 0 (U+200B), gộp một cụm bị lặp liền nhau ("Unknown authorUnknown author." → "Unknown author"), bỏ dấu câu ở cuối. Sau đó, nếu chữ (không phân biệt hoa thường) là `unknown`, `unknown author`, `author unknown`, `anonymous` hoặc chứa `hereby publish` (câu mẫu giấy phép dán nhầm vào ô tác giả) thì coi như **không có tác giả**. Lý do: lần dựng đầu có 11 ảnh mang tác giả hỏng như vậy, 6 ảnh trong đó là CC BY-SA 3.0, tức là không ghi công được đúng giấy phép. Số trước/sau ở `data_cards/mmkg_vi.md` mục 3. Gốc của lỗi dính chữ nằm ở bước thu thập: `strip_html` (`src/mmxai/data/mmkg_collect.py`) từng xoá thẳng thẻ HTML nên hai thẻ "Unknown author" liền nhau dính thành một từ; nay mỗi thẻ được thay bằng một dấu cách, áp dụng cho các lần thu thập sau.
+
+Danh sách 18 mã `P` (17 tên quan hệ) và nghĩa tiếng Việt nằm trong `data_cards/mmkg_vi.md`. Các quyết định nhỏ khác của Claude Code (chưa được nhóm duyệt, ghi trong design §5.2–5.3): thu thêm triple giữa các thực thể đích đã có; thực thể của miền có dưới 3 ảnh vẫn được làm `concept` nếu đủ 3 `item` trỏ tới.
 
 ### 3. Cách lấy dữ liệu
 
@@ -70,8 +73,12 @@ Danh sách 18 mã quan hệ và nghĩa tiếng Việt nằm trong `data_cards/mm
 |---|---|---|
 | Thực thể và triple | SPARQL qua **QLever** `https://qlever.dev/api/wikidata`; chuỗi mô tả index của endpoint được ghi vào `meta.json` (khoá `sparql_index`) | Ngày 2026-11-16, WDQS trả HTTP 429 yêu cầu chờ 1000 s ngay ở câu truy vấn đầu; người dùng (FluteInTheRain) yêu cầu cách thu thập nhanh nhất. QLever chạy trên bản dump Wikidata, trả cùng định dạng JSON |
 | Ảnh và metadata ảnh | Commons API (`commons.wikimedia.org/w/api.php`) | Nguồn duy nhất có giấy phép, tác giả, `sha1`, kích thước từng file |
-| Giới hạn tốc độ | Nghỉ 1,5 s giữa request, tối đa 5 lần thử; gặp 429 thì chờ đúng `Retry-After` nếu ≤ 1800 s và in một dòng log, quá 1800 s thì dừng với lỗi (`WikimediaClient` trong `src/mmxai/data/wikimedia.py`) | Chính sách Wikimedia yêu cầu tôn trọng `Retry-After`; gửi lại sớm có thể bị chặn lâu hơn |
+| Giới hạn tốc độ và thử lại | Nghỉ 1,5 s giữa request, tối đa 5 lần thử. Chỉ thử lại khi gặp 429 và 5xx (500/502/503/504) và lỗi mạng tạm thời (`URLError`, hết thời gian chờ, kết nối bị ngắt, `IncompleteRead`); mã khác (400, 404, 501...) báo lỗi ngay. Có `Retry-After` hợp lệ thì chờ đúng số giây đó nếu ≤ 1800 s, quá 1800 s thì dừng với lỗi; không có thì chờ tăng dần (1,5 s × 2^lần thử). Mỗi lần chờ in một dòng log. Hết lượt thử thì lỗi chỉ ghi máy chủ và đường dẫn, không ghi cả câu truy vấn (`WikimediaClient._get` trong `src/mmxai/data/wikimedia.py`) | Chính sách Wikimedia yêu cầu tôn trọng `Retry-After`; gửi lại sớm có thể bị chặn lâu hơn. Lỗi mạng chốc lát không nên làm hỏng một lần thu thập dài |
+| Tên bản dump (`sparql_index`) | Đọc `?cmd=stats` của endpoint **đầu tiên**, trước mọi câu truy vấn. Không đọc được (lỗi mạng, `RuntimeError` sau khi client đã thử hết lượt, JSON sai, thiếu khoá) thì ghi `unknown` và in cảnh báo (`_sparql_index` trong `src/mmxai/data/mmkg_collect.py`) | Chỉ là thông tin nguồn gốc, không đáng dừng cả lần thu thập; đọc trước để tên dump khớp dữ liệu các câu truy vấn đọc |
+| Câu trả lời rỗng | Câu `domain` trả 0 thực thể hoặc câu `triples` trả 0 dòng thì dừng với `RuntimeError` | Rỗng nghĩa là sai config hoặc endpoint hỏng, không phải miền rỗng; lưu lại sẽ đóng băng một snapshot rỗng |
+| File ảnh không có thông tin | `meta.json` khoá `missing_files` ghi `{name, reason}`, `reason` là `missing` (đã xoá), `invalid` (tên sai), `no_imageinfo` hoặc `unresolved_redirect`; script in 10 file đầu và đường dẫn `meta.json` | Biết vì sao thiếu để kiểm tay. Snapshot `20261116` thu trước thay đổi này nên chỉ ghi tên file |
 | User-Agent | `mmxai-course-project/0.1 (research script)`, không có email hay tên | Không công bố thông tin cá nhân; nhóm chưa đồng ý đăng thông tin liên hệ |
+| Tải ảnh | Thumbnail rộng `download_width` = 960 px (`scripts/download_mmkg_images.py`, logic `download_images` trong `src/mmxai/data/mmkg_images.py`). Tải **bản gốc** và so `sha1` với Commons khi: bản gốc rộng ≤ 960 px (Commons không phóng to, nên "thumbnail" khi đó chính là bản gốc), Commons không trả `thumburl`, hoặc thumbnail có cạnh ngắn < 224 px. Cột `why` của `mmkg/images_manifest.csv` ghi lý do: `thumbnail`, `original_not_wider`, `original_no_thumburl`, `original_thumb_too_small`, `original_already_present`. Manifest được ghi lại **sau từng file**. File trên đĩa sai `sha1` bị xoá (có log) rồi tải lại. File trong `mmkg/images/` không có trong `images.csv` (ảnh đã bị bỏ, file `.part` dở) làm script dừng mã 1 trước mọi request, trừ khi chạy với `--delete-stray` (xoá và log từng file). Mọi file sai `sha1` hoặc không tìm thấy được ghi tên ra stderr và vào `mmkg/download_report.json`; còn lỗi thì thoát mã 1 | Tải bản gốc bị chặn tốc độ (429) ngày 2026-11-16; chính sách robot cho phép thumbnail tạo sẵn; CLIP chỉ cần 224 px. Ảnh bị duyệt bỏ (ví dụ có mặt người) không được lọt lên bản chia sẻ |
 | Giới hạn 1 MiB | Tác giả/người tải lên tách sang `image_credits.csv`; bảng nào vẫn vượt 1 MiB thì chia thành `<tên>_000.csv`, `<tên>_001.csv`... (`write_rows` trong `src/mmxai/data/mmkg_csv.py`) | Không nới giới hạn của hook |
 
 ## Các phương án đã cân nhắc
@@ -93,6 +100,7 @@ Danh sách 18 mã quan hệ và nghĩa tiếng Việt nằm trong `data_cards/mm
 - **Biên quy mô hẹp:** lần dựng đầu có 331 triple, chỉ hơn mốc tối thiểu 300 là 31. Nếu duyệt bỏ nhiều triple hoặc thực thể, có thể phải đổi ngưỡng (ví dụ `min_items_per_concept`); khi đó ghi lý do và số mới vào data card.
 - **Một số di tích bị loại vì thiếu ảnh hợp lệ:** ví dụ trống đồng Ngọc Lũ (`Q3514747`) có 6 file trên Commons nhưng chỉ 2 qua luật (2 GIF và 1 SVG bị loại vì MIME, 1 JPEG cạnh ngắn 200 px), nên không thành `item`.
 - **Danh sách quan hệ chưa được nhóm duyệt:** cần duyệt và đổi trạng thái ADR này trước khi dùng bộ dữ liệu cho thí nghiệm.
+- **File duyệt chịu được bảng tính:** `read_review` nhận file có BOM (Excel), ô thừa khoảng trắng, cột đổi thứ tự; thiếu hoặc thừa cột thì báo lỗi nêu tên cột. Dòng duyệt có `key` không khớp gì trong snapshot gốc (thường là gõ sai) được liệt kê ở `review_keys_unmatched` trong `build_report.json`, và `--require-reviewed` thoát mã 1 khi danh sách này khác rỗng.
 - **Việc tiếp theo:** thành viên duyệt `mmkg/review.csv`; dựng lại tới khi `scripts/build_mmkg.py --require-reviewed` qua; tải ảnh (`scripts/download_mmkg_images.py`) và đưa lên cloud; ADR cho split `splits/mmkg_vi/`, cạnh `contains` và truy vấn trên MMKG.
 
 ## Nguồn tham khảo
