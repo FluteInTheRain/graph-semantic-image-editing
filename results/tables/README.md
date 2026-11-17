@@ -49,3 +49,18 @@ Quy tắc, ghi lại trước khi có bất kỳ số nào của `_eval2`:
 - Luật chia nhóm đã chốt trên val (ADR-0049, mục 3); không đổi sau thời điểm này.
 - Các dòng cũ trong `main.csv` giữ nguyên. Nếu R@K/MRR của `_eval2` lệch so với dòng cũ, ghi mức lệch và lý do (huấn luyện lại, khác máy) vào hồ sơ `results/records/<ngày>_cap-do-1-mo-rong/`.
 - Ba bảng sinh bằng `scripts/summarize_runs.py --experiment-suffix _eval2` (tham số `--kind main | groups | image_to_text`), không sửa tay.
+
+## `g_retriever_test.csv`: G-Retriever bậc 2 (ADR-0051)
+
+Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_test.csv`. Không ghi đè `main.csv`, vì máy chạy không có các run cũ.
+
+| Dòng (`experiment`) | `lr` | Vai trò |
+|---|---|---|
+| `clip_pcst_sage_vg` | 1e-4 | G-Retriever bậc 2: GraphSAGE chỉ gộp khái niệm trong đồ thị con PCST (`k = 3`, `C = 0,5` cố định theo bài gốc) |
+| `clip_nograph_vg_lr1e4` | 1e-4 | Đối chứng **cùng cấu hình huấn luyện** với dòng trên, đúng như thiết kế bậc 2 trong ADR-0051 |
+
+Ghi chú minh bạch:
+- Theo quy tắc chọn `lr` ở mục `main.csv`, đối chứng không đồ thị **chính thức** vẫn là `clip_nograph_vg` (1e-3, val tốt hơn 1e-4).
+- Dòng `clip_nograph_vg_lr1e4` ở đây được chạy test ngày 2026-11-17, **sau khi nhóm đồng ý**, chỉ để so cùng cấu hình với G-Retriever. Không có lựa chọn nào dựa trên số test này.
+- Run: `20261117-1300/1305/1309_clip_pcst_sage_vg_seed0/1/2`, `20261117-1301/1305/1310_clip_nograph_vg_lr1e4_seed0/1/2`. Commit code `4afb770`, cùng `split_sha256` với `main.csv`.
+

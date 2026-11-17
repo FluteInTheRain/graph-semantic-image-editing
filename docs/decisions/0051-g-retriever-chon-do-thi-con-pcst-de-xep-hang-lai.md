@@ -206,6 +206,25 @@ Run: `20261116-0809/1041/1808_clip_pcst_sage_vg_seed0/1/2`, `20261116-0919/1457/
 
 **Theo quy tắc dừng (mục 3):** bậc 2 không hơn `clip_nograph` trên val. G-Retriever trên đồ thị khái niệm sinh từ CLIP **không cải thiện** truy vấn so với đối chứng không đồ thị. Báo cáo trung thực, kèm giả thuyết ở mục trên. Test chạy một lần cho cả hai mô hình khi nhóm đồng ý, để có bảng báo cáo.
 
+### Kết quả bậc 2 trên test (2026-11-17)
+
+Chạy **một lần** cho mỗi seed, sau khi nhóm đồng ý; commit code `4afb770`, cùng split với `main.csv`. Số lấy từ `results/tables/g_retriever_test.csv` (ADR-0010). Hai dòng có dấu * lấy từ `results/tables/main.csv`.
+
+| Test (mean ± std, 3 seed) | `lr` | MRR@100 | R@1 | R@5 | R@10 |
+|---|---|---|---|---|---|
+| CLIP thuần `clip_vg`* | – | 0,1076 | | | 0,2018 |
+| `clip_nograph_vg`* (đối chứng chính theo quy tắc chọn `lr` trên val) | 1e-3 | 0,1266 | | | |
+| `clip_nograph_vg_lr1e4` (đối chứng cùng cấu hình) | 1e-4 | **0,1277 ± 0,0001** | 0,0697 ± 0,0008 | 0,1742 ± 0,0017 | 0,2485 ± 0,0007 |
+| **`clip_pcst_sage_vg` (G-Retriever bậc 2)** | 1e-4 | **0,1278 ± 0,0005** | 0,0708 ± 0,0006 | 0,1724 ± 0,0011 | 0,2474 ± 0,0001 |
+| `clip_graph_vg_lr1e4`* (GraphSAGE cấp độ 1) | 1e-4 | 0,1284 ± 0,0006 | | | 0,2492 ± 0,0015 |
+
+**Kết luận:**
+- Test **khớp với val**: G-Retriever bậc 2 bằng đối chứng cùng cấu hình trong khoảng std (MRR chênh +0,0001). Đồ thị con không đóng góp thêm.
+- So với đối chứng chính `clip_nograph_vg` (0,1266) thì cao hơn +0,0012. Nhưng hai mô hình khác `lr`, nên mức chênh này không cho biết đồ thị có ích.
+- Đối chứng `clip_nograph_vg_lr1e4` không phải cấu hình chính theo quy tắc trong `results/tables/README.md`; nó được chạy test chỉ để so cùng cấu hình (đã ghi rõ ở đó).
+
+G-Retriever (phần truy xuất đồ thị con, bậc 1 và bậc 2) **không cải thiện truy vấn** so với đối chứng không đồ thị trên Visual Genome. Kết quả âm này nhất quán với GraphSAGE ở cấp độ 1, và được báo cáo cùng giả thuyết: đồ thị sinh từ CLIP nên không mang thông tin mới.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.
