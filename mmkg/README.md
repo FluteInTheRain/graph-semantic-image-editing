@@ -4,7 +4,7 @@
 
 Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, ADR-0050). Dữ liệu lấy tự động từ Wikidata + Wikimedia Commons, lọc bằng luật trong config, rồi thành viên duyệt (ADR-0051). Nguồn, giấy phép, thống kê, hạn chế: `data_cards/mmkg_vi.md`.
 
-**Trạng thái (2026-11-17):** đã thu thập snapshot `raw/20261116/` và dựng (lần sau cùng với luật tác giả mới): 80 `item` + 39 `concept` (119 thực thể), 302 triple, 382 ảnh (`build_report.json`). **Đã duyệt sơ bộ bằng AI** (`reviewer = claude-ai`, mục 3), **chưa có duyệt của người**, chưa dùng cho thí nghiệm. 382 ảnh đã nằm đủ trong `images/`, đã kiểm `sha1`.
+**Trạng thái (2026-11-17):** đã thu thập snapshot `raw/20261116/` và dựng (lần sau cùng với luật tác giả mới): 80 `item` + 39 `concept` (119 thực thể), 303 triple, 380 ảnh (`build_report.json`). **Đã duyệt sơ bộ bằng AI rồi duyệt bởi người** (qphulong, mục 3), `--require-reviewed` qua; chưa dùng cho thí nghiệm. Tình trạng tải ảnh: `download_report.json` và data card mục 8.
 
 ## 1. Luồng làm việc
 
@@ -54,13 +54,14 @@ Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, AD
 
 ## 3. Cách duyệt một dòng
 
-**Tình trạng duyệt (2026-11-17):** một AI pre-review (Claude Code, subagent xem ảnh) đã điền **mọi** dòng của `review.csv` (946 dòng): `reviewer = claude-ai`, `date = 2026-11-17`, tiêu chí thận trọng. Kết quả: 68 ảnh, 16 khoá triple và 4 thực thể bị `drop`; 5 nhãn `fix_name_vi` do AI dịch. Đây **chưa phải duyệt của người**. Thành viên phải kiểm:
+**Tình trạng duyệt (2026-11-17):** hai lượt.
 
-- mọi dòng `review_status = drop` (lọc trong `review.csv`);
-- 36 dòng ghi chú bắt đầu bằng `unsure:` hoặc `check:` trong `mmkg/review_ai_notes.csv` (cột `kind, key, review_status, note`; file này chỉ để tham khảo, build không đọc);
-- nên xem thêm một mẫu ngẫu nhiên ảnh `ok`.
+1. **AI duyệt sơ bộ** (Claude Code, subagent xem ảnh) điền mọi dòng (946 dòng, `reviewer = claude-ai`, tiêu chí thận trọng): `drop` 68 ảnh, 16 khoá triple, 4 thực thể; dịch 5 nhãn `fix_name_vi`; ghi 36 ca không chắc (`unsure:`/`check:`) vào `mmkg/review_ai_notes.csv` (cột `kind, key, review_status, note`; file này chỉ để tham khảo, build không đọc).
+2. **Người duyệt** (qphulong) xem lại mọi dòng AI `drop`, 36 ca không chắc, nhãn dịch và danh sách quan hệ, lướt toàn bộ ảnh `ok`; bỏ thêm 20 ảnh, giữ lại 1 triple; 2 vòng, 158 dòng ký `reviewer = qphulong`. Bộ chính thức sau lượt này: 119 thực thể, 303 triple, 380 ảnh.
 
-**Cách ghi đè quyết định của AI:** sửa đúng dòng đó trong `review.csv` (đổi `review_status`, `reason`, `fix_name_vi` nếu cần), **ghi tên mình vào `reviewer`**, đặt `date`, rồi dựng lại (bước 4). Kết quả chi tiết: `data_cards/mmkg_vi.md` mục 7.
+`review.csv` hiện có 962 dòng. 804 dòng `ok` vẫn ký `claude-ai`: người không đánh dấu gì ở các dòng đó. Chi tiết, số liệu và giới hạn: `data_cards/mmkg_vi.md` mục 7.
+
+**Cách ghi đè một quyết định:** sửa đúng dòng đó trong `review.csv` (đổi `review_status`, `reason`, `fix_name_vi` nếu cần), **ghi tên mình vào `reviewer`**, đặt `date`, rồi dựng lại (bước 4). Kết quả chi tiết: `data_cards/mmkg_vi.md` mục 7.
 
 Mỗi dòng của `mmkg/review.csv` là một quyết định cho **một** mục của bộ chính thức:
 
