@@ -318,7 +318,7 @@ Kết quả theo cột `why` của `mmkg/images_manifest.csv` (382 dòng): `thum
 | Link cloud | https://drive.google.com/drive/folders/1KnsEIUrnbo0C58idfRK_sjhy8cRsahzG |
 |---|---|
 
-Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; `rclone check` báo 416 file khớp, 0 khác biệt. Bản sao này được upload **trước duyệt** (403 ảnh, 416 file): nó còn chứa các ảnh đã bị `drop` và CSV cũ, nên cần đồng bộ lại thư mục này với `mmkg/` hiện tại (382 ảnh) rồi mới chia sẻ tiếp. Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
+Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; Bản upload đầu (trước duyệt, 403 ảnh) đã được **đồng bộ lại ngày 2026-11-17 sau duyệt** bằng `rclone sync`, nên các ảnh bị `drop` (kể cả 11 ảnh có mặt người) đã bị gỡ khỏi Drive: thư mục hiện có đúng 382 ảnh, `rclone check` báo 396 file khớp, 0 khác biệt. Mỗi lần duyệt lại và dựng lại phải đồng bộ tiếp (`rclone sync mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store"`). Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
 
 Mỗi lần nhóm sửa duyệt rồi dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
