@@ -1,6 +1,6 @@
 # ADR-0052: Chạy G-Retriever bậc 2 trên Flickr30k bằng cách dùng lại cạnh PMI của Visual Genome
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Chấp nhận (nhóm chấp nhận 2026-11-17)
 - **Ngày:** 2026-11-17
 
 ## Bối cảnh

@@ -555,7 +555,7 @@ Fidelity, validity, sparsity: xem `src/mmxai/explain/` và ADR-0016.
 
 ## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0052)
 
-> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0052 **Đề xuất**, nhóm chưa duyệt. Không chạy bước test trước khi nhóm duyệt.
+> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0052 đã được nhóm **chấp nhận** (2026-11-17), nên bước test được phép chạy, mỗi seed đúng một lần.
 
 ### 11.1. Ý tưởng
 
