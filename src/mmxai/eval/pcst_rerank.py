@@ -87,6 +87,9 @@ class PcstRerankConfig:
     selection_metric: str
     selection_dir: str  # where selection.json is written (artifacts/, gitignored)
     output_dir: str
+    # Flickr30k borrows VG's vocabulary and PMI edges (ADR-0052);
+    # None = this experiment's own split_file.
+    concept_edges_split_file: str | None = None
 
 
 def load_pcst_rerank_config(path: str | Path) -> PcstRerankConfig:
