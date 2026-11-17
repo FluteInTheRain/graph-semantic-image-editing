@@ -59,12 +59,12 @@ Sau mỗi batch, Haiku review chỉ theo spec.
 ## Batch B2
 
 ### T3 [M]: ADR-0052 và hướng dẫn chạy
-- [ ] Tạo `docs/decisions/0052-g-retriever-tren-flickr30k-dung-lai-canh-pmi-cua-vg.md` theo template ADR-0001, viết tiếng Việt.
+- [x] Tạo `docs/decisions/0052-g-retriever-tren-flickr30k-dung-lai-canh-pmi-cua-vg.md` theo template ADR-0001, viết tiếng Việt.
   - Trạng thái "Đề xuất", ngày 2026-11-17.
   - Nội dung lấy từ spec, mục 2–8: bối cảnh, quyết định (nhóm chọn ngày 2026-11-17), hai phương án bị loại, rò rỉ, hệ quả.
   - Ghi chú trùng số ADR-0050 (spec mục 8).
-- [ ] Thêm dòng 0052 vào cuối bảng "Quyết định khi cài đặt" trong `docs/decisions/README.md`, bắt đầu bằng "(Đề xuất)".
-- [ ] Thêm mục `## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0052)` vào cuối `docs/guides/huan-luyen-va-xep-hang-lai.md`. Mục gồm:
+- [x] Thêm dòng 0052 vào cuối bảng "Quyết định khi cài đặt" trong `docs/decisions/README.md`, bắt đầu bằng "(Đề xuất)".
+- [x] Thêm mục `## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0052)` vào cuối `docs/guides/huan-luyen-va-xep-hang-lai.md`. Mục gồm:
   1. Ý tưởng, 3–4 câu.
   2. Bảng "cần có trước khi chạy". Mỗi dòng ghi thêm cách tạo:
      - đặc trưng Flickr30k;
@@ -81,12 +81,12 @@ Sau mỗi batch, Haiku review chỉ theo spec.
      - symlink **cả** `artifacts/pcst_cache` lên Drive (bài học 2026-11-17: cache mất khi xoá runtime);
      - `drive.flush_and_unmount()` sau mỗi phiên.
   5. Thời gian ước tính (spec mục 7) và quy tắc dừng giống mục 10.8.
-- [ ] Commit: `docs: ADR-0052 and guide for G-Retriever stage 2 on Flickr30k`.
+- [x] Commit: `docs: ADR-0052 and guide for G-Retriever stage 2 on Flickr30k`.
 
 ### T4 [S]: nhật ký AI
-- [ ] Thêm một dòng vào cuối bảng `docs/ai-usage-log.md`, giữ CRLF như các dòng khác:
+- [x] Thêm một dòng vào cuối bảng `docs/ai-usage-log.md`, giữ CRLF như các dòng khác:
   - ngày 2026-11-17, thành viên `Thuat Nguyen`;
   - công cụ: `Claude Code (Opus 5.5 lập spec/plan; Sonnet 5.5 subagent, Haiku 4.5 review)`;
   - phần việc: tóm tắt T1–T3 kèm đường dẫn file;
   - "Phần đã chỉnh sửa" ghi `(chưa)`; cột cuối ghi `Chưa`.
-- [ ] Commit: `docs(ai-log): G-Retriever on Flickr30k`.
+- [x] Commit: `docs(ai-log): G-Retriever on Flickr30k`.
