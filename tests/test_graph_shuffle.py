@@ -21,6 +21,7 @@ from mmxai.graph.shuffle import (
     ShuffleGraphConfig,
     load_shuffle_graph_config,
     run_shuffle_graph,
+    shuffle_concept_pairs,
     shuffle_contains_edges,
 )
 
@@ -194,3 +195,16 @@ def test_committed_config_shuffles_the_graph_of_the_main_model():
 
     assert config.graph_dir == main_graph.output_dir
     assert config.output_dir != config.graph_dir
+
+
+def test_shuffle_concept_pairs_keeps_degrees_and_changes_edges():
+    pairs = np.array([[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [4, 6]])
+
+    shuffled = shuffle_concept_pairs(pairs, seed=0)
+
+    def degrees(edge_pairs):
+        return np.bincount(edge_pairs.ravel(), minlength=8).tolist()
+
+    assert degrees(shuffled) == degrees(pairs)
+    assert {tuple(p) for p in shuffled.tolist()} != {tuple(p) for p in pairs.tolist()}
+    assert shuffle_concept_pairs(pairs, seed=0).tolist() == shuffled.tolist()  # deterministic
