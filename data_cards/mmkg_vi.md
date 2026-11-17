@@ -262,19 +262,24 @@ uv run python scripts/download_mmkg_images.py \
 # thêm --delete-stray nếu script báo file lạ
 ```
 
-Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt. Số liệu (in cuối lần chạy và nằm trong `mmkg/download_report.json`) và dung lượng `mmkg/images/` điền khi tải xong:
+Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt, và xong ngày 2026-11-17 sau nhiều lần chạy lại (bị `upload.wikimedia.org` giới hạn bằng HTTP 429; hết bị chặn khi User-Agent có email liên hệ, xem `configs/mmkg_vi_collect.yaml`). Số liệu của **lần chạy cuối** (in cuối lần chạy, nằm trong `mmkg/download_report.json`; các lần trước được tính vào `already_present`):
 
 | Mục | Giá trị |
 |---|---|
-| `downloaded_thumbnail` | (điền sau) |
-| `downloaded_original` | (điền sau) |
-| `already_present` | (điền sau) |
-| `relabelled_as_original` | (điền sau) |
-| `removed_bad_file` | (điền sau) |
-| `sha1_mismatch` | (điền sau) |
-| `missing_on_commons` | (điền sau) |
-| Dung lượng `mmkg/images/` (`du -sh`) | (điền sau) |
-| Link cloud | (điền sau) |
+| `downloaded_thumbnail` | 50 |
+| `downloaded_original` | 5 |
+| `already_present` | 348 |
+| `relabelled_as_original` | 0 |
+| `removed_bad_file` | 0 |
+| `sha1_mismatch` | 0 |
+| `missing_on_commons` | 0 |
+| Tổng ảnh trong `mmkg/images/` | 403 / 403 |
+| Tổng dung lượng theo manifest (`bytes`) | 121.230.948 byte (khoảng 116 MB theo `du -sh`) |
+
+Kết quả cuối theo cột `why` của `mmkg/images_manifest.csv` (403 dòng): `thumbnail` 350, `original_not_wider` 44, `original_already_present` 9.
+
+| Link cloud | (điền sau khi upload) |
+|---|---|
 
 Sau khi duyệt và dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
