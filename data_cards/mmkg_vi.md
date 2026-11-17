@@ -107,7 +107,7 @@ Phân bố giấy phép của 403 ảnh (đếm từ `mmkg/images.csv`):
 Điều kiện khi dùng hoặc đăng lại:
 
 - Ảnh CC BY / CC BY-SA: phải ghi tác giả (`author`), giấy phép (`license`) và link trang file (`source_url`). Ảnh CC BY-SA sửa đổi phải giữ cùng giấy phép.
-- Ảnh **không** nằm trong git (`mmkg/images/` đã gitignore, ADR-0008); chia sẻ qua link cloud của nhóm (chưa có link, sẽ điền sau khi duyệt và tải xong). Người nhận kiểm từng file bằng `sha1` trong `mmkg/images_manifest.csv` (mục 8).
+- Ảnh **không** nằm trong git (`mmkg/images/` đã gitignore, ADR-0008); chia sẻ qua link cloud của nhóm: https://drive.google.com/drive/folders/1KnsEIUrnbo0C58idfRK_sjhy8cRsahzG (mục 8). Người nhận kiểm từng file bằng `sha1` trong `mmkg/images_manifest.csv` (mục 8).
 - ADR-0015 quy tắc 4: không dùng ảnh có mặt người nhận diện được. Việc này chỉ kiểm được khi duyệt bằng mắt (lý do `identifiable_person`, mục 7).
 
 ## 4. Cách tạo triple
@@ -278,8 +278,10 @@ Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt, và xong
 
 Kết quả cuối theo cột `why` của `mmkg/images_manifest.csv` (403 dòng): `thumbnail` 350, `original_not_wider` 44, `original_already_present` 9.
 
-| Link cloud | (điền sau khi upload) |
+| Link cloud | https://drive.google.com/drive/folders/1KnsEIUrnbo0C58idfRK_sjhy8cRsahzG |
 |---|---|
+
+Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; `rclone check` báo 416 file khớp, 0 khác biệt. Ảnh **chưa được nhóm duyệt** tại thời điểm upload: sau khi duyệt và chạy lại script tải với `--delete-stray`, cần đồng bộ lại thư mục này để gỡ ảnh bị `drop`. Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
 
 Sau khi duyệt và dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
