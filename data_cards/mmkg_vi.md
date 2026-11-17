@@ -2,7 +2,7 @@
 
 **Là gì?** Một đồ thị tri thức đa phương thức (MMKG) nhỏ do nhóm tự xây cho cấp độ 3 (PDF §5). Đỉnh là **thực thể** (di tích, hiện vật, khái niệm như "tượng", "đồng điếu", "Bảo tàng Lịch sử Việt Nam"), cạnh là **triple** (đầu, quan hệ, đuôi), và mỗi di tích có 3–5 **ảnh**. Định dạng theo ADR-0015; miền theo ADR-0050; cách thu thập, lọc và duyệt theo ADR-0051.
 
-**Trạng thái (2026-11-16):** đã thu thập và dựng bản đầu, **chưa duyệt**. Chưa được dùng cho thí nghiệm nào. Chỉ dùng khi `scripts/build_mmkg.py --require-reviewed` chạy qua (không còn mục `pending`).
+**Trạng thái (2026-11-17):** đã thu thập, dựng bản đầu và dựng lại với luật tác giả mới (mục 3), **chưa duyệt**. Chưa được dùng cho thí nghiệm nào. Chỉ dùng khi `scripts/build_mmkg.py --require-reviewed` chạy qua (không còn mục `pending`).
 
 Đường dẫn tính từ gốc repo. Số liệu lấy từ `mmkg/build_report.json` và `mmkg/raw/20261116/meta.json`; số nào đếm thêm từ `mmkg/*.csv` thì ghi rõ.
 
@@ -43,6 +43,8 @@
 | Phiên bản code thu thập | `git_commit` trong `meta.json` | `8a75f310259a646d75bbe33c4f33f49d1b9df299` |
 | Câu truy vấn đã chạy | Khoá `queries` trong `meta.json` | 4 câu: `domain`, `triples`, `target_labels`, `concept_triples` |
 
+Nếu không đọc được tên bản dump (endpoint lỗi mạng, client đã thử hết lượt và báo `RuntimeError`, JSON sai, thiếu khoá `name-index`), script ghi `sparql_index = unknown` và in cảnh báo, không dừng lần thu thập: đây chỉ là thông tin nguồn gốc (ADR-0051 mục 3, `_sparql_index` trong `src/mmxai/data/mmkg_collect.py`). Tên dump được đọc **trước** mọi câu truy vấn. Khoá `missing_files` của `meta.json` ghi các file Commons không trả thông tin; từ nay mỗi mục là `{name, reason}` (`missing`, `invalid`, `no_imageinfo`, `unresolved_redirect`), riêng snapshot `20261116` thu trước thay đổi này nên chỉ ghi tên file.
+
 Vì sao dùng QLever thay cho Wikidata Query Service (WDQS): ngày 2026-11-16 WDQS trả HTTP 429 yêu cầu chờ 1000 s ngay ở câu truy vấn đầu, và người dùng yêu cầu thu thập nhanh nhất (ADR-0051). QLever chạy trên bản dump Wikidata nên dữ liệu có thể lệch Wikidata trực tiếp (mục 10).
 
 Lệnh thu thập (chạy một lần; script từ chối chạy lại trong cùng ngày):
@@ -62,12 +64,30 @@ Script gửi User-Agent `mmxai-course-project/0.1 (research script)`, không ch�
 
 **Luật ghi công** (lựa chọn của nhóm, `pick_author` trong `src/mmxai/data/mmkg_build.py`):
 
-| Giấy phép | `Artist` trên Commons có | `Artist` rỗng |
+| Giấy phép | `Artist` nêu một người/tổ chức | `Artist` rỗng hoặc không nêu ai |
 |---|---|---|
-| CC BY, CC BY-SA | Ghi nguyên văn | Ghi `uploader: <tên người tải lên>`; nếu cũng rỗng thì **bỏ ảnh** |
-| Public domain, CC0 | Ghi nguyên văn | Ghi `unknown` |
+| CC BY, CC BY-SA | Ghi lại (đã chuẩn hoá) | Ghi `uploader: <tên người tải lên>`; nếu cũng rỗng thì **bỏ ảnh** |
+| Public domain, CC0 | Ghi lại (đã chuẩn hoá) | Ghi `unknown` |
 
-Trong bộ hiện tại (đếm từ `mmkg/images.csv`): 1 ảnh ghi `uploader: ...`, 1 ảnh ghi `unknown`.
+**Vấn đề tác giả ở lần dựng đầu.** Commons trả ô `Artist` dưới dạng HTML. Với ảnh không rõ tác giả, Commons đặt chữ "Unknown author" trong hai thẻ liền nhau; bộ thu thập cũ xoá thẻ mà không chèn dấu cách nên được `Unknown authorUnknown author`. Một ảnh khác có câu mẫu giấy phép ("... the copyright holder of this work, hereby publishes it under the following license:") nằm trong ô tác giả. Lần dựng đầu có **11 ảnh** mang tác giả hỏng như vậy, **6 ảnh** trong đó là CC BY-SA 3.0, tức là không ghi công đúng giấy phép.
+
+**Luật sửa** (`normalize_artist`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0051 mục 2):
+
+1. Làm sạch chữ `Artist`: bỏ ký tự rộng 0, gộp một cụm bị lặp liền nhau (`Unknown authorUnknown author.` → `Unknown author`), bỏ dấu câu ở cuối (`Chainwit.` → `Chainwit`).
+2. Chữ (không phân biệt hoa thường) là `unknown`, `unknown author`, `author unknown`, `anonymous`, hoặc chứa `hereby publish`, thì coi như không nêu ai và áp cột phải của bảng trên.
+3. Bộ thu thập (`strip_html` trong `src/mmxai/data/mmkg_collect.py`) nay thay mỗi thẻ HTML bằng dấu cách, nên lần thu thập sau không còn dính chữ. Snapshot `20261116` không bị sửa; luật 1–2 xử lý nó ở bước dựng.
+
+Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`):
+
+| Mục | Trước | Sau |
+|---|---|---|
+| Ảnh có tác giả hỏng | 11 | 0 |
+| Ảnh ghi `uploader: ...` (đều CC BY-SA 3.0) | 1 | 7 |
+| Ảnh ghi `unknown` (6 Public domain, 1 CC0) | 1 | 7 |
+| Ảnh bị bỏ vì `no_author` | 0 | 0 |
+| Tổng số ảnh | 403 | 403 (cùng `image_id`, chỉ cột `author` đổi ở 36 dòng, phần lớn là bỏ dấu chấm cuối) |
+
+**Cần nhóm kiểm tay:** ảnh `Bia Vinh Lang.JPG` (`Q10739843_3e40239b`, CC BY-SA 3.0) nay ghi `uploader: Vmenkov`, nhưng trang mô tả trên Commons ghi người giữ bản quyền là `Rungbachduong` (thành viên Wikipedia tiếng Việt). Người duyệt mở `source_url`, xác nhận tên cần ghi công; nếu cần thì `drop` ảnh với lý do `other` hoặc báo để sửa luật.
 
 Phân bố giấy phép của 403 ảnh (đếm từ `mmkg/images.csv`):
 
@@ -95,7 +115,7 @@ Phân bố giấy phép của 403 ảnh (đếm từ `mmkg/images.csv`):
 Triple được tạo **bán tự động**: script lấy từ Wikidata, nhóm lọc bằng luật trong config, rồi thành viên duyệt từng triple.
 
 1. **Thu thập** (`scripts/collect_mmkg.py`): mọi phát biểu trực tiếp (`wdt:P...`) của thực thể trong miền trỏ tới một thực thể Wikidata khác, cộng mọi triple giữa các thực thể đích đã có (câu `concept_triples`). Giữ nguyên mã `P`.
-2. **Dựng** (`scripts/build_mmkg.py`, logic `merge_triples`, `find_concepts`, `keep_triples` trong `src/mmxai/data/mmkg_build.py`): chỉ giữ 18 mã `P` trong `configs/mmkg_vi_build.yaml`, đổi sang tên snake_case, gộp `P276` và `P195` thành `kept_at`, chỉ giữ triple có cả hai đầu là thực thể được giữ.
+2. **Dựng** (`scripts/build_mmkg.py`, logic `merge_triples`, `find_concepts`, `keep_triples` trong `src/mmxai/data/mmkg_build.py`): chỉ giữ 18 mã `P` trong `configs/mmkg_vi_build.yaml`, đổi sang 17 tên snake_case, gộp `P276` và `P195` thành `kept_at`, chỉ giữ triple có cả hai đầu là thực thể được giữ.
 3. **Duyệt** (mục 7): thành viên đánh dấu `ok`/`drop` từng triple trong `mmkg/review.csv`. **Chưa làm.**
 
 Cột `source` = URL Wikidata của thực thể đầu, nên mọi triple kiểm lại được. Cột thêm `wikidata_property` ghi mã `P` gốc (triple gộp ghi `P195|P276`).
@@ -171,7 +191,7 @@ Kiểm lại: 5.093 − 228 − 41 − 15 − 6 − 45 − 4.355 = 403.
 
 | Khoá trong report | Số bị bỏ | Luật | Lý do |
 |---|---|---|---|
-| `triples_dropped_unknown_relation` | 1.835 | Mã `P` không có trong danh sách 18 quan hệ | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục...) |
+| `triples_dropped_unknown_relation` | 1.835 | Mã `P` không có trong danh sách 18 mã `P` (17 tên quan hệ) | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục...) |
 | `triples_dropped_review` | 0 | Triple bị duyệt `drop` | Kết quả duyệt |
 | `triples_dropped_end_not_kept` | 1.320 | Một đầu không phải thực thể được giữ, hoặc tự trỏ về chính nó | Đồ thị không có đầu mút treo |
 
@@ -213,33 +233,65 @@ Nếu duyệt bỏ nhiều tới mức triple dưới 300 hoặc thực thể ra
 
 ## 8. Tải ảnh
 
-Ảnh được tải dưới dạng **thumbnail rộng 960 px** từ các kích thước Wikimedia Commons đã tạo sẵn (`download_width: 960` trong `configs/mmkg_vi_build.yaml`), không tải bản gốc. Lý do: lần tải bản gốc ngày 2026-11-16 bị Wikimedia chặn tốc độ (HTTP 429, rồi phải chờ 600 s sau 11/403 file); chính sách robot của Wikimedia cho phép tải "bản gốc hoặc một trong các kích thước thumbnail tạo sẵn"; CLIP chỉ cần 224 px nên 960 px không mất gì, và dung lượng giảm từ khoảng 1,1 GB xuống vài chục MB. Thiết kế (§6) cho phép thumbnail miễn là cạnh ngắn vẫn ≥ 224 px: nếu thumbnail có cạnh ngắn < 224 px thì tải **bản gốc** và so `sha1` với `mmkg/images.csv`; bản gốc sai `sha1` không được lưu (`download_images` trong `src/mmxai/data/mmkg_images.py`). File lưu ở `mmkg/images/<image_id><đuôi file>`.
+Ảnh được tải dưới dạng **thumbnail rộng 960 px** từ các kích thước Wikimedia Commons đã tạo sẵn (`download_width: 960` trong `configs/mmkg_vi_build.yaml`). Lý do: lần tải bản gốc ngày 2026-11-16 bị Wikimedia chặn tốc độ (HTTP 429, rồi phải chờ 600 s sau 11/403 file); chính sách robot của Wikimedia cho phép tải "bản gốc hoặc một trong các kích thước thumbnail tạo sẵn"; CLIP chỉ cần 224 px nên 960 px không mất gì, và dung lượng giảm từ khoảng 1,1 GB xuống vài chục MB. File lưu ở `mmkg/images/<image_id><đuôi file>` (logic `download_images` trong `src/mmxai/data/mmkg_images.py`).
 
-Commons không có `sha1` cho thumbnail, nên script tự tính `sha1` của file đã tải và ghi vào **`mmkg/images_manifest.csv`** (đã commit): `image_id, file_name, kind, url, width, height, bytes, sha1`, với `kind` là `thumbnail` hoặc `original`, sắp theo `image_id`, gồm mọi file trong `mmkg/images/`. Cách kiểm một bản copy trên cloud: chạy `shasum -a 1 <file>` rồi so với cột `sha1` của dòng có `image_id` tương ứng (tên file không kèm đuôi). Cột `sha1` trong `mmkg/images.csv` là `sha1` của bản gốc trên Commons, chỉ khớp với file có `kind = original`.
+**Khi nào tải bản gốc thay cho thumbnail.** Script tải **bản gốc** và so `sha1` với cột `sha1` của `mmkg/images.csv` (là `sha1` Commons của bản gốc) trong ba trường hợp. Bản gốc sai `sha1` không được lưu.
+
+| `why` trong manifest | `kind` | Khi nào |
+|---|---|---|
+| `thumbnail` | `thumbnail` | Bản gốc rộng hơn 960 px và thumbnail 960 px có cạnh ngắn ≥ 224 px (trường hợp thường gặp) |
+| `original_not_wider` | `original` | Bản gốc rộng ≤ 960 px. Commons không phóng to ảnh, nên "thumbnail" nó trả về chính là file gốc (URL có `utm_content=thumbnail_unscaled`); tải như bản gốc để kiểm được `sha1`. Theo cột `width` của `images.csv` có 44 ảnh như vậy |
+| `original_no_thumburl` | `original` | Commons không trả link thumbnail |
+| `original_thumb_too_small` | `original` | Thumbnail 960 px có cạnh ngắn < 224 px (ảnh rất dẹt) |
+| `original_already_present` | `original` | File đã có trên đĩa từ trước và khớp `sha1` Commons, nhưng không biết vì sao lúc đó tải bản gốc (ví dụ file của lần tải bản gốc đầu tiên) |
+
+**Manifest `mmkg/images_manifest.csv`.** Commons không có `sha1` cho thumbnail, nên script tự tính `sha1` của file đã tải và ghi vào manifest: `image_id, file_name, kind, why, url, width, height, bytes, sha1`, sắp theo `image_id`. Manifest mô tả đúng các ảnh của `images.csv` **hiện tại** đang có trên đĩa, và được ghi lại **sau từng file**, nên lần chạy bị ngắt giữa chừng không mất dòng nào. Cách kiểm một bản copy trên cloud: chạy `shasum -a 1 <file>` rồi so với cột `sha1` của dòng có `image_id` tương ứng (tên file không kèm đuôi). Cột `sha1` trong `mmkg/images.csv` chỉ khớp với file có `kind = original`.
+
+**Chạy lại.** Mỗi lần chạy, script kiểm file đã có trước khi tải:
+
+- File khớp `sha1` của dòng manifest, hoặc khớp `sha1` Commons, được giữ (`already_present`).
+- Dòng manifest cũ ghi `thumbnail` cho ảnh rộng ≤ 960 px được so lại với `sha1` Commons: khớp thì đổi nhãn thành `original_not_wider` (`relabelled_as_original`), không khớp thì tải lại.
+- File sai `sha1` bị xoá (in một dòng log, `removed_bad_file`) rồi tải lại.
+- **File lạ:** file trong `mmkg/images/` có tên (bỏ đuôi) không phải `image_id` nào của `images.csv`, ví dụ ảnh vừa bị duyệt `drop` hay file `.part` dở. Script liệt kê chúng ra stderr và dừng với mã 1 **trước mọi request**; chạy thêm `--delete-stray` thì script xoá từng file và in tên. Nhờ vậy ảnh bị bỏ (ví dụ `identifiable_person`) không lọt lên bản chia sẻ.
+- **Báo lỗi theo tên:** mọi ảnh sai `sha1` (`image_id, file_name, expected_sha1, actual_sha1`) và mọi ảnh Commons không tìm thấy (`image_id, file_name, reason`) được in ra stderr và ghi vào `mmkg/download_report.json`. Còn lỗi thì script thoát mã 1.
 
 ```bash
 uv run python scripts/download_mmkg_images.py \
     --collect-config configs/mmkg_vi_collect.yaml \
     --build-config configs/mmkg_vi_build.yaml
+# thêm --delete-stray nếu script báo file lạ
 ```
 
-Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt. Số liệu (`downloaded_thumbnail`, `downloaded_original`, `already_present`, `sha1_mismatch`, `missing_on_commons`) và dung lượng `mmkg/images/` điền khi tải xong:
+Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt. Số liệu (in cuối lần chạy và nằm trong `mmkg/download_report.json`) và dung lượng `mmkg/images/` điền khi tải xong:
 
 | Mục | Giá trị |
 |---|---|
 | `downloaded_thumbnail` | (điền sau) |
 | `downloaded_original` | (điền sau) |
 | `already_present` | (điền sau) |
+| `relabelled_as_original` | (điền sau) |
+| `removed_bad_file` | (điền sau) |
 | `sha1_mismatch` | (điền sau) |
 | `missing_on_commons` | (điền sau) |
 | Dung lượng `mmkg/images/` (`du -sh`) | (điền sau) |
 | Link cloud | (điền sau) |
 
-Sau khi duyệt và dựng lại, chạy lại lệnh trên: file đã có đúng `sha1` được bỏ qua (`already_present`), (file có dòng trong manifest khớp `sha1`, hoặc bản gốc cũ khớp `sha1` của Commons) chỉ tải ảnh mới thay cho ảnh bị `drop`. Script không xoá ảnh cũ; ảnh bị `drop` vẫn nằm trên đĩa nên phải xoá tay trước khi đưa lên cloud.
+Sau khi duyệt và dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
 ## 9. Split
 
 **Chưa tạo.** Split sẽ nằm ở `splits/mmkg_vi/` theo cùng quy tắc ADR-0009 (ADR-0015 quy tắc 5), chốt ở một ADR sau, cùng với cách dựng cạnh `contains` và cách sinh truy vấn. Luật lọc hiện tại không đọc split hay nhãn nào (chỉ dùng số ảnh hợp lệ và triple Wikidata).
+
+Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-11-16, checklist PDF §6 trong `CLAUDE.md`):
+
+| Điểm | Vấn đề | Việc phải làm |
+|---|---|---|
+| Đơn vị chia | Chưa chọn chia theo **ảnh** (cùng di tích có ảnh ở cả train và test) hay theo **item** (di tích test không có ảnh nào ở train). Hai cách đo hai năng lực khác nhau | Chọn và ghi lý do trong ADR split |
+| `concept` và triple đếm trên mọi item | Luật `min_items_per_concept` và cạnh giữa các thực thể đang đếm trên **cả 84 item**, gồm cả item sẽ vào val/test | Nếu chia theo item: đếm lại trên item train, **hoặc** khai báo cách làm là transductive (đồ thị biết trước mọi thực thể) và chạy ablation bỏ thông tin đó |
+| `entity_id` trong `images.csv` là đáp án | Cột này nói ảnh thuộc di tích nào | Không dùng nó để dựng cạnh `ảnh → contains → thực thể` cho ảnh val/test (mục 5, ADR-0051) |
+| Đóng băng bộ dữ liệu | Dựng lại sau khi đã chia có thể đổi ảnh, thực thể, triple | Ghi `sha1` của các CSV chính thức (`entities.csv`, `triples.csv`, `images.csv`) vào file split; test kiểm khớp |
+| Khoá ngưỡng dựng | Đổi ngưỡng sau khi có split (để kết quả đẹp hơn) là chọn siêu tham số trên test | Sau khi có split, ngưỡng trong `configs/mmkg_vi_build.yaml` khoá lại; muốn đổi thì ADR mới và chạy lại mọi mô hình |
+| Ảnh gần trùng trong một item | Luật `sha1` chỉ bắt file giống hệt; ảnh chụp liên tiếp cùng góc vẫn còn. Chia theo ảnh thì một ảnh ở train và ảnh gần giống ở test làm điểm cao giả | Người duyệt `drop` với lý do `duplicate`; ADR split cân nhắc kiểm thêm bằng độ tương đồng đặc trưng |
 
 ## 10. Hạn chế, thiên lệch
 
@@ -260,4 +312,5 @@ Sau khi duyệt và dựng lại, chạy lại lệnh trên: file đã có đún
 | Chọn miền (ADR-0050), duyệt thiết kế, chọn ngưỡng `min_items_per_concept: 3` | FluteInTheRain | 2026-11-16 |
 | Viết code thu thập/dựng/tải ảnh, chạy thu thập và dựng bản đầu, data card | Claude Code (Opus 5.5), FluteInTheRain chịu trách nhiệm (`docs/ai-usage-log.md`) | 2026-11-16 |
 | Đề xuất danh sách quan hệ (chưa duyệt) | Claude Code | 2026-11-16 |
+| Sửa luật tác giả, file duyệt và trình tải ảnh; dựng lại (mục 3, 8) | Claude Code (Opus 5.5), FluteInTheRain chịu trách nhiệm | 2026-11-17 |
 | Duyệt ảnh, triple, thực thể | (chưa phân công) | |
