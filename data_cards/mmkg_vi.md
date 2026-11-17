@@ -71,11 +71,12 @@ Script gửi User-Agent `mmxai-course-project/0.1 (research script)`, không ch�
 
 **Vấn đề tác giả ở lần dựng đầu (trước duyệt).** Commons trả ô `Artist` dưới dạng HTML. Với ảnh không rõ tác giả, Commons đặt chữ "Unknown author" trong hai thẻ liền nhau; bộ thu thập cũ xoá thẻ mà không chèn dấu cách nên được `Unknown authorUnknown author`. Một ảnh khác có câu mẫu giấy phép ("... the copyright holder of this work, hereby publishes it under the following license:") nằm trong ô tác giả. Lần dựng đầu có **11 ảnh** mang tác giả hỏng như vậy, **6 ảnh** trong đó là CC BY-SA 3.0, tức là không ghi công đúng giấy phép.
 
-**Luật sửa** (`normalize_artist`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0051 mục 2):
+**Luật sửa** (`normalize_artist`, `name_before_licence_sentence`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0051 mục 2):
 
 1. Làm sạch chữ `Artist`: bỏ ký tự rộng 0, gộp một cụm bị lặp liền nhau (`Unknown authorUnknown author.` → `Unknown author`), bỏ dấu câu ở cuối (`Chainwit.` → `Chainwit`).
-2. Chữ (không phân biệt hoa thường) là `unknown`, `unknown author`, `author unknown`, `anonymous`, hoặc chứa `hereby publish`, thì coi như không nêu ai và áp cột phải của bảng trên.
-3. Bộ thu thập (`strip_html` trong `src/mmxai/data/mmkg_collect.py`) nay thay mỗi thẻ HTML bằng dấu cách, nên lần thu thập sau không còn dính chữ. Snapshot `20261116` không bị sửa; luật 1–2 xử lý nó ở bước dựng.
+2. Câu mẫu giấy phép có tên người ở đầu (`<tên>, the copyright holder of this work, hereby publishes it ...`) thì giữ phần `<tên>` làm tác giả: đó đúng là tên mà giấy phép trên Commons yêu cầu ghi công (thêm ngày 2026-11-17, sau duyệt của người; trước đó cả câu bị coi là không nêu ai).
+3. Sau bước 2, chữ (không phân biệt hoa thường) là `unknown`, `unknown author`, `author unknown`, `anonymous`, hoặc vẫn chứa `hereby publish` (câu mẫu không có tên ở đầu), thì coi như không nêu ai và áp cột phải của bảng trên.
+4. Bộ thu thập (`strip_html` trong `src/mmxai/data/mmkg_collect.py`) nay thay mỗi thẻ HTML bằng dấu cách, nên lần thu thập sau không còn dính chữ. Snapshot `20261116` không bị sửa; luật 1–3 xử lý nó ở bước dựng.
 
 Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`; đây là số của lần dựng đầu 403 ảnh, trước duyệt):
 
@@ -87,7 +88,7 @@ Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`; �
 | Ảnh bị bỏ vì `no_author` | 0 | 0 |
 | Tổng số ảnh | 403 | 403 (cùng `image_id`, chỉ cột `author` đổi ở 36 dòng, phần lớn là bỏ dấu chấm cuối) |
 
-**Còn mở – tên ghi công một ảnh:** ảnh `Bia Vinh Lang.JPG` (`Q10739843_3e40239b`, CC BY-SA 3.0) ghi `uploader: Vmenkov`, nhưng trang mô tả trên Commons ghi người giữ bản quyền là `Rungbachduong` (thành viên Wikipedia tiếng Việt). Người duyệt (qphulong, 2026-11-17) giữ ảnh (`ok`) nhưng không ghi nhận xét về tên ghi công, nên cột `author` chưa đổi. Trước khi đăng lại ảnh này, mở `source_url` và ghi công theo trang Commons.
+**Đã sửa – tên ghi công ảnh `Bia Vinh Lang.JPG`** (`Q10739843_3e40239b`, CC BY-SA 3.0): ô `Artist` là câu mẫu "Vietnames Wikipedia user Rungbachduong, the copyright holder of this work, hereby publishes it under the following license:". Luật cũ bỏ cả câu nên ảnh bị ghi `uploader: Vmenkov`, trong khi Vmenkov chỉ là người tải lên. Người duyệt (qphulong, 2026-11-17) đối chiếu trang Commons: mục Attribution yêu cầu ghi "Vietnames Wikipedia user Rungbachduong". Luật 2 ở trên được thêm cho trường hợp này; dựng lại chỉ đổi đúng cột `author` của dòng này thành `Vietnames Wikipedia user Rungbachduong`. Đây là dòng duy nhất trong snapshot có câu mẫu này (đếm từ `image_credits.csv`).
 
 Phân bố giấy phép của 380 ảnh chính thức sau duyệt của người (đếm từ `mmkg/images.csv`):
 
@@ -104,7 +105,7 @@ Phân bố giấy phép của 380 ảnh chính thức sau duyệt của người
 | `CC BY-SA 2.5` | 2 |
 | `CC BY 2.5` | 1 |
 
-Sau duyệt của người, ảnh ghi `uploader: ...` là 7 và ảnh ghi `unknown` là 8 (đếm từ `mmkg/images.csv`; sau duyệt AI: 7 và 7).
+Sau duyệt của người và sửa ghi công, ảnh ghi `uploader: ...` là 6 và ảnh ghi `unknown` là 8 (đếm từ `mmkg/images.csv`; sau duyệt AI: 7 và 7).
 
 Điều kiện khi dùng hoặc đăng lại:
 
@@ -369,7 +370,6 @@ Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-1
 - **Dữ liệu theo bản dump:** Wikidata lấy qua QLever, dựng từ bản dump ghi trong `sparql_index` (mục 2); có thể lệch so với Wikidata trực tiếp cùng ngày.
 - **Biên quy mô hẹp:** 303 triple, chỉ hơn mốc 300 là 3 (lần dựng đầu: 331).
 - **Duyệt của người chưa phủ hết từng dòng:** một người (qphulong) đã xem mọi dòng AI `drop`, mọi ca AI không chắc, nhãn dịch và danh sách quan hệ, và có tab lướt toàn bộ ảnh `ok`; nhưng 804 dòng `ok` vẫn chỉ mang chữ ký `claude-ai` (mục 7.2). Mỗi dòng chỉ có một người duyệt, chưa có người thứ hai kiểm chéo. Vẫn có thể sót ảnh có mặt người nhận diện được.
-- **Tên ghi công một ảnh còn mở:** `Bia Vinh Lang.JPG` (mục 3).
 
 ## 11. Người tạo và ngày
 

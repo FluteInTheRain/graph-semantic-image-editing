@@ -234,6 +234,10 @@ HEREBY = (
     "​Vietnames Wikipedia user Rungbachduong, the copyright holder of this work, "
     "hereby publishes it under the following license:"
 )
+# The same licence sentence without a name in front of it.
+HEREBY_NO_NAME = (
+    "The copyright holder of this work hereby publishes it under the following license:"
+)
 
 
 @pytest.mark.parametrize(
@@ -246,7 +250,7 @@ HEREBY = (
         "unknown",
         "Author unknown",
         "Anonymous",
-        HEREBY,
+        HEREBY_NO_NAME,
     ],
 )
 def test_no_real_author_under_attribution_falls_back_to_uploader(artist):
@@ -254,7 +258,15 @@ def test_no_real_author_under_attribution_falls_back_to_uploader(artist):
     assert pick_author("CC BY-SA 3.0", credit, make_config()) == "uploader: Bob"
 
 
-@pytest.mark.parametrize("artist", [GLUED_UNKNOWN, GLUED_UNKNOWN + ".", HEREBY])
+def test_name_before_licence_sentence_is_the_author():
+    # Commons asks for exactly this credit on File:Bia_Vinh_Lang.JPG; the uploader
+    # (Vmenkov) is a different person and must not be credited instead.
+    credit = {"file_name": "Bia Vinh Lang.JPG", "artist": HEREBY, "uploader": "Vmenkov"}
+    author = pick_author("CC BY-SA 3.0", credit, make_config())
+    assert author == "Vietnames Wikipedia user Rungbachduong"
+
+
+@pytest.mark.parametrize("artist", [GLUED_UNKNOWN, GLUED_UNKNOWN + ".", HEREBY_NO_NAME])
 def test_no_real_author_and_no_uploader_under_attribution_is_none(artist):
     credit = {"file_name": "a.jpg", "artist": artist, "uploader": ""}
     assert pick_author("CC BY 4.0", credit, make_config()) is None

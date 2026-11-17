@@ -57,6 +57,9 @@ COMMONS_FILE_URL = "https://commons.wikimedia.org/wiki/File:"
 NO_AUTHOR_TEXTS = {"unknown", "unknown author", "author unknown", "anonymous"}
 # Licence boilerplate pasted into the Artist field ("... hereby publishes it under ...").
 NO_AUTHOR_PHRASE = "hereby publish"
+# Commons' self-published template reads "<name>, the copyright holder of this work,
+# hereby publishes it ...": the text before this marker is the author to credit.
+COPYRIGHT_HOLDER_MARKER = ", the copyright holder of this work"
 TRAILING_PUNCTUATION = " .,;:"
 
 
@@ -216,6 +219,18 @@ def normalize_artist(text: str) -> str:
     return cleaned
 
 
+def name_before_licence_sentence(artist: str) -> str:
+    """Keep only "<name>" from "<name>, the copyright holder of this work, hereby ...".
+
+    Text without the marker, or with nothing in front of it, is returned unchanged,
+    so names_an_author still rejects a licence sentence that names nobody.
+    """
+    position = artist.lower().find(COPYRIGHT_HOLDER_MARKER)
+    if position <= 0:
+        return artist
+    return artist[:position].strip()
+
+
 def names_an_author(artist: str) -> bool:
     """False for empty text, "unknown"-like texts and licence boilerplate."""
     lowered = artist.lower()
@@ -231,7 +246,7 @@ def pick_author(license_name: str, credit: dict[str, str], config: MmkgBuildConf
     names nobody, the uploader is the best name we have, else the image is dropped.
     Public domain and CC0 need no credit, so "unknown" is enough there.
     """
-    artist = normalize_artist(credit.get("artist", ""))
+    artist = name_before_licence_sentence(normalize_artist(credit.get("artist", "")))
     if names_an_author(artist):
         return artist
     if starts_with_any(license_name, config.attribution_license_prefixes):
