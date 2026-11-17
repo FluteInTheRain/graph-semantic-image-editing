@@ -151,6 +151,40 @@ def test_query_text_is_read_from_the_region_file(tmp_path, monkeypatch):
         assert item["source_image_id"] in item["relevant_image_ids"]
 
 
+def write_flickr30k_caption_file(directory: Path) -> None:
+    """A tiny dataset_flickr30k.json: images 1-12, two captions each."""
+    images = []
+    for image_id in range(1, 13):
+        sentences = [{"raw": f"caption {image_id}-{index}"} for index in range(2)]
+        images.append({"filename": f"{image_id}.jpg", "sentences": sentences})
+    directory.mkdir()
+    with open(directory / "dataset_flickr30k.json", "w", encoding="utf-8") as file:
+        json.dump({"images": images}, file)
+
+
+def test_flickr30k_query_text_is_its_own_caption(tmp_path, monkeypatch):
+    # Caption positions repeat across images, so the text must be looked up by
+    # (image, position), never by position alone.
+    config = write_inputs(tmp_path, monkeypatch, dataset="flickr30k")
+    saved_model_with_graph(config, alpha=0.0)
+    write_flickr30k_caption_file(tmp_path / "flickr30k")
+
+    analysis = analyse_split(config, 0, "val", 1, tmp_path / "flickr30k", log=str)
+
+    assert analysis["queries"]
+    for item in analysis["queries"]:
+        assert item["text"] == f"caption {item['source_image_id']}-{item['text_id']}"
+
+
+def test_flickr30k_analysis_runs_without_the_caption_file(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path, monkeypatch, dataset="flickr30k")
+    saved_model_with_graph(config, alpha=0.0)
+
+    analysis = analyse_split(config, 0, "val", 1, None, log=str)
+
+    assert all(item["text"] is None for item in analysis["queries"])
+
+
 def test_run_folder_has_the_analysis_but_no_metrics_file(tmp_path, monkeypatch):
     config = write_inputs(tmp_path, monkeypatch)
     saved_model_with_graph(config, alpha=0.0)

@@ -1,0 +1,11 @@
+# Flickr30k (ADR-0050): image-concept graph. Run: scripts/build_graph_from_vocabulary.py.
+# Flickr30k has no object annotations, so the concept nodes are copied from the VG main graph;
+# edges are each image's k nearest concepts by CLIP cosine, as in configs/graph_vg_clip_topk.yaml.
+dataset: flickr30k
+split_file: splits/flickr30k/split_seed0.json
+features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k
+vocabulary_graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+clip_topk_k: 16
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+output_dir: artifacts/graphs/flickr30k/contains_clip_top16_v1
