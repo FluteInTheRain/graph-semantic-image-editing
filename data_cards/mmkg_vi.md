@@ -1,10 +1,10 @@
 # Data card: MMKG tiếng Việt – di tích và di sản Việt Nam
 
-**Là gì?** Một đồ thị tri thức đa phương thức (MMKG) nhỏ do nhóm tự xây cho cấp độ 3 (PDF §5). Đỉnh là **thực thể** (di tích, hiện vật, khái niệm như "tượng", "đồng điếu", "Bảo tàng Lịch sử Việt Nam"), cạnh là **triple** (đầu, quan hệ, đuôi), và mỗi di tích có 3–5 **ảnh**. Định dạng theo ADR-0015; miền theo ADR-0050; cách thu thập, lọc và duyệt theo ADR-0051.
+**Là gì?** Một đồ thị tri thức đa phương thức (MMKG) nhỏ do nhóm tự xây cho cấp độ 3 (PDF §5). Đỉnh là **thực thể** (di tích, hiện vật, khái niệm như "tượng", "đồng thanh", "Bảo tàng Lịch sử Việt Nam"), cạnh là **triple** (đầu, quan hệ, đuôi), và mỗi di tích có 3–5 **ảnh**. Định dạng theo ADR-0015; miền theo ADR-0050; cách thu thập, lọc và duyệt theo ADR-0051.
 
-**Trạng thái (2026-11-17):** đã thu thập, dựng bản đầu và dựng lại với luật tác giả mới (mục 3), **chưa duyệt**. Chưa được dùng cho thí nghiệm nào. Chỉ dùng khi `scripts/build_mmkg.py --require-reviewed` chạy qua (không còn mục `pending`).
+**Trạng thái (2026-11-17):** đã thu thập, dựng, và **duyệt sơ bộ bằng AI** (Claude Code, `reviewer = claude-ai`, mục 7). `scripts/build_mmkg.py --require-reviewed` đã chạy qua (không còn mục `pending`). Bộ chính thức hiện có **119 thực thể (80 `item` + 39 `concept`), 302 triple, 382 ảnh**. Đây **chưa phải duyệt của người**: nhóm vẫn phải kiểm các mục bị `drop` và các ghi chú cần người xem (mục 7) trước khi dùng cho thí nghiệm. Chưa được dùng cho thí nghiệm nào.
 
-Đường dẫn tính từ gốc repo. Số liệu lấy từ `mmkg/build_report.json` và `mmkg/raw/20261116/meta.json`; số nào đếm thêm từ `mmkg/*.csv` thì ghi rõ.
+Đường dẫn tính từ gốc repo. Số liệu của bộ chính thức hiện tại lấy từ `mmkg/build_report.json` (sau duyệt) và `mmkg/raw/20261116/meta.json`; số nào đếm thêm từ `mmkg/*.csv` thì ghi rõ. Số của **lần dựng đầu, trước duyệt** (128 thực thể, 331 triple, 403 ảnh) chỉ còn xuất hiện ở những chỗ ghi rõ "lần dựng đầu" và ở bảng trước/sau mục 7.
 
 ## Mục lục
 
@@ -69,7 +69,7 @@ Script gửi User-Agent `mmxai-course-project/0.1 (research script)`, không ch�
 | CC BY, CC BY-SA | Ghi lại (đã chuẩn hoá) | Ghi `uploader: <tên người tải lên>`; nếu cũng rỗng thì **bỏ ảnh** |
 | Public domain, CC0 | Ghi lại (đã chuẩn hoá) | Ghi `unknown` |
 
-**Vấn đề tác giả ở lần dựng đầu.** Commons trả ô `Artist` dưới dạng HTML. Với ảnh không rõ tác giả, Commons đặt chữ "Unknown author" trong hai thẻ liền nhau; bộ thu thập cũ xoá thẻ mà không chèn dấu cách nên được `Unknown authorUnknown author`. Một ảnh khác có câu mẫu giấy phép ("... the copyright holder of this work, hereby publishes it under the following license:") nằm trong ô tác giả. Lần dựng đầu có **11 ảnh** mang tác giả hỏng như vậy, **6 ảnh** trong đó là CC BY-SA 3.0, tức là không ghi công đúng giấy phép.
+**Vấn đề tác giả ở lần dựng đầu (trước duyệt).** Commons trả ô `Artist` dưới dạng HTML. Với ảnh không rõ tác giả, Commons đặt chữ "Unknown author" trong hai thẻ liền nhau; bộ thu thập cũ xoá thẻ mà không chèn dấu cách nên được `Unknown authorUnknown author`. Một ảnh khác có câu mẫu giấy phép ("... the copyright holder of this work, hereby publishes it under the following license:") nằm trong ô tác giả. Lần dựng đầu có **11 ảnh** mang tác giả hỏng như vậy, **6 ảnh** trong đó là CC BY-SA 3.0, tức là không ghi công đúng giấy phép.
 
 **Luật sửa** (`normalize_artist`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0051 mục 2):
 
@@ -77,7 +77,7 @@ Script gửi User-Agent `mmxai-course-project/0.1 (research script)`, không ch�
 2. Chữ (không phân biệt hoa thường) là `unknown`, `unknown author`, `author unknown`, `anonymous`, hoặc chứa `hereby publish`, thì coi như không nêu ai và áp cột phải của bảng trên.
 3. Bộ thu thập (`strip_html` trong `src/mmxai/data/mmkg_collect.py`) nay thay mỗi thẻ HTML bằng dấu cách, nên lần thu thập sau không còn dính chữ. Snapshot `20261116` không bị sửa; luật 1–2 xử lý nó ở bước dựng.
 
-Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`):
+Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`; đây là số của lần dựng đầu 403 ảnh, trước duyệt):
 
 | Mục | Trước | Sau |
 |---|---|---|
@@ -87,22 +87,24 @@ Trước/sau (đếm từ `mmkg/images.csv` trước và sau commit `c6d7a97`):
 | Ảnh bị bỏ vì `no_author` | 0 | 0 |
 | Tổng số ảnh | 403 | 403 (cùng `image_id`, chỉ cột `author` đổi ở 36 dòng, phần lớn là bỏ dấu chấm cuối) |
 
-**Cần nhóm kiểm tay:** ảnh `Bia Vinh Lang.JPG` (`Q10739843_3e40239b`, CC BY-SA 3.0) nay ghi `uploader: Vmenkov`, nhưng trang mô tả trên Commons ghi người giữ bản quyền là `Rungbachduong` (thành viên Wikipedia tiếng Việt). Người duyệt mở `source_url`, xác nhận tên cần ghi công; nếu cần thì `drop` ảnh với lý do `other` hoặc báo để sửa luật.
+**Cần nhóm kiểm tay:** ảnh `Bia Vinh Lang.JPG` (`Q10739843_3e40239b`, CC BY-SA 3.0, vẫn nằm trong bộ chính thức: AI duyệt `ok` ở `mmkg/review.csv`) nay ghi `uploader: Vmenkov`, nhưng trang mô tả trên Commons ghi người giữ bản quyền là `Rungbachduong` (thành viên Wikipedia tiếng Việt). Người duyệt mở `source_url`, xác nhận tên cần ghi công; nếu cần thì `drop` ảnh với lý do `other` hoặc báo để sửa luật.
 
-Phân bố giấy phép của 403 ảnh (đếm từ `mmkg/images.csv`):
+Phân bố giấy phép của 382 ảnh chính thức sau duyệt (đếm từ `mmkg/images.csv`):
 
 | `license` | Số ảnh |
 |---|---|
-| `CC0` | 85 |
-| `CC BY-SA 3.0` | 70 |
-| `Public domain` | 68 |
-| `CC BY 2.0` | 68 |
-| `CC BY-SA 4.0` | 66 |
-| `CC BY 4.0` | 23 |
-| `CC BY-SA 2.0` | 17 |
+| `CC0` | 76 |
+| `CC BY-SA 3.0` | 71 |
+| `CC BY 2.0` | 67 |
+| `Public domain` | 63 |
+| `CC BY-SA 4.0` | 58 |
+| `CC BY 4.0` | 21 |
+| `CC BY-SA 2.0` | 20 |
 | `CC BY 3.0` | 3 |
 | `CC BY-SA 2.5` | 2 |
 | `CC BY 2.5` | 1 |
+
+Sau duyệt, ảnh ghi `uploader: ...` là 7 và ảnh ghi `unknown` là 7 (đếm từ `mmkg/images.csv`).
 
 Điều kiện khi dùng hoặc đăng lại:
 
@@ -116,7 +118,7 @@ Triple được tạo **bán tự động**: script lấy từ Wikidata, nhóm l
 
 1. **Thu thập** (`scripts/collect_mmkg.py`): mọi phát biểu trực tiếp (`wdt:P...`) của thực thể trong miền trỏ tới một thực thể Wikidata khác, cộng mọi triple giữa các thực thể đích đã có (câu `concept_triples`). Giữ nguyên mã `P`.
 2. **Dựng** (`scripts/build_mmkg.py`, logic `merge_triples`, `find_concepts`, `keep_triples` trong `src/mmxai/data/mmkg_build.py`): chỉ giữ 18 mã `P` trong `configs/mmkg_vi_build.yaml`, đổi sang 17 tên snake_case, gộp `P276` và `P195` thành `kept_at`, chỉ giữ triple có cả hai đầu là thực thể được giữ.
-3. **Duyệt** (mục 7): thành viên đánh dấu `ok`/`drop` từng triple trong `mmkg/review.csv`. **Chưa làm.**
+3. **Duyệt** (mục 7): từng triple được đánh dấu `ok`/`drop` trong `mmkg/review.csv`. **Đã duyệt sơ bộ bằng AI** (16 khoá triple bị `drop`); nhóm còn phải kiểm lại.
 
 Cột `source` = URL Wikidata của thực thể đầu, nên mọi triple kiểm lại được. Cột thêm `wikidata_property` ghi mã `P` gốc (triple gộp ghi `P195|P276`).
 
@@ -154,23 +156,27 @@ Cột `source` = URL Wikidata của thực thể đầu, nên mọi triple kiể
 
 ### 6.1. Snapshot gốc → bộ chính thức
 
-| Mục | Snapshot gốc | Bộ chính thức | Mục tiêu (ADR-0050) |
-|---|---|---|---|
-| Thực thể | 848 (`raw_entities`; gồm thực thể của miền và thực thể đích) | 128 = 84 `item` + 44 `concept` | 50–150 |
-| Triple | 3.581 (`raw_triples`) | 331 (`triples`) | 300–1.000 |
-| Ảnh | 5.093 cặp (thực thể, file) ứng viên (`raw_image_candidates`) | 403 (`images`) | 200–500 |
+Bộ chính thức dưới đây là bộ **sau duyệt sơ bộ bằng AI** (mục 7). Cột "Lần dựng đầu" là bộ trước duyệt, để so.
 
-Snapshot có 170 thực thể của miền (`in_domain = 1` trong `entities_raw.csv`), 4.979 file ảnh khác nhau (`image_credits` trong `meta.json`). Tất cả 44 `concept` đều là thực thể đích, không phải thực thể của miền (đếm từ `mmkg/entities.csv` và `entities_raw.csv`).
+| Mục | Snapshot gốc | Lần dựng đầu (trước duyệt) | Bộ chính thức (sau duyệt AI) | Mục tiêu (ADR-0050) |
+|---|---|---|---|---|
+| Thực thể | 848 (`raw_entities`; gồm thực thể của miền và thực thể đích) | 128 = 84 `item` + 44 `concept` | 119 = 80 `item` + 39 `concept` (`entities_item`, `entities_concept`) | 50–150 |
+| Triple | 3.581 (`raw_triples`) | 331 | 302 (`triples`) | 300–1.000 |
+| Ảnh | 5.093 cặp (thực thể, file) ứng viên (`raw_image_candidates`) | 403 | 382 (`images`) | 200–500 |
 
-Số ảnh mỗi `item` (đếm từ `mmkg/images.csv`): 72 di tích có 5 ảnh, 7 có 4 ảnh, 5 có 3 ảnh.
+Snapshot có 170 thực thể của miền (`in_domain = 1` trong `entities_raw.csv`), 4.979 file ảnh khác nhau (`image_credits` trong `meta.json`). Cả 39 `concept` đều là thực thể đích, không phải thực thể của miền (đếm từ `mmkg/entities.csv` và `entities_raw.csv`).
 
-Số triple theo quan hệ (đếm từ `mmkg/triples.csv`): `heritage_designation` 89, `instance_of` 69, `kept_at` 47, `made_from` 32, `located_in` 26, `part_of` 13, `culture` 11, `influenced_by` 11, `significant_event` 9, `depicts` 8, `time_period` 7, `named_after` 5, `has_part` 2, `discovered_at` 2. Ba quan hệ trong danh sách không có triple nào: `creator`, `commissioned_by`, `has_pattern`. 29 triple `kept_at` gộp từ cả `P195` lẫn `P276`.
+**Lưu ý biên quy mô:** 302 triple chỉ hơn mốc tối thiểu 300 là 2. Duyệt thêm mà bỏ triple nữa sẽ xuống dưới mốc; khi đó phải đổi ngưỡng trong `configs/mmkg_vi_build.yaml` (ví dụ `min_items_per_concept`) và ghi lý do (mục 7, ADR-0051).
+
+Số ảnh mỗi `item` (đếm từ `mmkg/images.csv`): 66 di tích có 5 ảnh, 10 có 4 ảnh, 4 có 3 ảnh.
+
+Số triple theo quan hệ (đếm từ `mmkg/triples.csv`): `heritage_designation` 86, `instance_of` 65, `kept_at` 45, `made_from` 30, `located_in` 26, `influenced_by` 11, `culture` 10, `part_of` 10, `time_period` 7, `depicts` 7, `has_part` 2, `discovered_at` 2, `named_after` 1. Bốn quan hệ trong danh sách không còn triple nào: `creator`, `commissioned_by`, `has_pattern` (không có ngay từ lần dựng đầu) và `significant_event` (lần dựng đầu có 9, mọi triple bị AI duyệt `drop`, mục 7). 27 triple `kept_at` gộp từ cả `P195` lẫn `P276`.
 
 ### 6.2. Số dòng bị bỏ theo từng luật
 
-Mọi luật là **lựa chọn của nhóm, không phải yêu cầu của đề**. Số lấy từ `mmkg/build_report.json`, theo đúng thứ tự áp luật.
+Mọi luật là **lựa chọn của nhóm, không phải yêu cầu của đề**. Số lấy từ `mmkg/build_report.json` (bộ sau duyệt), theo đúng thứ tự áp luật. Hai khoá `*_review_drop` là kết quả của duyệt AI.
 
-**Ảnh** (5.093 cặp ứng viên → 403):
+**Ảnh** (5.093 cặp ứng viên → 382):
 
 | Khoá trong report | Số bị bỏ | Luật | Lý do |
 |---|---|---|---|
@@ -180,56 +186,85 @@ Mọi luật là **lựa chọn của nhóm, không phải yêu cầu của đ�
 | `images_dropped_license` | 15 | Ngoài `Public domain`, `CC0`, `CC BY *`, `CC BY-SA *` | PDF §9, ADR-0015 quy tắc 3 |
 | `images_dropped_too_small` | 6 | Cạnh ngắn < 224 px | Kích thước đầu vào của CLIP ViT-B-32 |
 | `images_dropped_no_author` | 0 | CC BY/CC BY-SA mà không có tác giả lẫn người tải lên | Không ghi công được |
-| `images_dropped_review_drop` | 0 | Ảnh bị duyệt `drop` | Kết quả duyệt |
+| `images_dropped_review_drop` | 68 | Ảnh bị duyệt `drop` | Kết quả duyệt AI (mục 7) |
 | `images_dropped_duplicate_sha1` | 0 | Trùng `sha1`, giữ tên nhỏ nhất | Hai file giống hệt từng byte |
-| `images_dropped_below_min_per_item` | 45 | Thực thể còn dưới 3 ảnh hợp lệ thì không thành `item` | Cần đủ ảnh để chia train/val/test sau này |
-| `images_dropped_over_max_per_item` | 4.355 | Giữ tối đa 5 ảnh mỗi `item` (`P18` trước, rồi theo tên file) | Giữ quy mô gợi ý; không để di tích nhiều ảnh lấn át |
+| `images_dropped_below_min_per_item` | 53 | Thực thể còn dưới 3 ảnh hợp lệ thì không thành `item` | Cần đủ ảnh để chia train/val/test sau này |
+| `images_dropped_over_max_per_item` | 4.300 | Giữ tối đa 5 ảnh mỗi `item` (`P18` trước, rồi theo tên file) | Giữ quy mô gợi ý; không để di tích nhiều ảnh lấn át |
 
-Kiểm lại: 5.093 − 228 − 41 − 15 − 6 − 45 − 4.355 = 403.
+Kiểm lại: 5.093 − 228 − 41 − 15 − 6 − 68 − 53 − 4.300 = 382. (Lần dựng đầu trước duyệt: `below_min_per_item` 45, `over_max_per_item` 4.355, `review_drop` 0, tổng 403.)
 
-**Triple** (3.581 → 331):
+**Triple** (3.581 → 302):
 
 | Khoá trong report | Số bị bỏ | Luật | Lý do |
 |---|---|---|---|
 | `triples_dropped_unknown_relation` | 1.835 | Mã `P` không có trong danh sách 18 mã `P` (17 tên quan hệ) | Bỏ quan hệ quản trị (quốc gia, bản quyền, danh mục...) |
-| `triples_dropped_review` | 0 | Triple bị duyệt `drop` | Kết quả duyệt |
-| `triples_dropped_end_not_kept` | 1.320 | Một đầu không phải thực thể được giữ, hoặc tự trỏ về chính nó | Đồ thị không có đầu mút treo |
+| `triples_dropped_review` | 16 | Triple bị duyệt `drop` | Kết quả duyệt AI (mục 7) |
+| `triples_dropped_end_not_kept` | 1.333 | Một đầu không phải thực thể được giữ, hoặc tự trỏ về chính nó | Đồ thị không có đầu mút treo |
 
-Hai số trên không cộng thẳng ra 331, vì bước gộp `P276`/`P195` nằm giữa: 3.581 − 1.835 = 1.746 dòng; gộp các dòng cùng (đầu, `kept_at`, đuôi) còn 331 + 1.320 = 1.651 triple; bỏ 1.320 còn 331 (`merge_triples`, `keep_triples`).
+Ba số trên không cộng thẳng ra 302, vì bước gộp `P276`/`P195` nằm giữa: 3.581 − 1.835 = 1.746 dòng; gộp các dòng cùng (đầu, `kept_at`, đuôi) còn 302 + 1.333 + 16 = 1.651 triple; bỏ 1.333 và 16 còn 302 (`merge_triples`, `keep_triples`). (Lần dựng đầu: 1.320 và 0, còn 331.)
 
-**Thực thể:** `entities_dropped_review` = 0. Từ 170 thực thể của miền, 84 có đủ 3 ảnh hợp lệ thành `item`; 44 thực thể đích được ≥ 3 `item` trỏ tới thành `concept` (`min_items_per_concept: 3`, FluteInTheRain chọn 3 thay vì 2 để tổng số thực thể nằm trong 50–150, ADR-0050).
+**Thực thể:** `entities_dropped_review` = 4 (mục 7). Từ 170 thực thể của miền, 80 có đủ 3 ảnh hợp lệ thành `item` (lần dựng đầu: 84; bốn di tích ít hơn do ảnh bị `drop` hoặc thay đổi theo luật, `images_dropped_below_min_per_item` tăng từ 45 lên 53); 39 thực thể đích được ≥ 3 `item` trỏ tới thành `concept` (`min_items_per_concept: 3`, FluteInTheRain chọn 3 thay vì 2 để tổng số thực thể nằm trong 50–150, ADR-0050; lần dựng đầu: 44).
 
 ### 6.3. Thiếu nhãn tiếng Việt
 
-`entities_missing_name_vi` = 7 thực thể không có nhãn `vi` trên Wikidata (cột `name_vi` rỗng): `Q120835889` (`item`, "The set of steps of Kinh Thien Palace") và 6 `concept`: `Q106379705`, `Q1459900`, `Q19683138`, `Q29778318`, `Q43113623`, `Q830393`. Người duyệt điền nhãn ở cột `fix_name_vi` của `mmkg/review.csv`.
+Lần dựng đầu có 7 thực thể không có nhãn `vi` trên Wikidata (cột `name_vi` rỗng): `Q120835889` (`item`, "The set of steps of Kinh Thien Palace") và 6 `concept`: `Q106379705`, `Q1459900`, `Q19683138`, `Q29778318`, `Q43113623`, `Q830393`. Hiện `entities_missing_name_vi` = 0 (`mmkg/build_report.json`): 3 thực thể (`Q106379705`, `Q830393`, `Q29778318`) bị `drop` nên không còn trong bộ, và 4 thực thể còn lại (`Q120835889`, `Q1459900`, `Q19683138`, `Q43113623`) được điền nhãn bằng `fix_name_vi` do AI dịch (mục 7). Nhãn dịch bằng AI chưa được người kiểm.
 
 ## 7. Kết quả duyệt
 
-**Trạng thái: chưa duyệt.** Mọi mục trong bộ chính thức đang `pending` (`mmkg/build_report.json`):
+**Trạng thái: đã duyệt sơ bộ bằng AI, chưa có duyệt của người.** Mọi dòng của `mmkg/review.csv` (946 dòng) có `review_status` là `ok` hoặc `drop`, `reviewer = claude-ai`, ngày 2026-11-17 (thành viên nào sửa một dòng thì `reviewer` đổi thành tên người đó). Số liệu dưới đây đếm từ `mmkg/review.csv`, riêng ảnh bộ chính thức lấy từ `mmkg/build_report.json`.
 
-| Loại | Số mục chờ duyệt | Khoá trong report |
+### 7.1. Ai duyệt, duyệt thế nào
+
+- **Người duyệt:** Claude Code (Opus 5.5) làm bộ điều phối, dùng các subagent có khả năng xem ảnh để xem từng ảnh. Đây là AI duyệt sơ bộ (pre-review), không thay cho duyệt của nhóm.
+- **Sáu vòng:** mỗi lần dựng lại (`scripts/build_mmkg.py`) thay ảnh bị `drop` bằng ảnh kế tiếp của di tích đó; ảnh mới lại là dòng `pending` và được duyệt ở vòng sau. Lặp tới khi `scripts/build_mmkg.py --require-reviewed` thoát mã 0 (không còn `pending`, không có khoá duyệt lệch).
+- **Tiêu chí:** `drop` ảnh với lý do `identifiable_person`, `not_the_object`, `duplicate`, `other`; **thận trọng**: ca không chắc thì giữ `ok` và ghi chú để người xem lại.
+- **Kiểm lại:** cả 8 ảnh `identifiable_person` bị `drop` ở vòng 1 được bộ điều phối xem lại bằng mắt.
+
+### 7.2. Số mục bị `drop` và `ok`
+
+| Loại | Lý do `drop` | Số mục `drop` | Số mục `ok` |
+|---|---|---|---|
+| Ảnh | `not_the_object` | 34 | 390 (tổng mọi lý do) |
+| Ảnh | `duplicate` | 21 | |
+| Ảnh | `identifiable_person` | 11 | |
+| Ảnh | `other` | 2 | |
+| Ảnh | tổng | 68 | 390 |
+| Triple (khoá `head\|P\|tail`) | (không ghi `reason`; lý do nằm trong `review_ai_notes.csv`) | 16 | 344 |
+| Thực thể | (không ghi `reason`) | 4 | 124 |
+
+Tổng 946 dòng = 458 ảnh + 360 khoá triple + 128 thực thể. Ảnh có 458 dòng vì mỗi vòng thêm ảnh thay thế; chỉ 382 ảnh `ok` còn nằm trong bộ chính thức (390 `ok` lớn hơn 382: một số ảnh `ok` không còn trong bộ vì luật khác áp sau, ví dụ ngưỡng ảnh mỗi `item`).
+
+**4 thực thể bị `drop`:** `Q106379705` ("damaged"), `Q830393` ("preservation"), `Q29778318` ("UNESCO World Heritage Site record modification"), `Q532` ("làng"/Village). Đều là khái niệm quản trị hoặc quá chung, không nhìn thấy trên ảnh (mục 10).
+
+**16 khoá triple bị `drop`:** 9 triple `significant_event` (`P793`) tới khái niệm meta như "damaged", "preservation", "UNESCO record modification"; 4 triple `named_after` (`P138`) tới "làng" (`Q532`) chung chung; 3 triple `part_of` (`P361`) giữa các khái niệm danh hiệu (`Q1459900` và `Q43113623` tới `Q9259`, `Q386724` tới `Q2668072`). Danh sách đầy đủ: lọc `kind = triple`, `review_status = drop` trong `mmkg/review.csv`.
+
+**5 nhãn tiếng Việt do AI dịch** (cột `fix_name_vi`, `review_status = ok`): `Q120835889` "Bậc thềm điện Kính Thiên", `Q1459900` "Di sản thế giới dự kiến", `Q19683138` "Khu Ramsar", `Q43113623` "một phần của Di sản thế giới UNESCO", `Q34095` "đồng thanh" (sửa nhãn Wikidata "đồng điếu", vì "bronze" là đồng thanh).
+
+### 7.3. Ghi chú của AI và việc nhóm phải làm
+
+`mmkg/review_ai_notes.csv` (130 dòng; cột `kind, key, review_status, note`) giữ ghi chú của các lượt duyệt. **36 dòng** có ghi chú bắt đầu bằng `unsure:` hoặc `check:`: đó là ca AI không chắc, giữ `ok` hoặc `drop` thận trọng và cần người xem.
+
+Nhóm **phải** làm:
+
+1. Kiểm **mọi dòng bị `drop`** (68 ảnh, 16 khoá triple, 4 thực thể): đồng ý hay không.
+2. Kiểm **36 ghi chú** `unsure:`/`check:` trong `mmkg/review_ai_notes.csv`.
+3. Nên xem thêm một mẫu ngẫu nhiên các ảnh `ok` (đặc biệt về mặt người nhận diện được, ADR-0015 quy tắc 4) và nhãn dịch ở trên.
+4. Không đồng ý với AI thì **sửa dòng đó** trong `mmkg/review.csv`, ghi tên mình vào `reviewer`, rồi dựng lại (`mmkg/README.md` mục 3). Phải duyệt xong mới dùng cho thí nghiệm.
+
+### 7.4. Ảnh hưởng lên bộ chính thức (trước → sau)
+
+| Mục | Lần dựng đầu (trước duyệt) | Sau duyệt AI (`mmkg/build_report.json`) |
 |---|---|---|
-| Thực thể | 128 | `pending_entity` |
-| Ảnh | 403 | `pending_image` |
-| Triple | 360 | `pending_triple` |
+| Thực thể | 128 (84 `item` + 44 `concept`) | 119 (80 `item` + 39 `concept`) |
+| Triple | 331 | 302 |
+| Ảnh | 403 | 382 |
+| Thực thể thiếu `name_vi` | 7 | 0 |
+| Dòng còn `pending` (thực thể / ảnh / triple) | 128 / 403 / 360 | 0 / 0 / 0 |
+| `entities_dropped_review` / `images_dropped_review_drop` / `triples_dropped_review` | 0 / 0 / 0 | 4 / 68 / 16 |
 
-Số triple chờ duyệt (360) lớn hơn số triple (331) vì file duyệt khoá theo mã `P` gốc: mỗi triple `kept_at` gộp từ `P195` và `P276` có hai dòng duyệt (331 + 29 = 360).
+Số triple 302 chỉ hơn mốc 300 là 2. Số khoá duyệt triple là 360 (344 `ok` + 16 `drop`, không phải 302) vì file duyệt khoá theo mã `P` gốc (triple `kept_at` gộp có hai dòng duyệt) và vì có khoá thuộc triple đã rơi khỏi bộ do luật khác (thực thể bị bỏ, `item` rớt dưới 3 ảnh).
 
-Cách duyệt: xem `mmkg/README.md`. Lý do `drop` cho ảnh: `not_the_object`, `identifiable_person`, `duplicate`, `other`.
-
-Bảng điền sau khi duyệt (người duyệt cập nhật, số đếm từ `mmkg/review.csv` và `build_report.json` của lần dựng sau duyệt):
-
-| Loại | Lý do `drop` | Số mục | Người duyệt | Ngày |
-|---|---|---|---|---|
-| Ảnh | `not_the_object` | (chưa duyệt) | | |
-| Ảnh | `identifiable_person` | (chưa duyệt) | | |
-| Ảnh | `duplicate` | (chưa duyệt) | | |
-| Ảnh | `other` | (chưa duyệt) | | |
-| Triple | (ghi lý do) | (chưa duyệt) | | |
-| Thực thể | (ghi lý do) | (chưa duyệt) | | |
-| Thực thể | sửa `name_vi` (`fix_name_vi`) | (chưa duyệt) | | |
-
-Nếu duyệt bỏ nhiều tới mức triple dưới 300 hoặc thực thể ra ngoài 50–150, nhóm đổi ngưỡng trong `configs/mmkg_vi_build.yaml`, dựng lại và ghi ngưỡng mới, lý do và số mới vào mục này (ADR-0051).
+Nếu nhóm duyệt bỏ thêm tới mức triple dưới 300 hoặc thực thể ra ngoài 50–150, đổi ngưỡng trong `configs/mmkg_vi_build.yaml`, dựng lại và ghi ngưỡng mới, lý do và số mới vào mục này (ADR-0051).
 
 ## 8. Tải ảnh
 
@@ -240,7 +275,7 @@ Nếu duyệt bỏ nhiều tới mức triple dưới 300 hoặc thực thể ra
 | `why` trong manifest | `kind` | Khi nào |
 |---|---|---|
 | `thumbnail` | `thumbnail` | Bản gốc rộng hơn 960 px và thumbnail 960 px có cạnh ngắn ≥ 224 px (trường hợp thường gặp) |
-| `original_not_wider` | `original` | Bản gốc rộng ≤ 960 px. Commons không phóng to ảnh, nên "thumbnail" nó trả về chính là file gốc (URL có `utm_content=thumbnail_unscaled`); tải như bản gốc để kiểm được `sha1`. Theo cột `width` của `images.csv` có 44 ảnh như vậy |
+| `original_not_wider` | `original` | Bản gốc rộng ≤ 960 px. Commons không phóng to ảnh, nên "thumbnail" nó trả về chính là file gốc (URL có `utm_content=thumbnail_unscaled`); tải như bản gốc để kiểm được `sha1`. Theo cột `width` của `images.csv` hiện có 36 ảnh như vậy (lần dựng đầu: 44) |
 | `original_no_thumburl` | `original` | Commons không trả link thumbnail |
 | `original_thumb_too_small` | `original` | Thumbnail 960 px có cạnh ngắn < 224 px (ảnh rất dẹt) |
 | `original_already_present` | `original` | File đã có trên đĩa từ trước và khớp `sha1` Commons, nhưng không biết vì sao lúc đó tải bản gốc (ví dụ file của lần tải bản gốc đầu tiên) |
@@ -262,28 +297,30 @@ uv run python scripts/download_mmkg_images.py \
 # thêm --delete-stray nếu script báo file lạ
 ```
 
-Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt, và xong ngày 2026-11-17 sau nhiều lần chạy lại (bị `upload.wikimedia.org` giới hạn bằng HTTP 429; hết bị chặn khi User-Agent có email liên hệ, xem `configs/mmkg_vi_collect.yaml`). Số liệu của **lần chạy cuối** (in cuối lần chạy, nằm trong `mmkg/download_report.json`; các lần trước được tính vào `already_present`):
+Lần tải đầu bắt đầu ngày 2026-11-16, trước khi duyệt, và xong ngày 2026-11-17 sau nhiều lần chạy lại (bị `upload.wikimedia.org` giới hạn bằng HTTP 429; hết bị chặn khi User-Agent có email liên hệ, xem `configs/mmkg_vi_collect.yaml`). Lần chạy xong đó tải đủ 403/403 ảnh của bộ trước duyệt (350 thumbnail, 44 bản gốc không rộng hơn 960 px, 9 `original_already_present`).
+
+**Sau duyệt AI** (2026-11-17): trình tải được chạy lại với `--delete-stray` để xoá các ảnh bị `drop`, và `mmkg/images/` nay chứa đúng 382 ảnh chính thức. Số liệu lần chạy này (`mmkg/download_report.json`):
 
 | Mục | Giá trị |
 |---|---|
-| `downloaded_thumbnail` | 50 |
-| `downloaded_original` | 5 |
-| `already_present` | 348 |
+| `already_present` | 382 |
+| `downloaded_thumbnail` | 0 |
+| `downloaded_original` | 0 |
 | `relabelled_as_original` | 0 |
 | `removed_bad_file` | 0 |
 | `sha1_mismatch` | 0 |
 | `missing_on_commons` | 0 |
-| Tổng ảnh trong `mmkg/images/` | 403 / 403 |
-| Tổng dung lượng theo manifest (`bytes`) | 121.230.948 byte (khoảng 116 MB theo `du -sh`) |
+| Tổng ảnh trong `mmkg/images/` | 382 / 382 |
+| Tổng dung lượng theo manifest (`bytes`) | 115.741.097 byte (đếm từ `mmkg/images_manifest.csv`) |
 
-Kết quả cuối theo cột `why` của `mmkg/images_manifest.csv` (403 dòng): `thumbnail` 350, `original_not_wider` 44, `original_already_present` 9.
+Kết quả theo cột `why` của `mmkg/images_manifest.csv` (382 dòng): `thumbnail` 337, `original_not_wider` 36, `original_already_present` 9.
 
 | Link cloud | https://drive.google.com/drive/folders/1KnsEIUrnbo0C58idfRK_sjhy8cRsahzG |
 |---|---|
 
-Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; `rclone check` báo 416 file khớp, 0 khác biệt. Ảnh **chưa được nhóm duyệt** tại thời điểm upload: sau khi duyệt và chạy lại script tải với `--delete-stray`, cần đồng bộ lại thư mục này để gỡ ảnh bị `drop`. Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
+Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; `rclone check` báo 416 file khớp, 0 khác biệt. Bản sao này được upload **trước duyệt** (403 ảnh, 416 file): nó còn chứa các ảnh đã bị `drop` và CSV cũ, nên cần đồng bộ lại thư mục này với `mmkg/` hiện tại (382 ảnh) rồi mới chia sẻ tiếp. Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
 
-Sau khi duyệt và dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
+Mỗi lần nhóm sửa duyệt rồi dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
 ## 9. Split
 
@@ -294,7 +331,7 @@ Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-1
 | Điểm | Vấn đề | Việc phải làm |
 |---|---|---|
 | Đơn vị chia | Chưa chọn chia theo **ảnh** (cùng di tích có ảnh ở cả train và test) hay theo **item** (di tích test không có ảnh nào ở train). Hai cách đo hai năng lực khác nhau | Chọn và ghi lý do trong ADR split |
-| `concept` và triple đếm trên mọi item | Luật `min_items_per_concept` và cạnh giữa các thực thể đang đếm trên **cả 84 item**, gồm cả item sẽ vào val/test | Nếu chia theo item: đếm lại trên item train, **hoặc** khai báo cách làm là transductive (đồ thị biết trước mọi thực thể) và chạy ablation bỏ thông tin đó |
+| `concept` và triple đếm trên mọi item | Luật `min_items_per_concept` và cạnh giữa các thực thể đang đếm trên **cả 80 item**, gồm cả item sẽ vào val/test | Nếu chia theo item: đếm lại trên item train, **hoặc** khai báo cách làm là transductive (đồ thị biết trước mọi thực thể) và chạy ablation bỏ thông tin đó |
 | `entity_id` trong `images.csv` là đáp án | Cột này nói ảnh thuộc di tích nào | Không dùng nó để dựng cạnh `ảnh → contains → thực thể` cho ảnh val/test (mục 5, ADR-0051) |
 | Đóng băng bộ dữ liệu | Dựng lại sau khi đã chia có thể đổi ảnh, thực thể, triple | Ghi `sha1` của các CSV chính thức (`entities.csv`, `triples.csv`, `images.csv`) vào file split; test kiểm khớp |
 | Khoá ngưỡng dựng | Đổi ngưỡng sau khi có split (để kết quả đẹp hơn) là chọn siêu tham số trên test | Sau khi có split, ngưỡng trong `configs/mmkg_vi_build.yaml` khoá lại; muốn đổi thì ADR mới và chạy lại mọi mô hình |
@@ -305,12 +342,13 @@ Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-1
 - **Miền trộn hai loại:** công trình (chùa, đình, thành) và hiện vật (trống đồng, tượng) nằm chung, nên miền hơi rộng (ADR-0050).
 - **Ảnh giống nhau:** nhiều chùa, đình có kiến trúc gần giống nhau; CLIP có thể khó phân biệt, kết quả truy vấn ảnh có thể thấp.
 - **Thiên lệch độ phủ Wikidata:** chỉ di tích đã có trên Wikidata với `P1435` mới vào miền; di tích nổi tiếng, có trang Wikipedia, có nhiều thông tin hơn. Triple phản ánh những gì người đóng góp Wikidata đã nhập, không phải đầy đủ tri thức về di tích.
-- **Nhiều di tích thiếu ảnh tự do:** trong 170 thực thể của miền, chỉ 121 có ít nhất một ảnh ứng viên (đếm từ `image_candidates.csv`) và 84 qua được luật 3 ảnh. Ví dụ trống đồng Ngọc Lũ (`Q3514747`) có 6 file nhưng chỉ 2 qua luật nên không thành `item`.
-- **Thiếu nhãn tiếng Việt:** 7 thực thể không có `name_vi` (mục 6.3).
-- **Khái niệm mang tính quản trị:** một số `concept` là danh hiệu hay trạng thái hồ sơ (ví dụ `Q29778318` "UNESCO World Heritage Site record modification", `Q106379705` "damaged") chứ không phải khái niệm nhìn thấy trên ảnh; người duyệt cân nhắc bỏ.
+- **Nhiều di tích thiếu ảnh tự do:** trong 170 thực thể của miền, chỉ 121 có ít nhất một ảnh ứng viên (đếm từ `image_candidates.csv`) và 80 qua được luật 3 ảnh và duyệt (84 trước duyệt). Ví dụ trống đồng Ngọc Lũ (`Q3514747`) có 6 file nhưng chỉ 2 qua luật nên không thành `item`.
+- **Thiếu nhãn tiếng Việt:** lần dựng đầu có 7 thực thể không có `name_vi`; nay đã điền, nhưng 5 nhãn do AI dịch, chưa được người kiểm (mục 6.3, 7).
+- **Khái niệm mang tính quản trị:** lần dựng đầu có một số `concept` là danh hiệu hay trạng thái hồ sơ (ví dụ `Q29778318` "UNESCO World Heritage Site record modification", `Q106379705` "damaged"); AI duyệt đã bỏ 3 khái niệm như vậy, nhưng nhóm nên rà lại các khái niệm meta còn lại.
 - **Dữ liệu theo bản dump:** Wikidata lấy qua QLever, dựng từ bản dump ghi trong `sparql_index` (mục 2); có thể lệch so với Wikidata trực tiếp cùng ngày.
 - **Danh sách quan hệ chưa được nhóm duyệt** (mục 4).
-- **Biên quy mô hẹp:** 331 triple, chỉ hơn mốc 300 là 31.
+- **Biên quy mô hẹp:** 302 triple, chỉ hơn mốc 300 là 2 (lần dựng đầu: 331).
+- **Chưa có duyệt của người:** mọi quyết định `ok`/`drop` hiện là của AI (mục 7); AI có thể bỏ sót ảnh có mặt người nhận diện được hoặc `drop` nhầm.
 
 ## 11. Người tạo và ngày
 
@@ -320,4 +358,5 @@ Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-1
 | Viết code thu thập/dựng/tải ảnh, chạy thu thập và dựng bản đầu, data card | Claude Code (Opus 5.5), FluteInTheRain chịu trách nhiệm (`docs/ai-usage-log.md`) | 2026-11-16 |
 | Đề xuất danh sách quan hệ (chưa duyệt) | Claude Code | 2026-11-16 |
 | Sửa luật tác giả, file duyệt và trình tải ảnh; dựng lại (mục 3, 8) | Claude Code (Opus 5.5), FluteInTheRain chịu trách nhiệm | 2026-11-17 |
-| Duyệt ảnh, triple, thực thể | (chưa phân công) | |
+| Duyệt sơ bộ bằng AI toàn bộ ảnh, triple, thực thể (946 dòng, 6 vòng, `reviewer = claude-ai`) | Claude Code (Opus 5.5) cùng subagent xem ảnh, FluteInTheRain chịu trách nhiệm | 2026-11-17 |
+| Duyệt của người: dòng bị `drop`, 36 ghi chú cần kiểm, mẫu ảnh `ok` | (chưa phân công) | |

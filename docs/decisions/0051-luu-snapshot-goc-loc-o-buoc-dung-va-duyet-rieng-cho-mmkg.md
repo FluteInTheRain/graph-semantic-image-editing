@@ -102,6 +102,7 @@ Danh sách 18 mã `P` (17 tên quan hệ) và nghĩa tiếng Việt nằm trong 
 - **Danh sách quan hệ chưa được nhóm duyệt:** cần duyệt và đổi trạng thái ADR này trước khi dùng bộ dữ liệu cho thí nghiệm.
 - **File duyệt chịu được bảng tính:** `read_review` nhận file có BOM (Excel), ô thừa khoảng trắng, cột đổi thứ tự; thiếu hoặc thừa cột thì báo lỗi nêu tên cột. Dòng duyệt có `key` không khớp gì trong snapshot gốc (thường là gõ sai) được liệt kê ở `review_keys_unmatched` trong `build_report.json`, và `--require-reviewed` thoát mã 1 khi danh sách này khác rỗng.
 - **Việc tiếp theo:** thành viên duyệt `mmkg/review.csv`; dựng lại tới khi `scripts/build_mmkg.py --require-reviewed` qua; tải ảnh (`scripts/download_mmkg_images.py`) và đưa lên cloud; ADR cho split `splits/mmkg_vi/`, cạnh `contains` và truy vấn trên MMKG.
+- **Ghi chú 2026-11-17 (sau duyệt sơ bộ bằng AI):** các số "lần dựng đầu" ở trên (331 triple, mục `pending`) là của bản trước duyệt. Một AI pre-review (Claude Code, `reviewer = claude-ai`, 6 vòng) đã quyết định mọi dòng của `mmkg/review.csv` và `scripts/build_mmkg.py --require-reviewed` đã qua. Bộ chính thức hiện có 119 thực thể, 302 triple, 382 ảnh (`mmkg/build_report.json`); 302 chỉ hơn mốc 300 là 2, nên "biên quy mô hẹp" nghiêm trọng hơn. Đây **chưa phải duyệt của người**: thành viên vẫn phải kiểm các dòng `drop` và 36 ghi chú trong `mmkg/review_ai_notes.csv`, và ADR này chưa đổi trạng thái. Chi tiết và số: `data_cards/mmkg_vi.md` mục 7.
 
 ## Nguồn tham khảo
 
