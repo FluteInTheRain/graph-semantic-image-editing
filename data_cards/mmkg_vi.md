@@ -244,6 +244,8 @@ Tổng 946 dòng = 458 ảnh + 360 khoá triple + 128 thực thể. Ảnh có 45
 
 `mmkg/review_ai_notes.csv` (130 dòng; cột `kind, key, review_status, note`) giữ ghi chú của các lượt duyệt. **36 dòng** có ghi chú bắt đầu bằng `unsure:` hoặc `check:`: đó là ca AI không chắc, giữ `ok` hoặc `drop` thận trọng và cần người xem.
 
+**Bộ đối chiếu ảnh bị loại** (để kiểm lại về sau): 68 ảnh bị `drop` (tải lại bản rộng 480 px từ Commons ngày 2026-11-17) ghép thành 6 tấm lưới có lý do, tên hiện vật, `image_id`, ghi chú, kèm `dropped_images.csv` (link Commons từng file). Bản trên máy ở `data/mmkg_review_drops/` (gitignored, vì có ảnh người); bản cho nhóm ở thư mục con `review_drops/` trong thư mục Drive của MMKG (mục 8). Thư mục Drive này chỉ dành cho nhóm, không đăng lại công khai.
+
 Nhóm **phải** làm:
 
 1. Kiểm **mọi dòng bị `drop`** (68 ảnh, 16 khoá triple, 4 thực thể): đồng ý hay không.
