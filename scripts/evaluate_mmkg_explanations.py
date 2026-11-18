@@ -16,6 +16,10 @@ Run (from the repo root):
     uv run python scripts/evaluate_mmkg_explanations.py --config configs/explain_mmkg_vi.yaml \
         --transfer-config configs/mmkg_vi_transfer.yaml
 
+    Rebuild only the table from a finished run (reads its evaluation.json):
+    uv run python scripts/evaluate_mmkg_explanations.py --config configs/explain_mmkg_vi.yaml \
+        --transfer-config configs/mmkg_vi_transfer.yaml --table-from-run results/runs/<run>
+
 Output:
     results/runs/<time>_explain_mmkg_vi_test/ (evaluation.json, summary.md, config.yaml,
     env.json) and results/tables/xai_mmkg.csv (overall and per query group).
@@ -57,7 +61,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--config", required=True, help="configs/explain_mmkg_vi.yaml")
     parser.add_argument("--transfer-config", required=True, help="configs/mmkg_vi_transfer.yaml")
+    parser.add_argument(
+        "--table-from-run",
+        default=None,
+        help="rebuild the table from an existing run folder's evaluation.json (no evaluation)",
+    )
     args = parser.parse_args(argv)
+    if args.table_from_run is not None:
+        run_dir = Path(args.table_from_run)
+        with open(run_dir / "evaluation.json", encoding="utf-8") as file:
+            write_table(table_rows(json.load(file)["groups"], run_dir.name), TABLE)
+        print(f"saved {TABLE} from {run_dir}")
+        return 0
 
     config = load_explain_config(args.config)
     ranking = load_graph_rerank_config(config.ranking_config)

@@ -125,3 +125,5 @@ def test_summary_and_table_have_one_row_overall_and_per_group():
     assert rows[0]["num_records"] == 6
     assert "fidelity_plus_mean" in rows[0] and "p_rank_drop_vs_random" in rows[0]
     assert rows[0]["run"] == "run_x"
+    # p-values are text, so the CSV writer's rounding cannot turn them into 0.
+    assert isinstance(rows[0]["p_rank_drop_vs_random"], str)

@@ -141,6 +141,10 @@ def table_rows(summary: dict, run_name: str) -> list[dict]:
                 if isinstance(value, dict):
                     flat[f"{name}_mean"] = value["mean"]
                     flat[f"{name}_std"] = value["std"]
+                elif name.startswith("p_"):
+                    # Text with 3 significant digits: the CSV writer rounds numbers to 4
+                    # decimals, which would turn p = 1e-59 into 0.
+                    flat[name] = f"{value:.3g}"
                 elif name not in flat:
                     flat[name] = value
             flat["run"] = run_name
