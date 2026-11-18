@@ -333,3 +333,101 @@ Kết quả chính (`results/records/20261113_cap-do-1-mo-rong/README.md`):
 - **Vì sao hard negative lấy từ top 100 của CLIP?** Đó đúng là những ảnh mà bước xếp hạng lại phải đẩy xuống.
 - **Shortcut huấn luyện có "gian lận" không?** Không. Với một lớp, mean và không có hàm kích hoạt, trung bình vector khái niệm của mỗi ảnh không đổi khi học, nên tính trước một lần cho kết quả giống hệt. Có test chứng minh. Lúc chấm val/test và lúc giải thích vẫn dùng `SAGEConv` thật.
 - **Đồ thị có thêm thông tin gì ngoài CLIP?** Ít: cạnh và vector khái niệm đều từ CLIP. Đó là lý do phải có đối chứng không đồ thị (ADR-0046, mục Hệ quả).
+
+## 9. G-Retriever bậc 1: đồ thị con PCST của truy vấn (ADR-0051)
+
+> **Trạng thái 2026-11-15:** code và test tổng hợp đã xong; **chưa chạy trên dữ liệu thật** (máy này chưa có đặc trưng và đồ thị). ADR-0051 đang **Đề xuất**, nhóm chưa duyệt.
+
+### 9.1. Ý tưởng
+
+Ở các mục trên, điểm đồ thị của một ảnh **không phụ thuộc câu truy vấn**. Ở đây, mỗi truy vấn tự chọn **một đồ thị con nhỏ** của đồ thị khái niệm, rồi ảnh nào "chạm" đồ thị con đó nhiều thì được cộng điểm. Không huấn luyện gì cả.
+
+Ba khái niệm cần nhớ (lấy từ bài G-Retriever, bỏ phần LLM):
+
+| Khái niệm | Nghĩa |
+|---|---|
+| **Giải thưởng** | `k` khái niệm giống truy vấn nhất (theo cosine CLIP) nhận thưởng `k, k−1, …, 1`; các khái niệm khác nhận 0 |
+| **Phí cạnh** | Mỗi cạnh đồng xuất hiện (PMI, chỉ đếm trên train) tốn một hằng số `C` |
+| **Cầu nối** | Khái niệm thưởng 0 nhưng nằm giữa hai khái niệm có thưởng; PCST giữ nó nếu nối được thì lời hơn phí cạnh |
+
+PCST (Prize-Collecting Steiner Tree) tìm cây nhiều thưởng, ít phí nhất. Cạnh rẻ thì cây to và có cầu nối; cạnh đắt thì cây co lại còn khái niệm tốt nhất.
+
+**Ví dụ giả** (dữ liệu tổng hợp lấy từ `tests/test_pcst.py`, không phải Visual Genome): 4 khái niệm `0, 1, 2, 3`, cạnh `0–1`, `1–2`, `2–3`. Truy vấn gần khái niệm 2 nhất rồi tới khái niệm 0, nên `k = 2` cho thưởng `2` (khái niệm 2) và `1` (khái niệm 0).
+
+| `C` | `S_q` | Giải thích |
+|---|---|---|
+| `0.1` (rẻ) | `{0, 1, 2}` | Khái niệm 1 thưởng 0 nhưng là cầu duy nhất nối 0 và 2, nên được giữ |
+| `10` (đắt) | `{2}` | Không đáng trả phí để nối, chỉ giữ khái niệm tốt nhất |
+
+Một ảnh giả có khái niệm `{0, 2, 3}` trong trường hợp `C = 0.1`: trùng `{0, 2}` với `S_q`, nên `g = 2/3`.
+
+### 9.2. Công thức
+
+```
+g(q, i) = |N(i) ∩ S_q| / |S_q|
+final   = alpha · cos(q, x_i) + (1 − alpha) · g(q, i)
+```
+
+- `N(i)`: 16 khái niệm CLIP top-k của ảnh `i` (cạnh `contains`, như nhau ở mọi split, không dùng annotation).
+- Mọi khái niệm trong `S_q` có trọng số như nhau, **kể cả cầu nối**. Nếu chỉ cộng thưởng thì cầu nối (thưởng 0) không góp gì và mất cơ chế gián tiếp.
+- `alpha = 1` là CLIP thuần.
+- Code: `src/mmxai/graph/pcst.py` (thưởng, PCST), `src/mmxai/models/subgraph_scorer.py` (`overlap_scores`), `src/mmxai/eval/pcst_rerank.py` (chọn và chấm).
+
+### 9.3. Chuẩn bị
+
+| Cần gì | Lấy ở đâu |
+|---|---|
+| Môi trường | `uv sync --group ml --group graph`. Repo ghim `numpy<2` vì `pcst-fast` cho kết quả **sai** với numpy 2 (ADR-0051 mục 6). Sau khi merge, **cả nhóm phải chạy lại lệnh này** |
+| Đặc trưng CLIP | `artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k/`, trích trên Kaggle (ADR-0041) |
+| Đồ thị `contains` | `uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml` |
+| Cạnh PMI | `uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml` |
+
+### 9.4. Thứ tự chạy
+
+Commit code trước khi chạy (như mục 4).
+
+```bash
+# 1. Chọn prize_k, edge_cost, alpha trên VAL (3 seed)
+for s in 0 1 2; do
+  uv run python scripts/select_pcst_rerank.py --config configs/clip_pcst_vg.yaml --seed $s
+done
+
+# 2. Hai ablation, cũng chọn trên val
+for s in 0 1 2; do
+  uv run python scripts/select_pcst_rerank.py --config configs/clip_pcst_vg_no_tree.yaml --seed $s
+  uv run python scripts/select_pcst_rerank.py --config configs/clip_pcst_vg_shuffled.yaml --seed $s
+done
+
+# 3. Test: MỘT lần mỗi seed và mỗi config, sau khi đã chốt
+for s in 0 1 2; do
+  uv run python scripts/evaluate_pcst_rerank.py --config configs/clip_pcst_vg.yaml --seed $s
+done   # lặp lại với hai config ablation
+
+# 4. Bảng tổng hợp
+uv run python scripts/summarize_runs.py
+```
+
+Lưới trên val: `prize_k ∈ {3, 5, 10}`, `C ∈ {0.25, 0.5, 1.0}`, rồi `alpha` từ 0.0 tới 1.0; chọn MRR@100 cao nhất, hoà thì ưu tiên `alpha` lớn hơn, rồi `prize_k` nhỏ hơn, rồi `C` lớn hơn (gần CLIP thuần nhất). `select_pcst_rerank.py` từ chối chạy lại nếu `selection.json` đã có; `evaluate_pcst_rerank.py` từ chối chấm test lần hai.
+
+### 9.5. Hai ablation
+
+| Config | Thay đổi | Kiểm điều gì |
+|---|---|---|
+| `configs/clip_pcst_vg_no_tree.yaml` | `S_q` chỉ gồm `k` khái niệm có thưởng, không cầu nối | Phần đóng góp của PCST. Chế độ này **không dùng `C`**, nên lưới `edge_cost_grid` chỉ ghi giá trị đầu tiên |
+| `configs/clip_pcst_vg_shuffled.yaml` | Xáo cạnh PMI, giữ bậc từng khái niệm, seed xáo = seed chạy | Cạnh PMI thật có ích hơn cạnh ngẫu nhiên cùng bậc không |
+
+Ba config chỉ khác `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `selection_dir`; có test kiểm (`tests/test_pcst_rerank.py`).
+
+**Về seed và std = 0.** Bậc 1 không huấn luyện và `pcst`, `top_k_only` là tất định, nên chạy 3 seed cho ba kết quả giống hệt nhau và std = 0 (giống CLIP thuần trong `main.csv`). Std = 0 ở đây là do tính tất định, **không** phải bằng chứng ổn định thống kê. Vẫn chạy 3 seed để `summarize_runs.py` hoạt động. Chỉ ablation xáo cạnh có seed thật (seed xáo = seed chạy), nên hãy so sánh main với shuffled **theo từng seed**, không chỉ so hai giá trị trung bình.
+
+### 9.6. Rò rỉ dữ liệu
+
+- Cạnh PMI chỉ đếm trên **train** (ADR-0048).
+- Cạnh `contains` lấy từ CLIP top-k của chính ảnh, không dùng annotation ở split nào.
+- PCST chỉ dùng văn bản truy vấn và vector khái niệm đóng băng.
+- `prize_k`, `C`, `alpha` chọn chỉ trên **val**; test chạy một lần với lựa chọn đã lưu.
+- Không dùng `queries/` để chọn gì.
+
+### 9.7. Giải thích
+
+Giải thích của một ảnh là `explain_overlap` (`src/mmxai/models/subgraph_scorer.py`): danh sách khái niệm thuộc `N(i) ∩ S_q`, đánh dấu cái nào là cầu nối, và điểm khi bỏ từng khái niệm. Nó lấy **đúng từ phép tính `g`**: bỏ một khái niệm trùng thì tử số giảm đúng 1, tức `g` giảm `1/|S_q|`. Không có bước dựng đường đi riêng sau khi đã có kết quả.

@@ -1,0 +1,32 @@
+# G-Retriever stage 1 on Visual Genome (ADR-0051, status: Proposed): ablation 1, no tree.
+# S_q is only the top-k prized concepts, without PCST bridges.
+# How to run: scripts/select_pcst_rerank.py (val), then scripts/evaluate_pcst_rerank.py (test, once).
+# One file = one experiment. Every value below is chosen on val only, never on test or queries/.
+experiment: clip_pcst_vg_no_tree
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0046): contains edges from CLIP top-k for every split
+# (built by configs/graph_vg_clip_topk.yaml).
+graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Decision (ADR-0051): PCST runs on the train-counted PMI co-occurrence edges (ADR-0048),
+# built by configs/concept_edges_vg_cooccurrence.yaml.
+concept_edges_dir: artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1
+subgraph_mode: top_k_only
+shuffle_concept_edges: false
+top_k: 100
+recall_ks: [1, 5, 10]
+# Decision (ADR-0043): equal sentences are relevant.
+same_text_threshold: 0.9999
+# Decision (ADR-0051): the grid includes the G-Retriever SceneGraphs values (topk=3, cost_e=0.5).
+#   Chosen on val only. Proposed by Claude Code, 2026-11-15; not yet approved by the team.
+prize_k_grid: [3, 5, 10]
+# Unused in top_k_only mode (no tree, so no edge cost): only its first value is recorded.
+# Kept identical to the main config so the three files differ only in the ablation fields.
+edge_cost_grid: [0.25, 0.5, 1.0]
+alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# Decision (ADR-0047): choose on val MRR@100; ties go to the larger alpha.
+selection_metric: MRR@100
+# Where selection.json is written, one folder per seed (artifacts/ is gitignored).
+selection_dir: artifacts/models/visual_genome/clip_pcst_vg_no_tree
+output_dir: results/runs

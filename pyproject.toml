@@ -7,7 +7,8 @@ requires-python = ">=3.11"
 # Light default runtime deps: enough for configs, splits, metrics and tests.
 # Heavy ML stacks live in dependency groups below (see docs/decisions/0006).
 dependencies = [
-    "numpy>=1.26",
+    # pcst-fast 1.0.10 (ADR-0051) gives wrong results with numpy 2; keep numpy 1.x until it is fixed.
+    "numpy>=1.26,<2",
     "pyyaml>=6.0",
 ]
 
@@ -32,6 +33,8 @@ ml = [
 graph = [
     "torch-geometric>=2.6",
     "networkx>=3.3",
+    # PCST solver for the G-Retriever reranker (ADR-0051). License: GNU GPL.
+    "pcst-fast>=1.0.10",
 ]
 # Extra text encoders / KG linking helpers (optional).
 nlp = [

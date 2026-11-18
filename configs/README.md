@@ -7,6 +7,7 @@
 | `configs/clip_graph_vg.yaml` | **CLIP + Graph**: GraphSAGE một lớp xếp hạng lại top 100 của CLIP; `alpha` và số epoch chọn trên `val` (ADR-0046, ADR-0047) |
 | `configs/clip_nograph_vg.yaml` | Đối chứng **không đồ thị**: huấn luyện y hệt nhưng cố định `W_nb = 0` (ADR-0046 mục 6) |
 | `configs/clip_cooc_graph_vg.yaml` | CLIP + Graph **có cạnh đồng xuất hiện**: GraphSAGE hai lớp, khái niệm nghe khái niệm đi cùng nó trong annotation train (ADR-0048) |
+| `configs/clip_pcst_vg.yaml`, `clip_pcst_vg_no_tree.yaml`, `clip_pcst_vg_shuffled.yaml` | **G-Retriever bậc 1** (ADR-0051, không huấn luyện): PCST chọn đồ thị con khái niệm của truy vấn trên cạnh PMI, ảnh được chấm bằng độ trùng với đồ thị con. Bản chính và hai ablation (không dựng cây; xáo cạnh PMI giữ bậc); chỉ khác `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `selection_dir` (có test kiểm) |
 | `configs/concept_edges_vg_cooccurrence.yaml` | Dựng cạnh khái niệm → khái niệm bằng PMI trên annotation **train** (ADR-0048) |
 | `configs/clip_graph_vg_lr1e4_shuffled.yaml` | Ablation **xáo cạnh giữ bậc** (ADR-0046 mục 6): mô hình chính `clip_graph_vg_lr1e4` huấn luyện y hệt trên đồ thị đã xáo cạnh; chỉ khác `experiment`, `graph_dir`, `model_dir` (có test kiểm) |
 | `configs/*_lr1e4.yaml` | Ba thí nghiệm trên với `lr = 1e-4` thay vì `1e-3` (val tốt nhất ngay epoch 1 rồi giảm); so với bản `1e-3` **chỉ trên val** |
