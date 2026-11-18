@@ -1,0 +1,51 @@
+# Transfer evaluation of the Visual Genome models on the Vietnamese MMKG (ADR-0053).
+# MMKG is for evaluation only: nothing in this file may be tuned on MMKG results.
+# How to run: scripts/make_mmkg_queries.py, then scripts/evaluate_mmkg_transfer.py (see their docstrings).
+
+# Official MMKG files (entities, triples, images CSV) built by scripts/build_mmkg.py.
+mmkg_dir: mmkg
+# Decision (ADR-0053 rules 5-6): 4 queries per item with images (direct/indirect x en/vi),
+# answer = every image of every item that fits the query.
+#   Decided by: qphulong, 2026-11-18 (proposed by Claude Code).
+queries_file: queries/mmkg_vi/queries.jsonl
+
+# --- CLIP features (step "features"): same frozen CLIP as on Visual Genome. ----------------
+images_dir: mmkg/images
+features_dir: artifacts/features/mmkg_vi/ViT-B-32__laion2b_s34b_b79k
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto
+batch_size: 64
+# Decision (ADR-0053 rule 2): concept node = CLIP text vector of this sentence with the
+# entity's English name, for English and Vietnamese queries alike (same as VG).
+#   Decided by: qphulong, 2026-11-18 (proposed by Claude Code).
+concept_prompt: "a photo of a {}"
+
+# --- Graph and scoring (step "evaluate"). -------------------------------------------------
+# Decision (ADR-0053 rule 3): k = 16 as on VG (ADR-0046); never tuned on MMKG.
+#   Decided by: qphulong, 2026-11-18 (proposed by Claude Code).
+clip_topk_k: 16
+# ADR-0043: re-rank CLIP's top 100 (of 380 images); same metrics as VG.
+top_k: 100
+recall_ks: [1, 5, 10]
+seeds: [0, 1, 2]
+output_dir: results/runs
+# Decision (ADR-0053 rule 1): VG weights and the alpha in each seed's selection.json, unchanged.
+# model_dir: null is plain CLIP. Experiment names end with _mmkg_vi so the summary can select them.
+#   Decided by: qphulong, 2026-11-18 (proposed by Claude Code).
+experiments:
+  - name: clip_mmkg_vi
+    model_dir: null
+    two_layer: false
+  - name: clip_graph_vg_lr1e4_mmkg_vi
+    model_dir: artifacts/models/visual_genome/clip_graph_vg_lr1e4
+    two_layer: false
+  - name: clip_cooc_graph_vg_lr1e4_mmkg_vi
+    model_dir: artifacts/models/visual_genome/clip_cooc_graph_vg_lr1e4
+    two_layer: true
+  # Decision (ADR-0053 addendum, rule 9): the VG no-graph control (W_nb = 0, same learned
+  # projection), to tell graph gain from projection gain. Fixed before running it.
+  #   Decided by: qphulong, 2026-11-18 (proposed by experiment-reviewer / Claude Code).
+  - name: clip_nograph_vg_mmkg_vi
+    model_dir: artifacts/models/visual_genome/clip_nograph_vg
+    two_layer: false

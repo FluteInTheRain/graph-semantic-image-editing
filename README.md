@@ -404,10 +404,10 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 - [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016)
   - Fidelity theo đề: bỏ hoặc làm nhiễu cạnh/đường đi dùng làm giải thích thì điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý.
-- [ ] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người (119 thực thể, 303 triple, 380 ảnh): `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
-- [ ] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này.
-- [ ] Mô tả nguồn dữ liệu, cách liên kết ảnh – thực thể.
-- [ ] Phân tích **khả năng chuyển giao** (transferability).
+- [x] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người (119 thực thể, 303 triple, 380 ảnh): `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
+- [x] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này. → 2 mô hình GNN của Visual Genome và đối chứng không đồ thị, dùng nguyên, không huấn luyện lại, 318 truy vấn × 3 seed: `results/tables/mmkg_transfer.csv`, `mmkg_transfer_groups.csv` (ADR-0053, báo cáo mục 8)
+- [x] Mô tả nguồn dữ liệu, cách liên kết ảnh – thực thể. → `data_cards/mmkg_vi.md` mục 2 và 5
+- [x] Phân tích **khả năng chuyển giao** (transferability). → VG → di sản Việt Nam: MRR tăng nhẹ nhưng đối chứng không đồ thị cũng đạt mức đó, nên mức tăng đến từ phép chiếu học trên VG chứ không từ đồ thị; tiếng Anh → tiếng Việt thất bại vì CLIP gom các câu tiếng Việt lại (`results/tables/mmkg_transfer_query_spread.csv`); báo cáo mục 8.3
 
 ### Cấp độ 4 – điểm cộng +1.0 đến +2.0
 
@@ -492,7 +492,7 @@ Nguồn: PDF §8.
 - [ ] Notebook hoặc giao diện nhỏ: nhập truy vấn → top-k kết quả → hiển thị quan hệ/đường đi giải thích.
 - [ ] Phân tích chi tiết **≥ 5 truy vấn thành công** và **≥ 5 truy vấn thất bại**.
 - [ ] Nếu làm cấp độ 2: bộ **≥ 20 truy vấn** đánh giá kèm mô tả cách xây dựng và kiểm tra.
-- [ ] Nếu làm cấp độ 3: MMKG tự xây kèm **data card**, nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng dữ liệu. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người: `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
+- [x] Nếu làm cấp độ 3: MMKG tự xây kèm **data card**, nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng dữ liệu. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người: `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
 - [ ] **Demo chạy trực tiếp** khi vấn đáp + **video dự phòng ≤ 5 phút**.
 
 ---

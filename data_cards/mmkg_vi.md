@@ -360,7 +360,9 @@ Mỗi lần nhóm sửa duyệt rồi dựng lại, chạy lại lệnh trên. S
 
 ## 9. Split
 
-**Chưa tạo.** Split sẽ nằm ở `splits/mmkg_vi/` theo cùng quy tắc ADR-0009 (ADR-0015 quy tắc 5), chốt ở một ADR sau, cùng với cách dựng cạnh `contains` và cách sinh truy vấn. Luật lọc hiện tại không đọc split hay nhãn nào (chỉ dùng số ảnh hợp lệ và triple Wikidata).
+**Không cần split cho lần đánh giá chuyển giao (ADR-0053, 2026-11-18).** MMKG chỉ dùng để **đánh giá**: hai mô hình GNN của Visual Genome chạy nguyên, không huấn luyện lại, với `alpha` chọn trên val VG; toàn bộ 380 ảnh là ảnh đánh giá. Cạnh `contains` ảnh → thực thể lấy bằng CLIP top-16, **không** đọc `entity_id`. Truy vấn: `queries/mmkg_vi/queries.jsonl` (318 câu, trực tiếp/gián tiếp × Anh/Việt, sinh bằng `scripts/make_mmkg_queries.py`). Kết quả: `results/tables/mmkg_transfer*.csv`, báo cáo mục 8.
+
+**Nếu sau này huấn luyện trên MMKG**, khi đó mới cần split: nằm ở `splits/mmkg_vi/` theo cùng quy tắc ADR-0009 (ADR-0015 quy tắc 5), chốt ở một ADR mới. Luật lọc hiện tại không đọc split hay nhãn nào (chỉ dùng số ảnh hợp lệ và triple Wikidata).
 
 Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-11-16, checklist PDF §6 trong `CLAUDE.md`):
 
