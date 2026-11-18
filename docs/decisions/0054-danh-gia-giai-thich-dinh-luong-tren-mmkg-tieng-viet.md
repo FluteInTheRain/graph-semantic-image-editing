@@ -43,3 +43,7 @@ Do qphulong duyệt ngày 2026-11-18 (Claude Code đề xuất), trước khi ch
 
 - Đề bài §5 (cấp độ 3), §6 (rò rỉ).
 - ADR-0016 (explainer tính trên chính mô hình, chọn trên val), ADR-0053 (chuyển giao sang MMKG), `configs/explain_vg.yaml`, báo cáo mục 7.3.
+
+## Kết quả (2026-11-18)
+
+Run `results/runs/20261118-2258_explain_mmkg_vi_test/`, bảng `results/tables/xai_mmkg.csv`. Xếp hạng lại khớp MRR@100 của run chuyển giao ở cả 3 seed. 954 giải thích (318 truy vấn × 3 seed): Fid+ 0,0094 ± 0,0003 so với ngẫu nhiên 0,0001; tụt hạng 0,82 ± 0,04 bậc so với 0,10 (Wilcoxon p ≈ 1e-59); validity 100 %; sparsity 0,375. Đúng ở cả bốn nhóm truy vấn. Characterization không dùng được (giá trị chuẩn hoá bị cắt ở mọi truy vấn, ≈ 0 với tiếng Việt). Phân tích: báo cáo mục 8.4.

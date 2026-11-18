@@ -402,7 +402,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 3 – trần 10
 
-- [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016)
+- [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016); thêm trên MMKG tiếng Việt (318 truy vấn × 3 seed, cùng lựa chọn của VG): `results/tables/xai_mmkg.csv` (ADR-0054)
   - Fidelity theo đề: bỏ hoặc làm nhiễu cạnh/đường đi dùng làm giải thích thì điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý.
 - [x] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người (119 thực thể, 303 triple, 380 ảnh): `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
 - [x] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này. → 2 mô hình GNN của Visual Genome và đối chứng không đồ thị, dùng nguyên, không huấn luyện lại, 318 truy vấn × 3 seed: `results/tables/mmkg_transfer.csv`, `mmkg_transfer_groups.csv` (ADR-0053, báo cáo mục 8)
