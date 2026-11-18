@@ -220,7 +220,7 @@ Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh ch�
 \addcontentsline{toc}{section}{Tóm tắt}
 Khi tìm ảnh bằng văn bản, CLIP chỉ so khớp hai vectơ. Cách này không khai thác quan hệ giữa các khái niệm trong ảnh và không cho biết vì sao một ảnh được trả về. Nhóm xây dựng trên Visual Genome một hệ thống gồm ba bước: (i) CLIP ViT-B/32 đóng băng và FAISS lấy 100 ứng viên; (ii) một đồ thị hai phía ảnh -- khái niệm (3.880 synset WordNet, mỗi ảnh nối với 16 khái niệm) cùng một lớp GraphSAGE được huấn luyện để xếp hạng lại 100 ứng viên này; điểm cuối là $\alpha\cdot\cos + (1-\alpha)\cdot$điểm đồ thị; (iii) giải thích bằng các cạnh ảnh -- khái niệm, tính bằng can thiệp trên chính mô hình xếp hạng.
 
-Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Trên MMKG tiếng Việt tự xây (119 thực thể, 303 triple, 380 ảnh), hai mô hình VG dùng nguyên không huấn luyện lại nâng \mrr{} từ 0.2766 lên 0.2836--0.2872, chủ yếu ở truy vấn gián tiếp (chưa có ablation và kiểm định trên MMKG); truy vấn tiếng Việt thất bại vì CLIP không phân biệt được câu tiếng Việt, đồ thị không bù được. Các phần chưa hoàn thành (cấp độ 2, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
+Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Trên MMKG tiếng Việt tự xây (119 thực thể, 303 triple, 380 ảnh), các mô hình VG dùng nguyên không huấn luyện lại nâng \mrr{} từ 0.2766 lên 0.2836--0.2872, nhưng đối chứng không đồ thị cũng đạt 0.2861, nên mức tăng chủ yếu đến từ phép chiếu học trên VG chứ không từ đồ thị; truy vấn tiếng Việt thất bại vì CLIP không phân biệt được câu tiếng Việt, đồ thị không bù được. Các phần chưa hoàn thành (cấp độ 2, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
 
 \vspace{0.3cm}
 \noindent\textbf{Từ khoá:} truy vấn đa phương thức, CLIP, GraphSAGE, xếp hạng lại, giải thích trung thực, fidelity.
@@ -264,7 +264,7 @@ Tình trạng từng cấp độ của đề được tổng hợp ở Bảng~\r
 NV1 mở rộng & nDCG, chiều ảnh $\to$ văn bản, đánh giá theo nhóm truy vấn & Hoàn thành \\
 2 (8.5) & Tập công khai thứ 2; phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
 3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Đã chạy val; test chưa chạy \\
-3 (10) & MMKG tiếng Việt tự xây; chạy phương pháp tốt nhất, phân tích chuyển giao & Hoàn thành (mục~\ref{sec:mmkg}); chưa có ablation trên MMKG \\
+3 (10) & MMKG tiếng Việt tự xây; chạy phương pháp tốt nhất, phân tích chuyển giao & Hoàn thành (mục~\ref{sec:mmkg}) \\
 4 (+1--2) & Cải tiến riêng & Chưa (có ý tưởng, mục~\ref{sec:future}) \\
 Sản phẩm & Notebook/giao diện demo, slide & Chưa \\
 \bottomrule
@@ -774,22 +774,23 @@ Miền: \textbf{di tích và di sản Việt Nam} (Wikidata \code{P1435}, \code{
 
 \begin{table}[H]
 \centering\small
-\caption{Chuyển giao sang MMKG tiếng Việt (318 truy vấn, 380 ảnh, 3 seed, mean \pmm{} std). Nguồn: \code{results/tables/mmkg\_transfer.csv}, \code{mmkg\_transfer\_groups.csv}. CLIP tất định nên std = 0. $\alpha$ lấy từ val VG: 0.0/0.0/0.1 (một lớp) và 0.0/0.1/0.0 (hai lớp) cho seed 0/1/2, tức điểm cuối gần như chỉ còn điểm đồ thị.}
+\caption{Chuyển giao sang MMKG tiếng Việt (318 truy vấn, 380 ảnh, 3 seed, mean \pmm{} std). Nguồn: \code{results/tables/mmkg\_transfer.csv}, \code{mmkg\_transfer\_groups.csv}. CLIP tất định nên std = 0. ``Không đồ thị'' là đối chứng \code{clip\_nograph\_vg} của VG: cùng phép chiếu học được, $W_{\text{nb}}=0$. $\alpha$ lấy từ val VG cho seed 0/1/2: 0.3/0.4/0.2 (không đồ thị), 0.0/0.0/0.1 (một lớp), 0.0/0.1/0.0 (hai lớp).}
 \label{tab:mmkg}
-\begin{tabular}{l l c c c}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l l c c c c}
 \toprule
-\textbf{Nhóm} & \textbf{Chỉ số} & \textbf{CLIP} & \textbf{GNN một lớp} & \textbf{GNN hai lớp (triple)} \\
+\textbf{Nhóm} & \textbf{Chỉ số} & \textbf{CLIP} & \textbf{Không đồ thị} & \textbf{GNN một lớp} & \textbf{GNN hai lớp} \\
 \midrule
-Toàn bộ (318) & \mrr{} & 0.2766 & 0.2836 \pmm{} 0.0006 & \textbf{0.2872} \pmm{} 0.0019 \\
- & R@1 & 0.1792 & 0.1855 \pmm{} 0.0000 & \textbf{0.1950} \pmm{} 0.0031 \\
- & R@10 & 0.4686 & \textbf{0.4696} \pmm{} 0.0048 & 0.4623 \pmm{} 0.0094 \\
+Toàn bộ (318) & \mrr{} & 0.2766 & 0.2861 \pmm{} 0.0035 & 0.2836 \pmm{} 0.0006 & \textbf{0.2872} \pmm{} 0.0019 \\
+ & R@1 & 0.1792 & 0.1939 \pmm{} 0.0036 & 0.1855 \pmm{} 0.0000 & \textbf{0.1950} \pmm{} 0.0031 \\
+ & R@10 & 0.4686 & 0.4623 \pmm{} 0.0063 & \textbf{0.4696} \pmm{} 0.0048 & 0.4623 \pmm{} 0.0094 \\
 \midrule
-Trực tiếp, Anh (80) & \mrr{} & \textbf{0.464} & 0.459 \pmm{} 0.005 & 0.462 \pmm{} 0.006 \\
-Gián tiếp, Anh (79) & \mrr{} & 0.418 & 0.436 \pmm{} 0.007 & \textbf{0.458} \pmm{} 0.010 \\
-\quad chung chung (44) & \mrr{} & 0.539 & 0.575 \pmm{} 0.006 & \textbf{0.609} \pmm{} 0.011 \\
-\quad cụ thể (35) & \mrr{} & 0.266 & 0.261 \pmm{} 0.008 & \textbf{0.268} \pmm{} 0.009 \\
-Trực tiếp, Việt (80) & \mrr{} & \textbf{0.123} & 0.115 \pmm{} 0.001 & 0.114 \pmm{} 0.000 \\
-Gián tiếp, Việt (79) & \mrr{} & 0.101 & \textbf{0.124} \pmm{} 0.005 & 0.115 \pmm{} 0.006 \\
+Trực tiếp, Anh (80) & \mrr{} & \textbf{0.464} & 0.458 \pmm{} 0.012 & 0.459 \pmm{} 0.005 & 0.462 \pmm{} 0.006 \\
+Gián tiếp, Anh (79) & \mrr{} & 0.418 & 0.442 \pmm{} 0.004 & 0.436 \pmm{} 0.007 & \textbf{0.458} \pmm{} 0.010 \\
+\quad chung chung (44) & \mrr{} & 0.539 & 0.592 \pmm{} 0.006 & 0.575 \pmm{} 0.006 & \textbf{0.609} \pmm{} 0.011 \\
+\quad cụ thể (35) & \mrr{} & 0.266 & 0.254 \pmm{} 0.011 & 0.261 \pmm{} 0.008 & \textbf{0.268} \pmm{} 0.009 \\
+Trực tiếp, Việt (80) & \mrr{} & \textbf{0.123} & 0.118 \pmm{} 0.005 & 0.115 \pmm{} 0.001 & 0.114 \pmm{} 0.000 \\
+Gián tiếp, Việt (79) & \mrr{} & 0.101 & \textbf{0.126} \pmm{} 0.004 & 0.124 \pmm{} 0.005 & 0.115 \pmm{} 0.006 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -797,16 +798,21 @@ Gián tiếp, Việt (79) & \mrr{} & 0.101 & \textbf{0.124} \pmm{} 0.005 & 0.115
 \subsection{Phân tích khả năng chuyển giao}
 Các nhận xét dưới đây là xu hướng, \textbf{chưa kiểm định theo truy vấn}: mỗi nhóm chỉ 35--80 câu, và std chỉ phản ánh 3 bộ trọng số VG.
 \begin{enumerate}[leftmargin=*]
-\item \textbf{Chuyển miền (VG $\to$ di sản Việt Nam): giữ được, mức tăng nhỏ.} Không huấn luyện lại, cả hai mô hình nâng \mrr{} tổng thêm 0.007 (một lớp) và 0.011 (hai lớp), tức +2.5\% và +3.8\% tương đối; R@1 tăng (0.1792 $\to$ 0.1855--0.1950), R@10 gần như không đổi (0.4623--0.4696 so với 0.4686). Trên VG test mức tăng là +19\%, nhưng phần lớn trong đó đến từ phép chiếu học được chứ không từ cạnh (đối chứng không đồ thị đạt 0.1266, mục kết quả cấp độ 1). Trên MMKG chưa chạy đối chứng này, nên \textbf{chưa tách được} mức tăng trên MMKG đến từ cấu trúc ảnh -- thực thể hay chỉ từ phép chiếu học trên VG.
-\item \textbf{Mức tăng nằm ở truy vấn gián tiếp; truy vấn trực tiếp hơi giảm.} Với mô hình một lớp, cả hai ngôn ngữ đều tăng ở câu gián tiếp (\mrr{} tiếng Anh 0.418 $\to$ 0.436, tiếng Việt 0.101 $\to$ 0.124); với mô hình hai lớp, mức tăng tập trung ở tiếng Anh (0.418 $\to$ 0.458). Ở câu gián tiếp chung chung tiếng Anh, \mrr{} tăng từ 0.539 lên 0.575--0.609, giống VG (đồ thị giúp rõ nhất khi có nhiều ảnh đúng). Ở câu trực tiếp (tên riêng), cả hai mô hình hơi giảm (tiếng Anh 0.464 $\to$ 0.459--0.462). Một giả thuyết, chưa kiểm chứng: với $\alpha \approx 0$, điểm cuối gần như chỉ còn vector đồ thị, mà vector này trộn thêm trung bình của 16 thực thể gần nhất, có thể làm mờ chi tiết mà tên riêng cần. Ở câu gián tiếp cụ thể, R@1 tăng (0.086 $\to$ 0.124) nhưng R@10 giảm (0.657 $\to$ 0.571--0.591), \mrr{} gần như đứng yên.
-\item \textbf{Mô hình hai lớp (có triple MMKG) tốt hơn mô hình một lớp ở câu gián tiếp tiếng Anh} (\mrr{} 0.458 so với 0.436), \textbf{nhưng kém hơn ở câu gián tiếp tiếng Việt} (0.115 so với 0.124). Hai mô hình khác nhau cả kiến trúc lẫn trọng số VG, và chưa có lần chạy nào bỏ hoặc xáo triple, nên \textbf{chưa thể quy} chênh lệch này cho triple. Lớp khái niệm $\to$ khái niệm của mô hình hai lớp được học trên cạnh đồng xuất hiện của VG chứ không phải trên quan hệ tri thức.
-\item \textbf{Chuyển ngôn ngữ (Anh $\to$ Việt): thất bại, và nguyên nhân chính nằm ở CLIP.} Cùng nội dung, \mrr{} của CLIP rơi từ 0.464 xuống 0.123 (trực tiếp) và từ 0.418 xuống 0.101 (gián tiếp); CLIP đạt R@1 = 0 trên cả 79 câu gián tiếp tiếng Việt. Phân tích khám phá sau khi có kết quả (\code{results/tables/mmkg\_transfer\_query\_spread.csv}, không thuộc giao thức chốt trước) cho thấy lý do: bộ mã hoá văn bản của CLIP \code{laion2b} (học chủ yếu trên tiếng Anh) đặt các câu tiếng Việt gần nhau (cosine trung bình giữa hai câu: 0.92 với câu gián tiếp tiếng Việt, so với 0.70 tiếng Anh), nên 79 câu chỉ trả về 3 ảnh top-1 khác nhau, và 70\% số câu trả về cùng một ảnh. Đồ thị không sửa được gốc rễ, vì điểm đồ thị $\cos(q, h_i)$ vẫn dùng chính vector truy vấn $q$. Tuy vậy nó vẫn giúp một phần: \mrr{} gián tiếp tiếng Việt tăng từ 0.101 lên 0.115--0.124, và R@5 ở câu gián tiếp chung chung tiếng Việt tăng từ 0.409 lên 0.568.
+\item \textbf{Chuyển miền (VG $\to$ di sản Việt Nam): mô hình VG vẫn giúp, nhưng phần giúp đến từ phép chiếu, không đến từ đồ thị.} Không huấn luyện lại, cả ba mô hình học trên VG đều nâng \mrr{} tổng so với CLIP (0.2766 $\to$ 0.2836--0.2872, tức +2.5\% đến +3.8\%). Nhưng đối chứng \textbf{không đồ thị} (cùng phép chiếu, $W_{\text{nb}}=0$) đã đạt 0.2861 \pmm{} 0.0035: cao hơn mô hình một lớp (0.2836) và ngang mô hình hai lớp (0.2872 \pmm{} 0.0019, chênh 0.0011, nhỏ hơn std). Như vậy, giống trên VG (đối chứng không đồ thị 0.1266 so với 0.1284), \textbf{gần như toàn bộ mức tăng trên MMKG là của phép chiếu tuyến tính học trên VG}; cạnh ảnh -- thực thể không thêm gì rõ rệt ở kết quả tổng.
+\item \textbf{Đồ thị chỉ còn dấu hiệu nhỏ ở vài nhóm.} So với đối chứng không đồ thị (thay vì so với CLIP): mô hình hai lớp cao hơn ở câu gián tiếp tiếng Anh (\mrr{} 0.458 so với 0.442), nhất là câu chung chung (0.609 so với 0.592), và R@5 ở câu gián tiếp chung chung tiếng Việt tăng từ 0.477 lên 0.568 với cả hai mô hình có đồ thị (\code{mmkg\_transfer\_groups.csv}). Mô hình một lớp thì thấp hơn đối chứng ở gần như mọi nhóm. Ở câu trực tiếp (tên riêng), mọi mô hình học trên VG đều hơi thấp hơn CLIP (tiếng Anh 0.464 $\to$ 0.458--0.462), nên nguyên nhân là phép chiếu chứ không riêng đồ thị.
+\item \textbf{Triple MMKG: chưa kết luận được.} Mô hình hai lớp, nơi triple đi vào điểm, là mô hình duy nhất vượt đối chứng ở câu gián tiếp tiếng Anh, nhưng lại kém mô hình một lớp và đối chứng ở câu gián tiếp tiếng Việt (0.115 so với 0.124 và 0.126). Mô hình hai lớp khác mô hình một lớp cả kiến trúc lẫn trọng số VG, và chưa có lần chạy nào bỏ hoặc xáo triple, nên chênh lệch chưa thể quy cho triple. Lớp khái niệm $\to$ khái niệm của nó được học trên cạnh đồng xuất hiện của VG chứ không phải quan hệ tri thức.
+\item \textbf{Chuyển ngôn ngữ (Anh $\to$ Việt): thất bại, và nguyên nhân chính nằm ở CLIP.} Cùng nội dung, \mrr{} của CLIP rơi từ 0.464 xuống 0.123 (trực tiếp) và từ 0.418 xuống 0.101 (gián tiếp); CLIP đạt R@1 = 0 trên cả 79 câu gián tiếp tiếng Việt. Phân tích khám phá sau khi có kết quả (\code{results/tables/mmkg\_transfer\_query\_spread.csv}, không thuộc giao thức chốt trước) cho thấy lý do: bộ mã hoá văn bản của CLIP \code{laion2b} (học chủ yếu trên tiếng Anh) đặt các câu tiếng Việt gần nhau (cosine trung bình giữa hai câu: 0.92 với câu gián tiếp tiếng Việt, so với 0.70 tiếng Anh), nên 79 câu chỉ trả về 3 ảnh top-1 khác nhau, và 70\% số câu trả về cùng một ảnh. Đồ thị không sửa được gốc rễ, vì điểm đồ thị $\cos(q, h_i)$ vẫn dùng chính vector truy vấn $q$. Các mô hình học trên VG nâng \mrr{} gián tiếp tiếng Việt từ 0.101 lên 0.115--0.126, nhưng đối chứng không đồ thị cũng đạt mức đó (0.126), nên phần lớn đây cũng là tác dụng của phép chiếu.
 \item \textbf{Đồ thị nhỏ và ``thế giới đóng''.} Với 119 thực thể, mỗi ảnh nối tới 16 thực thể, tức khoảng 13\% số đỉnh khái niệm, nên cạnh \code{contains} kém phân biệt hơn trên VG. Đỉnh khái niệm gồm cả 80 hiện vật, tức chính tập tên của các đáp án: ảnh không nối với hiện vật của nó qua nhãn mà qua CLIP, nhưng đồ thị biết trước danh sách tên (trên VG, đỉnh là từ vựng đối tượng chung). Theo giao thức, $k$ và tập đỉnh không được chỉnh trên MMKG.
 \end{enumerate}
 
-\textbf{Hạn chế.} Truy vấn sinh bằng mẫu câu cố định, chưa có người viết câu tự nhiên; mỗi nhóm chỉ 35--80 câu; 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của thực thể đích (ví dụ \code{has\_part} của chùa Tây Phương). Chưa có ablation trên MMKG (đối chứng không đồ thị, bỏ/xáo triple, xáo cạnh \code{contains}) và chưa có kiểm định cặp theo truy vấn. Trong \code{metrics.json}, nhãn \code{split = test} chỉ có nghĩa ``ảnh đánh giá'': MMKG không có train/val. Std chỉ phản ánh 3 bộ trọng số VG, không phản ánh độ biến thiên của truy vấn. Muốn chuyển ngôn ngữ thật sự cần bộ mã hoá văn bản đa ngôn ngữ (ví dụ CLIP đa ngôn ngữ); khi đó không gian vector đổi, nên phải huấn luyện lại GNN trên VG. Đánh giá giải thích (Integrated Gradients) trên truy vấn MMKG chưa làm.
+\textbf{Hạn chế.} Truy vấn sinh bằng mẫu câu cố định, chưa có người viết câu tự nhiên; mỗi nhóm chỉ 35--80 câu; 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của thực thể đích (ví dụ \code{has\_part} của chùa Tây Phương). Đã có đối chứng không đồ thị; chưa có ablation bỏ/xáo triple, xáo cạnh \code{contains}, và chưa có kiểm định cặp theo truy vấn. Trong \code{metrics.json}, nhãn \code{split = test} chỉ có nghĩa ``ảnh đánh giá'': MMKG không có train/val. Std chỉ phản ánh 3 bộ trọng số VG, không phản ánh độ biến thiên của truy vấn. Muốn chuyển ngôn ngữ thật sự cần bộ mã hoá văn bản đa ngôn ngữ (ví dụ CLIP đa ngôn ngữ); khi đó không gian vector đổi, nên phải huấn luyện lại GNN trên VG. Đánh giá giải thích (Integrated Gradients) trên truy vấn MMKG chưa làm.
 
-Tái lập: \code{scripts/make\_mmkg\_queries.py}, rồi \code{scripts/evaluate\_mmkg\_transfer.py features | evaluate | diagnose} với \code{configs/mmkg\_vi\_transfer.yaml}, rồi \code{scripts/summarize\_runs.py --experiment-suffix \_mmkg\_vi}.
+Tái lập (đối chứng không đồ thị là thí nghiệm thứ tư trong cùng config, chốt ở phần bổ sung của ADR-0053 trước khi chạy):
+\begin{itemize}[leftmargin=*]
+\item \code{scripts/make\_mmkg\_queries.py}
+\item \code{scripts/evaluate\_mmkg\_transfer.py} với bước \code{features}, \code{evaluate}, \code{diagnose} và \code{configs/mmkg\_vi\_transfer.yaml}
+\item \code{scripts/summarize\_runs.py --experiment-suffix \_mmkg\_vi}
+\end{itemize}
 
 % ================= 9. THẢO LUẬN =================
 \section{Thảo luận và hạn chế}

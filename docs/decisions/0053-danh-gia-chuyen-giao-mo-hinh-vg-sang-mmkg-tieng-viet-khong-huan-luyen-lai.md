@@ -81,3 +81,7 @@ Chốt **trước khi chạy** (qphulong yêu cầu, sau review của `experimen
 - Đề bài `Project03_Multimodal_XAI.pdf` §5 (cấp độ 3), §6 (rò rỉ dữ liệu).
 - ADR-0043 (giao thức đánh giá), ADR-0046 (GNN một lớp, cạnh CLIP top-k), ADR-0047 (chọn `alpha`), ADR-0048 (GNN hai lớp), ADR-0051 (G-Retriever bậc 1), ADR-0050 và ADR-0052 (MMKG).
 - `data_cards/mmkg_vi.md` mục 9 (rủi ro rò rỉ của `entity_id`); mô tả PR #21 (phương án bàn giao).
+
+## Kết quả (2026-11-18)
+
+`results/tables/mmkg_transfer.csv`, MRR@100, 3 seed: CLIP 0,2766; không đồ thị 0,2861 ± 0,0035; GNN một lớp 0,2836 ± 0,0006; GNN hai lớp 0,2872 ± 0,0019. Đối chứng không đồ thị ngang các mô hình có đồ thị, nên mức tăng trên MMKG chủ yếu đến từ phép chiếu học trên VG, giống VG. Phân tích: báo cáo mục 8.3.
