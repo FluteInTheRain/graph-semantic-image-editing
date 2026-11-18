@@ -1,0 +1,35 @@
+# Level-3 explanation evaluation on the Vietnamese MMKG (ADR-0054).
+# Every explanation setting is copied from configs/explain_vg.yaml (chosen on VG val);
+# nothing here may be tuned on MMKG. How to run: scripts/evaluate_mmkg_explanations.py.
+experiment: explain_mmkg_vi
+# Decision (ADR-0054 rule 1): explain the one-layer VG model, the one explained on VG; its
+# config names the weights folder. The MMKG graph, queries and features come from
+# configs/mmkg_vi_transfer.yaml (ADR-0053), passed to the script with --transfer-config.
+#   Decided by: qphulong, 2026-11-18 (proposed by Claude Code).
+ranking_config: configs/clip_graph_vg_lr1e4.yaml
+# Runs once, like a test split (ADR-0054 rule 7).
+eval_split: test
+# Decision (ADR-0054 rule 3): all 318 MMKG queries; the sample seed is then unused.
+num_queries: 318
+query_sample_seed: 0
+seeds: [0, 1, 2]
+# Decision (ADR-0054 rule 2): Integrated Gradients, m = 10, as chosen on VG val.
+explainers: [integrated_gradients]
+num_layers: 1
+both_directions: false
+top_m_options: [10]
+main_explainer: integrated_gradients
+top_m: 10
+# The rest is copied unchanged from configs/explain_vg.yaml (ADR-0054 rule 5).
+min_contribution: 1.0e-6
+plus_weight: 0.5
+random_repeats: 20
+robust_remove_prob: 0.1
+robust_add_back_prob: 0.9
+robust_repeats: 20
+ig_steps: 50
+gnn_explainer_epochs: 200
+gnn_explainer_learning_rate: 1.0
+gnn_explainer_size_weight: 0.005
+gnn_explainer_entropy_weight: 1.0
+output_dir: results/runs
