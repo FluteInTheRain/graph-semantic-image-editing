@@ -343,16 +343,16 @@ Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được
 | Ngày | Ai chạy | Bộ trên Drive | `rclone check` |
 |---|---|---|---|
 | 2026-11-17 | Khang | sau duyệt AI: 382 ảnh (đã gỡ ảnh `drop`, kể cả 11 ảnh có mặt người) | 396 khớp, 0 khác biệt |
-| 2026-11-18 | qphulong (quyền Editor) | sau duyệt của người: thêm 16 ảnh mới, thay các file có `sha1` đổi (9 ảnh, CSV, manifest, báo cáo) | 394 khớp, 0 sai nội dung, **18 file thừa trên Drive** |
+| 2026-11-18 | qphulong (quyền Editor) | sau duyệt của người: thêm 16 ảnh mới, thay các file có `sha1` đổi (9 ảnh, CSV, manifest, báo cáo); 18 ảnh `drop` xoá tay trên web Drive | 394 khớp, 0 khác biệt; thư mục `images/` có đúng 380 ảnh, 94.314.505 byte |
 
-**Còn 18 ảnh thừa trên Drive** (cả 18 là ảnh qphulong đánh `drop` / `not_the_object`, không có ảnh mặt người). Editor ghi đè và thêm file được nhưng không xoá được file do người khác sở hữu trong thư mục My Drive (lỗi `403 insufficientFilePermissions`), nên chỉ chủ sở hữu xoá được. Khang chạy lại đúng lệnh `rclone sync` bên dưới từ một bản checkout có `mmkg/images/` mới (hoặc xoá tay 18 file mà `rclone check` báo "file not in Local file system"); sau đó `rclone check` phải báo 0 khác biệt. Cho tới khi đó, ai tải cả thư mục về sẽ có 398 ảnh; chỉ 380 ảnh có dòng trong `images.csv` / `images_manifest.csv`, 18 ảnh còn lại phải bỏ.
+Khi qphulong chạy `rclone sync` với quyền Editor, rclone không xoá được 18 ảnh bị `drop` (lỗi `403 insufficientFilePermissions`: file do người khác sở hữu trong thư mục My Drive). 18 ảnh đó được xoá tay trên web Drive. Lúc xoá tay có 2 ảnh thuộc bộ (`Q10841005_2d3691c0.jpg`, `Q36160_8498a0eb.jpg`) bị xoá nhầm; `rclone check` phát hiện, đã upload lại bằng `rclone copy`, rồi kiểm lại: 0 khác biệt. Vì vậy sau mỗi lần xoá tay phải chạy `rclone check`.
 
 **Đồng bộ từ máy khác** (sau mỗi lần duyệt lại và dựng lại):
 
 1. Xin chủ sở hữu quyền **Editor** cho đúng tài khoản Google sẽ đăng nhập rclone (Viewer/Commenter chỉ đọc được).
 2. `rclone config create gdrive drive scope=drive` (đăng nhập bằng tài khoản ở bước 1; sai tài khoản thì `rclone config reconnect gdrive:`).
 3. Thư mục được chia sẻ không nằm trong My Drive của mình, nên mọi lệnh thêm `--drive-shared-with-me` (hoặc tạo shortcut vào My Drive).
-4. Chạy thử: `rclone --drive-shared-with-me sync mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store" --dry-run`, rồi chạy thật (bỏ `--dry-run`), rồi `rclone --drive-shared-with-me check mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store"`. Người không phải chủ sở hữu sẽ gặp đúng giới hạn xoá nói trên.
+4. Chạy thử: `rclone --drive-shared-with-me sync mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store" --dry-run`, rồi chạy thật (bỏ `--dry-run`), rồi `rclone --drive-shared-with-me check mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store"`. Người không phải chủ sở hữu sẽ gặp đúng giới hạn xoá nói trên: hoặc nhờ chủ sở hữu chạy `sync`, hoặc xoá tay những file `check` báo "file not in Local file system" rồi `check` lại.
 
 Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
 
