@@ -4,6 +4,8 @@ Logic: mmxai.eval.mmkg_transfer.
 What it does:
     features   Encode the 380 MMKG images, the 119 entities ("a photo of a {name_en}")
                and the queries with frozen CLIP; cache them in features_dir.
+    diagnose   Plain CLIP only: per query group, distinct top-1 images and mean
+               query-query cosine -> results/tables/mmkg_transfer_query_spread.csv.
     evaluate   For every experiment in the config (plain CLIP, one-layer GNN, two-layer
                GNN) and every seed: build the MMKG graph, load the VG weights and the
                VG alpha of that seed, score the queries once, write a run folder.
@@ -18,6 +20,7 @@ Before running:
 Run (from the repo root):
     uv run python scripts/evaluate_mmkg_transfer.py features --config configs/mmkg_vi_transfer.yaml
     uv run python scripts/evaluate_mmkg_transfer.py evaluate --config configs/mmkg_vi_transfer.yaml
+    uv run python scripts/evaluate_mmkg_transfer.py diagnose --config configs/mmkg_vi_transfer.yaml
     Then the tables:
     uv run python scripts/summarize_runs.py --experiment-suffix _mmkg_vi \
         --output results/tables/mmkg_transfer.csv
@@ -37,7 +40,14 @@ import yaml
 
 from mmxai.data.mmkg_queries import load_mmkg
 from mmxai.eval.graph_rerank import library_versions
-from mmxai.eval.mmkg_transfer import encode_mmkg, load_features, run_transfer, save_features
+from mmxai.eval.mmkg_transfer import (
+    encode_mmkg,
+    load_features,
+    query_spread,
+    run_transfer,
+    save_features,
+)
+from mmxai.eval.summary import write_table
 from mmxai.utils.runs import (
     collect_env,
     file_sha256,
@@ -103,17 +113,29 @@ def evaluate(config: dict) -> None:
             )
 
 
+def diagnose(config: dict) -> None:
+    arrays, _ = load_features(Path(config["features_dir"]))
+    rows = query_spread(arrays, read_queries(Path(config["queries_file"])))
+    output = "results/tables/mmkg_transfer_query_spread.csv"
+    write_table(rows, output)
+    for row in rows:
+        print(row)
+    print(f"saved {output}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("step", choices=["features", "evaluate"])
+    parser.add_argument("step", choices=["features", "evaluate", "diagnose"])
     parser.add_argument("--config", required=True, help="YAML file in configs/")
     args = parser.parse_args(argv)
     with open(args.config, encoding="utf-8") as file:
         config = yaml.safe_load(file)
     if args.step == "features":
         features(config)
+    elif args.step == "diagnose":
+        diagnose(config)
     else:
         evaluate(config)
     return 0

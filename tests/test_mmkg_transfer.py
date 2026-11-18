@@ -173,3 +173,25 @@ def test_run_transfer_refuses_features_of_another_query_file():
 
     with pytest.raises(ValueError, match="different query file"):
         run_transfer({}, {"name": "x", "model_dir": None}, 0, arrays, queries, [])
+
+
+def test_query_spread_counts_distinct_top1_images_per_group():
+    from mmxai.eval.mmkg_transfer import query_spread
+
+    arrays = {
+        "query_qids": np.array(["a", "b", "c"]),
+        "query_features": unit([[1, 0, 0, 0], [0, 0, 1, 0], [1, 0.01, 0, 0]]),
+        "image_features": IMAGES,
+    }
+    queries = [
+        {"qid": "a", "type": "direct", "lang": "en"},
+        {"qid": "b", "type": "direct", "lang": "en"},
+        {"qid": "c", "type": "direct", "lang": "vi"},
+    ]
+
+    rows = {row["group"]: row for row in query_spread(arrays, queries)}
+
+    assert rows["direct_en"]["distinct_top1_images"] == 2
+    assert rows["direct_en"]["largest_top1_share"] == pytest.approx(0.5)
+    assert rows["direct_en"]["mean_query_cosine"] == pytest.approx(0.0, abs=1e-6)
+    assert rows["direct_vi"]["num_queries"] == 1

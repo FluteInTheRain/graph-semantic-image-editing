@@ -306,3 +306,35 @@ def run_transfer(
     metrics["groups"] = group_metrics(ranks, query_groups(queries), config["recall_ks"], top_k)
     metrics.update(facts)
     return metrics
+
+
+def query_spread(arrays: dict[str, np.ndarray], queries: list[dict]) -> list[dict]:
+    """Per (type, lang) group: how spread out CLIP's query vectors and top-1 images are.
+
+    A text encoder that cannot read a language maps all its sentences close together, so
+    they share one top-1 image. Plain CLIP only; deterministic, so no seed.
+    """
+    if [query["qid"] for query in queries] != arrays["query_qids"].tolist():
+        raise ValueError("the feature cache was built from a different query file")
+    top1 = np.argmax(arrays["query_features"] @ arrays["image_features"].T, axis=1)
+    labels = [f"{query['type']}_{query['lang']}" for query in queries]
+    rows = []
+    for label in sorted(set(labels)):
+        members = [row for row, own in enumerate(labels) if own == label]
+        vectors = arrays["query_features"][members]
+        pairs = np.triu_indices(len(members), k=1)
+        top_images = top1[members].tolist()
+        rows.append(
+            {
+                "group": label,
+                "num_queries": len(members),
+                "distinct_top1_images": len(set(top_images)),
+                "largest_top1_share": max(top_images.count(i) for i in set(top_images))
+                / len(members),
+                # A group of one query has no pair: NaN instead of a misleading number.
+                "mean_query_cosine": (
+                    float((vectors @ vectors.T)[pairs].mean()) if len(members) > 1 else float("nan")
+                ),
+            }
+        )
+    return rows
