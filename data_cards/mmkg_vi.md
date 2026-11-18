@@ -338,9 +338,23 @@ Kết quả theo cột `why` của `mmkg/images_manifest.csv` (380 dòng): `thum
 | Link cloud | https://drive.google.com/drive/folders/1KnsEIUrnbo0C58idfRK_sjhy8cRsahzG |
 |---|---|
 
-**Bản Drive chưa đồng bộ với bộ sau duyệt của người.** Drive vẫn là bộ sau duyệt AI (382 ảnh). Phải chạy lại `rclone sync` từ máy có `mmkg/images/` của lần tải trên, để gỡ 18 ảnh rời bộ, thêm 16 ảnh mới và thay 9 file có `sha1` đổi; rồi `rclone check` và ghi kết quả vào đây.
+Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, chủ sở hữu: Khang) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này. Lịch sử đồng bộ:
 
-Thư mục Google Drive `MMKG-di-tich-viet-nam` (ai có link đều xem được, upload ngày 2026-11-17 bằng `rclone`) chứa bản sao của `mmkg/` (ảnh, CSV chính thức, snapshot gốc, manifest, báo cáo tải) và data card này; Bản upload đầu (trước duyệt, 403 ảnh) đã được **đồng bộ lại ngày 2026-11-17 sau duyệt** bằng `rclone sync`, nên các ảnh bị `drop` (kể cả 11 ảnh có mặt người) đã bị gỡ khỏi Drive: thư mục hiện có đúng 382 ảnh, `rclone check` báo 396 file khớp, 0 khác biệt. Mỗi lần duyệt lại và dựng lại phải đồng bộ tiếp (`rclone sync mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store"`). Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
+| Ngày | Ai chạy | Bộ trên Drive | `rclone check` |
+|---|---|---|---|
+| 2026-11-17 | Khang | sau duyệt AI: 382 ảnh (đã gỡ ảnh `drop`, kể cả 11 ảnh có mặt người) | 396 khớp, 0 khác biệt |
+| 2026-11-18 | qphulong (quyền Editor) | sau duyệt của người: thêm 16 ảnh mới, thay các file có `sha1` đổi (9 ảnh, CSV, manifest, báo cáo) | 394 khớp, 0 sai nội dung, **18 file thừa trên Drive** |
+
+**Còn 18 ảnh thừa trên Drive** (cả 18 là ảnh qphulong đánh `drop` / `not_the_object`, không có ảnh mặt người). Editor ghi đè và thêm file được nhưng không xoá được file do người khác sở hữu trong thư mục My Drive (lỗi `403 insufficientFilePermissions`), nên chỉ chủ sở hữu xoá được. Khang chạy lại đúng lệnh `rclone sync` bên dưới từ một bản checkout có `mmkg/images/` mới (hoặc xoá tay 18 file mà `rclone check` báo "file not in Local file system"); sau đó `rclone check` phải báo 0 khác biệt. Cho tới khi đó, ai tải cả thư mục về sẽ có 398 ảnh; chỉ 380 ảnh có dòng trong `images.csv` / `images_manifest.csv`, 18 ảnh còn lại phải bỏ.
+
+**Đồng bộ từ máy khác** (sau mỗi lần duyệt lại và dựng lại):
+
+1. Xin chủ sở hữu quyền **Editor** cho đúng tài khoản Google sẽ đăng nhập rclone (Viewer/Commenter chỉ đọc được).
+2. `rclone config create gdrive drive scope=drive` (đăng nhập bằng tài khoản ở bước 1; sai tài khoản thì `rclone config reconnect gdrive:`).
+3. Thư mục được chia sẻ không nằm trong My Drive của mình, nên mọi lệnh thêm `--drive-shared-with-me` (hoặc tạo shortcut vào My Drive).
+4. Chạy thử: `rclone --drive-shared-with-me sync mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store" --dry-run`, rồi chạy thật (bỏ `--dry-run`), rồi `rclone --drive-shared-with-me check mmkg gdrive:MMKG-di-tich-viet-nam/mmkg --exclude ".DS_Store"`. Người không phải chủ sở hữu sẽ gặp đúng giới hạn xoá nói trên.
+
+Kiểm một file tải về bằng `shasum -a 1 <file>` so với cột `sha1` trong `images_manifest.csv`.
 
 Mỗi lần nhóm sửa duyệt rồi dựng lại, chạy lại lệnh trên. Script bỏ qua file đã có và đúng `sha1`, nên chỉ tải ảnh mới thay cho ảnh bị `drop`. Ảnh bị `drop` vẫn nằm trên đĩa và bị báo là file lạ: chạy với `--delete-stray` để xoá trước khi đưa lên cloud.
 
