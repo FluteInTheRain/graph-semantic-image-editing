@@ -43,3 +43,9 @@ experiments:
   - name: clip_cooc_graph_vg_lr1e4_mmkg_vi
     model_dir: artifacts/models/visual_genome/clip_cooc_graph_vg_lr1e4
     two_layer: true
+  # Decision (ADR-0053 addendum, rule 9): the VG no-graph control (W_nb = 0, same learned
+  # projection), to tell graph gain from projection gain. Fixed before running it.
+  #   Decided by: qphulong, 2026-11-18 (proposed by experiment-reviewer / Claude Code).
+  - name: clip_nograph_vg_mmkg_vi
+    model_dir: artifacts/models/visual_genome/clip_nograph_vg
+    two_layer: false

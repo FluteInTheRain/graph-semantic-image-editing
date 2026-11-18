@@ -47,6 +47,12 @@ Các quyết định 1–5 do qphulong duyệt ngày 2026-11-18 (Claude Code đ�
 
 8. **Metric và ứng viên:** như ADR-0043, ADR-0047: xếp hạng lại 100 ứng viên đầu của CLIP (trên 380 ảnh), R@1, R@5, R@10, MRR@100, 3 seed, mean ± std (`ddof = 1`). Báo cáo tổng và tách theo 4 nhóm: {trực tiếp, gián tiếp} × {tiếng Anh, tiếng Việt}. Câu gián tiếp tách thêm theo **độ cụ thể**: *cụ thể* (đúng 1 hiện vật khớp, 35 câu mỗi ngôn ngữ) và *chung chung* (> 1 hiện vật, 44 câu mỗi ngôn ngữ; câu chung nhất "a heritage of Vietnam, listed as National Treasures of Vietnam" có 47 hiện vật đúng, nên gần như luôn trúng). Cách tách này chốt sau khi sinh câu nhưng **trước khi chạy mô hình** (2026-11-18), chỉ đổi cách trình bày, không đổi câu hay đáp án. Mô hình CLIP: `ViT-B-32` / `laion2b_s34b_b79k`, như VG.
 
+### Bổ sung 2026-11-18: đối chứng không đồ thị
+
+Chốt **trước khi chạy** (qphulong yêu cầu, sau review của `experiment-reviewer`; chưa xem kết quả của thí nghiệm này):
+
+9. **Thêm `clip_nograph_vg_mmkg_vi`:** trọng số và `alpha` của `artifacts/models/visual_genome/clip_nograph_vg/seed<k>/` (đối chứng không đồ thị của ADR-0046, lr `1e-3`, đúng đối chứng đã báo cáo trên VG: \mrr{} 0,1266 trong `results/tables/main.csv`). Mô hình này có cùng phép chiếu học được nhưng `W_nb = 0` (đã kiểm: cả 3 seed, giá trị lớn nhất của `conv.lin_l.weight` bằng 0), nên cạnh không ảnh hưởng điểm. So với hai mô hình có đồ thị, nó cho biết mức tăng trên MMKG đến từ cấu trúc ảnh – thực thể hay chỉ từ phép chiếu. Chọn bản lr `1e-3` chứ không phải `clip_nograph_vg_lr1e4` vì chỉ bản này có kết quả test VG đã báo cáo. Cùng ứng viên, cùng truy vấn, cùng metric, 3 seed.
+
 ## Các phương án đã cân nhắc
 
 | Phương án | Ưu | Nhược | Lý do không chọn |
@@ -66,7 +72,7 @@ Các quyết định 1–5 do qphulong duyệt ngày 2026-11-18 (Claude Code đ�
 - **Diễn giải kết quả:** CLIP `laion2b` học chủ yếu trên tiếng Anh, nên dự kiến truy vấn tiếng Việt yếu hơn nhiều; đó là kết quả cần báo cáo, không phải lỗi. Trên VG, phần lớn mức tăng đến từ phép chiếu học được chứ không từ cạnh (`clip_nograph` 0,1266); phân tích chuyển giao cần nhắc điều này.
 - **Thế giới đóng:** đỉnh khái niệm gồm cả 80 hiện vật, tức chính tập tên của đáp án. Ảnh không nối với hiện vật của nó qua nhãn mà qua CLIP, nên không rò nhãn, nhưng đồ thị biết trước danh sách tên (trên VG, đỉnh là từ vựng đối tượng chung). 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của `tail` (vd. `has_part` của chùa Tây Phương); không sửa file truy vấn đã đóng băng, chỉ ghi nhận (leakage-auditor, 2026-11-18).
 - **Ngoài giao thức:** bảng `results/tables/mmkg_transfer_query_spread.csv` (độ phân tán câu truy vấn theo CLIP) được thêm **sau** khi có kết quả, là phân tích khám phá; không đổi số liệu hay cấu hình nào. Nhãn `split = test` trong `metrics.json` chỉ nghĩa là "ảnh đánh giá": MMKG không có train/val.
-- **Chưa làm** (nếu làm phải chốt trước trong ADR mới): đối chứng không đồ thị `clip_nograph` của VG trên MMKG, bỏ/xáo triple cho mô hình hai lớp, xáo cạnh `contains`, kiểm định cặp theo truy vấn.
+- **Chưa làm** (nếu làm phải chốt trước trong ADR mới): bỏ/xáo triple cho mô hình hai lớp, xáo cạnh `contains`, kiểm định cặp theo truy vấn.
 - Không có seed nào trong CLIP thuần và trong việc dựng đồ thị (tất định); khác biệt giữa seed chỉ đến từ trọng số VG.
 - Việc tiếp: sinh truy vấn (`queries/mmkg_vi/`), trích đặc trưng CLIP, dựng đồ thị, chạy, ghi bảng `results/tables/`, viết phần chuyển giao trong báo cáo.
 
