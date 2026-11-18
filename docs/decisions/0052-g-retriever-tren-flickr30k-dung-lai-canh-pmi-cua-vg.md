@@ -64,9 +64,31 @@ Test `tests/test_flickr30k_pcst_configs.py` kiểm hai điều: mọi khoá khá
 - Tốt: thay đổi code nhỏ (một trường cấu hình, một chỗ kiểm tra); run VG không bị ảnh hưởng.
 - Giới hạn: từ vựng VG có thể thiếu khái niệm hay gặp ở Flickr30k. Giới hạn này đã ghi trong ADR-0050.
 - Ngoài phạm vi: G-Retriever bậc 1, ablation `no_tree` và `shuffled` trên Flickr30k; bộ truy vấn trực tiếp/gián tiếp trên Flickr30k.
-- Chạy thật do người dùng chạy trên Colab theo `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 11. Chưa có kết quả nào.
+- Chạy thật do người dùng chạy trên Colab theo `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 11. Kết quả: xem mục "Kết quả (2026-11-18)".
 - **Trùng số ADR-0050:** nhánh Flickr30k và PR #14 (ConceptNet) cùng dùng số 0050. Một trong hai phải đổi số trước khi cả hai vào `main`. Nhóm quyết định; ADR này không đổi số.
 - Việc tiếp theo: nhóm duyệt ADR này, rồi mới chạy test một lần mỗi seed.
+
+## Kết quả (2026-11-18)
+
+Chạy trên Colab theo `docs/guides/huan-luyen-va-xep-hang-lai.md` mục 11, commit `f03a156`. 3 seed, mean ± std (`ddof=1`). Nguồn: `results/tables/g_retriever_flickr30k_test.csv` (test); val tổng hợp từ 6 run train cùng commit.
+
+| Flickr30k | val MRR@100 | test R@1 | test MRR@100 |
+|---|---|---|---|
+| CLIP thuần (epoch 0, chưa huấn luyện) | 0,6016 | chưa có | chưa có |
+| Đối chứng cùng cấu hình `clip_nograph_flickr30k_lr1e4` | 0,6397 ± 0,0015 | 0,5314 ± 0,0019 | **0,6430 ± 0,0016** |
+| **G-Retriever bậc 2** `clip_pcst_sage_flickr30k` | 0,6381 ± 0,0002 | 0,5278 ± 0,0002 | **0,6408 ± 0,0003** |
+
+So với VG (ADR-0051), dùng mức chênh "G-Retriever − đối chứng cùng cấu hình" trên test MRR@100:
+
+| Tập | G-Retriever | Đối chứng | Chênh |
+|---|---|---|---|
+| VG | 0,1278 ± 0,0005 | 0,1277 ± 0,0001 | +0,0001 (hoà) |
+| Flickr30k | 0,6408 ± 0,0003 | 0,6430 ± 0,0016 | −0,0022 (thua nhẹ) |
+
+Đọc kết quả:
+- Theo quy tắc dừng (mục 11.6 của hướng dẫn), bản chính **không hơn** đối chứng trên val, nên đây là **kết quả âm**. Test vẫn chạy một lần mỗi seed và được báo cáo đầy đủ.
+- Trên VG, đồ thị con không mang thêm thông tin (đồ thị dựng từ CLIP). Trên Flickr30k, cạnh PMI còn được mượn từ VG nên có thể không khớp nội dung ảnh Flickr30k và gây nhiễu nhẹ. Đây là giả thuyết, chưa có thí nghiệm kiểm chứng.
+- Số CLIP thuần trên **test** Flickr30k thuộc nhánh Flickr30k (`clip_flickr30k`); khi có thì điền vào bảng báo cáo.
 
 ## Nguồn tham khảo
 

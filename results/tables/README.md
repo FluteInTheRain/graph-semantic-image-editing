@@ -78,3 +78,18 @@ Ghi chú minh bạch:
 - Dòng `clip_nograph_vg_lr1e4` ở đây được chạy test ngày 2026-11-17, **sau khi nhóm đồng ý**, chỉ để so cùng cấu hình với G-Retriever. Không có lựa chọn nào dựa trên số test này.
 - Run: `20261117-1300/1305/1309_clip_pcst_sage_vg_seed0/1/2`, `20261117-1301/1305/1310_clip_nograph_vg_lr1e4_seed0/1/2`. Commit code `4afb770`, cùng `split_sha256` với `main.csv`.
 
+
+## `g_retriever_flickr30k_test.csv`: G-Retriever bậc 2 trên Flickr30k (ADR-0052)
+
+Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_flickr30k_test.csv`.
+
+| Dòng (`experiment`) | `lr` | Vai trò |
+|---|---|---|
+| `clip_pcst_sage_flickr30k` | 1e-4 | G-Retriever bậc 2 trên Flickr30k, cấu hình y hệt `clip_pcst_sage_vg`; cạnh PMI mượn từ VG (ADR-0052) |
+| `clip_nograph_flickr30k_lr1e4` | 1e-4 | Đối chứng cùng cấu hình huấn luyện với dòng trên |
+
+Ghi chú:
+- Đối chứng không đồ thị chính thức của cấp độ 1 trên Flickr30k là `clip_nograph_flickr30k` (lr 1e-3), thuộc nhánh Flickr30k; dòng lr 1e-4 ở đây chỉ để so cùng cấu hình với G-Retriever.
+- Epoch và `alpha` chọn trên val; test chạy một lần mỗi seed. Không có lựa chọn nào dựa trên số test.
+- Run test: `20261118-0039/0042/0045_clip_pcst_sage_flickr30k_seed0/1/2`, `20261118-0025/0025/0026_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Run train (val): `20261117-1812/1901/1933_clip_pcst_sage_flickr30k_seed0/1/2`, `20261117-1819/1823/1827_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Commit code `f03a156`, `split_sha256` `8b5c5427…b440d` (`splits/flickr30k/split_seed0.json`).
+- Không so số tuyệt đối với bảng VG: caption Flickr30k tả cả ảnh, region description VG chỉ tả một vùng, nên Flickr30k dễ hơn nhiều. So mức chênh so với đối chứng.
