@@ -263,7 +263,7 @@ Tình trạng từng cấp độ của đề được tổng hợp ở Bảng~\r
 1 (7.0) & Baseline CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, giải thích 5+5 & Hoàn thành \\
 NV1 mở rộng & nDCG, chiều ảnh $\to$ văn bản, đánh giá theo nhóm truy vấn & Hoàn thành \\
 2 (8.5) & Tập công khai thứ 2; phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
-3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Đã chạy val; test chưa chạy \\
+3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Hoàn thành (VG mục 7.3; MMKG mục~\ref{sec:mmkg-xai}) \\
 3 (10) & MMKG tiếng Việt tự xây; chạy phương pháp tốt nhất, phân tích chuyển giao & Hoàn thành (mục~\ref{sec:mmkg}) \\
 4 (+1--2) & Cải tiến riêng & Chưa (có ý tưởng, mục~\ref{sec:future}) \\
 Sản phẩm & Notebook/giao diện demo, slide & Chưa \\
@@ -805,7 +805,7 @@ Các nhận xét dưới đây là xu hướng, \textbf{chưa kiểm định the
 \item \textbf{Đồ thị nhỏ và ``thế giới đóng''.} Với 119 thực thể, mỗi ảnh nối tới 16 thực thể, tức khoảng 13\% số đỉnh khái niệm, nên cạnh \code{contains} kém phân biệt hơn trên VG. Đỉnh khái niệm gồm cả 80 hiện vật, tức chính tập tên của các đáp án: ảnh không nối với hiện vật của nó qua nhãn mà qua CLIP, nhưng đồ thị biết trước danh sách tên (trên VG, đỉnh là từ vựng đối tượng chung). Theo giao thức, $k$ và tập đỉnh không được chỉnh trên MMKG.
 \end{enumerate}
 
-\textbf{Hạn chế.} Truy vấn sinh bằng mẫu câu cố định, chưa có người viết câu tự nhiên; mỗi nhóm chỉ 35--80 câu; 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của thực thể đích (ví dụ \code{has\_part} của chùa Tây Phương). Đã có đối chứng không đồ thị; chưa có ablation bỏ/xáo triple, xáo cạnh \code{contains}, và chưa có kiểm định cặp theo truy vấn. Trong \code{metrics.json}, nhãn \code{split = test} chỉ có nghĩa ``ảnh đánh giá'': MMKG không có train/val. Std chỉ phản ánh 3 bộ trọng số VG, không phản ánh độ biến thiên của truy vấn. Muốn chuyển ngôn ngữ thật sự cần bộ mã hoá văn bản đa ngôn ngữ (ví dụ CLIP đa ngôn ngữ); khi đó không gian vector đổi, nên phải huấn luyện lại GNN trên VG. Đánh giá giải thích (Integrated Gradients) trên truy vấn MMKG chưa làm.
+\textbf{Hạn chế.} Truy vấn sinh bằng mẫu câu cố định, chưa có người viết câu tự nhiên; mỗi nhóm chỉ 35--80 câu; 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của thực thể đích (ví dụ \code{has\_part} của chùa Tây Phương). Đã có đối chứng không đồ thị; chưa có ablation bỏ/xáo triple, xáo cạnh \code{contains}, và chưa có kiểm định cặp theo truy vấn. Trong \code{metrics.json}, nhãn \code{split = test} chỉ có nghĩa ``ảnh đánh giá'': MMKG không có train/val. Std chỉ phản ánh 3 bộ trọng số VG, không phản ánh độ biến thiên của truy vấn. Muốn chuyển ngôn ngữ thật sự cần bộ mã hoá văn bản đa ngôn ngữ (ví dụ CLIP đa ngôn ngữ); khi đó không gian vector đổi, nên phải huấn luyện lại GNN trên VG. Đánh giá giải thích trên MMKG: mục~\ref{sec:mmkg-xai}.
 
 Tái lập (đối chứng không đồ thị là thí nghiệm thứ tư trong cùng config, chốt ở phần bổ sung của ADR-0053 trước khi chạy):
 \begin{itemize}[leftmargin=*]
@@ -813,6 +813,38 @@ Tái lập (đối chứng không đồ thị là thí nghiệm thứ tư trong 
 \item \code{scripts/evaluate\_mmkg\_transfer.py} với bước \code{features}, \code{evaluate}, \code{diagnose} và \code{configs/mmkg\_vi\_transfer.yaml}
 \item \code{scripts/summarize\_runs.py --experiment-suffix \_mmkg\_vi}
 \end{itemize}
+
+\subsection{Đánh giá giải thích định lượng trên MMKG}
+\label{sec:mmkg-xai}
+Cùng thước đo như mục 7.3 nhưng trên MMKG (ADR-0054, chốt trước khi chạy, chạy một lần). Mọi lựa chọn lấy nguyên từ val VG: mô hình một lớp, $\alpha$ của từng seed, Integrated Gradients, $m=10$ cạnh (trong 16 cạnh của mỗi ảnh). Giải thích ảnh hạng 1 của \textbf{toàn bộ 318 truy vấn} $\times$ 3 seed = 954 giải thích. Trước khi giải thích, xếp hạng lại phải cho đúng \mrr{} của run chuyển giao ở từng seed (đã khớp). Nguồn: \code{results/tables/xai\_mmkg.csv}.
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Giải thích trên MMKG (IG, $m=10$, 3 seed, mean \pmm{} std) so với VG test (mục 7.3). ``Ngẫu nhiên'': bỏ 10 cạnh ngẫu nhiên của cùng ảnh, 20 lần. $p$: Wilcoxon một phía theo truy vấn, ``tụt hạng do giải thích > ngẫu nhiên''.}
+\label{tab:mmkg-xai}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r c c c}
+\toprule
+\textbf{Nhóm} & \textbf{Số} & \textbf{Fid\textsuperscript{+}} & \textbf{Tụt hạng} & $p$ \\
+ & & (ngẫu nhiên) & (ngẫu nhiên) & \\
+\midrule
+MMKG, toàn bộ & 954 & 0.0094 \pmm{} 0.0003 (0.0001) & 0.82 \pmm{} 0.04 (0.10) & $10^{-59}$ \\
+\quad trực tiếp, Anh & 240 & 0.0090 (0.0003) & 0.68 (0.09) & $10^{-13}$ \\
+\quad gián tiếp, Anh & 237 & 0.0081 (0.0004) & 1.12 (0.12) & $7\cdot10^{-18}$ \\
+\quad trực tiếp, Việt & 240 & 0.0107 (0.0000) & 0.73 (0.08) & $3\cdot10^{-14}$ \\
+\quad gián tiếp, Việt & 237 & 0.0097 (0.0000) & 0.77 (0.11) & $4\cdot10^{-16}$ \\
+\midrule
+VG test (mục 7.3) & 60 & 0.0225 \pmm{} 0.0010 (0.0006) & 2.57 \pmm{} 0.29 (0.26) & $5\cdot10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Giải thích trung thực với mô hình, cả trên miền mới.} Bỏ 10 cạnh IG chọn làm điểm đồ thị giảm 0.0094, gấp khoảng 90 lần bỏ 10 cạnh ngẫu nhiên (0.0001), và làm ảnh tụt trung bình 0.82 bậc so với 0.10 bậc ($p \approx 10^{-59}$ trên 318 truy vấn). Điều này đúng ở cả bốn nhóm, kể cả truy vấn tiếng Việt. Validity 100\% (mọi cạnh có thật và nối tới ảnh), sparsity 0.375 (10/16 cạnh), như VG.
+\item \textbf{Hiệu ứng nhỏ hơn VG} (tụt 0.82 so với 2.57 bậc; Fid\textsuperscript{+} 0.0094 so với 0.0225). Giả thuyết, chưa kiểm: đồ thị MMKG ít phân biệt hơn (16 trong 119 thực thể, mục~\ref{sec:mmkg}), nên mỗi cạnh mang ít thông tin riêng hơn.
+\item \textbf{Trung thực không có nghĩa là đúng.} Giải thích mô tả vì sao \emph{mô hình} xếp ảnh lên đầu, không phải vì sao ảnh đó đúng: chỉ 18.6\% ảnh hạng 1 được giải thích là ảnh đúng (\code{evaluation.json} của run). Mục 8.3 cũng cho thấy trên MMKG mô hình một lớp không hơn đối chứng không đồ thị; giải thích ở đây đo độ trung thực với cơ chế chấm điểm, không chứng minh đồ thị giúp xếp hạng.
+\item \textbf{Characterization không dùng được trên MMKG.} Giá trị chuẩn hoá (chia cho tác động của \emph{toàn bộ} cạnh) bị cắt về $[0,1]$ ở mọi truy vấn, tức tác động của các cạnh không cộng dồn; với truy vấn tiếng Việt, Fid\textsuperscript{+} chuẩn hoá về 0 nên characterization $\approx 0$ (0.01 và 0.00), trong khi Fid\textsuperscript{+} thô vẫn cao. Vì vậy ta dựa vào Fid\textsuperscript{+} thô và tụt hạng so với ngẫu nhiên. Triple MMKG không xuất hiện trong giải thích vì mô hình một lớp chỉ có cạnh \code{contains}; giải thích mô hình hai lớp là việc sau.
+\end{enumerate}
 
 % ================= 9. THẢO LUẬN =================
 \section{Thảo luận và hạn chế}
@@ -832,7 +864,7 @@ Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chố
 Việc cần làm tiếp, theo thứ tự ưu tiên của đề:
 \begin{enumerate}
 \item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
-\item Cấp độ 3: chuyển ngôn ngữ cho MMKG (bộ mã hoá văn bản đa ngôn ngữ), truy vấn MMKG do người viết, đánh giá giải thích trên MMKG.
+\item Cấp độ 3: chuyển ngôn ngữ cho MMKG (bộ mã hoá văn bản đa ngôn ngữ), truy vấn MMKG do người viết, giải thích mô hình hai lớp (có triple) trên MMKG.
 \end{enumerate}
 
 \begin{chualam}{Cấp độ 4 -- cải tiến của nhóm}
