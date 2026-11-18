@@ -2,7 +2,7 @@
 
 **MMKG là gì?** Đồ thị tri thức đa phương thức: các **thực thể** (ví dụ "Văn Miếu – Quốc Tử Giám", "tượng", "đồng thanh") nối với nhau bằng **triple** (đầu, quan hệ, đuôi) và mỗi di tích có **ảnh** minh hoạ.
 
-Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, ADR-0050). Dữ liệu lấy tự động từ Wikidata + Wikimedia Commons, lọc bằng luật trong config, rồi thành viên duyệt (ADR-0051). Nguồn, giấy phép, thống kê, hạn chế: `data_cards/mmkg_vi.md`.
+Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, ADR-0050). Dữ liệu lấy tự động từ Wikidata + Wikimedia Commons, lọc bằng luật trong config, rồi thành viên duyệt (ADR-0052). Nguồn, giấy phép, thống kê, hạn chế: `data_cards/mmkg_vi.md`.
 
 **Trạng thái (2026-11-17):** đã thu thập snapshot `raw/20261116/` và dựng (lần sau cùng với luật tác giả mới): 80 `item` + 39 `concept` (119 thực thể), 303 triple, 380 ảnh (`build_report.json`). **Đã duyệt sơ bộ bằng AI rồi duyệt bởi người** (qphulong, mục 3), `--require-reviewed` qua; chưa dùng cho thí nghiệm. Tình trạng tải ảnh: `download_report.json` và data card mục 8.
 
@@ -42,7 +42,7 @@ Miền: **di tích và di sản Việt Nam** (Wikidata `P1435`, `P17 = Q881`, AD
 | `raw/<YYYYMMDD>/meta.json` | Ngày thu thập, 4 câu SPARQL, số dòng, endpoint (`sparql_url`, `sparql_index`), commit git, config | Bước 1 | Có, không sửa tay |
 | `entities.csv` | `entity_id, name_vi, name_en, type, source_url`; `type` là `item` (có ảnh) hoặc `concept` | Bước 2 | Có |
 | `triples.csv` | `head_id, relation, tail_id, source, wikidata_property` | Bước 2 | Có |
-| `images.csv` | `image_id, entity_id, file_name, source_url, license, author, sha1, width, height`. **Cảnh báo rò rỉ:** `entity_id` là đáp án "ảnh này là di tích nào"; không dùng nó để dựng cạnh `contains` cho ảnh val/test (ADR-0051, Hệ quả) | Bước 2 | Có |
+| `images.csv` | `image_id, entity_id, file_name, source_url, license, author, sha1, width, height`. **Cảnh báo rò rỉ:** `entity_id` là đáp án "ảnh này là di tích nào"; không dùng nó để dựng cạnh `contains` cho ảnh val/test (ADR-0052, Hệ quả) | Bước 2 | Có |
 | `build_report.json` | Số dòng gốc, số dòng chính thức, số dòng bị bỏ theo từng luật, số mục `pending`, `review_keys_unmatched` (dòng duyệt không khớp gì) | Bước 2 | Có |
 | `review_ai_notes.csv` | Ghi chú của AI duyệt: `kind, key, review_status, note` (130 dòng, 36 dòng cần người xem) | AI duyệt | Có |
 | `review.csv` | Kết quả duyệt (mục 3) | Bước 2 thêm dòng `pending`; thành viên sửa | Có |
@@ -104,5 +104,5 @@ Lưu ý:
 
 - `docs/decisions/0015-mmkg-tieng-viet-va-data-card.md`: định dạng.
 - `docs/decisions/0050-mien-di-tich-di-san-viet-nam-cho-mmkg-thu-thap-tu-wikidata-commons.md`: miền và nguồn.
-- `docs/decisions/0051-luu-snapshot-goc-loc-o-buoc-dung-va-duyet-rieng-cho-mmkg.md`: snapshot, luật lọc, duyệt.
+- `docs/decisions/0052-luu-snapshot-goc-loc-o-buoc-dung-va-duyet-rieng-cho-mmkg.md`: snapshot, luật lọc, duyệt.
 - `data_cards/mmkg_vi.md`: data card.

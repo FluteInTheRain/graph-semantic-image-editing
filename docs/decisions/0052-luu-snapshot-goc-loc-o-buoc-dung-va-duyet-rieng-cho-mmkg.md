@@ -1,7 +1,8 @@
-# ADR-0051: Lưu snapshot gốc nguyên vẹn, lọc MMKG ở bước dựng bằng config, lưu kết quả duyệt riêng
+# ADR-0052: Lưu snapshot gốc nguyên vẹn, lọc MMKG ở bước dựng bằng config, lưu kết quả duyệt riêng
 
 - **Trạng thái:** Đề xuất
 - **Ngày:** 2026-11-16
+- **Đổi số:** ngày 2026-11-18 đổi từ ADR-0051 thành ADR-0052, vì PR #18 (G-Retriever) đã merge ADR-0051 của nó vào `main` trước. Nội dung không đổi; các tham chiếu tới "ADR-0051" trong tài liệu MMKG đã được sửa theo.
 
 ## Bối cảnh
 

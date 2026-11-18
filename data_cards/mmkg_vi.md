@@ -1,6 +1,6 @@
 # Data card: MMKG tiếng Việt – di tích và di sản Việt Nam
 
-**Là gì?** Một đồ thị tri thức đa phương thức (MMKG) nhỏ do nhóm tự xây cho cấp độ 3 (PDF §5). Đỉnh là **thực thể** (di tích, hiện vật, khái niệm như "tượng", "đồng thanh", "Bảo tàng Lịch sử Việt Nam"), cạnh là **triple** (đầu, quan hệ, đuôi), và mỗi di tích có 3–5 **ảnh**. Định dạng theo ADR-0015; miền theo ADR-0050; cách thu thập, lọc và duyệt theo ADR-0051.
+**Là gì?** Một đồ thị tri thức đa phương thức (MMKG) nhỏ do nhóm tự xây cho cấp độ 3 (PDF §5). Đỉnh là **thực thể** (di tích, hiện vật, khái niệm như "tượng", "đồng thanh", "Bảo tàng Lịch sử Việt Nam"), cạnh là **triple** (đầu, quan hệ, đuôi), và mỗi di tích có 3–5 **ảnh**. Định dạng theo ADR-0015; miền theo ADR-0050; cách thu thập, lọc và duyệt theo ADR-0052.
 
 **Trạng thái (2026-11-17):** đã thu thập, dựng, **duyệt sơ bộ bằng AI** (Claude Code, `reviewer = claude-ai`) rồi **duyệt bởi người** (qphulong: mọi dòng AI `drop`, 36 ghi chú cần người xem, nhãn dịch, danh sách quan hệ; mục 7). `scripts/build_mmkg.py --require-reviewed` đã chạy qua (không còn mục `pending`). Bộ chính thức hiện có **119 thực thể (80 `item` + 39 `concept`), 303 triple, 380 ảnh**. Chưa được dùng cho thí nghiệm nào.
 
@@ -43,9 +43,9 @@
 | Phiên bản code thu thập | `git_commit` trong `meta.json` | `8a75f310259a646d75bbe33c4f33f49d1b9df299` |
 | Câu truy vấn đã chạy | Khoá `queries` trong `meta.json` | 4 câu: `domain`, `triples`, `target_labels`, `concept_triples` |
 
-Nếu không đọc được tên bản dump (endpoint lỗi mạng, client đã thử hết lượt và báo `RuntimeError`, JSON sai, thiếu khoá `name-index`), script ghi `sparql_index = unknown` và in cảnh báo, không dừng lần thu thập: đây chỉ là thông tin nguồn gốc (ADR-0051 mục 3, `_sparql_index` trong `src/mmxai/data/mmkg_collect.py`). Tên dump được đọc **trước** mọi câu truy vấn. Khoá `missing_files` của `meta.json` ghi các file Commons không trả thông tin; từ nay mỗi mục là `{name, reason}` (`missing`, `invalid`, `no_imageinfo`, `unresolved_redirect`), riêng snapshot `20261116` thu trước thay đổi này nên chỉ ghi tên file.
+Nếu không đọc được tên bản dump (endpoint lỗi mạng, client đã thử hết lượt và báo `RuntimeError`, JSON sai, thiếu khoá `name-index`), script ghi `sparql_index = unknown` và in cảnh báo, không dừng lần thu thập: đây chỉ là thông tin nguồn gốc (ADR-0052 mục 3, `_sparql_index` trong `src/mmxai/data/mmkg_collect.py`). Tên dump được đọc **trước** mọi câu truy vấn. Khoá `missing_files` của `meta.json` ghi các file Commons không trả thông tin; từ nay mỗi mục là `{name, reason}` (`missing`, `invalid`, `no_imageinfo`, `unresolved_redirect`), riêng snapshot `20261116` thu trước thay đổi này nên chỉ ghi tên file.
 
-Vì sao dùng QLever thay cho Wikidata Query Service (WDQS): ngày 2026-11-16 WDQS trả HTTP 429 yêu cầu chờ 1000 s ngay ở câu truy vấn đầu, và người dùng yêu cầu thu thập nhanh nhất (ADR-0051). QLever chạy trên bản dump Wikidata nên dữ liệu có thể lệch Wikidata trực tiếp (mục 10).
+Vì sao dùng QLever thay cho Wikidata Query Service (WDQS): ngày 2026-11-16 WDQS trả HTTP 429 yêu cầu chờ 1000 s ngay ở câu truy vấn đầu, và người dùng yêu cầu thu thập nhanh nhất (ADR-0052). QLever chạy trên bản dump Wikidata nên dữ liệu có thể lệch Wikidata trực tiếp (mục 10).
 
 Lệnh thu thập (chạy một lần; script từ chối chạy lại trong cùng ngày):
 
@@ -71,7 +71,7 @@ Script gửi User-Agent `mmxai-course-project/0.1 (research script)`, không ch�
 
 **Vấn đề tác giả ở lần dựng đầu (trước duyệt).** Commons trả ô `Artist` dưới dạng HTML. Với ảnh không rõ tác giả, Commons đặt chữ "Unknown author" trong hai thẻ liền nhau; bộ thu thập cũ xoá thẻ mà không chèn dấu cách nên được `Unknown authorUnknown author`. Một ảnh khác có câu mẫu giấy phép ("... the copyright holder of this work, hereby publishes it under the following license:") nằm trong ô tác giả. Lần dựng đầu có **11 ảnh** mang tác giả hỏng như vậy, **6 ảnh** trong đó là CC BY-SA 3.0, tức là không ghi công đúng giấy phép.
 
-**Luật sửa** (`normalize_artist`, `name_before_licence_sentence`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0051 mục 2):
+**Luật sửa** (`normalize_artist`, `name_before_licence_sentence`, `names_an_author`, `pick_author` trong `src/mmxai/data/mmkg_build.py`; ADR-0052 mục 2):
 
 1. Làm sạch chữ `Artist`: bỏ ký tự rộng 0, gộp một cụm bị lặp liền nhau (`Unknown authorUnknown author.` → `Unknown author`), bỏ dấu câu ở cuối (`Chainwit.` → `Chainwit`).
 2. Câu mẫu giấy phép có tên người ở đầu (`<tên>, the copyright holder of this work, hereby publishes it ...`) thì giữ phần `<tên>` làm tác giả: đó đúng là tên mà giấy phép trên Commons yêu cầu ghi công (thêm ngày 2026-11-17, sau duyệt của người; trước đó cả câu bị coi là không nêu ai).
@@ -151,7 +151,7 @@ Cột `source` = URL Wikidata của thực thể đầu, nên mọi triple kiể
 - File thuộc **hơn một** thực thể bị bỏ, và file trùng `sha1` chỉ giữ một bản, nên mỗi ảnh trong bộ chính thức thuộc đúng một thực thể.
 - `image_id` = `<entity_id>_<8 ký tự đầu của sha1>` (`make_image_row`), ổn định khi dựng lại.
 - Chỉ `item` có ảnh; `concept` không có ảnh.
-- **Lưu ý rò rỉ:** cột `entity_id` của `images.csv` chính là đáp án "ảnh này là di tích nào". Khi dựng đồ thị, cạnh `ảnh → contains → thực thể` cho ảnh val/test không được lấy từ cột này (ADR-0051, Hệ quả). Cách dựng cạnh sẽ chốt ở ADR sau.
+- **Lưu ý rò rỉ:** cột `entity_id` của `images.csv` chính là đáp án "ảnh này là di tích nào". Khi dựng đồ thị, cạnh `ảnh → contains → thực thể` cho ảnh val/test không được lấy từ cột này (ADR-0052, Hệ quả). Cách dựng cạnh sẽ chốt ở ADR sau.
 
 ## 6. Thống kê
 
@@ -167,7 +167,7 @@ Bộ chính thức dưới đây là bộ **sau duyệt của người** (mục 
 
 Snapshot có 170 thực thể của miền (`in_domain = 1` trong `entities_raw.csv`), 4.979 file ảnh khác nhau (`image_credits` trong `meta.json`). Cả 39 `concept` đều là thực thể đích, không phải thực thể của miền (đếm từ `mmkg/entities.csv` và `entities_raw.csv`).
 
-**Lưu ý biên quy mô:** 303 triple chỉ hơn mốc tối thiểu 300 là 3. Bỏ thêm triple (hoặc bỏ một `item`, vì triple của nó mất theo) có thể xuống dưới mốc; khi đó phải đổi ngưỡng trong `configs/mmkg_vi_build.yaml` (ví dụ `min_items_per_concept`) và ghi lý do (mục 7, ADR-0051).
+**Lưu ý biên quy mô:** 303 triple chỉ hơn mốc tối thiểu 300 là 3. Bỏ thêm triple (hoặc bỏ một `item`, vì triple của nó mất theo) có thể xuống dưới mốc; khi đó phải đổi ngưỡng trong `configs/mmkg_vi_build.yaml` (ví dụ `min_items_per_concept`) và ghi lý do (mục 7, ADR-0052).
 
 Số ảnh mỗi `item` (đếm từ `mmkg/images.csv`): 65 di tích có 5 ảnh, 10 có 4 ảnh, 5 có 3 ảnh.
 
@@ -284,7 +284,7 @@ Tổng 962 dòng = 474 ảnh + 360 khoá triple + 128 thực thể. Ảnh có 47
 
 So với bộ sau duyệt AI: 18 ảnh rời bộ và 16 ảnh thay thế vào (đếm theo `image_id` của `mmkg/images.csv`), và một triple `part_of` trở lại. Số triple 303 chỉ hơn mốc 300 là 3. Số khoá duyệt triple là 360 (345 `ok` + 15 `drop`, không phải 303) vì file duyệt khoá theo mã `P` gốc (triple `kept_at` gộp có hai dòng duyệt) và vì có khoá thuộc triple đã rơi khỏi bộ do luật khác (thực thể bị bỏ, `item` rớt dưới 3 ảnh).
 
-Nếu nhóm duyệt bỏ thêm tới mức triple dưới 300 hoặc thực thể ra ngoài 50–150, đổi ngưỡng trong `configs/mmkg_vi_build.yaml`, dựng lại và ghi ngưỡng mới, lý do và số mới vào mục này (ADR-0051). Duyệt lại thì sửa dòng trong `mmkg/review.csv`, ghi tên mình vào `reviewer`, rồi dựng lại (`mmkg/README.md` mục 3).
+Nếu nhóm duyệt bỏ thêm tới mức triple dưới 300 hoặc thực thể ra ngoài 50–150, đổi ngưỡng trong `configs/mmkg_vi_build.yaml`, dựng lại và ghi ngưỡng mới, lý do và số mới vào mục này (ADR-0052). Duyệt lại thì sửa dòng trong `mmkg/review.csv`, ghi tên mình vào `reviewer`, rồi dựng lại (`mmkg/README.md` mục 3).
 
 ## 8. Tải ảnh
 
@@ -368,7 +368,7 @@ Những điểm ADR split phải chốt (từ lần kiểm rò rỉ ngày 2026-1
 |---|---|---|
 | Đơn vị chia | Chưa chọn chia theo **ảnh** (cùng di tích có ảnh ở cả train và test) hay theo **item** (di tích test không có ảnh nào ở train). Hai cách đo hai năng lực khác nhau | Chọn và ghi lý do trong ADR split |
 | `concept` và triple đếm trên mọi item | Luật `min_items_per_concept` và cạnh giữa các thực thể đang đếm trên **cả 80 item**, gồm cả item sẽ vào val/test | Nếu chia theo item: đếm lại trên item train, **hoặc** khai báo cách làm là transductive (đồ thị biết trước mọi thực thể) và chạy ablation bỏ thông tin đó |
-| `entity_id` trong `images.csv` là đáp án | Cột này nói ảnh thuộc di tích nào | Không dùng nó để dựng cạnh `ảnh → contains → thực thể` cho ảnh val/test (mục 5, ADR-0051) |
+| `entity_id` trong `images.csv` là đáp án | Cột này nói ảnh thuộc di tích nào | Không dùng nó để dựng cạnh `ảnh → contains → thực thể` cho ảnh val/test (mục 5, ADR-0052) |
 | Đóng băng bộ dữ liệu | Dựng lại sau khi đã chia có thể đổi ảnh, thực thể, triple | Ghi `sha1` của các CSV chính thức (`entities.csv`, `triples.csv`, `images.csv`) vào file split; test kiểm khớp |
 | Khoá ngưỡng dựng | Đổi ngưỡng sau khi có split (để kết quả đẹp hơn) là chọn siêu tham số trên test | Sau khi có split, ngưỡng trong `configs/mmkg_vi_build.yaml` khoá lại; muốn đổi thì ADR mới và chạy lại mọi mô hình |
 | Ảnh gần trùng trong một item | Luật `sha1` chỉ bắt file giống hệt; ảnh chụp liên tiếp cùng góc vẫn còn. Chia theo ảnh thì một ảnh ở train và ảnh gần giống ở test làm điểm cao giả | Người duyệt `drop` với lý do `duplicate`; ADR split cân nhắc kiểm thêm bằng độ tương đồng đặc trưng |
