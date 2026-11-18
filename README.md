@@ -394,7 +394,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 2 – trần 8.5
 
-- [ ] Thực nghiệm trên **ít nhất 2 tập công khai**.
+- [x] Thực nghiệm trên **ít nhất 2 tập công khai**. → Flickr30k chạy lại pipeline cấp độ 1 (ADR-0050), 3 seed, val + test (`results/tables/level1_flickr30k_test.csv`, `level1_flickr30k_val.csv`)
 - [ ] Triển khai hoặc tái lập **1 phương pháp mới từ năm 2024 trở lại đây** về multimodal KG, graph-enhanced retrieval hoặc explainable graph retrieval. Chỉ cần 1. Ví dụ: NativE (SIGIR 2024), AdaMF-MAT (LREC-COLING 2024), Mixed-Curvature MMKGC (AAAI 2025) (PDF §2, §10).
 - [ ] Đánh giá trên **cùng pipeline và cách chia** của cấp độ 1.
 - [ ] Xây bộ **tối thiểu 20 truy vấn đánh giá**, có nhóm **truy vấn gián tiếp** (kiểu child – plays – football).

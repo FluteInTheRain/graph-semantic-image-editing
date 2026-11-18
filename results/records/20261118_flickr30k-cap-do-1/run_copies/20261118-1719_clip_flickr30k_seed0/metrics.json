@@ -1,0 +1,14 @@
+{
+  "R@1": 0.48908,
+  "R@5": 0.7368,
+  "R@10": 0.8168,
+  "MRR@100": 0.601610778648999,
+  "num_queries": 25000,
+  "num_images": 5000,
+  "fraction_queries_with_several_relevant": 0.00084,
+  "split": "val",
+  "split_file": "splits/flickr30k/split_seed0.json",
+  "split_sha256": "8b5c542761a198d09ff749566b0d32e1549731a552427e41c77cb7cfe56b440d",
+  "seed": 0,
+  "features_code_hash": "6f1ebf3a94b9c652ac64a8c658269f752347842352ae933ebdd16c0dea3ba027"
+}
