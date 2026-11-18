@@ -220,7 +220,7 @@ Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh ch�
 \addcontentsline{toc}{section}{Tóm tắt}
 Khi tìm ảnh bằng văn bản, CLIP chỉ so khớp hai vectơ. Cách này không khai thác quan hệ giữa các khái niệm trong ảnh và không cho biết vì sao một ảnh được trả về. Nhóm xây dựng trên Visual Genome một hệ thống gồm ba bước: (i) CLIP ViT-B/32 đóng băng và FAISS lấy 100 ứng viên; (ii) một đồ thị hai phía ảnh -- khái niệm (3.880 synset WordNet, mỗi ảnh nối với 16 khái niệm) cùng một lớp GraphSAGE được huấn luyện để xếp hạng lại 100 ứng viên này; điểm cuối là $\alpha\cdot\cos + (1-\alpha)\cdot$điểm đồ thị; (iii) giải thích bằng các cạnh ảnh -- khái niệm, tính bằng can thiệp trên chính mô hình xếp hạng.
 
-Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Trên MMKG tiếng Việt tự xây (119 thực thể, 303 triple, 380 ảnh), các mô hình VG dùng nguyên không huấn luyện lại nâng \mrr{} từ 0.2766 lên 0.2836--0.2872, nhưng đối chứng không đồ thị cũng đạt 0.2861, nên mức tăng chủ yếu đến từ phép chiếu học trên VG chứ không từ đồ thị; truy vấn tiếng Việt thất bại vì CLIP không phân biệt được câu tiếng Việt, đồ thị không bù được. Các phần chưa hoàn thành (cấp độ 2, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
+Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Trên tập thứ hai Flickr30k (chạy lại y nguyên pipeline), phép chiếu học được vẫn mang lại gần hết mức tăng (\mrr{} test 0.6045 $\to$ 0.6447), còn CLIP + Graph không hơn mô hình không đồ thị (0.6432 \pmm{} 0.0028). Các phần chưa hoàn thành (phần còn lại của cấp độ 2, MMKG tiếng Việt, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
 
 \vspace{0.3cm}
 \noindent\textbf{Từ khoá:} truy vấn đa phương thức, CLIP, GraphSAGE, xếp hạng lại, giải thích trung thực, fidelity.
@@ -262,9 +262,10 @@ Tình trạng từng cấp độ của đề được tổng hợp ở Bảng~\r
 \midrule
 1 (7.0) & Baseline CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, giải thích 5+5 & Hoàn thành \\
 NV1 mở rộng & nDCG, chiều ảnh $\to$ văn bản, đánh giá theo nhóm truy vấn & Hoàn thành \\
-2 (8.5) & Tập công khai thứ 2; phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
-3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Hoàn thành (VG mục 7.3; MMKG mục~\ref{sec:mmkg-xai}) \\
-3 (10) & MMKG tiếng Việt tự xây; chạy phương pháp tốt nhất, phân tích chuyển giao & Hoàn thành (mục~\ref{sec:mmkg}) \\
+2 (8.5) & Tập công khai thứ 2 (Flickr30k, chạy lại pipeline cấp độ 1) & Hoàn thành (val + test, 3 seed) \\
+2 (8.5) & Phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
+3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Đã chạy val; test chưa chạy \\
+3 (10) & MMKG tiếng Việt tự xây & Chưa \\
 4 (+1--2) & Cải tiến riêng & Chưa (có ý tưởng, mục~\ref{sec:future}) \\
 Sản phẩm & Notebook/giao diện demo, slide & Chưa \\
 \bottomrule
@@ -329,10 +330,14 @@ Dữ liệu có ảnh trùng: 5 cặp có embedding giống hệt, 247 cặp có
 \end{enumerate}
 
 \subsection{Flickr30k -- tập công khai thứ hai}
-Nhóm đã chọn Flickr30k~\cite{young2014flickr} với split Karpathy~\cite{karpathy2015} (29.000/1.014/1.000 ảnh) làm tập thứ hai, và đã trích embedding CLIP cho 31.014 ảnh và 155.070 caption (ADR-0040, \code{data\_cards/flickr30k.md}).
-\begin{chualam}{Split, đồ thị và thực nghiệm trên Flickr30k}
-Còn thiếu: chuyển split Karpathy sang \code{splits/flickr30k/} (gom 1 ảnh trùng), dựng đồ thị ảnh -- khái niệm (liên kết từ trong caption sang ConceptNet~\cite{speer2017conceptnet}/WordNet), chạy lại toàn bộ thí nghiệm với cùng giao thức và 3 seed. Đây là điều kiện bắt buộc của cấp độ 2.
-\end{chualam}
+Tập thứ hai là Flickr30k~\cite{young2014flickr} (bản Karpathy~\cite{karpathy2015}). Tập có 31.014 ảnh, mỗi ảnh 5 caption. Embedding CLIP được trích bằng cùng mô hình như Visual Genome (ADR-0040, ADR-0041, \code{data\_cards/flickr30k.md}). Nhóm chạy lại \textbf{y nguyên} pipeline cấp độ 1 và chỉ đổi dữ liệu (ADR-0050):
+\begin{itemize}
+\item \textbf{Split:} cùng quy trình như Visual Genome, gồm 5.000 val, 5.000 test và 21.014 train, seed 0. Ảnh có cosine $\ge 0.99$ được gom vào cùng tập (có 2 cặp như vậy). Trường \code{split} của bản Karpathy không được dùng. File split là \code{splits/flickr30k/split\_seed0.json} (sha256 \code{8b5c5427\dots}).
+\item \textbf{Giao thức:} truy vấn là cả 5 caption của mỗi ảnh val/test (25.000 câu), kho là 5.000 ảnh. Đáp án đúng được xác định theo cùng quy tắc ``câu trùng'' như mục~\ref{sec:protocol}. Chỉ 0,08\% truy vấn val có hơn một đáp án.
+\item \textbf{Đồ thị:} Flickr30k không có annotation đối tượng, nên không đếm được từ vựng khái niệm như mục~\ref{sec:graph}. Vì vậy nhóm \textbf{chép} 3.880 đỉnh khái niệm (synset, vectơ văn bản CLIP) từ đồ thị Visual Genome. Mỗi ảnh Flickr30k được nối với 16 khái niệm gần nhất theo cosine CLIP, cho tổng 496.224 cạnh. Từ vựng chỉ đếm trên train Visual Genome, và cạnh của mỗi ảnh chỉ phụ thuộc vectơ của chính ảnh đó, nên không có rò rỉ từ test Flickr30k.
+\item \textbf{Không chạy trên Flickr30k:} mô hình đồng xuất hiện (cần annotation đối tượng) và giao thức v2 (luật chia nhóm truy vấn chốt trên câu Visual Genome).
+\end{itemize}
+Kết quả nằm ở mục~\ref{sec:flickr}.
 
 % ================= 4. PHƯƠNG PHÁP =================
 \section{Phương pháp}
@@ -636,8 +641,91 @@ Còn thiếu: sinh ứng viên trên test; hai thành viên xem ảnh và xác n
 Các phương pháp gợi ý (NativE, AdaMF-MAT, Mixed-Curvature MMKGC) là phương pháp hoàn thiện KG nên không chạy thẳng trên bài toán truy vấn ảnh của nhóm (ADR-0040). Cần chọn một phương pháp graph-enhanced retrieval hoặc explainable graph retrieval có mã nguồn công khai, chạy trên cùng pipeline, cùng split, 3 seed, và đưa vào Bảng~\ref{tab:main}.
 \end{chualam}
 
-\subsubsection{Tập công khai thứ hai}
-Xem khung ``Split, đồ thị và thực nghiệm trên Flickr30k'' ở mục~\ref{sec:data}.
+\subsection{Cấp độ 2: tập công khai thứ hai Flickr30k}
+\label{sec:flickr}
+Bốn thí nghiệm của cấp độ 1 được chạy lại trên Flickr30k (thiết lập ở mục~\ref{sec:data}): CLIP thuần, không đồ thị, CLIP + Graph và đồ thị xáo cạnh.
+\begin{itemize}
+\item Config là bản sao config Visual Genome. Chỉ tên thí nghiệm và đường dẫn dữ liệu được đổi; một test tự động kiểm điều này.
+\item Không siêu tham số nào được chỉnh lại, kể cả lr và $k$.
+\item Epoch và $\alpha$ vẫn chọn trên val, như ADR-0047.
+\item Test chạy \textbf{đúng một lần} mỗi seed, ngay sau khi huấn luyện, với checkpoint và $\alpha$ đã chốt trên val.
+\item Các run chạy trên Kaggle tại commit \code{fb62f69}.
+\item Bảng test: \code{results/tables/level1\_flickr30k\_test.csv}.
+\item Bảng val: \code{results/tables/level1\_flickr30k\_val.csv}.
+\item Hồ sơ: \code{results/records/20261118\_flickr30k-cap-do-1/}.
+\end{itemize}
+
+\begin{table}[H]
+\centering\small
+\caption{Văn bản $\to$ ảnh trên \textbf{test} Flickr30k (5.000 ảnh, 25.000 truy vấn). Mean \pmm{} std mẫu qua 3 seed. CLIP tất định nên std của CLIP thuần bằng 0.}
+\label{tab:flickr}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
+\midrule
+CLIP thuần & 0.4901 \pmm{} 0.0000 & 0.7426 \pmm{} 0.0000 & 0.8250 \pmm{} 0.0000 & 0.6045 \pmm{} 0.0000 & 1 \\
+Không đồ thị (lr $10^{-3}$) & \textbf{0.5332 \pmm{} 0.0006} & \textbf{0.7825 \pmm{} 0.0005} & \textbf{0.8556 \pmm{} 0.0011} & \textbf{0.6447 \pmm{} 0.0003} & 0.6/0.6/0.6 \\
+CLIP + Graph (lr $10^{-4}$) & 0.5309 \pmm{} 0.0036 & 0.7811 \pmm{} 0.0022 & 0.8553 \pmm{} 0.0026 & 0.6432 \pmm{} 0.0028 & 0.5/0.5/0.5 \\
+Đồ thị xáo cạnh (ablation) & 0.5276 \pmm{} 0.0014 & 0.7775 \pmm{} 0.0014 & 0.8526 \pmm{} 0.0009 & 0.6399 \pmm{} 0.0015 & 0.5/0.5/0.4 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Cùng các mô hình trên \textbf{val} Flickr30k (tập dùng để chọn epoch và $\alpha$). CLIP thuần chỉ chạy seed 0 trên val; vì CLIP tất định, $\alpha=1$ trong cả 9 run huấn luyện cho đúng số này.}
+\label{tab:flickr_val}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \\
+\midrule
+CLIP thuần & 0.4891 & 0.7368 & 0.8168 & 0.6016 \\
+Không đồ thị (lr $10^{-3}$) & 0.5288 \pmm{} 0.0003 & 0.7785 \pmm{} 0.0010 & 0.8519 \pmm{} 0.0008 & 0.6403 \pmm{} 0.0000 \\
+CLIP + Graph (lr $10^{-4}$) & 0.5298 \pmm{} 0.0026 & 0.7782 \pmm{} 0.0038 & 0.8517 \pmm{} 0.0028 & 0.6408 \pmm{} 0.0026 \\
+Đồ thị xáo cạnh (ablation) & 0.5269 \pmm{} 0.0002 & 0.7753 \pmm{} 0.0013 & 0.8495 \pmm{} 0.0012 & 0.6383 \pmm{} 0.0007 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{\mrr{} Flickr30k ghép cặp theo seed (hiệu của hai mô hình cùng seed).}
+\label{tab:flickr_paired}
+\begin{tabular}{l l c c c c}
+\toprule
+\textbf{Tập} & \textbf{Hiệu} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean \pmm{} std} \\
+\midrule
+Test & Thật -- không đồ thị & +0.00032 & $-$0.00006 & $-$0.00474 & $-$0.00149 \pmm{} 0.00282 \\
+Test & Thật -- xáo & +0.00444 & +0.00354 & +0.00184 & +0.00327 \pmm{} 0.00132 \\
+Test & Xáo -- không đồ thị & $-$0.00412 & $-$0.00360 & $-$0.00658 & $-$0.00477 \pmm{} 0.00159 \\
+\midrule
+Val & Thật -- không đồ thị & +0.00222 & +0.00191 & $-$0.00253 & +0.00053 \pmm{} 0.00266 \\
+Val & Thật -- xáo & +0.00400 & +0.00328 & +0.00023 & +0.00250 \pmm{} 0.00200 \\
+Val & Xáo -- không đồ thị & $-$0.00178 & $-$0.00137 & $-$0.00276 & $-$0.00197 \pmm{} 0.00072 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Nhận xét.}
+\begin{itemize}
+\item \textbf{Kết luận chính của Visual Genome lặp lại trên test:} gần như toàn bộ mức tăng so với CLIP đến từ phép chiếu học được. \mrr{} test tăng từ 0.6045 lên 0.6447 (+0.040, khoảng 6,6\% tương đối; ổn định qua seed: +0.0401 \pmm{} 0.0003). So với Visual Genome (+0.019, khoảng 18\%), mức tăng tuyệt đối lớn hơn nhưng mức tăng tương đối nhỏ hơn, vì CLIP vốn đã mạnh trên caption Flickr30k.
+\item \textbf{Trên Flickr30k, đồ thị không thêm được gì.} Trên test, CLIP + Graph kém mô hình không đồ thị $-$0.0015 \pmm{} 0.0028 \mrr. Seed 0 và 1 gần như bằng nhau, còn seed 2 kém 0.0047. Seed 2 dừng sớm ở epoch 2, trong khi seed 0 và 1 dừng ở epoch 6 và 5; vì vậy std của mô hình chính lớn hơn hẳn. Trên val hiệu này là +0.0005. Cả hai đều nhỏ hơn std, nên hai mô hình coi như ngang nhau.
+\item \textbf{Đồ thị thật vẫn hơn đồ thị xáo} ở cả 3 seed, trên cả val và test (test: +0.0033 \pmm{} 0.0013), cùng chiều với Visual Genome. Tuy vậy, bản xáo \textbf{kém} mô hình không đồ thị ở cả 3 seed (test: $-$0.0048 \pmm{} 0.0016). Trên Flickr30k, cạnh nhiễu làm hại, còn cạnh thật chỉ đủ bù lại phần hại đó. Như trên Visual Genome, đây là dao động theo seed với một bản xáo, không phải kiểm định.
+\item \textbf{Val và test cùng thứ tự,} trừ cặp CLIP + Graph -- không đồ thị (đổi dấu nhưng đều nằm trong std). Số test của mọi mô hình cao hơn val khoảng 0.003--0.004 \mrr, kể cả CLIP thuần không học gì; vậy chênh lệch đến từ độ khó của hai tập, không phải do quá khớp val.
+\item \textbf{$\alpha$ chọn được là 0.4--0.6}, so với khoảng 0 trên Visual Genome. Trên Flickr30k, điểm cuối chia gần đều giữa CLIP và nhánh học được.
+\item \textbf{Giới hạn:} từ vựng khái niệm lấy từ Visual Genome, nên một số khái niệm hay gặp trong caption Flickr30k (hoạt động của người) có thể không có trong từ vựng. Train Flickr30k (21.014 ảnh) cũng nhỏ hơn Visual Genome khoảng 4,7 lần.
+\end{itemize}
+
+\paragraph{Giải thích cơ bản trên Flickr30k (val, seed 0).} Nhóm chạy cùng \code{scripts/explain.py} như mục~\ref{sec:xai}: Occlusion, 5 thành công + 5 thất bại, xoá 3 cạnh và bỏ mọi cạnh.
+\begin{itemize}
+\item Chốt chặn khớp mô hình chạy qua: \mrr{} trong phân tích bằng số lúc huấn luyện (0.64250).
+\item Ở 25.000 truy vấn, hạng ảnh đúng tăng ở 7.306 truy vấn, giảm ở 3.557 và giữ nguyên ở 13.288. Với 849 truy vấn, ảnh đúng nằm ngoài top 100.
+\item Input Kaggle thiếu file caption (\code{dataset\_flickr30k.json}), nên phân tích ghi truy vấn bằng id ảnh và vị trí caption, không có câu.
+\item \textbf{Xoá 3 cạnh do Occlusion chọn làm điểm đồ thị giảm ở cả 15 ảnh} được giải thích.
+\item \textbf{Khác Visual Genome, cạnh đóng vai trò lớn hơn trong các ca thành công.} Bỏ mọi cạnh làm 5 ảnh thành công tụt từ hạng 5/8/11/14/9 xuống 37/25/15/44/50. Trên Visual Genome, các ảnh này gần như giữ hạng. Điều này khớp với việc $\alpha \approx 0.5$ và nhánh láng giềng có trọng số đáng kể.
+\item Ở 5 ca thất bại (ảnh đúng từ hạng 8--24 theo CLIP rơi xuống 61--83), bỏ mọi cạnh làm ảnh đúng tụt \textbf{thêm} (ví dụ 70 $\to$ 95). Vậy thất bại không do cạnh, mà do phép chiếu của chính ảnh.
+\item Khái niệm đẩy lên thường hợp ngữ cảnh: \code{ballplayer.n.01} và \code{player.n.01} cho một ảnh thể thao; \code{lap.n.01} và \code{pace.n.04} cho một ảnh chạy bộ. Vẫn có cạnh lạc nghĩa do từ vựng Visual Genome, ví dụ \code{main.n.01}.
+\end{itemize}
 
 % ================= 7. GIẢI THÍCH =================
 \section{Kết quả Nhiệm vụ 3: giải thích}
@@ -850,6 +938,7 @@ VG test (mục 7.3) & 60 & 0.0225 \pmm{} 0.0010 (0.0006) & 2.57 \pmm{} 0.29 (0.2
 \section{Thảo luận và hạn chế}
 \begin{enumerate}
 \item \textbf{Đồ thị đóng góp ít trên toàn tập.} Khoảng 91\% mức tăng so với CLIP đến từ một phép chiếu tuyến tính học trên Visual Genome. Đây là phát hiện quan trọng: nếu không có đối chứng không đồ thị, toàn bộ mức tăng 19\% sẽ bị gán nhầm cho đồ thị.
+\item \textbf{Trên Flickr30k, đồ thị không thêm được mức tăng nào} so với mô hình không đồ thị (test: $-$0.0015 \pmm{} 0.0028 \mrr, mục~\ref{sec:flickr}). Kết luận ``phần lớn mức tăng đến từ phép chiếu'' lặp lại trên hai tập. Kết luận ``đồ thị thật hơn đồ thị xáo'' cũng cùng chiều trên cả hai tập (Flickr30k test: +0.0033 \pmm{} 0.0013), nhưng trên Flickr30k bản xáo còn kém cả mô hình không đồ thị.
 \item \textbf{Đồ thị hiện tại ít ``quan hệ''.} Cạnh \code{contains} được suy ra từ chính CLIP (16 khái niệm gần nhất), không có cạnh quan hệ giữa đối tượng trong scene graph và chưa có ConceptNet. Lựa chọn này giúp hệ thống chạy được với ảnh chưa gán nhãn và tránh rò rỉ, nhưng khiến đồ thị mang ít thông tin mới so với những gì CLIP đã có. Đây có lẽ là lý do chính khiến đồ thị chỉ giúp ở các truy vấn chung chung, và là điểm cần cải thiện để trả lời được câu hỏi về truy vấn gián tiếp.
 \item \textbf{$\alpha \approx 0$} khiến điểm cuối gần như chỉ còn nhánh đồ thị; các ca thất bại lớn (hạng 7--15 rơi xuống 92--100) cho thấy một $\alpha$ cố định cho mọi truy vấn là chưa tốt.
 \item \textbf{Thống kê:} 3 seed và một bản xáo; t, p theo seed chỉ là số mô tả; chưa có kiểm định theo truy vấn. Recall là cận dưới, MRR cắt ở 100. Hai câu khác chữ cùng nghĩa (``a man'', ``man'') vẫn tính là khác nhau.
@@ -863,8 +952,8 @@ Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chố
 
 Việc cần làm tiếp, theo thứ tự ưu tiên của đề:
 \begin{enumerate}
-\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
-\item Cấp độ 3: chuyển ngôn ngữ cho MMKG (bộ mã hoá văn bản đa ngôn ngữ), truy vấn MMKG do người viết, giải thích mô hình hai lớp (có triple) trên MMKG.
+\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
+\item Cấp độ 3: MMKG tiếng Việt.
 \end{enumerate}
 
 \begin{chualam}{Cấp độ 4 -- cải tiến của nhóm}
@@ -902,6 +991,7 @@ ADR-0046 & GNN một lớp, cạnh CLIP top-$k$ cho mọi split \\
 ADR-0047 & Quy trình huấn luyện, chọn $\alpha$, chạy test một lần \\
 ADR-0048 & Cạnh đồng xuất hiện đếm trên train, GraphSAGE hai lớp \\
 ADR-0049 & Giao thức đánh giá v2: nDCG, ảnh $\to$ văn bản, nhóm truy vấn \\
+ADR-0050 & Flickr30k: chạy lại pipeline cấp độ 1, chỉ đổi dữ liệu, từ vựng chép từ Visual Genome \\
 \bottomrule
 \end{tabularx}
 \end{table}

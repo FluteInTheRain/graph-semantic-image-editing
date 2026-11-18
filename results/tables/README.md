@@ -63,3 +63,16 @@ Quy tắc:
 - Test chạy **đúng một lần** (`results/runs/20261116-2245_explain_vg_test`, commit `8a2f137`, `git_dirty: false`). Script từ chối lần chạy test thứ hai.
 - Dòng `val` lấy từ lần chạy lại trên val (`20261116-2252_explain_vg_val`, commit `59d088c`) với **đúng checkpoint của lần test**, nên val và test dùng cùng mô hình. Lần chạy lại cho cùng lựa chọn (`integrated_gradients`, `m = 10`) như lần val đầu trên Kaggle (`20261114-0453_explain_vg_val`, checkpoint train lại trên Kaggle); hai lần lệch nhau ≤ 0,001 ở hạng tụt ngẫu nhiên, các cột khác trùng tới 4 chữ số.
 - Bản sao các run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của `20261116-2252_explain_vg_val` và `20261116-2245_explain_vg_test`, không sửa tay số.
+
+## Flickr30k: pipeline cấp độ 1 trên tập thứ hai
+
+Quyết định: ADR-0050. Pipeline giữ nguyên, chỉ đổi dữ liệu.
+
+| Bảng | Nội dung |
+|---|---|
+| `level1_flickr30k_test.csv` | Mean ± std qua 3 seed trên **test** Flickr30k: `clip_flickr30k`, `clip_nograph_flickr30k`, `clip_graph_flickr30k_lr1e4`, `clip_graph_flickr30k_lr1e4_shuffled` |
+| `level1_flickr30k_val.csv` | Như trên nhưng trên **val** (tập chọn epoch và `alpha`), chỉ 3 mô hình có học |
+
+- Test chạy **đúng một lần** mỗi seed, cùng phiên Kaggle với huấn luyện (commit `fb62f69`, `git_dirty: false`), bằng checkpoint và `alpha` đã chọn trên val.
+- CLIP thuần chỉ chạy seed 0 trên val, nên không có trong bảng val (`summarize_runs.py` cần ≥ 3 seed). Số của nó nằm trong hồ sơ.
+- Hai bảng sinh bằng `scripts/summarize_runs.py --split {val,test}` trên bản chép các run Kaggle (`results/records/20261118_flickr30k-cap-do-1/run_copies/`); không sửa tay.
