@@ -38,3 +38,16 @@ clip_mmkg_vi,indirect,indirect_generic_en,44,0.1384,0.4091,0.0,0.7045,0.0,0.7273
 clip_mmkg_vi,indirect,indirect_generic_vi,44,0.1384,0.0,0.0,0.4091,0.0,0.6364,0.0,0.1602,0.0
 clip_mmkg_vi,indirect,indirect_specific_en,35,0.1101,0.0857,0.0,0.4571,0.0,0.6571,0.0,0.2658,0.0
 clip_mmkg_vi,indirect,indirect_specific_vi,35,0.1101,0.0,0.0,0.0571,0.0,0.0571,0.0,0.026,0.0
+clip_nograph_vg_mmkg_vi,type,direct,160,0.5031,0.2229,0.0036,0.3271,0.0072,0.3917,0.0072,0.2879,0.0049
+clip_nograph_vg_mmkg_vi,type,indirect,158,0.4969,0.1646,0.0063,0.4241,0.0127,0.5338,0.0073,0.2842,0.0027
+clip_nograph_vg_mmkg_vi,language,en,159,0.5,0.3459,0.0109,0.5472,0.0166,0.6457,0.0096,0.4502,0.0079
+clip_nograph_vg_mmkg_vi,language,vi,159,0.5,0.0419,0.0036,0.2034,0.0158,0.2788,0.0036,0.122,0.0047
+clip_nograph_vg_mmkg_vi,type_language,direct_en,80,0.2516,0.3708,0.0144,0.5167,0.0144,0.6042,0.0072,0.4582,0.0123
+clip_nograph_vg_mmkg_vi,type_language,direct_vi,80,0.2516,0.075,0.0125,0.1375,0.0,0.1792,0.0072,0.1176,0.0054
+clip_nograph_vg_mmkg_vi,type_language,indirect_en,79,0.2484,0.3207,0.0073,0.5781,0.0264,0.6878,0.0146,0.4421,0.0039
+clip_nograph_vg_mmkg_vi,type_language,indirect_vi,79,0.2484,0.0084,0.0073,0.27,0.0319,0.3797,0.0,0.1264,0.004
+clip_nograph_vg_mmkg_vi,indirect,direct,160,0.5031,0.2229,0.0036,0.3271,0.0072,0.3917,0.0072,0.2879,0.0049
+clip_nograph_vg_mmkg_vi,indirect,indirect_generic_en,44,0.1384,0.4773,0.0,0.7197,0.0473,0.7727,0.0,0.5918,0.0062
+clip_nograph_vg_mmkg_vi,indirect,indirect_generic_vi,44,0.1384,0.0152,0.0131,0.4773,0.0601,0.6364,0.0,0.2112,0.0077
+clip_nograph_vg_mmkg_vi,indirect,indirect_specific_en,35,0.1101,0.1238,0.0165,0.4,0.0,0.581,0.033,0.2539,0.0114
+clip_nograph_vg_mmkg_vi,indirect,indirect_specific_vi,35,0.1101,0.0,0.0,0.0095,0.0165,0.0571,0.0,0.0198,0.002
