@@ -114,7 +114,9 @@ def evaluate(config: dict) -> None:
 
 
 def diagnose(config: dict) -> None:
-    arrays, _ = load_features(Path(config["features_dir"]))
+    arrays, meta = load_features(Path(config["features_dir"]))
+    if meta["queries_sha256"] != file_sha256(config["queries_file"]):
+        raise ValueError("features were built from another queries file; run the features step")
     rows = query_spread(arrays, read_queries(Path(config["queries_file"])))
     output = "results/tables/mmkg_transfer_query_spread.csv"
     write_table(rows, output)

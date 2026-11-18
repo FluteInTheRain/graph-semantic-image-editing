@@ -407,7 +407,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 - [x] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người (119 thực thể, 303 triple, 380 ảnh): `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
 - [x] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này. → 2 mô hình GNN của Visual Genome dùng nguyên, không huấn luyện lại, 318 truy vấn × 3 seed: `results/tables/mmkg_transfer.csv`, `mmkg_transfer_groups.csv` (ADR-0053, báo cáo mục 8)
 - [x] Mô tả nguồn dữ liệu, cách liên kết ảnh – thực thể. → `data_cards/mmkg_vi.md` mục 2 và 5
-- [x] Phân tích **khả năng chuyển giao** (transferability). → VG → di sản Việt Nam: MRR tăng nhẹ, chủ yếu ở truy vấn gián tiếp tiếng Anh; tiếng Anh → tiếng Việt thất bại vì CLIP gom các câu tiếng Việt lại (`results/tables/mmkg_transfer_query_spread.csv`); báo cáo mục 8.3
+- [x] Phân tích **khả năng chuyển giao** (transferability). → VG → di sản Việt Nam: MRR tăng nhẹ, chủ yếu ở truy vấn gián tiếp (chưa có ablation trên MMKG); tiếng Anh → tiếng Việt thất bại vì CLIP gom các câu tiếng Việt lại (`results/tables/mmkg_transfer_query_spread.csv`); báo cáo mục 8.3
 
 ### Cấp độ 4 – điểm cộng +1.0 đến +2.0
 
