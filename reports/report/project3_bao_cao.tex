@@ -162,7 +162,7 @@
   \textbf{Giáo viên hướng dẫn:} & \dots \\[10pt]
   \textbf{Học viên thực hiện:}  & \dots \\[4pt]
                                  & \dots \\[4pt]
-                                 & \dots \\[4pt]
+                                 & 25C15060 -- Nguyễn Phước Thiện \\[4pt]
                                  & 25C15050 -- Quan Phú Long \\[4pt]
                                  & 25C15068 -- Trần Hồ Thanh Vũ \\
 \end{tabular}
@@ -189,7 +189,6 @@
 % ══════════════════════════════════════════════════════════════
 \section*{Phân công công việc}
 \addcontentsline{toc}{section}{Phân công công việc và khai báo sử dụng AI}
-Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh chứng đóng góp. Mỗi thành viên tự điền phần việc của mình; lịch sử commit và pull request trên GitHub là minh chứng đi kèm.
 
 \begin{table}[H]
     \centering
@@ -199,14 +198,14 @@ Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh ch�
         \rowcolor{madrid}\textcolor{white}{\textbf{STT}} & \textcolor{white}{\textbf{MSHV}} & \textcolor{white}{\textbf{Họ và tên}} & \textcolor{white}{\textbf{Phân công công việc}} & \textcolor{white}{\textbf{Tỉ lệ}} \\ \hline
         1 & & & & \\ \hline
         2 & & & & \\ \hline
-        3 & & & & \\ \hline
+        3 & 25C15060 & Nguyễn Phước Thiện & - Viết common function Giải thích cơ bản, Giải thích định lượng \newline - Dựng demo app hiển thị kết quả và đường đi \newline - Chạy thực nghiệm trên dataset Flickr30k \newline - Viết báo cáo cho các phần ở trên & \\ \hline
         4 & 25C15050 & Quan Phú Long & - Trích đặc trưng CLIP đóng băng (Flickr30k, Visual Genome), notebook Kaggle (PR \#1) \newline - Dựng đồ thị ảnh--khái niệm từ Visual Genome, cạnh \code{contains} theo CLIP top-$k$ (PR \#6, ADR-0045) \newline - GraphSAGE, xếp hạng lại CLIP + Graph, chọn $\alpha$ trên val, cạnh đồng xuất hiện (PR \#7, ADR-0046--0048) \newline - Duyệt MMKG, đánh giá chuyển giao sang MMKG (PR \#24, ADR-0053) \newline - Đánh giá giải thích định lượng trên MMKG (PR \#25, ADR-0054) \newline - Viết phần MMKG trong báo cáo, tài liệu hướng dẫn & \\ \hline
         5 & 25C15068 & Trần Hồ Thanh Vũ & - Theo dõi tiến độ \newline - Viết báo cáo \newline - Làm slide \newline - Hỗ trợ (support) nhóm & \\ \hline
     \end{tabularx}
     \caption{Bảng phân công nhiệm vụ thành viên}
 \end{table}
 
-\subsection*{Khai báo sử dụng công cụ AI (đề §9)}
+\subsection*{Khai báo sử dụng công cụ AI}
 \begin{itemize}
 \item Nhóm dùng \textbf{Claude Code} để hỗ trợ viết code, test, tài liệu ADR và review. Mọi lần dùng được ghi trong \code{docs/ai-usage-log.md} của repo (ngày, việc, phần đã sửa). Các quyết định có giá trị do AI đề xuất mà nhóm chưa duyệt được đánh dấu ``nhóm chưa duyệt'' ngay trong ADR.
 \item Repo có ba agent review độc lập (kiểm rò rỉ dữ liệu, kiểm thiết kế thí nghiệm, kiểm độ trung thực của giải thích; định nghĩa trong \code{.claude/agents/}) chạy trên từng pull request; phát hiện và cách xử lý được ghi trong hồ sơ phiên ở \code{results/records/}.
