@@ -2,7 +2,7 @@
 \label{sec:method}
 
 \subsection{Pipeline tổng thể}
-Hình~\ref{fig:pipeline} mô tả pipeline theo đúng quy trình đề bài gợi ý: truy vấn đi qua CLIP, lấy top-100 ảnh theo cosine, tính điểm đồ thị cho từng ứng viên, xếp hạng lại, sinh giải thích và cuối cùng đo độ trung thực của giải thích.
+Hình~\ref{fig:pipeline} mô tả pipeline theo quy trình đề bài gợi ý: truy vấn đi qua CLIP, lấy top-100 ảnh theo cosine, tính điểm đồ thị cho từng ứng viên, xếp hạng lại, sinh giải thích và cuối cùng đo độ trung thực của giải thích.
 
 \begin{figure}[t]
 \centering
@@ -32,7 +32,7 @@ Hình~\ref{fig:pipeline} mô tả pipeline theo đúng quy trình đề bài g�
 \label{sec:graph}
 Đồ thị có hai loại đỉnh. Đỉnh ảnh gồm mọi ảnh trong tập, kể cả ảnh không có đối tượng nào. Đỉnh khái niệm gồm 3.880 synset WordNet xuất hiện trong ít nhất 5 ảnh train. Vectơ của ảnh là embedding CLIP; vectơ của khái niệm là embedding văn bản CLIP của câu ``a photo of a \{lemma\}'' (ví dụ \code{fire\_hydrant.n.01} trở thành ``a photo of a fire hydrant''). Nhờ vậy ảnh và khái niệm nằm trong cùng một không gian 512 chiều.
 
-\textbf{Cạnh \code{contains} (khái niệm $\to$ ảnh).} Phiên bản đầu tiên lấy cạnh từ annotation đối tượng và gặp hai vấn đề. Nếu ảnh test dùng annotation, hệ thống đọc được thông tin mà một ảnh mới ngoài thực tế không có. Còn nếu chỉ train dùng annotation mà test thì không, hai phân phối sẽ khác nhau. Vì vậy phiên bản chính nối mỗi ảnh với $k = 16$ khái niệm có cosine CLIP cao nhất, áp dụng như nhau cho train, val và test. Giá trị $k = 16$ gần với bậc trung bình của đồ thị annotation (1.719.645 cạnh trên 108.077 ảnh, xấp xỉ 15,9). Đồ thị có 1.569.232 cạnh ở train và 80.000 cạnh ở mỗi tập val, test.
+\textbf{Cạnh \code{contains} (khái niệm $\to$ ảnh).} Phiên bản đầu tiên lấy cạnh từ annotation đối tượng và gặp hai vấn đề. Nếu ảnh test dùng annotation, hệ thống đọc được thông tin mà một ảnh mới ngoài thực tế không có. Còn nếu chỉ tập train dùng annotation, tập test thì không, hai phân phối sẽ khác nhau. Vì vậy phiên bản chính nối mỗi ảnh với $k = 16$ khái niệm có cosine CLIP cao nhất, áp dụng như nhau cho train, val và test. Giá trị $k = 16$ gần với bậc trung bình của đồ thị annotation (1.719.645 cạnh trên 108.077 ảnh, xấp xỉ 15,9). Đồ thị có 1.569.232 cạnh ở train và 80.000 cạnh ở mỗi tập val, test.
 
 \begin{figure}[t]
 \centering
@@ -77,7 +77,7 @@ trong đó $\alpha$ được chọn trên val từ lưới $\{0; 0,1; \dots; 1\}
 \subsection{Huấn luyện}
 Mỗi câu train $t$ được dùng nếu ảnh gốc của nó nằm trong top-100 của CLIP (tìm trong kho ảnh train). Tập ứng viên gồm ảnh gốc và $n_{\text{hard}} = 15$ ảnh sai lấy từ top-100 đó; ảnh có cùng câu với $t$ không được dùng làm ảnh sai. Hàm mất mát là cross-entropy trên $g(t,\cdot)/\tau$ của các ứng viên với $\tau = 0,05$, tức InfoNCE~\cite{oord2018cpc} dạng listwise; mô hình được học đúng cho việc xếp lại top-100. Nhóm dùng Adam, batch 512, tối đa 10 epoch và dừng sớm (patience 2) theo \mrr{} val của riêng điểm đồ thị. Epoch 0 (bằng CLIP) cũng được chấm, nên trên val mô hình không bao giờ kém CLIP. Mỗi mô hình thử learning rate $10^{-3}$ và $10^{-4}$ rồi giữ bản có điểm val cao hơn; quy tắc này được chốt trước khi chạy test.
 
-Phiên bản huấn luyện đầu tiên dùng mọi câu train và gặp lỗi. Ảnh đúng luôn có mặt trong tập ứng viên kể cả khi CLIP xếp nó ngoài top-100, còn 15 ảnh sai thì luôn nằm trong top-100. Mô hình vì thế học được một ``mẹo'': chọn ứng viên mà CLIP đánh giá thấp nhất. Hàm mất mát trên train giảm, nhưng \mrr{} val tụt từ 0,106 xuống 0,038 chỉ sau một epoch. Việc lọc câu như trên giúp ảnh đúng và ảnh sai đến từ cùng một phân phối, đúng với bản chất của bài toán xếp hạng lại.
+Phiên bản huấn luyện đầu tiên dùng mọi câu train và gặp lỗi. Ảnh đúng luôn có mặt trong tập ứng viên kể cả khi CLIP xếp nó ngoài top-100, còn 15 ảnh sai thì luôn nằm trong top-100. Mô hình vì thế học được một lối tắt (shortcut): chọn ứng viên mà CLIP đánh giá thấp nhất. Hàm mất mát trên train giảm, nhưng \mrr{} val tụt từ 0,106 xuống 0,038 chỉ sau một epoch. Việc lọc câu như trên giúp ảnh đúng và ảnh sai đến từ cùng một phân phối, đúng với bản chất của bài toán xếp hạng lại.
 
 \subsection{Các mô hình đối chứng}
 Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung cách chia tập, chung 100 ứng viên và 3 seed. Đối chứng \emph{không đồ thị} giữ nguyên mô hình nhưng cố định $W_{\text{nb}} = 0$, tức chỉ học một phép chiếu tuyến tính trên vectơ ảnh. Đối chứng này trả lời câu hỏi: mức tăng đến từ đồ thị, hay chỉ từ một phép chiếu được học trên dữ liệu Visual Genome? Ablation \emph{đồ thị xáo} xáo các cạnh \code{contains} nhưng giữ nguyên bậc của từng ảnh và từng khái niệm trong mỗi tập, rồi huấn luyện y hệt mô hình chính.
@@ -108,7 +108,7 @@ Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung các
 \begin{enumerate}
 \item Chấm độ liên quan của các khái niệm với truy vấn và gán giải thưởng cho $k$ khái niệm liên quan nhất.
 \item Chọn một cây liên thông $S_q$ trên đồ thị đồng xuất hiện bằng PCST, gọi thư viện \code{pcst\_fast} với tham số giống mã gốc. PCST giữ cả những đỉnh không có thưởng nếu chúng là cầu nối giữa hai đỉnh có thưởng, phù hợp với kiểu truy vấn gián tiếp như \emph{child -- plays -- football}.
-\item Chấm điểm ứng viên dựa trên đồ thị con. Bậc 1 dùng tỉ lệ khái niệm của ảnh nằm trong $S_q$. Bậc 2 thay tỉ lệ này bằng một GraphSAGE một lớp chỉ gộp các khái niệm thuộc $S_q$, huấn luyện bằng InfoNCE như trên.
+\item Chấm điểm ứng viên dựa trên đồ thị con. Giai đoạn 1 dùng tỉ lệ khái niệm của ảnh nằm trong $S_q$. Giai đoạn 2 thay tỉ lệ này bằng một GraphSAGE một lớp chỉ gộp các khái niệm thuộc $S_q$, huấn luyện bằng InfoNCE như trên.
 \end{enumerate}
 Các tham số $k \in \{3, 5, 10\}$, phí cạnh $C \in \{0,25; 0,5; 1\}$ và $\alpha$ được chọn trên val. Hai ablation đi kèm là bỏ bước dựng cây (chỉ giữ top-$k$ khái niệm) và xáo cạnh. Thư viện \code{pcst\_fast} chỉ cho kết quả đúng với numpy 1.x nên dự án ghim phiên bản \code{numpy<2}.
 
@@ -130,7 +130,7 @@ Vì $h_i$ ở~\eqref{eq:sage} là một tổng, điểm đồ thị của mô h�
 \midrule
 Fid$^+$ (điểm) & $g_G(q,i^*) - g_{G\setminus E_x}(q,i^*)$; càng lớn càng tốt \\
 Hạng tụt & $\text{rank}_{G\setminus E_x}(i^*) - \text{rank}_G(i^*)$ trên điểm cuối với $\alpha$ đã chốt \\
-Fid$^-$ & $g_G(q,i^*) - g_{E_x}(q,i^*)$; càng gần 0 càng tốt \\
+Fid$^-$ & $g_G(q,i^*) - g_{E_x}(q,i^*)$; càng nhỏ càng tốt (âm: chỉ giữ giải thích thì điểm còn cao hơn) \\
 Characterization & Trung bình điều hòa có trọng số của Fid$^+$ và $1-$Fid$^-$ sau khi chuẩn hóa về $[0,1]$~\cite{amara2022graphframex} \\
 Robust Fid$^\pm$ & Mỗi cạnh giải thích bị xóa với xác suất 0,1~\cite{zheng2024robust} \\
 Sparsity & $1 - |E_x|/|S(i^*)|$ \\

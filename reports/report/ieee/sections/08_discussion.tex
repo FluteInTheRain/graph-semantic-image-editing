@@ -37,7 +37,7 @@ Mỗi quyết định thiết kế quan trọng được ghi thành một ADR (a
 0049 & Giao thức v2: nDCG, ảnh $\to$ văn bản, nhóm truy vấn \\
 0050 & Flickr30k: chạy lại pipeline, chỉ đổi dữ liệu; miền di sản cho MMKG \\
 0051 & G-Retriever: chọn đồ thị con PCST để xếp hạng lại \\
-0052 & Lưu ảnh chụp gốc và duyệt riêng cho MMKG \\
+0052 & Lưu dữ liệu thô (snapshot) và duyệt riêng cho MMKG \\
 0053 & Đánh giá chuyển giao sang MMKG, không huấn luyện lại \\
 0054 & Đánh giá giải thích định lượng trên MMKG \\
 \bottomrule
@@ -64,23 +64,23 @@ Mỗi quyết định thiết kế quan trọng được ghi thành một ADR (a
 
 \section{Thảo luận và hạn chế}
 \label{sec:discussion}
-\textbf{Đối chứng không đồ thị là bắt buộc.} Nếu thiếu đối chứng này, toàn bộ mức tăng 19\% trên Visual Genome sẽ bị gán nhầm cho đồ thị. Kết luận ``phần lớn mức tăng đến từ phép chiếu học được'' lặp lại trên ba bộ dữ liệu (Visual Genome, Flickr30k, MMKG) và với cả G-Retriever. Kết luận ``đồ thị thật tốt hơn đồ thị xáo'' cũng cùng chiều trên Visual Genome và Flickr30k, dù trên Flickr30k bản xáo còn kém cả mô hình không đồ thị.
+\textit{Vai trò của đối chứng không đồ thị.} Nếu thiếu đối chứng này, toàn bộ mức tăng 19\% trên Visual Genome sẽ bị gán nhầm cho đồ thị. Kết luận ``phần lớn mức tăng đến từ phép chiếu học được'' lặp lại trên ba bộ dữ liệu (Visual Genome, Flickr30k, MMKG) và với cả G-Retriever. Đồ thị thật tốt hơn đồ thị xáo trên Visual Genome và Flickr30k, nhưng chỉ trên Visual Genome mô hình có đồ thị mới cao hơn mô hình không đồ thị; trên Flickr30k và MMKG thì không.
 
-\textbf{Đồ thị hiện tại mang ít quan hệ.} Cạnh \code{contains} được suy ra từ chính CLIP (16 khái niệm gần nhất), không có quan hệ giữa các đối tượng trong scene graph và chưa dùng ConceptNet. Lựa chọn này giúp hệ thống chạy được với ảnh chưa gán nhãn và tránh rò rỉ, nhưng khiến đồ thị mang ít thông tin mới so với những gì CLIP đã biết. Đây có lẽ là lý do chính khiến đồ thị chỉ giúp ở các truy vấn chung chung. Ngoài ra, cạnh ở mức cả ảnh không khớp với truy vấn mô tả một vùng nhỏ của Visual Genome.
+\textit{Thông tin trong đồ thị.} Cạnh \code{contains} được suy ra từ chính CLIP (16 khái niệm gần nhất), không có quan hệ giữa các đối tượng trong scene graph và chưa dùng ConceptNet. Lựa chọn này giúp hệ thống chạy được với ảnh chưa gán nhãn và tránh rò rỉ, nhưng khiến đồ thị mang ít thông tin mới so với những gì CLIP đã biết. Đây có lẽ là lý do chính khiến đồ thị chỉ giúp ở các truy vấn chung chung. Ngoài ra, cạnh ở mức cả ảnh không khớp với truy vấn mô tả một vùng nhỏ của Visual Genome.
 
-\textbf{Một giá trị $\alpha$ cho mọi truy vấn là chưa tốt.} Trên Visual Genome, $\alpha \approx 0$ khiến điểm cuối gần như chỉ còn nhánh học được, và các ca thất bại lớn (ảnh đúng từ hạng 7--15 rơi xuống 92--100) cho thấy cần một cơ chế kết hợp linh hoạt hơn.
+\textit{Trọng số kết hợp.} Trên Visual Genome, $\alpha \approx 0$ khiến điểm cuối gần như chỉ còn nhánh học được, và các trường hợp thất bại lớn (hạng của ảnh đúng giảm từ 7--15 xuống 92--100) cho thấy một giá trị $\alpha$ chung cho mọi truy vấn là chưa phù hợp.
 
-\textbf{Giới hạn thống kê.} Mỗi thí nghiệm có 3 seed và chỉ có một bản xáo; t và $p$ tính theo seed chỉ mang tính mô tả. Nhóm chưa có kiểm định theo truy vấn. Recall là cận dưới vì mỗi ảnh chỉ xét 5 câu, MRR bị cắt ở 100, và hai câu khác chữ nhưng cùng nghĩa (``a man'', ``man'') vẫn được tính là khác nhau.
+\textit{Giới hạn thống kê.} Mỗi thí nghiệm có 3 seed và chỉ có một bản xáo; t và $p$ tính theo seed chỉ mang tính mô tả. Nhóm chưa có kiểm định theo truy vấn. Recall là cận dưới vì mỗi ảnh chỉ xét 5 câu, MRR bị cắt ở 100, và hai câu khác chữ nhưng cùng nghĩa (``a man'', ``man'') vẫn được tính là khác nhau.
 
-\textbf{Giới hạn của MMKG.} Truy vấn được sinh bằng mẫu câu cố định, chưa có câu tự nhiên do người viết; mỗi nhóm chỉ có 35--80 câu; 2/158 câu gián tiếp vẫn để lộ tên hiện vật qua tên của thực thể đích. Nhóm chưa chạy ablation bỏ hoặc xáo bộ ba. Muốn chuyển ngôn ngữ thật sự, cần một bộ mã hóa văn bản đa ngôn ngữ; khi đó không gian vectơ thay đổi và phải huấn luyện lại GNN.
+\textit{Giới hạn của MMKG.} Truy vấn được sinh bằng mẫu câu cố định, chưa có câu tự nhiên do người viết; mỗi nhóm chỉ có 35--80 câu; 2/158 câu gián tiếp vẫn để lộ tên hiện vật qua tên của thực thể đích. Nhóm chưa chạy ablation bỏ hoặc xáo bộ ba. Muốn chuyển ngôn ngữ thật sự, cần một bộ mã hóa văn bản đa ngôn ngữ; khi đó không gian vectơ thay đổi và phải huấn luyện lại GNN.
 
-\textbf{Phần chưa hoàn thành.} Bộ ít nhất 20 truy vấn trực tiếp và gián tiếp trên test Visual Genome chưa được người kiểm và đánh giá; cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
+\textit{Phần chưa hoàn thành.} Bộ ít nhất 20 truy vấn trực tiếp và gián tiếp trên test Visual Genome chưa được người kiểm và đánh giá; cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
 
 \section{Kết luận và hướng phát triển}
 \label{sec:conclusion}
-Đồ án xây dựng một hệ thống truy vấn ảnh bằng văn bản có đồ thị, với quy trình chống rò rỉ chặt chẽ và giải thích được kiểm chứng bằng can thiệp. Trên Visual Genome, CLIP kết hợp GraphSAGE nâng \mrr{} test từ 0,1076 lên 0,1284. Các đối chứng cho thấy khoảng 91\% mức tăng đến từ phép chiếu học được; cấu trúc ảnh--khái niệm thật đóng góp phần nhỏ nhưng ổn định so với đồ thị xáo, rõ nhất ở các truy vấn chung chung. Kết luận này lặp lại trên Flickr30k, trên MMKG tiếng Việt và với phần truy xuất đồ thị con của G-Retriever. Giải thích bằng Integrated Gradients trung thực với mô hình trên cả Visual Genome lẫn MMKG, với mức tụt hạng khi bỏ cạnh giải thích lớn hơn nhiều so với bỏ cạnh ngẫu nhiên.
+Đồ án xây dựng một hệ thống truy vấn ảnh bằng văn bản có đồ thị, với năm quy tắc chống rò rỉ (Mục~\ref{sec:data}) và giải thích được kiểm chứng bằng can thiệp. Trên Visual Genome, CLIP kết hợp GraphSAGE nâng \mrr{} test từ 0,1076 lên 0,1284. Các đối chứng cho thấy khoảng 91\% mức tăng đến từ phép chiếu học được; cấu trúc ảnh--khái niệm thật đóng góp phần nhỏ nhưng ổn định so với đồ thị xáo, rõ nhất ở các truy vấn chung chung. Việc phần lớn mức tăng đến từ phép chiếu lặp lại trên Flickr30k, trên MMKG tiếng Việt và với phần truy xuất đồ thị con của G-Retriever; ở ba thí nghiệm này, đồ thị không tốt hơn mô hình không đồ thị. Giải thích bằng Integrated Gradients trung thực với mô hình trên cả Visual Genome lẫn MMKG, với mức tụt hạng khi bỏ cạnh giải thích lớn hơn nhiều so với bỏ cạnh ngẫu nhiên.
 
-Nhóm đề xuất ba hướng tiếp theo. Thứ nhất, học $\alpha(q)$ thay đổi theo từng truy vấn thay cho một $\alpha$ cố định, nhắm vào các ca thất bại ở Bảng~\ref{tab:case}. Thứ hai, thêm cạnh quan hệ từ scene graph và ConceptNet để kiểm chứng giả thuyết rằng đồ thị giàu quan hệ giúp ích cho truy vấn gián tiếp. Thứ ba, dùng bộ mã hóa văn bản đa ngôn ngữ để truy vấn tiếng Việt có thể khai thác được MMKG.
+Nhóm đề xuất ba hướng tiếp theo. Thứ nhất, học $\alpha(q)$ thay đổi theo từng truy vấn thay cho một $\alpha$ cố định, nhắm vào các trường hợp thất bại ở Bảng~\ref{tab:case}. Thứ hai, thêm cạnh quan hệ từ scene graph và ConceptNet để kiểm chứng giả thuyết rằng đồ thị giàu quan hệ giúp ích cho truy vấn gián tiếp. Thứ ba, dùng bộ mã hóa văn bản đa ngôn ngữ để truy vấn tiếng Việt có thể khai thác được MMKG.
 
 \section*{Khai báo sử dụng AI}
 Nhóm dùng Claude Code để hỗ trợ viết mã, kiểm thử, tài liệu ADR, rà soát mã và soạn bản nháp báo cáo. Mọi lần sử dụng được ghi trong \code{docs/ai-usage-log.md} của kho mã. Số liệu trong báo cáo được chép từ \code{results/tables/}, không tính lại. Các thành viên đã đọc lại toàn bộ nội dung và chịu trách nhiệm giải thích mọi phần khi vấn đáp.

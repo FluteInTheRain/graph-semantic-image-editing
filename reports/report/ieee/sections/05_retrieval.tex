@@ -44,7 +44,7 @@ Không đồ thị & 0,0689\pmm0,0006 & 0,1741\pmm0,0056 & 0,2457\pmm0,0043 & 0,
 \label{fig:mrr}
 \end{figure}
 
-Nhóm chạy lại năm thí nghiệm theo giao thức thứ hai để có thêm nDCG@10 và chiều ảnh $\to$ văn bản, với điều kiện cấu hình giữ nguyên, quy tắc được commit trước, test chạy một lần cho mỗi seed và không sửa dòng kết quả cũ. R@K và MRR của lần chạy lại khớp bảng chính tới 4 chữ số. Ở chiều ảnh $\to$ văn bản, mô hình không được huấn luyện thêm: truy vấn là mỗi ảnh, kho là 25.000 câu, câu đúng là các câu của chính ảnh và mọi câu giống hệt chúng; $\alpha$ của chiều này được chọn riêng trên val. Bảng~\ref{tab:eval2} cho thấy cùng một xu hướng ở cả hai chiều: các mô hình có học vượt CLIP với khoảng cách lớn hơn nhiều lần độ lệch chuẩn, nhưng giữa bốn mô hình có học thì chênh lệch nhỏ hơn hoặc xấp xỉ độ lệch chuẩn. Nhóm vì vậy không kết luận mô hình nào vượt trội trên toàn tập.
+Nhóm chạy lại năm thí nghiệm theo giao thức thứ hai để có thêm nDCG@10 và chiều ảnh $\to$ văn bản, với điều kiện cấu hình giữ nguyên, quy tắc được commit trước, test chạy một lần cho mỗi seed và không sửa dòng kết quả cũ. R@K và MRR của lần chạy lại khớp bảng chính với sai khác không quá 0,0001. Ở chiều ảnh $\to$ văn bản, mô hình không được huấn luyện thêm: truy vấn là mỗi ảnh, kho là 25.000 câu, câu đúng là các câu của chính ảnh và mọi câu giống hệt chúng; $\alpha$ của chiều này được chọn riêng trên val. Bảng~\ref{tab:eval2} cho thấy cùng một xu hướng ở cả hai chiều: các mô hình có học vượt CLIP với khoảng cách lớn hơn nhiều lần độ lệch chuẩn. Giữa ba mô hình có đồ thị (thật, xáo, đồng xuất hiện), chênh lệch xấp xỉ độ lệch chuẩn, nên nhóm không kết luận mô hình nào trong ba mô hình này vượt trội. Mô hình không đồ thị thấp hơn ba mô hình có đồ thị khoảng 0,003 \mrr{} ở chiều ảnh $\to$ văn bản (gấp khoảng 5 lần độ lệch chuẩn), nhưng bản xáo cũng đạt mức đó, nên phần hơn này chưa thể quy cho cấu trúc đồ thị thật.
 
 \begin{table}[t]
 \centering
@@ -89,7 +89,7 @@ TB & 0,1284 & 0,12718 & 0,1266 & \textbf{+0,00126}\pmm0,00042 & +0,00054\pmm0,00
 \end{tabular}
 \end{table}
 
-Ablation xáo cạnh (Bảng~\ref{tab:paired}) cho thấy đồ thị thật hơn đồ thị xáo ở cả 3 seed, trung bình +0,00126 \pmm{} 0,00042 (t ghép cặp bằng 5,16 với 2 bậc tự do). Kết quả này phù hợp với giả thuyết rằng một phần nhỏ của mức cải thiện đến từ quan hệ ảnh--khái niệm thật. Tuy nhiên nhóm không coi đây là bằng chứng: chỉ có 3 seed và một bản xáo, hiệu ứng tuyệt đối chỉ khoảng 1\% \mrr, và giá trị t ở đây chỉ phản ánh dao động theo seed huấn luyện. Xét từng chỉ số, chỉ R@1 có mức chênh (+0,0019) lớn hơn độ lệch chuẩn của mô hình chính. Có thêm hai dấu hiệu phụ cùng chiều: trên đồ thị xáo, $\alpha$ được chọn cao hơn (0,1/0,2/0,1 so với 0/0/0,1) và epoch tốt nhất đến muộn hơn (7/9/8 so với 6/8/6). Nói cách khác, khi cạnh mang ít thông tin, mô hình dựa vào CLIP nhiều hơn.
+Ablation xáo cạnh (Bảng~\ref{tab:paired}) cho thấy đồ thị thật hơn đồ thị xáo ở cả 3 seed, trung bình +0,00126 \pmm{} 0,00042 (t ghép cặp bằng 5,16 với 2 bậc tự do). Kết quả này phù hợp với giả thuyết rằng một phần nhỏ của mức cải thiện đến từ quan hệ ảnh--khái niệm thật. Tuy nhiên nhóm không coi đây là bằng chứng: chỉ có 3 seed và một bản xáo, hiệu ứng tuyệt đối chỉ khoảng 1\% \mrr, và giá trị t ở đây chỉ phản ánh dao động theo seed huấn luyện. Xét từng chỉ số, chỉ R@1 có mức chênh (+0,0019) lớn hơn độ lệch chuẩn của mô hình chính. Có thêm hai dấu hiệu phụ cùng chiều: trên đồ thị xáo, $\alpha$ được chọn cao hơn (0,1/0,2/0,1 so với 0/0/0,1) và epoch tốt nhất đến muộn hơn (7/9/8 so với 6/8/6). Điều này gợi ý rằng khi cạnh mang ít thông tin, mô hình có thể dựa vào CLIP nhiều hơn.
 
 Có một điểm bất thường nhóm chưa giải thích được. Trên val, chênh lệch giữa đồ thị thật và đồ thị xáo là +0,0040, nhưng trên test chỉ còn +0,0013: bản xáo tăng +0,0031 từ val lên test, trong khi mô hình chính chỉ tăng +0,0003. Tỉ lệ cạnh xáo trùng với cạnh gốc gần như nhau ở val và test (1,78\% và 1,89\%), nên không giải thích được hiện tượng này. Vì chỉ có một bản xáo, nhóm không tách được phần dao động do chính cách xáo.
 
@@ -118,7 +118,7 @@ none & 12.849 & 0,0987 & 0,1134\pmm0,0011 & 0,1131\pmm0,0006 & 0,1130\pmm0,0012 
 \end{tabular}
 \end{table}
 
-Bảng~\ref{tab:groups} cho thấy đồ thị phát huy tác dụng ở nhóm \code{generic}. Ở nhóm này, đồ thị thật tách rõ khỏi cả hai đối chứng: \mrr{} đạt 0,1082, so với 0,0951 của đồ thị xáo và 0,0914 của mô hình không đồ thị; R@1 tăng khoảng 50\% (0,042 so với 0,027--0,028). Đây là những câu ngắn và chung chung như ``a man'' hay ``white clouds'', có nhiều ảnh đúng. Một cách hiểu hợp lý là vectơ trung bình của 16 khái niệm giúp đẩy lên những ảnh thực sự chứa khái niệm được nhắc tới, thay vì những ảnh chỉ giống về bề mặt. Bảng~\ref{tab:groups-r1} cho thấy mức tăng R@1 ở hai nhóm này.
+Bảng~\ref{tab:groups} cho thấy đồ thị phát huy tác dụng ở nhóm \code{generic}. Ở nhóm này, đồ thị thật tách rõ khỏi cả hai đối chứng: \mrr{} đạt 0,1082, so với 0,0951 của đồ thị xáo và 0,0914 của mô hình không đồ thị; R@1 tăng khoảng 50\% (0,042 so với 0,027--0,028). Đây là những câu ngắn và chung chung như ``a man'' hay ``white clouds'', có nhiều ảnh đúng. Một cách hiểu hợp lý là vectơ trung bình của 16 khái niệm giúp đẩy lên những ảnh thực sự chứa khái niệm được nhắc tới, thay vì những ảnh chỉ giống về bề mặt. Bảng~\ref{tab:groups-r1} cho thấy R@1 ở hai nhóm \code{generic} và \code{spatial}.
 
 \begin{table}[t]
 \centering
@@ -143,7 +143,7 @@ Hình~\ref{fig:alpha} vẽ \mrr{} val theo $\alpha$, lấy trung bình 3 seed. G
 
 \begin{table}[t]
 \centering
-\caption{\mrr{} val theo $\alpha$ của từng seed; in đậm là giá trị được chọn}
+\caption{\mrr{} val theo $\alpha$ của từng seed (trích một số giá trị trong lưới); in đậm là giá trị được chọn}
 \label{tab:alpha}
 \scriptsize
 \setlength{\tabcolsep}{2.5pt}
@@ -203,7 +203,9 @@ CLIP + Graph & 0,5309\pmm0,0036 & 0,8553\pmm0,0026 & 0,6432\pmm0,0028 & 0,5 \\
 
 Bảng~\ref{tab:flickr} lặp lại kết luận chính của Visual Genome: gần như toàn bộ mức tăng so với CLIP đến từ phép chiếu học được. \mrr{} test tăng từ 0,6045 lên 0,6447 (+0,040, khoảng 6,6\% tương đối). So với Visual Genome (+0,019, khoảng 18\%), mức tăng tuyệt đối lớn hơn nhưng mức tăng tương đối nhỏ hơn, vì CLIP vốn đã rất mạnh trên chú thích Flickr30k.
 
-Khác với Visual Genome, trên Flickr30k đồ thị không mang lại thêm gì. Ghép cặp theo seed, CLIP + Graph kém mô hình không đồ thị $-0,0015$ \pmm{} 0,0028 trên test (seed 0 và 1 gần như bằng nhau, seed 2 kém 0,0047 do dừng sớm ở epoch 2). Đồ thị thật vẫn hơn đồ thị xáo ở cả 3 seed (+0,0033 \pmm{} 0,0013), cùng chiều với Visual Genome, nhưng bản xáo lại kém cả mô hình không đồ thị ($-0,0048$ \pmm{} 0,0016). Như vậy trên Flickr30k, cạnh nhiễu gây hại, còn cạnh thật chỉ vừa đủ bù lại phần hại đó. Giá trị $\alpha$ được chọn là 0,4--0,6, nghĩa là điểm cuối chia gần đều giữa CLIP và nhánh học được. Hai hạn chế của thí nghiệm này là từ vựng khái niệm lấy từ Visual Genome nên thiếu nhiều hoạt động của con người vốn hay gặp trong chú thích Flickr30k, và tập train Flickr30k nhỏ hơn Visual Genome khoảng 4,7 lần. Bảng~\ref{tab:flickr-val} cho kết quả trên val, và Bảng~\ref{tab:flickr-paired} cho hiệu ghép cặp theo từng seed.
+Khác với Visual Genome, trên Flickr30k đồ thị không mang lại thêm gì. Ghép cặp theo seed, CLIP + Graph kém mô hình không đồ thị $-0,0015$ \pmm{} 0,0028 trên test (seed 0 và 1 gần như bằng nhau, seed 2 kém 0,0047 do dừng sớm ở epoch 2). Đồ thị thật vẫn hơn đồ thị xáo ở cả 3 seed (+0,0033 \pmm{} 0,0013), cùng chiều với Visual Genome, nhưng bản xáo lại kém cả mô hình không đồ thị ($-0,0048$ \pmm{} 0,0016). Như vậy trên Flickr30k, cạnh nhiễu gây hại, còn cạnh thật chỉ vừa đủ bù lại phần hại đó. Giá trị $\alpha$ được chọn là 0,4--0,6, nghĩa là điểm cuối chia gần đều giữa CLIP và nhánh học được. Hai hạn chế của thí nghiệm này là từ vựng khái niệm lấy từ Visual Genome nên thiếu nhiều hoạt động của con người vốn hay gặp trong chú thích Flickr30k, và tập train Flickr30k nhỏ hơn Visual Genome khoảng 4,7 lần.
+
+Bảng~\ref{tab:flickr-val} cho kết quả trên val, và Bảng~\ref{tab:flickr-paired} cho hiệu ghép cặp theo từng seed.
 
 \begin{table}[t]
 \centering
@@ -247,11 +249,11 @@ Val & Xáo -- không ĐT & $-0,00178$ & $-0,00137$ & $-0,00276$ & $-0,00197$\pmm
 \label{sec:gret}
 Để chọn phương pháp mới, nhóm chấm 9 ứng viên (NativE, AdaMF-MAT, Mixed-Curvature MMKGC, ULTRA, CORA, Structure-CLIP, GOAt, G-RAG và G-Retriever) theo mức độ phù hợp với bài toán truy vấn ảnh, khả năng chạy trên cùng pipeline và tình trạng mã nguồn. G-Retriever đạt điểm cao nhất (33/40).
 
-\textbf{Bậc 1.} Cả 3 cấu hình (bản chính, bản không dựng cây, bản xáo cạnh) được chạy trên val với 3 seed. Ở cả 9 lượt, mọi tổ hợp $(k, C)$ đều chọn $\alpha = 1$, tức trùng CLIP thuần (\mrr{} val 0,1061). Nhóm chạy thêm chẩn đoán trên 3.000 câu val đầu tiên để phân biệt lỗi cài đặt với kết quả thật. Không phát hiện lỗi: mọi ảnh val đều có ít nhất một khái niệm và 29--48\% ứng viên có điểm đồ thị dương. Nguyên nhân nằm ở chỗ chênh lệch điểm CLIP giữa hai ứng viên liền kề có trung vị chỉ 0,00037, trong khi điểm ``tỉ lệ chạm đồ thị con'' quá thô để sắp lại những ứng viên sát nhau như vậy (Bảng~\ref{tab:gret-diag}).
+\textbf{Giai đoạn 1.} Cả 3 cấu hình (bản chính, bản không dựng cây, bản xáo cạnh) được chạy trên val với 3 seed. Ở cả 9 lượt, mọi tổ hợp $(k, C)$ đều chọn $\alpha = 1$, tức trùng CLIP thuần (\mrr{} val 0,1061). Nhóm chạy thêm chẩn đoán trên 3.000 câu val đầu tiên để phân biệt lỗi cài đặt với kết quả thật. Không phát hiện lỗi: mọi ảnh val đều có ít nhất một khái niệm và 29--48\% ứng viên có điểm đồ thị dương. Nguyên nhân nằm ở chỗ chênh lệch điểm CLIP giữa hai ứng viên liền kề có trung vị chỉ 0,00037, trong khi điểm ``tỉ lệ chạm đồ thị con'' quá thô để sắp lại những ứng viên sát nhau như vậy (Bảng~\ref{tab:gret-diag}).
 
 \begin{table}[t]
 \centering
-\caption{Chẩn đoán G-Retriever bậc 1 trên 3.000 câu val đầu tiên (\mrr{} / R@10). $|S_q|$: số khái niệm trong đồ thị con}
+\caption{Chẩn đoán G-Retriever giai đoạn 1 trên 3.000 câu val đầu tiên (\mrr{} / R@10). $|S_q|$: số khái niệm trong đồ thị con}
 \label{tab:gret-diag}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -266,7 +268,7 @@ $\alpha$ & $k=3$, $C=0,5$ ($|S_q|\approx 3$) & $k=10$, $C=0,25$ ($|S_q|\approx 1
 \end{tabular}
 \end{table}
 
-\textbf{Bậc 2.} Bậc này thay điểm tỉ lệ bằng GraphSAGE trên đồ thị con. Trên test Visual Genome, mô hình đạt \mrr{} 0,1278 \pmm{} 0,0005, ngang với đối chứng không đồ thị cùng cấu hình huấn luyện (0,1277 \pmm{} 0,0001). Chạy lại trên Flickr30k (dùng lại cạnh PMI đếm trên train Visual Genome, không dùng thống kê nào của Flickr30k), mô hình đạt 0,6408 \pmm{} 0,0003, thấp hơn đối chứng (0,6430 \pmm{} 0,0016). Theo quy tắc dừng đã chốt trước, nhóm ghi nhận đây là kết quả âm: đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được. Tại thời điểm viết báo cáo, mã nguồn của bậc 2 nằm ở hai pull request \#22 và \#23 và chưa được hợp nhất vào nhánh chính.
+\textbf{Giai đoạn 2.} Giai đoạn này thay điểm tỉ lệ bằng GraphSAGE trên đồ thị con. Trên test Visual Genome, mô hình đạt \mrr{} 0,1278 \pmm{} 0,0005, ngang với đối chứng không đồ thị cùng cấu hình huấn luyện (0,1277 \pmm{} 0,0001). Chạy lại trên Flickr30k (dùng lại cạnh PMI đếm trên train Visual Genome, không dùng thống kê nào của Flickr30k), mô hình đạt 0,6408 \pmm{} 0,0003, thấp hơn đối chứng (0,6430 \pmm{} 0,0016). Theo quy tắc dừng đã chốt trước, nhóm ghi nhận đây là kết quả âm: đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được. Tại thời điểm viết báo cáo, mã nguồn và bảng số của giai đoạn 2 (\code{g\_retriever\_test.csv}, \code{g\_retriever\_flickr30k\_test.csv}) nằm ở hai pull request \#22 và \#23, chưa được hợp nhất vào nhánh chính.
 
 \subsection{Bộ truy vấn trực tiếp và gián tiếp}
 Đề yêu cầu một bộ ít nhất 20 truy vấn, trong đó có nhóm truy vấn gián tiếp, để đánh giá riêng vai trò của đồ thị. Phiên bản đầu sinh truy vấn từ scene graph: tìm trong một ảnh hai quan hệ nối với nhau qua một đối tượng chung, viết câu trực tiếp gọi tên mọi đối tượng và câu gián tiếp giấu tên đối tượng ở giữa. Ví dụ, từ \code{person -holding-> kite} và \code{kite -in-> sky}, câu trực tiếp là ``A person is holding a kite, and the kite is in a sky'', còn câu gián tiếp là ``A person is holding something that is in a sky''. Phiên bản thứ hai mô tả khái niệm bị giấu bằng một từ chỉ loại và hai tính chất ConceptNet~\cite{speer2017conceptnet} chỉ đúng với khái niệm đó, ví dụ ``a person playing a sport that uses a bat and is played in a park''. Code sinh và kiểm tra đã có và luật đã được thử trên val, nhưng bộ truy vấn trên test chưa được người kiểm và chưa được đánh giá. Phần này vì vậy chưa có trong báo cáo. Riêng trên MMKG (Mục~\ref{sec:mmkg}), nhóm đã có bộ 318 truy vấn trực tiếp và gián tiếp được đánh giá đầy đủ.

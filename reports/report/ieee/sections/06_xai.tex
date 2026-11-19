@@ -2,7 +2,7 @@
 \label{sec:xai}
 
 \subsection{Phân tích 5 truy vấn thành công và 5 truy vấn thất bại}
-Với mỗi ảnh cần giải thích, Occlusion xóa lần lượt từng cạnh trong 16 cạnh và đo điểm đồ thị giảm bao nhiêu; giải thích hiển thị cho người dùng là 3 cạnh đẩy ảnh lên mạnh nhất. Năm truy vấn thành công là những truy vấn mà CLIP + Graph nâng hạng ảnh đúng nhiều nhất trên val (seed 0); năm truy vấn thất bại là những truy vấn bị hạ hạng nhiều nhất. Nhóm thực hiện hai phép can thiệp và chấm lại mọi ứng viên với $\alpha$ đã lưu: xóa 3 cạnh đẩy lên mạnh nhất, và bỏ toàn bộ 16 cạnh của riêng ảnh đó. Bảng~\ref{tab:case} tóm tắt kết quả; phân tích chi tiết từng truy vấn nằm trong kho mã (\code{reports/case\_studies/}). Do cách chọn lấy mức thay đổi lớn nhất, cả 10 truy vấn đều là ca cực trị và không đại diện cho truy vấn điển hình.
+Với mỗi ảnh cần giải thích, Occlusion xóa lần lượt từng cạnh trong 16 cạnh và đo điểm đồ thị giảm bao nhiêu; giải thích hiển thị cho người dùng là 3 cạnh đẩy ảnh lên mạnh nhất. Năm truy vấn thành công là những truy vấn mà CLIP + Graph nâng hạng ảnh đúng nhiều nhất trên val (seed 0); năm truy vấn thất bại là những truy vấn bị hạ hạng nhiều nhất. Nhóm thực hiện hai phép can thiệp và chấm lại mọi ứng viên với $\alpha$ đã lưu: xóa 3 cạnh đẩy lên mạnh nhất, và bỏ toàn bộ 16 cạnh của riêng ảnh đó. Bảng~\ref{tab:case} tóm tắt kết quả; phân tích chi tiết từng truy vấn nằm trong kho mã (\code{reports/case\_studies/}). Do cách chọn lấy mức thay đổi lớn nhất, cả 10 truy vấn đều là trường hợp cực trị và không đại diện cho truy vấn điển hình.
 
 \begin{table*}[t]
 \centering
@@ -32,28 +32,28 @@ Với mỗi ảnh cần giải thích, Occlusion xóa lần lượt từng cạn
 
 Từ Bảng~\ref{tab:case}, nhóm rút ra một số nhận xét.
 
-\textbf{Giải thích tác động đúng hướng.} Ở cả 15 ảnh được giải thích (10 ảnh đúng và 5 ảnh đứng hạng 1 của các truy vấn thất bại), xóa 3 cạnh do Occlusion chọn đều làm điểm đồ thị giảm.
+\textit{Giải thích tác động đúng hướng.} Ở cả 15 ảnh được giải thích (10 ảnh đúng và 5 ảnh đứng hạng 1 của các truy vấn thất bại), xóa 3 cạnh do Occlusion chọn đều làm điểm đồ thị giảm.
 
-\textbf{Thành công chủ yếu nhờ vectơ của chính ảnh.} Khi bỏ mọi cạnh, 5 ảnh thành công vẫn đứng hạng 7/5/1/3/8, so với 99/100/100/99/98 theo CLIP. Như vậy phần lớn mức cải thiện đến từ phép chiếu $W_{\text{self}}x_i + b$. Cạnh giúp ở 3/5 ca, không thay đổi 1 ca và kéo xuống 1 ca.
+\textit{Thành công chủ yếu nhờ vectơ của chính ảnh.} Khi bỏ mọi cạnh, 5 ảnh thành công vẫn đứng hạng 7/5/1/3/8, so với 99/100/100/99/98 theo CLIP. Như vậy phần lớn mức cải thiện đến từ phép chiếu $W_{\text{self}}x_i + b$. Cạnh làm tăng hạng ở 3/5 trường hợp, không đổi ở 1 trường hợp và làm giảm hạng ở 1 trường hợp.
 
-\textbf{Thất bại chủ yếu do $\alpha \approx 0$ và phép chiếu.} Ảnh đúng vốn đứng hạng 7--15 theo CLIP rơi xuống 92--100; bỏ mọi cạnh cũng chỉ đưa chúng lên 96/94/82/34/75. Cạnh kéo xuống rõ nhất ở truy vấn ``a wooden sign'' (từ 34 xuống 92). Ảnh hạng 1 của cả 5 truy vấn thất bại vẫn giữ hạng 1 khi bỏ mọi cạnh, nên giải thích bằng cạnh chỉ lý giải được một phần các ca thất bại.
+\textit{Thất bại chủ yếu do $\alpha \approx 0$ và phép chiếu.} Ảnh đúng vốn đứng hạng 7--15 theo CLIP rơi xuống 92--100; bỏ mọi cạnh cũng chỉ đưa chúng lên 96/94/82/34/75. Cạnh kéo xuống rõ nhất ở truy vấn ``a wooden sign'' (từ 34 xuống 92). Ảnh hạng 1 của cả 5 truy vấn thất bại vẫn giữ hạng 1 khi bỏ mọi cạnh, nên giải thích bằng cạnh chỉ lý giải được một phần các trường hợp thất bại.
 
-\textbf{Cần đọc ``xóa 3 cạnh'' cùng với ``bỏ mọi cạnh''.} Với ``part of a trouser'', 3 cạnh đẩy lên mạnh nhất (đều thuộc chủ đề bóng chày) đúng là làm điểm giảm khi bị xóa, nhưng bỏ cả 16 cạnh thì ảnh lại lên hạng 1. Nếu giao diện chỉ hiển thị 3 cạnh có đóng góp dương, người xem sẽ nghĩ đồ thị đã giúp, trong khi xét tổng thể nhánh láng giềng kéo ảnh xuống 2 bậc.
+\textit{Cần đọc ``xóa 3 cạnh'' cùng với ``bỏ mọi cạnh''.} Với ``part of a trouser'', 3 cạnh đẩy lên mạnh nhất (đều thuộc chủ đề bóng chày) đúng là làm điểm giảm khi bị xóa, nhưng bỏ cả 16 cạnh thì ảnh lại lên hạng 1. Nếu giao diện chỉ hiển thị 3 cạnh có đóng góp dương, người xem sẽ nghĩ đồ thị đã giúp, trong khi xét tổng thể nhánh láng giềng kéo ảnh xuống 2 bậc.
 
 \textbf{Khái niệm gần nghĩa nhất với truy vấn thường có đóng góp âm,} ví dụ \code{grass.n.01} ($-0,0031$) với ``tall green and tan grass'', \code{street\_sign.n.01} ($-0,0047$) với ``a wooden sign'', \code{hubcap.n.01} và \code{tire.n.01} với ``wheel of car''. Giả thuyết của nhóm (chưa kiểm chứng) là do mô hình lấy trung bình 16 khái niệm trước rồi mới tính cosine, nên dấu đóng góp của một khái niệm phụ thuộc vào vị trí của nó so với trung bình các khái niệm còn lại qua $W_{\text{nb}}$, không chỉ vào nghĩa của nó.
 
-\textbf{Cạnh ở mức ảnh, truy vấn ở mức vùng.} Truy vấn Visual Genome mô tả một vùng hoặc một thuộc tính (``wheel of car''), còn 16 khái niệm mô tả bối cảnh hoặc vật chính của cả ảnh. Ở ``wheel of car'', các khái niệm của ảnh đúng là trụ cứu hỏa và vòi nước, và đồ thị kéo ảnh xuống thêm 14 bậc. Một số ca thất bại có thể do nhãn thiếu: theo tên khái niệm, ảnh hạng 1 của ``scattered waves in water'' (cảnh lướt sóng) có thể cũng hợp nghĩa, dù nhận xét này chưa được đối chiếu với ảnh. Cạnh CLIP top-16 cũng chứa nhiễu, như \code{screen\_saver.n.01} hay \code{adam.n.01}; giải thích hiển thị đúng đồ thị mà mô hình dùng, kể cả phần nhiễu.
+\textit{Cạnh ở mức ảnh, truy vấn ở mức vùng.} Truy vấn Visual Genome mô tả một vùng hoặc một thuộc tính (``wheel of car''), còn 16 khái niệm mô tả bối cảnh hoặc vật chính của cả ảnh. Ở ``wheel of car'', các khái niệm của ảnh đúng là trụ cứu hỏa và vòi nước, và đồ thị kéo ảnh xuống thêm 14 bậc. Một số trường hợp thất bại có thể do nhãn thiếu: theo tên khái niệm, ảnh hạng 1 của ``scattered waves in water'' (cảnh lướt sóng) có thể cũng hợp nghĩa, dù nhận xét này chưa được đối chiếu với ảnh. Cạnh CLIP top-16 cũng chứa nhiễu, như \code{screen\_saver.n.01} hay \code{adam.n.01}; giải thích hiển thị đúng đồ thị mà mô hình dùng, kể cả phần nhiễu.
 
 \textbf{Ở mức toàn cục,} bỏ mọi cạnh của đồ thị val mà giữ nguyên trọng số làm \mrr{} giảm từ 0,12806 xuống 0,12621, vẫn cao hơn nhiều so với CLIP (0,1061). Mô hình trên đồ thị xáo cũng mất khoảng 0,001 khi bỏ cạnh, nên riêng việc ``bỏ cạnh thì điểm giảm'' không chứng minh vai trò của quan hệ; phép so sánh có ý nghĩa vẫn là đồ thị thật với đồ thị xáo.
 
 Trên Flickr30k ($\alpha \approx 0,5$), cạnh đóng vai trò lớn hơn: bỏ mọi cạnh làm 5 ảnh thành công tụt từ hạng 5/8/11/14/9 xuống 37/25/15/44/50. Khái niệm được đẩy lên thường hợp ngữ cảnh, chẳng hạn \code{ballplayer.n.01} và \code{player.n.01} cho một ảnh thể thao.
 
 \subsection{Đánh giá giải thích định lượng}
-Trên val, nhóm bốc ngẫu nhiên 20 truy vấn một lần (không nhìn vào thứ hạng) và dùng chung cho cả 3 seed. Ảnh được giải thích là ảnh đứng hạng 1 theo CLIP + Graph, vì đó là ảnh hệ thống trả về cho người dùng. Ba phương pháp (Occlusion, IG, GNNExplainer) được chạy với $m \in \{3, 5, 10\}$, tổng cộng 540 bản ghi. Phương pháp giải thích và $m$ được chọn trên val, sau đó test được chạy đúng một lần.
+Trên val, nhóm chọn ngẫu nhiên 20 truy vấn một lần (không nhìn vào thứ hạng) và dùng chung cho cả 3 seed. Ảnh được giải thích là ảnh đứng hạng 1 theo CLIP + Graph, vì đó là ảnh hệ thống trả về cho người dùng. Ba phương pháp (Occlusion, IG, GNNExplainer) được chạy với $m \in \{3, 5, 10\}$, tổng cộng 540 bản ghi. Phương pháp giải thích và $m$ được chọn trên val, sau đó test được chạy đúng một lần.
 
 \begin{table}[t]
 \centering
-\caption{Đánh giá giải thích với $m = 10$ (3 seed). Trong ngoặc là giá trị khi xóa cùng số cạnh ngẫu nhiên; $p$: Wilcoxon một phía}
+\caption{Đánh giá giải thích với $m = 10$ (3 seed). Trong ngoặc là giá trị khi xóa cùng số cạnh ngẫu nhiên; $p$: Wilcoxon một phía cho hạng tụt, mỗi bản ghi (truy vấn, seed) là một cặp}
 \label{tab:xai}
 \scriptsize
 \setlength{\tabcolsep}{2pt}
@@ -69,7 +69,7 @@ val & GNNExplainer & 0,0022 (0,0004) & 0,45 (0,22) & $-0,0008$ & 0,29 \\
 \end{tabular}
 \end{table}
 
-\textbf{Kết quả trên val.} Với Occlusion và IG, bỏ các cạnh giải thích làm điểm giảm và ảnh tụt hạng nhiều hơn rõ rệt so với xóa cùng số cạnh ngẫu nhiên, ở mọi giá trị $m$ (Wilcoxon một phía, $p \le 0,002$). GNNExplainer không tốt hơn đối chứng ngẫu nhiên (Bảng~\ref{tab:xai-m}).
+\textit{Kết quả trên val.} Với Occlusion và IG, bỏ các cạnh giải thích làm điểm giảm và ảnh tụt hạng nhiều hơn rõ rệt so với xóa cùng số cạnh ngẫu nhiên, ở mọi giá trị $m$ (Wilcoxon một phía, $p \le 0,002$). GNNExplainer không tốt hơn đối chứng ngẫu nhiên (Bảng~\ref{tab:xai-m}).
 
 \begin{table}[t]
 \centering
@@ -89,8 +89,8 @@ Ngẫu nhiên & 0,0001 / 0,02 & 0,0001 / 0,06 & 0,0004 / 0,22 \\
 \end{tabular}
 \end{table}
 
- Phương pháp chính được chọn theo characterization trung bình cao nhất là IG với $m = 10$. IG gần như hòa với Occlusion vì mô hình một lớp không có hàm kích hoạt nên gần tuyến tính. Quy tắc chọn này nghiêng về $m$ lớn, vì giữ nhiều cạnh hơn thì Fid$^-$ tốt hơn. Lựa chọn được ghi vào cấu hình và commit trước khi chạy test.
+Phương pháp chính được chọn theo characterization trung bình cao nhất là IG với $m = 10$. IG gần như hòa với Occlusion vì mô hình một lớp không có hàm kích hoạt nên gần tuyến tính. Quy tắc chọn này nghiêng về $m$ lớn, vì giữ nhiều cạnh hơn thì Fid$^-$ tốt hơn. Lựa chọn được ghi vào cấu hình và commit trước khi chạy test.
 
-\textbf{Kết quả trên test.} Bỏ 10 cạnh do IG chọn làm điểm đồ thị giảm 0,0225, gấp khoảng 35 lần so với xóa 10 cạnh ngẫu nhiên (0,0006), và làm ảnh tụt trung bình 2,57 bậc so với 0,26 bậc ($p = 0,0005$). Xét từng truy vấn, ở cả 20/20 truy vấn Fid$^+$ của giải thích lớn hơn Fid$^+$ khi xóa ngẫu nhiên; 11/20 ảnh bị tụt hạng (tối đa 11 bậc), 9 ảnh còn lại vẫn giữ hạng 1 vì cách biệt điểm với ảnh hạng 2 lớn hơn phần mà 10 cạnh đóng góp. Mọi cạnh giải thích đều có thật trong đồ thị đã chấm, nằm trong vùng ảnh hưởng và nối được tới ảnh (validity 100\%); sparsity bằng 0,375, tức giải thích dùng 10 trên 16 cạnh.
+\textit{Kết quả trên test.} Bỏ 10 cạnh do IG chọn làm điểm đồ thị giảm 0,0225, gấp khoảng 37 lần so với xóa 10 cạnh ngẫu nhiên (0,0006), và làm ảnh tụt trung bình 2,57 bậc so với 0,26 bậc ($p = 0,0005$). Xét từng truy vấn, ở cả 20/20 truy vấn Fid$^+$ của giải thích lớn hơn Fid$^+$ khi xóa ngẫu nhiên; 11/20 ảnh bị tụt hạng (tối đa 11 bậc), 9 ảnh còn lại vẫn giữ hạng 1 vì cách biệt điểm với ảnh hạng 2 lớn hơn phần mà 10 cạnh đóng góp. Mọi cạnh giải thích đều có thật trong đồ thị đã chấm, nằm trong vùng ảnh hưởng và nối được tới ảnh (validity 100\%); sparsity bằng 0,375, tức giải thích dùng 10 trên 16 cạnh.
 
-Fid$^-$ âm cho biết khi chỉ giữ 10 cạnh giải thích, điểm của ảnh còn \emph{cao hơn} khi có đủ 16 cạnh, nghĩa là 6 cạnh còn lại kéo ảnh xuống. Điều này khớp với phân tích ở mục trước về các cạnh có đóng góp âm. Fid$^+$ tuyệt đối khá nhỏ vì phần lớn điểm đến từ vectơ của chính ảnh: giải thích trung thực với nhánh đồ thị, nhưng nhánh đồ thị chỉ chiếm một phần của điểm. Lựa chọn trên val cũng không đổi khi chuyển giữa hai lần huấn luyện lại độc lập (trên Kaggle và trên máy của thành viên), nên kết luận không phụ thuộc vào một checkpoint cụ thể.
+Fid$^-$ âm cho biết khi chỉ giữ 10 cạnh giải thích, điểm của ảnh còn \emph{cao hơn} khi có đủ 16 cạnh, nghĩa là 6 cạnh còn lại kéo ảnh xuống. Điều này khớp với phân tích ở mục trước về các cạnh có đóng góp âm. Fid$^+$ tuyệt đối khá nhỏ vì phần lớn điểm đến từ vectơ của chính ảnh: giải thích phản ánh đúng nhánh đồ thị, và nhánh này chỉ chiếm một phần của điểm. Lựa chọn trên val cũng không đổi khi chuyển giữa hai lần huấn luyện lại độc lập (trên Kaggle và trên máy của thành viên), nên kết luận không phụ thuộc vào một checkpoint cụ thể.
