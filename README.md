@@ -590,7 +590,7 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 
 | Thành viên | MSSV | Vai trò / Đóng góp |
 |---|---|---|
-| TBD | TBD | TBD |
+| Nguyễn Nhật Khang (GitHub: FluteInTheRain) | 25C15013 | Dựng khung repo (môi trường `uv`, package `mmxai`, cấu hình công cụ AI, ADR, README); split cố định Visual Genome; baseline CLIP thuần (FAISS, Recall@K/MRR); CLIP + Graph: ablation đồ thị xáo, giải thích Occlusion, mở rộng đánh giá (nDCG, image-to-text, nhóm truy vấn); MMKG tiếng Việt cấp độ 3 (thu thập Wikidata/Commons, dựng bảng, tải ảnh, duyệt sơ bộ bằng AI) |
 | TBD | TBD | TBD |
 | TBD | TBD | TBD |
 | TBD | TBD | TBD |
