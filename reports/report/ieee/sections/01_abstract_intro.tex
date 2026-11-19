@@ -1,0 +1,52 @@
+\begin{abstract}
+Truy vấn ảnh bằng CLIP chỉ so cosine giữa vectơ của câu và vectơ của ảnh, nên hệ thống không dùng đến quan hệ giữa các khái niệm có trong ảnh và cũng không cho biết vì sao một ảnh được trả về. Báo cáo này trình bày một hệ thống gồm ba bước. CLIP ViT-B/32 được giữ đóng băng để lấy 100 ảnh ứng viên. Tiếp theo, một đồ thị hai phía ảnh--khái niệm (3.880 synset WordNet) và một lớp GraphSAGE được dùng để xếp hạng lại các ứng viên này. Mỗi kết quả được giải thích bằng các cạnh ảnh--khái niệm, tính bằng can thiệp trên chính mô hình xếp hạng. Trên tập test Visual Genome (5.000 ảnh, 25.000 truy vấn, 3 seed), \mrr{} tăng từ 0,1076 lên 0,1284. Tuy vậy, mô hình đối chứng không dùng đồ thị đã đạt 0,1266 và mô hình trên đồ thị xáo cạnh đạt 0,1272. Khoảng 91\% mức tăng đến từ phép chiếu tuyến tính học được; phần đóng góp của đồ thị nhỏ nhưng ổn định qua các seed và thể hiện rõ nhất ở các truy vấn chung chung. Kết luận ``phần lớn mức tăng đến từ phép chiếu lặp lại trên tập thứ hai Flickr30k và với phần truy xuất đồ thị con của G-Retriever (2024); trên hai thí nghiệm này, đồ thị không tốt hơn mô hình không đồ thị. Giải thích bằng Integrated Gradients trung thực với mô hình: trên test, bỏ 10 cạnh giải thích làm ảnh tụt trung bình 2,57 bậc, trong khi bỏ 10 cạnh ngẫu nhiên chỉ làm tụt 0,26 bậc ($p = 0{,}0005$). Nhóm cũng tự xây một đồ thị tri thức đa phương thức tiếng Việt về di tích và di sản (119 thực thể, 303 bộ ba, 380 ảnh). Mô hình học trên Visual Genome chuyển sang miền này mà không cần huấn luyện lại, nhưng truy vấn tiếng Việt thất bại do bộ mã hóa văn bản của CLIP.
+\end{abstract}
+
+\begin{IEEEkeywords}
+truy vấn đa phương thức, CLIP, GraphSAGE, xếp hạng lại, G-Retriever, AI có thể giải thích, fidelity, đồ thị tri thức đa phương thức
+\end{IEEEkeywords}
+
+\section{Giới thiệu}
+\label{sec:intro}
+Bài toán truy vấn ảnh bằng văn bản (text-to-image retrieval) nhận một câu như ``a girl wearing blue jeans'' và trả về danh sách ảnh xếp theo mức độ phù hợp. Cách làm phổ biến hiện nay là mã hóa câu và ảnh vào cùng một không gian bằng CLIP~\cite{radford2021clip} rồi xếp ảnh theo cosine. Cách này cho kết quả tốt nhưng có hai hạn chế. Thứ nhất, CLIP không khai thác quan hệ có cấu trúc giữa các thực thể và khái niệm. Thứ hai, điểm cosine không giải thích được vì sao một ảnh được xếp lên đầu.
+
+Đề bài yêu cầu đưa dữ liệu đồ thị vào bài toán này: dùng đồ thị để cải thiện thứ hạng, sau đó giải thích mỗi kết quả bằng chính các quan hệ hoặc đồ thị con đã tham gia vào việc xếp hạng. Vì vậy đồ án tập trung đo phần đóng góp của đồ thị và không xây mô hình thị giác mới. Nhóm đặt ra ba câu hỏi nghiên cứu, tương ứng với ba nhiệm vụ của đề bài:
+\begin{itemize}
+\item \textbf{RQ1} (truy vấn): trên một giao thức đánh giá chuẩn, CLIP thuần và CLIP kết hợp đồ thị đạt kết quả đến đâu?
+\item \textbf{RQ2} (vai trò của đồ thị): phần cải thiện có thật sự đến từ cấu trúc quan hệ không, và đồ thị giúp ở nhóm truy vấn nào?
+\item \textbf{RQ3} (giải thích): những cạnh nào đã đẩy một ảnh lên, và giải thích đó có trung thực với cơ chế xếp hạng hay không?
+\end{itemize}
+
+Nhóm chọn nhánh văn bản $\to$ ảnh trên Visual Genome~\cite{krishna2017vg}, đo thêm chiều ảnh $\to$ văn bản như một phép đo mở rộng. Các đóng góp chính của đồ án gồm:
+\begin{enumerate}
+\item Một cách chia dữ liệu cố định cho Visual Genome có gom các ảnh gần trùng, kèm một giao thức đánh giá coi mọi ảnh có cùng câu mô tả là đáp án đúng (Mục~\ref{sec:data}).
+\item Một mô hình GraphSAGE một lớp được khởi tạo sao cho ban đầu cho kết quả đúng bằng CLIP, sau đó được huấn luyện trực tiếp cho việc xếp hạng lại; kèm theo là bộ mô hình đối chứng để tách riêng phần đóng góp của đồ thị (Mục~\ref{sec:method} và~\ref{sec:retrieval}).
+\item Kết quả chạy lại toàn bộ pipeline trên tập công khai thứ hai Flickr30k và kết quả tái lập phần truy xuất đồ thị con của G-Retriever~\cite{he2024gretriever}, một phương pháp công bố năm 2024.
+\item Một quy trình giải thích tính bằng can thiệp trên chính mô hình, có bước kiểm tra rằng mô hình được giải thích đúng là mô hình đã báo cáo, và được đánh giá bằng fidelity, validity, sparsity so với đối chứng ngẫu nhiên (Mục~\ref{sec:xai}).
+\item Một đồ thị tri thức đa phương thức (MMKG) tiếng Việt do nhóm tự xây, dùng để đo khả năng chuyển miền, chuyển ngôn ngữ của mô hình và của giải thích (Mục~\ref{sec:mmkg}).
+\end{enumerate}
+
+Bảng~\ref{tab:status} tóm tắt mức độ hoàn thành theo các cấp độ của đề. Toàn bộ mã nguồn, cấu hình, quyết định thiết kế (ADR) và bảng số nằm trong kho mã của nhóm\footnote{\url{\GHrepo}}. Các kết quả chính được chép từ \code{results/tables/*.csv}; một số đại lượng dẫn xuất (tỉ lệ, hiệu ghép cặp) được tính từ các bảng này, số còn lại lấy từ hồ sơ thí nghiệm và ADR trong kho mã.
+
+\begin{table}[t]
+\centering
+\caption{Mức độ hoàn thành theo các cấp độ của đề bài}
+\label{tab:status}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{1.15cm}p{4.35cm}p{2.1cm}@{}}
+\toprule
+\textbf{Cấp độ} & \textbf{Yêu cầu} & \textbf{Tình trạng} \\
+\midrule
+1 & CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, phân tích 5+5 truy vấn & Hoàn thành \\
+1 mở rộng & nDCG@10, chiều ảnh $\to$ văn bản, nhóm truy vấn & Hoàn thành \\
+2 & Tập công khai thứ hai (Flickr30k) & Hoàn thành \\
+2 & Phương pháp từ năm 2024 (G-Retriever) & Hoàn thành, kết quả âm \\
+2 & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa xong trên VG; có 318 câu trên MMKG \\
+3 & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Hoàn thành \\
+3 & MMKG tiếng Việt tự xây & Hoàn thành \\
+4 & Cải tiến riêng của nhóm & Chưa làm \\
+Sản phẩm & Giao diện demo, slide & Hoàn thành \\
+\bottomrule
+\end{tabular}
+\end{table}
