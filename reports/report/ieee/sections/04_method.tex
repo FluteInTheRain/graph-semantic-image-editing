@@ -1,0 +1,143 @@
+\section{Phương pháp}
+\label{sec:method}
+
+\subsection{Pipeline tổng thể}
+Hình~\ref{fig:pipeline} mô tả pipeline theo đúng quy trình đề bài gợi ý: truy vấn đi qua CLIP, lấy top-100 ảnh theo cosine, tính điểm đồ thị cho từng ứng viên, xếp hạng lại, sinh giải thích và cuối cùng đo độ trung thực của giải thích.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=0.32cm and 0.3cm,
+  box/.style={draw=blue!60!black,thick,rounded corners=2pt,fill=blue!5,align=center,font=\scriptsize,minimum height=0.85cm,text width=1.45cm},
+  data/.style={draw=gray,dashed,rounded corners=2pt,fill=gray!5,align=center,font=\scriptsize,text width=1.45cm,minimum height=0.7cm},
+  arr/.style={-{Stealth[length=1.6mm]},thick,blue!50!black}]
+\node[data] (q) {Truy vấn $q$};
+\node[box,right=of q] (clip) {CLIP $f_T$\\(đóng băng)};
+\node[box,right=of clip] (faiss) {FAISS\\top-100};
+\node[box,right=of faiss] (gnn) {GraphSAGE\\điểm $g$};
+\node[box,below=0.6cm of gnn] (fuse) {Kết hợp\\{\tiny $\alpha\cos+(1{-}\alpha)g$}};
+\node[box,left=of fuse] (exp) {Giải thích\\cạnh $i$--$c$};
+\node[box,left=of exp] (fid) {Fidelity,\\validity};
+\node[data,above=0.45cm of faiss] (img) {Ảnh $f_I$\\(tính trước)};
+\node[data,above=0.45cm of gnn] (graph) {Đồ thị\\ảnh--khái niệm};
+\draw[arr] (q) -- (clip); \draw[arr] (clip) -- (faiss); \draw[arr] (faiss) -- (gnn);
+\draw[arr] (img) -- (faiss); \draw[arr] (graph) -- (gnn);
+\draw[arr] (gnn) -- (fuse); \draw[arr] (fuse) -- (exp); \draw[arr] (exp) -- (fid);
+\end{tikzpicture}
+\caption{Pipeline của hệ thống. Ô nét đứt là dữ liệu được tính trước một lần.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Đồ thị ảnh--khái niệm}
+\label{sec:graph}
+Đồ thị có hai loại đỉnh. Đỉnh ảnh gồm mọi ảnh trong tập, kể cả ảnh không có đối tượng nào. Đỉnh khái niệm gồm 3.880 synset WordNet xuất hiện trong ít nhất 5 ảnh train. Vectơ của ảnh là embedding CLIP; vectơ của khái niệm là embedding văn bản CLIP của câu ``a photo of a \{lemma\}'' (ví dụ \code{fire\_hydrant.n.01} trở thành ``a photo of a fire hydrant''). Nhờ vậy ảnh và khái niệm nằm trong cùng một không gian 512 chiều.
+
+\textbf{Cạnh \code{contains} (khái niệm $\to$ ảnh).} Phiên bản đầu tiên lấy cạnh từ annotation đối tượng và gặp hai vấn đề. Nếu ảnh test dùng annotation, hệ thống đọc được thông tin mà một ảnh mới ngoài thực tế không có. Còn nếu chỉ train dùng annotation mà test thì không, hai phân phối sẽ khác nhau. Vì vậy phiên bản chính nối mỗi ảnh với $k = 16$ khái niệm có cosine CLIP cao nhất, áp dụng như nhau cho train, val và test. Giá trị $k = 16$ gần với bậc trung bình của đồ thị annotation (1.719.645 cạnh trên 108.077 ảnh, xấp xỉ 15,9). Đồ thị có 1.569.232 cạnh ở train và 80.000 cạnh ở mỗi tập val, test.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  img/.style={draw=blue!60!black,thick,rounded corners=2pt,fill=blue!6,font=\scriptsize,align=center,minimum width=1.5cm,minimum height=0.7cm},
+  con/.style={draw=orange!70!black,rounded corners=6pt,fill=orange!8,font=\scriptsize,minimum height=0.45cm,inner sep=2pt},
+  e/.style={-{Stealth[length=1.4mm]},blue!50!black},
+  co/.style={dashed,red!60!black}]
+\node[img] (i1) at (0,0) {Ảnh $i_1$\\(train)};
+\node[img] (i2) at (5.4,0) {Ảnh $i_2$\\(test)};
+\node[con] (c1) at (1.2,1.7) {\code{horse.n.01}};
+\node[con] (c2) at (2.7,2.4) {\code{saddle.n.01}};
+\node[con] (c3) at (4.2,1.7) {\code{rein.n.01}};
+\node[con] (c4) at (2.7,0.9) {\code{man.n.01}};
+\node[con] (c5) at (2.7,-1.1) {\code{beach.n.01}};
+\draw[e] (c1) -- (i1); \draw[e] (c2) -- (i1); \draw[e] (c4) -- (i1); \draw[e] (c5) -- (i1);
+\draw[e] (c1) -- (i2); \draw[e] (c3) -- (i2); \draw[e] (c4) -- (i2);
+\draw[co] (c1) -- (c2); \draw[co] (c2) -- (c3); \draw[co] (c1) -- (c3);
+\node[font=\tiny,align=left,anchor=west] at (-0.6,-1.75) {\tikz\draw[-{Stealth[length=1.4mm]},blue!50!black](0,0)--(0.4,0); \code{contains}: 16 khái niệm gần nhất theo CLIP \quad \tikz\draw[dashed,red!60!black](0,0)--(0.4,0); \code{cooccurs\_with}: PMI trên train};
+\end{tikzpicture}
+\caption{Minh họa đồ thị ảnh--khái niệm (mỗi ảnh thật có 16 cạnh \code{contains}; hình chỉ vẽ vài cạnh). Cạnh của ảnh test chỉ dựa vào vectơ CLIP của chính ảnh, nên không đọc annotation.}
+\label{fig:graph}
+\end{figure}
+
+Hình~\ref{fig:graph} minh họa cấu trúc của đồ thị. \textbf{Cạnh \code{cooccurs\_with} (khái niệm--khái niệm).} Một biến thể thêm quan hệ giữa các khái niệm, đếm trên annotation của ảnh train: cặp $(a, b)$ được giữ khi hai khái niệm cùng xuất hiện trong ít nhất 10 ảnh và có PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
+
+\subsection{Mô hình xếp hạng lại}
+\label{sec:model}
+Với ảnh $i$ có tập khái niệm láng giềng $N(i)$, $|N(i)| = 16$, mô hình GraphSAGE một lớp tính
+\begin{align}
+h_i &= W_{\text{self}}\,x_i + b + \frac{1}{|N(i)|}\sum_{c\in N(i)} W_{\text{nb}}\,x_c, \label{eq:sage}\\
+g(q,i) &= \cos\big(f_T(q),\,h_i\big).
+\end{align}
+Mô hình không có hàm kích hoạt. Các vectơ $x_i$, $x_c$ và $f_T(q)$ được giữ cố định; chỉ $W_{\text{self}}$, $W_{\text{nb}}$ và $b$ được học. Khởi tạo $W_{\text{self}} = I$, $W_{\text{nb}} = 0$, $b = 0$ khiến $g$ lúc chưa huấn luyện đúng bằng cosine của CLIP. Như vậy mô hình xuất phát từ baseline và chỉ rời khỏi baseline khi điều đó làm giảm hàm mất mát. Do chỉ có một lớp và cạnh đi một chiều (khái niệm $\to$ ảnh), điểm của một ảnh chỉ phụ thuộc vào chính nó và các khái niệm của nó; các ảnh val, test không ảnh hưởng lẫn nhau.
+
+Biến thể hai lớp (\code{CooccurrenceSage}) cập nhật khái niệm theo cạnh đồng xuất hiện ở lớp đầu, $z_c = W_{\text{cself}}\,x_c + \operatorname{mean}_{c'\in co(c)} W_{\text{co}}\,x_{c'}$, rồi dùng $z_c$ thay cho $x_c$ ở lớp sau. Biến thể này cũng được khởi tạo bằng CLIP ($W_{\text{cself}} = I$, $W_{\text{co}} = 0$). Điểm cuối cùng của một ứng viên là
+\begin{equation}
+s(q,i) = \alpha\cos\big(f_T(q),x_i\big) + (1-\alpha)\,g(q,i),
+\end{equation}
+trong đó $\alpha$ được chọn trên val từ lưới $\{0; 0,1; \dots; 1\}$; khi hòa, nhóm lấy $\alpha$ lớn hơn (gần CLIP hơn).
+
+\subsection{Huấn luyện}
+Mỗi câu train $t$ được dùng nếu ảnh gốc của nó nằm trong top-100 của CLIP (tìm trong kho ảnh train). Tập ứng viên gồm ảnh gốc và $n_{\text{hard}} = 15$ ảnh sai lấy từ top-100 đó; ảnh có cùng câu với $t$ không được dùng làm ảnh sai. Hàm mất mát là cross-entropy trên $g(t,\cdot)/\tau$ của các ứng viên với $\tau = 0,05$, tức InfoNCE~\cite{oord2018cpc} dạng listwise; mô hình được học đúng cho việc xếp lại top-100. Nhóm dùng Adam, batch 512, tối đa 10 epoch và dừng sớm (patience 2) theo \mrr{} val của riêng điểm đồ thị. Epoch 0 (bằng CLIP) cũng được chấm, nên trên val mô hình không bao giờ kém CLIP. Mỗi mô hình thử learning rate $10^{-3}$ và $10^{-4}$ rồi giữ bản có điểm val cao hơn; quy tắc này được chốt trước khi chạy test.
+
+Phiên bản huấn luyện đầu tiên dùng mọi câu train và gặp lỗi. Ảnh đúng luôn có mặt trong tập ứng viên kể cả khi CLIP xếp nó ngoài top-100, còn 15 ảnh sai thì luôn nằm trong top-100. Mô hình vì thế học được một ``mẹo'': chọn ứng viên mà CLIP đánh giá thấp nhất. Hàm mất mát trên train giảm, nhưng \mrr{} val tụt từ 0,106 xuống 0,038 chỉ sau một epoch. Việc lọc câu như trên giúp ảnh đúng và ảnh sai đến từ cùng một phân phối, đúng với bản chất của bài toán xếp hạng lại.
+
+\subsection{Các mô hình đối chứng}
+Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung cách chia tập, chung 100 ứng viên và 3 seed. Đối chứng \emph{không đồ thị} giữ nguyên mô hình nhưng cố định $W_{\text{nb}} = 0$, tức chỉ học một phép chiếu tuyến tính trên vectơ ảnh. Đối chứng này trả lời câu hỏi: mức tăng đến từ đồ thị, hay chỉ từ một phép chiếu được học trên dữ liệu Visual Genome? Ablation \emph{đồ thị xáo} xáo các cạnh \code{contains} nhưng giữ nguyên bậc của từng ảnh và từng khái niệm trong mỗi tập, rồi huấn luyện y hệt mô hình chính.
+
+\begin{table}[t]
+\centering
+\caption{Các thí nghiệm và câu hỏi mà mỗi thí nghiệm trả lời}
+\label{tab:exps}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{2.8cm}p{0.6cm}p{4.1cm}@{}}
+\toprule
+\textbf{Tên} & \textbf{lr} & \textbf{Câu hỏi} \\
+\midrule
+\code{clip\_vg} & -- & Baseline CLIP thuần \\
+\code{clip\_nograph\_vg} & $10^{-3}$ & $W_{\text{nb}} = 0$: mức tăng có cần đến đồ thị không? \\
+\code{clip\_graph\_vg\_lr1e4} & $10^{-4}$ & Mô hình chính: GraphSAGE một lớp \\
+\code{clip\_cooc\_graph\_\dots} & $10^{-4}$ & Cạnh đồng xuất hiện có giúp thêm không? \\
+\code{\dots\_shuffled} & $10^{-4}$ & Cấu trúc thật có quan trọng không? \\
+\code{clip\_pcst\_\dots} & -- & Đồ thị con phụ thuộc truy vấn (G-Retriever) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tái lập G-Retriever: chọn đồ thị con bằng PCST}
+\label{sec:gret-method}
+Đồ thị ở trên không phụ thuộc vào truy vấn: mọi truy vấn nhìn thấy cùng 16 cạnh của một ảnh. Để có điểm đồ thị phụ thuộc vào truy vấn, nhóm tái lập ba bước đầu của G-Retriever~\cite{he2024gretriever} và bỏ bước sinh câu trả lời bằng mô hình ngôn ngữ lớn:
+\begin{enumerate}
+\item Chấm độ liên quan của các khái niệm với truy vấn và gán giải thưởng cho $k$ khái niệm liên quan nhất.
+\item Chọn một cây liên thông $S_q$ trên đồ thị đồng xuất hiện bằng PCST, gọi thư viện \code{pcst\_fast} với tham số giống mã gốc. PCST giữ cả những đỉnh không có thưởng nếu chúng là cầu nối giữa hai đỉnh có thưởng, phù hợp với kiểu truy vấn gián tiếp như \emph{child -- plays -- football}.
+\item Chấm điểm ứng viên dựa trên đồ thị con. Bậc 1 dùng tỉ lệ khái niệm của ảnh nằm trong $S_q$. Bậc 2 thay tỉ lệ này bằng một GraphSAGE một lớp chỉ gộp các khái niệm thuộc $S_q$, huấn luyện bằng InfoNCE như trên.
+\end{enumerate}
+Các tham số $k \in \{3, 5, 10\}$, phí cạnh $C \in \{0,25; 0,5; 1\}$ và $\alpha$ được chọn trên val. Hai ablation đi kèm là bỏ bước dựng cây (chỉ giữ top-$k$ khái niệm) và xáo cạnh. Thư viện \code{pcst\_fast} chỉ cho kết quả đúng với numpy 1.x nên dự án ghim phiên bản \code{numpy<2}.
+
+\subsection{Giải thích trung thực}
+\label{sec:xai-method}
+Nhóm áp dụng ba quy tắc. Thứ nhất, giải thích là tập cạnh khái niệm $\to$ ảnh mà mô hình thật sự sử dụng; mọi phương pháp giải thích chạy lại đúng mô hình xếp hạng trên đồ thị đã bị sửa, không có bước tìm đường đi theo heuristic. Thứ hai, trước khi giải thích, \mrr{} val tính lại phải bằng từng bit con số đã lưu lúc huấn luyện; nếu sai checkpoint, sai đồ thị hoặc sai $\alpha$, chương trình dừng lại. Thứ ba, giải thích phải được kiểm chứng bằng can thiệp: bỏ các cạnh trong giải thích thì điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý.
+
+Vì $h_i$ ở~\eqref{eq:sage} là một tổng, điểm đồ thị của mô hình một lớp có thể tách thành phần của chính ảnh cộng phần của từng cạnh. Phép tách này không thay được các phương pháp giải thích (xóa một cạnh còn làm thay đổi mẫu số của phép lấy trung bình và chuẩn $\|h_i\|$), nhưng được dùng để kiểm chéo thứ tự cạnh do các phương pháp đó đưa ra.
+
+\begin{table}[t]
+\centering
+\caption{Thước đo đánh giá giải thích. $i^*$: ảnh được giải thích; $E_x$: tập $m$ cạnh giải thích; $S(i^*)$: các cạnh trong vùng ảnh hưởng của $i^*$}
+\label{tab:metrics}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{1.95cm}p{5.55cm}@{}}
+\toprule
+\textbf{Thước đo} & \textbf{Định nghĩa} \\
+\midrule
+Fid$^+$ (điểm) & $g_G(q,i^*) - g_{G\setminus E_x}(q,i^*)$; càng lớn càng tốt \\
+Hạng tụt & $\text{rank}_{G\setminus E_x}(i^*) - \text{rank}_G(i^*)$ trên điểm cuối với $\alpha$ đã chốt \\
+Fid$^-$ & $g_G(q,i^*) - g_{E_x}(q,i^*)$; càng gần 0 càng tốt \\
+Characterization & Trung bình điều hòa có trọng số của Fid$^+$ và $1-$Fid$^-$ sau khi chuẩn hóa về $[0,1]$~\cite{amara2022graphframex} \\
+Robust Fid$^\pm$ & Mỗi cạnh giải thích bị xóa với xác suất 0,1~\cite{zheng2024robust} \\
+Sparsity & $1 - |E_x|/|S(i^*)|$ \\
+Validity & Mọi cạnh của $E_x$ có thật, nằm trong $S(i^*)$ và nối được tới $i^*$ \\
+Đối chứng & Xóa $|E_x|$ cạnh ngẫu nhiên trong $S(i^*)$, lặp $\ge 20$ lần; Wilcoxon một phía~\cite{wilcoxon1945} ghép cặp theo truy vấn \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bảng~\ref{tab:metrics} định nghĩa các thước đo. Nhóm dùng hiệu điểm chưa chuẩn hóa thay cho hiệu xác suất như trong bài gốc, vì đây là bài toán xếp hạng và điểm cosine có thể bằng 0 hoặc âm.
