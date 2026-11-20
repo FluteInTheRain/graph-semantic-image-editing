@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import yaml
 
 from mmxai.data.splits import load_split
 from mmxai.eval.graph_rerank import (
@@ -294,3 +295,80 @@ def run_model_benchmark_evaluation(config: ModelBenchmarkEvalConfig, seed: int, 
     env = collect_env({"numpy": np.__version__, "torch": torch.__version__})
     write_run_files(run_dir, asdict(config), metrics, env)
     return run_dir
+
+
+SUMMARY_METRICS = ("R@1", "R@5", "R@10", "MRR@100")
+
+
+def load_run(run_dir: Path) -> tuple[str, dict]:
+    """Return (experiment, metrics) of one run folder; the name is in config.yaml."""
+    with open(run_dir / "config.yaml", encoding="utf-8") as file:
+        experiment = yaml.safe_load(file)["experiment"]
+    with open(run_dir / "metrics.json", encoding="utf-8") as file:
+        metrics = json.load(file)
+    return experiment, metrics
+
+
+def scope_metrics(metrics: dict) -> dict[str, dict | None]:
+    """Flatten a metrics.json into {scope name: metric dict}, e.g. "activity_direct"."""
+    scopes = {name: metrics.get(name) for name in ("all", "direct", "indirect")}
+    for group, by_type in metrics.get("by_query_group", {}).items():
+        for query_type, group_metrics in by_type.items():
+            scopes[f"{group}_{query_type}"] = group_metrics
+    return scopes
+
+
+def mean_and_std(values: list[float]) -> tuple[float, float | None]:
+    """Mean and sample std (ddof=1, ADR-0011); the std of a single seed is None."""
+    mean = float(np.mean(values))
+    if len(values) < 2:
+        return mean, None
+    return mean, float(np.std(values, ddof=1))
+
+
+def summarize_benchmark_runs(runs_dir: str | Path) -> list[dict]:
+    """One row per experiment: mean and std over seeds of every scope's metrics.
+
+    Refuses a repeated seed and runs made on different benchmark files, because every
+    model must be judged on the same queries (ADR-0057).
+    """
+    runs: dict[str, list[dict]] = {}
+    for run_dir in sorted(Path(runs_dir).glob("*/metrics.json")):
+        experiment, metrics = load_run(run_dir.parent)
+        runs.setdefault(experiment, []).append(metrics)
+    if not runs:
+        raise ValueError(f"no runs found in {runs_dir}")
+
+    benchmark_hashes = {m["benchmark_sha256"] for group in runs.values() for m in group}
+    if len(benchmark_hashes) > 1:
+        raise ValueError("runs were made on different benchmark files (benchmark_sha256)")
+
+    rows = []
+    for experiment in sorted(runs):
+        group = runs[experiment]
+        seeds = sorted(m["seed"] for m in group)
+        if len(set(seeds)) != len(seeds):
+            raise ValueError(f"{experiment} has a duplicated seed: {seeds}")
+        row = {
+            "experiment": experiment,
+            "num_seeds": len(seeds),
+            "seeds": " ".join(str(seed) for seed in seeds),
+            "num_queries": group[0]["all"]["num_queries"],
+        }
+        # Scope names come from the first run; all runs share one benchmark file.
+        for scope in scope_metrics(group[0]):
+            for metric in SUMMARY_METRICS:
+                values = []
+                for metrics in group:
+                    scope_values = scope_metrics(metrics).get(scope)
+                    if scope_values is not None:
+                        values.append(scope_values[metric])
+                # A scope that is None in the runs stays empty.
+                if len(values) == len(group):
+                    mean, std = mean_and_std(values)
+                else:
+                    mean, std = None, None
+                row[f"{scope}_{metric}_mean"] = mean
+                row[f"{scope}_{metric}_std"] = std
+        rows.append(row)
+    return rows
