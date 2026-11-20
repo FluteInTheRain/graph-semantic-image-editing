@@ -1,4 +1,4 @@
-"""Direct/indirect sentences for KG queries (ADR-0050)."""
+"""Direct/indirect sentences for KG queries (ADR-0057)."""
 
 from conceptnet_fixtures import EDGES, edge
 from mmxai.queries.kg_facts import build_fact_index, choose_description

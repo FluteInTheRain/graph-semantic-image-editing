@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Generate direct/indirect query pairs for Visual Genome where the indirect query hides a concept (an activity like *tennis* or an object like *train*) and describes it only through ConceptNet facts that point to that concept alone (ADR-0050).
+**Goal:** Generate direct/indirect query pairs for Visual Genome where the indirect query hides a concept (an activity like *tennis* or an object like *train*) and describes it only through ConceptNet facts that point to that concept alone (ADR-0057).
 
 **Architecture:** ConceptNet is filtered once into a small TSV (`src/mmxai/data/conceptnet.py`). Facts per concept and the "unique description" choice live in `src/mmxai/queries/kg_facts.py`; sentences in `kg_text.py`; concept → image lookups on scene graphs in `kg_targets.py`; the run loop in `kg_generator.py`. Validation, review manifest, build and evaluation reuse the v1 code (ADR-0044), with small generalisations.
 
 **Tech Stack:** Python 3.11 standard library (`csv`, `gzip`, `json`, `hashlib`), numpy, PyYAML, pytest, ruff. No new dependency.
 
-**Spec:** `docs/decisions/0050-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md`.
+**Spec:** `docs/decisions/0057-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md`.
 
-**Repo rules (CLAUDE.md):** branch `feat/vg-kg-query-benchmark` (already checked out, ADR-0050 committed as `83e795f`). Run every command as `python -m uv run ...` (uv is not on PATH on this machine). Code/comments in English, docs in Vietnamese, simple viva-explainable code. Commit after each task, never push. **Never run generation with the test config in this plan** — only unit tests and, if the ConceptNet file is present, the val pilot.
+**Repo rules (CLAUDE.md):** branch `feat/vg-kg-query-benchmark` (already checked out, ADR-0057 committed as `83e795f`). Run every command as `python -m uv run ...` (uv is not on PATH on this machine). Code/comments in English, docs in Vietnamese, simple viva-explainable code. Commit after each task, never push. **Never run generation with the test config in this plan** — only unit tests and, if the ConceptNet file is present, the val pilot.
 
 **Known pre-existing failures (ignore):** 10 tests in `tests/test_feature_pipeline.py` and `tests/test_notebooks_match_src.py`; 2 ruff I001 in `tests/test_eval_metrics.py`, `tests/test_eval_relevance.py`.
 
@@ -112,7 +112,7 @@ def write_assertions_gz(path: Path, lines: list[str]) -> None:
 - [ ] **Step 2: Write the failing tests** `tests/test_conceptnet.py`
 
 ```python
-"""ConceptNet parsing and filtering (ADR-0050). Synthetic lines only."""
+"""ConceptNet parsing and filtering (ADR-0057). Synthetic lines only."""
 
 from mmxai.data.conceptnet import (
     ConceptEdge,
@@ -187,7 +187,7 @@ Run: `python -m uv run pytest -q tests/test_conceptnet.py`
 ConceptNet is a public commonsense knowledge graph: each edge is
 (start, relation, end, weight), e.g. racket -UsedFor-> tennis. The full assertions
 file is large, so it is filtered ONCE (scripts/prepare_conceptnet.py) into a TSV
-with only English-English edges of a few relations (ADR-0050). The original edge
+with only English-English edges of a few relations (ADR-0057). The original edge
 URI is kept so every query can cite the exact edge it was built from.
 """
 
@@ -354,20 +354,20 @@ def load_conceptnet_prepare_config(path: str | Path) -> ConceptNetPrepareConfig:
 `configs/conceptnet_en.yaml`:
 
 ```yaml
-# Filter ConceptNet 5.7 once for the KG query benchmark (ADR-0050).
+# Filter ConceptNet 5.7 once for the KG query benchmark (ADR-0057).
 # How to run: uv run python scripts/prepare_conceptnet.py --config configs/conceptnet_en.yaml
 source_path: data/conceptnet/conceptnet-assertions-5.7.0.csv.gz
 output_path: artifacts/conceptnet/en_edges.tsv
-# Decision (ADR-0050): the relations the description templates can read.
+# Decision (ADR-0057): the relations the description templates can read.
 relations: [IsA, UsedFor, AtLocation, HasA, PartOf, CapableOf]
-# Decision (ADR-0050): drop edges asserted with weight < 1 (weakly supported).
+# Decision (ADR-0057): drop edges asserted with weight < 1 (weakly supported).
 min_weight: 1.0
 ```
 
 `scripts/prepare_conceptnet.py`:
 
 ```python
-"""Filter ConceptNet 5.7 into the small English TSV used by the KG queries (ADR-0050).
+"""Filter ConceptNet 5.7 into the small English TSV used by the KG queries (ADR-0057).
 
 Logic: mmxai.data.conceptnet.prepare_conceptnet.
 
@@ -444,7 +444,7 @@ How facts are read from edges (direction matters):
 - [ ] **Step 1: Failing tests** `tests/test_kg_facts.py`
 
 ```python
-"""Facts per concept and the unique description (ADR-0050). Synthetic edges only."""
+"""Facts per concept and the unique description (ADR-0057). Synthetic edges only."""
 
 from mmxai.queries.kg_facts import build_fact_index, choose_description, leaks_name
 from conceptnet_fixtures import EDGES
@@ -511,7 +511,7 @@ Run: `python -m uv run pytest -q tests/test_kg_facts.py`
 
 A fact is something true about a concept C read from one edge: "C is a sport",
 "C uses a racket" (racket -UsedFor-> C). An indirect query names one category and a
-few properties of C but never C itself (ADR-0050). To be a fair query it must point
+few properties of C but never C itself (ADR-0057). To be a fair query it must point
 to C alone: no other concept of the same group may have the same category and
 properties, otherwise images of that other concept would also be correct answers.
 """
@@ -664,7 +664,7 @@ git commit -m "feat(queries): ConceptNet facts and unique concept descriptions" 
 - [ ] **Step 1: Failing tests** `tests/test_kg_text.py`
 
 ```python
-"""Direct/indirect sentences for KG queries (ADR-0050)."""
+"""Direct/indirect sentences for KG queries (ADR-0057)."""
 
 from mmxai.queries.kg_facts import build_fact_index, choose_description
 from mmxai.queries.kg_text import direct_text, indirect_text, with_article
@@ -779,7 +779,7 @@ git commit -m "feat(queries): direct and indirect sentences for KG queries" -m "
 - [ ] **Step 1: Failing tests** `tests/test_kg_targets.py`
 
 ```python
-"""Concept -> images on scene graphs (ADR-0050). Hand-built synthetic graphs."""
+"""Concept -> images on scene graphs (ADR-0057). Hand-built synthetic graphs."""
 
 from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.kg_targets import activity_images, object_images
@@ -820,7 +820,7 @@ def test_object_images_use_every_object_synset():
 ```python
 """Which images of a split show a concept: an activity a person plays, or an object.
 
-These sets are the candidate answers of a KG query (ADR-0050), and their sizes on
+These sets are the candidate answers of a KG query (ADR-0057), and their sizes on
 train decide which concepts become targets. Predicates must already be canonical
 (mmxai.queries.generator.canonicalize_graphs), so "plays" counts as "playing".
 """
@@ -938,7 +938,7 @@ Run: `python -m uv run pytest -q tests/test_query_validator.py`
 In `manifest_rows`, replace the `relationship_ids = ...` line and the dict fields that assume v1 with:
 
 ```python
-        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0050).
+        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0057).
         relationship_ids = []
         for item in direct.get("relation_evidence", []):
             relationship_ids.append(str(item["relationship_id"]))
@@ -1003,7 +1003,7 @@ containing the existing existence check and the two `json.load` calls, and make 
 - [ ] **Step 2: Failing tests** `tests/test_kg_generator.py`
 
 ```python
-"""KG query generation end to end on synthetic data (ADR-0050)."""
+"""KG query generation end to end on synthetic data (ADR-0057)."""
 
 from dataclasses import replace
 
@@ -1121,7 +1121,7 @@ Add `from mmxai.queries.generator import canonicalize_graphs` to the imports. Ha
 - [ ] **Step 4: Implement** `src/mmxai/queries/kg_generator.py`
 
 ```python
-"""Generate KG direct/indirect query pairs for Visual Genome (ADR-0050).
+"""Generate KG direct/indirect query pairs for Visual Genome (ADR-0057).
 
 For each target concept (an activity a person plays, or an object), the direct
 query names it and the indirect query only describes it through ConceptNet facts
@@ -1414,7 +1414,7 @@ Check the key name `compute_metrics` returns for recall@1 (`R@1` or similar) in 
 (initialise `ranks_by_query_group: dict[str, dict[str, list]] = {}` before the loop), add `"query_group": query.get("query_group")` to each `per_query` item, and before returning:
 
 ```python
-    # ADR-0050: activity and object queries are reported apart; v1 files have no groups.
+    # ADR-0057: activity and object queries are reported apart; v1 files have no groups.
     metrics["by_query_group"] = {}
     for group, ranks_by_type in sorted(ranks_by_query_group.items()):
         metrics["by_query_group"][group] = {}
@@ -1468,7 +1468,7 @@ def test_kg_pilot_and_test_configs_share_every_rule():
 - [ ] **Step 3: Write the configs.** `configs/query_benchmark_vg_kg.yaml`:
 
 ```yaml
-# KG query benchmark for Visual Genome, test split (ADR-0050, status: Proposed).
+# KG query benchmark for Visual Genome, test split (ADR-0057, status: Proposed).
 # How to run: see scripts/generate_kg_queries.py and scripts/build_kg_query_benchmark.py.
 # Every value below must be fixed on the val pilot BEFORE generating on test, and never
 # changed after looking at retrieval results (PDF section 6, ADR-0009).
@@ -1482,16 +1482,16 @@ conceptnet_edges: artifacts/conceptnet/en_edges.tsv
 # Same canonicalisation as ADR-0044, only for the activity predicate.
 predicate_aliases: {plays: playing, play: playing, playing with: playing}
 activity_predicates: [playing]
-# Decision (ADR-0050, proposed): subjects that count as "a person".
+# Decision (ADR-0057, proposed): subjects that count as "a person".
 person_synsets: [man.n.01, woman.n.01, boy.n.01, girl.n.01, child.n.01, person.n.01,
                  player.n.01, guy.n.01, lady.n.01, people.n.01, kid.n.01]
-# Decision (ADR-0050, proposed): category words an indirect query may name.
+# Decision (ADR-0057, proposed): category words an indirect query may name.
 category_words: [sport, game, activity, vehicle, animal, instrument, fruit, vegetable,
                  furniture, tool, food, toy, appliance, device, container, clothing]
 activity_templates: {uses: uses, location: is played on, has: has, can: can}
 object_templates: {uses: is used with, location: is found at, has: has, can: can}
 num_properties: 2
-# Decision (ADR-0050, proposed): thresholds, fixed on the val pilot.
+# Decision (ADR-0057, proposed): thresholds, fixed on the val pilot.
 min_train_images: 20
 min_answer_images: 3
 max_answer_images: 50
@@ -1508,7 +1508,7 @@ min_verified_pairs: 10
 `configs/query_benchmark_vg_kg_pilot.yaml`: identical except
 
 ```yaml
-# Val PILOT of the KG generator (ADR-0050): check rules and templates without touching test.
+# Val PILOT of the KG generator (ADR-0057): check rules and templates without touching test.
 split: val
 candidates_path: results/runs/query_kg_pilot_val/visual_genome_kg_candidates_val.jsonl
 manifest_path: results/runs/query_kg_pilot_val/query_review_manifest_kg_val.csv
@@ -1522,7 +1522,7 @@ benchmark_path: results/runs/query_kg_pilot_val/unused_benchmark.jsonl  # never 
 - [ ] **Step 4: Write the CLIs.** `scripts/generate_kg_queries.py`:
 
 ```python
-"""Generate candidate KG direct/indirect query pairs for Visual Genome (ADR-0050).
+"""Generate candidate KG direct/indirect query pairs for Visual Genome (ADR-0057).
 
 Logic: mmxai.queries.kg_generator.
 
@@ -1582,11 +1582,11 @@ git commit -m "feat(queries): CLIs and configs for the KG query benchmark" -m "C
 ### Task 10: Docs, full checks, optional val pilot
 
 **Files:**
-- Modify: `docs/query_benchmark.md`, `docs/decisions/0050-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md`, `docs/ai-usage-log.md`
+- Modify: `docs/query_benchmark.md`, `docs/decisions/0057-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md`, `docs/ai-usage-log.md`
 
-- [ ] **Step 1: ADR fix.** In ADR-0050, row "Mô tả duy nhất", the text says "tất định theo seed"; the code is deterministic without a seed (targets by train frequency, ties by weight then alphabet). Change it to "tất định: duyệt khái niệm theo tần suất trên train, hoà thì theo trọng số cạnh rồi theo thứ tự chữ". Also add the file names actually created (`src/mmxai/data/conceptnet.py`, `src/mmxai/queries/kg_*.py`, the 4 configs, 3 scripts) in a "Code:" line under the decision table.
+- [ ] **Step 1: ADR fix.** In ADR-0057, row "Mô tả duy nhất", the text says "tất định theo seed"; the code is deterministic without a seed (targets by train frequency, ties by weight then alphabet). Change it to "tất định: duyệt khái niệm theo tần suất trên train, hoà thì theo trọng số cạnh rồi theo thứ tự chữ". Also add the file names actually created (`src/mmxai/data/conceptnet.py`, `src/mmxai/queries/kg_*.py`, the 4 configs, 3 scripts) in a "Code:" line under the decision table.
 
-- [ ] **Step 2: Docs.** Add a section "Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0050)" to `docs/query_benchmark.md` (Vietnamese, beginner-first): khái niệm; bảng fact kinds; cách chọn mô tả duy nhất; ví dụ **tổng hợp** từ test fixture (ghi rõ là dữ liệu giả); lệnh chạy theo thứ tự (prepare → pilot val → chốt config → test → review → build → evaluate); lưu ý rò rỉ (mô hình đồ thị không dựng cạnh từ annotation ảnh test). Add one row to `docs/ai-usage-log.md` (skill `/log-ai-usage`), column "Đã tự kiểm tra/hiểu chưa" = `Chưa`.
+- [ ] **Step 2: Docs.** Add a section "Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0057)" to `docs/query_benchmark.md` (Vietnamese, beginner-first): khái niệm; bảng fact kinds; cách chọn mô tả duy nhất; ví dụ **tổng hợp** từ test fixture (ghi rõ là dữ liệu giả); lệnh chạy theo thứ tự (prepare → pilot val → chốt config → test → review → build → evaluate); lưu ý rò rỉ (mô hình đồ thị không dựng cạnh từ annotation ảnh test). Add one row to `docs/ai-usage-log.md` (skill `/log-ai-usage`), column "Đã tự kiểm tra/hiểu chưa" = `Chưa`.
 
 - [ ] **Step 3: Full checks**
 
@@ -1606,7 +1606,7 @@ Print the pilot pairs (`type`, `query_group`, number of answers, `text`, `path_h
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/query_benchmark.md docs/decisions/0050-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md docs/ai-usage-log.md
+git add docs/query_benchmark.md docs/decisions/0057-truy-van-gian-tiep-mo-ta-khai-niem-qua-conceptnet.md docs/ai-usage-log.md
 git commit -m "docs(queries): document the KG query benchmark v2" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 

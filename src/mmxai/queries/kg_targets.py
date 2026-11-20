@@ -1,6 +1,6 @@
 """Which images of a split show a concept: an activity a person plays, or an object.
 
-These sets are the candidate answers of a KG query (ADR-0050), and their sizes on
+These sets are the candidate answers of a KG query (ADR-0057), and their sizes on
 train decide which concepts become targets. Predicates must already be canonical
 (mmxai.queries.generator.canonicalize_graphs), so "plays" counts as "playing".
 """
@@ -14,7 +14,7 @@ def activity_images(
     """(predicate, synset of the thing) -> images where a person does that to it.
 
     The predicate is part of the key: a horse is ridden, a tennis game is played, and
-    each predicate has its own comparison pool (ADR-0050).
+    each predicate has its own comparison pool (ADR-0057).
     """
     persons = set(person_synsets)
     predicates = set(activity_predicates)

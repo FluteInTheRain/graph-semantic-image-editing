@@ -1,4 +1,4 @@
-"""Filter ConceptNet 5.7 into the small English TSV used by the KG queries (ADR-0050).
+"""Filter ConceptNet 5.7 into the small English TSV used by the KG queries (ADR-0057).
 
 Logic: mmxai.data.conceptnet.prepare_conceptnet.
 

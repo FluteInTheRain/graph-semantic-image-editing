@@ -290,7 +290,7 @@ def manifest_rows(candidates: list[dict]) -> list[dict]:
     for pair_id in sorted(by_pair):
         direct = by_pair[pair_id]["direct"]
         indirect = by_pair[pair_id]["indirect"]
-        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0050).
+        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0057).
         relationship_ids = []
         for item in direct.get("relation_evidence", []):
             relationship_ids.append(str(item["relationship_id"]))

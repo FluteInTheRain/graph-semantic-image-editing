@@ -1,4 +1,4 @@
-"""Concept -> images on scene graphs (ADR-0050). Hand-built synthetic graphs."""
+"""Concept -> images on scene graphs (ADR-0057). Hand-built synthetic graphs."""
 
 from mmxai.data.scene_graph import Relation, SceneGraph, SceneObject
 from mmxai.queries.kg_targets import activity_images, object_images

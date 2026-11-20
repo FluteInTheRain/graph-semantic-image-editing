@@ -1,4 +1,4 @@
-"""ConceptNet parsing and filtering (ADR-0050). Synthetic lines only."""
+"""ConceptNet parsing and filtering (ADR-0057). Synthetic lines only."""
 
 from conceptnet_fixtures import assertion_line, write_assertions_gz
 from mmxai.data.conceptnet import (

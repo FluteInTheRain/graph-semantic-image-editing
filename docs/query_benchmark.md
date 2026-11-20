@@ -262,7 +262,7 @@ uv run pytest tests/test_scene_graph.py tests/test_query_generator.py tests/test
 
 ---
 
-## Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0050)
+## Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0057)
 
 ### Ý tưởng
 
@@ -302,7 +302,7 @@ Cạnh khác bị bỏ. Cùng (khái niệm, `kind`, giá trị) từ nhiều c�
 
 Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất trước, hoà thì theo tên synset. Cả quy trình **không dùng seed**.
 
-Các trường config liên quan (cùng giá trị ở config val và test; lý do: pilot val 2026-11-15, ADR-0050):
+Các trường config liên quan (cùng giá trị ở config val và test; lý do: pilot val 2026-11-15, ADR-0057):
 
 | Trường | Ý nghĩa |
 |---|---|
@@ -377,4 +377,4 @@ Trước hết tự tải `conceptnet-assertions-5.7.0.csv.gz` (xem `data_cards/
 - Khái niệm đích và kho so sánh chỉ đếm trên **train**. Ảnh test chỉ dùng để lấy đáp án.
 - Pilot chạy trên val. Không chỉnh quy tắc sau khi nhìn kết quả truy hồi trên bộ test.
 - Đáp án lấy từ annotation của ảnh test. Mô hình đồ thị **không được dựng cạnh từ annotation ảnh test** và không được đọc `hidden_concept`, `kg_evidence`, `path_hint`.
-- Dùng cạnh ConceptNet bên trong mô hình là việc ngoài ADR-0050, cần ADR riêng.
+- Dùng cạnh ConceptNet bên trong mô hình là việc ngoài ADR-0057, cần ADR riêng.

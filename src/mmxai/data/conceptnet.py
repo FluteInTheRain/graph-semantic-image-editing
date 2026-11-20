@@ -3,7 +3,7 @@
 ConceptNet is a public commonsense knowledge graph: each edge is
 (start, relation, end, weight), e.g. racket -UsedFor-> tennis. The full assertions
 file is large, so it is filtered ONCE (scripts/prepare_conceptnet.py) into a TSV
-with only English-English edges of a few relations (ADR-0050). The original edge
+with only English-English edges of a few relations (ADR-0057). The original edge
 URI is kept so every query can cite the exact edge it was built from.
 """
 

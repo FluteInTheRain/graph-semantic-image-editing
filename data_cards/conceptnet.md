@@ -1,6 +1,6 @@
 # Data card: ConceptNet 5.7
 
-**Là gì?** Đồ thị tri thức thường thức công khai: mỗi cạnh là (đầu, quan hệ, cuối, weight), ví dụ `racket -UsedFor-> tennis`. Đồ án dùng nó làm tri thức ngoài để viết truy vấn gián tiếp mô tả một khái niệm ẩn (ADR-0050).
+**Là gì?** Đồ thị tri thức thường thức công khai: mỗi cạnh là (đầu, quan hệ, cuối, weight), ví dụ `racket -UsedFor-> tennis`. Đồ án dùng nó làm tri thức ngoài để viết truy vấn gián tiếp mô tả một khái niệm ẩn (ADR-0057).
 
 ## Nguồn và phiên bản
 

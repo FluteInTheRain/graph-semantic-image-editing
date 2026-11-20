@@ -131,7 +131,7 @@ def score_rankings(
             metrics[group] = compute_metrics(ranks_by_group[group], recall_ks, top_k)
         else:
             metrics[group] = None
-    # ADR-0050: activity and object queries are reported apart; v1 files have no groups.
+    # ADR-0057: activity and object queries are reported apart; v1 files have no groups.
     metrics["by_query_group"] = {}
     for group, ranks_by_type in sorted(ranks_by_query_group.items()):
         metrics["by_query_group"][group] = {}

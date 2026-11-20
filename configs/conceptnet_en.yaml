@@ -1,8 +1,8 @@
-# Filter ConceptNet 5.7 once for the KG query benchmark (ADR-0050).
+# Filter ConceptNet 5.7 once for the KG query benchmark (ADR-0057).
 # How to run: uv run python scripts/prepare_conceptnet.py --config configs/conceptnet_en.yaml
 source_path: data/conceptnet/conceptnet-assertions-5.7.0.csv.gz
 output_path: artifacts/conceptnet/en_edges.tsv
-# Decision (ADR-0050): the relations the description templates can read.
+# Decision (ADR-0057): the relations the description templates can read.
 relations: [IsA, UsedFor, AtLocation, HasA, PartOf, CapableOf]
-# Decision (ADR-0050): drop edges asserted with weight < 1 (weakly supported).
+# Decision (ADR-0057): drop edges asserted with weight < 1 (weakly supported).
 min_weight: 1.0

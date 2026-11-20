@@ -34,7 +34,7 @@ Tái lập **bước (1)–(3)** của G-Retriever, **bỏ bước (4) LLM**, đ
 | Thành phần | Quy định |
 |---|---|
 | Đỉnh | 3.880 khái niệm của ADR-0045 (synset VG ở ≥ 5 ảnh train, vector CLIP text đóng băng) |
-| Cạnh (bản chính) | Cạnh đồng xuất hiện PMI của ADR-0048 (đếm trên **train**, top 10 mỗi khái niệm), xem như **vô hướng**, bỏ cạnh trùng. **Không** dùng ConceptNet ở bản chính, để tránh "Kênh rò 2" của ADR-0050 |
+| Cạnh (bản chính) | Cạnh đồng xuất hiện PMI của ADR-0048 (đếm trên **train**, top 10 mỗi khái niệm), xem như **vô hướng**, bỏ cạnh trùng. **Không** dùng ConceptNet ở bản chính, để tránh "Kênh rò 2" của ADR-0057 |
 | Giải thưởng | Theo bài gốc: `k` khái niệm có `cos(q, x_c)` cao nhất nhận giải thưởng `k, k−1, …, 1` theo hạng; các khái niệm khác nhận 0. `q` là vector CLIP text của truy vấn |
 | Phí cạnh | Một hằng số `C` cho mọi cạnh, theo bài gốc. PMI chỉ quyết định cạnh nào tồn tại. Cạnh của nhóm không có chữ, nên **không có giải thưởng cho cạnh**. Đây là chỗ khác bài gốc, phải ghi trong báo cáo |
 | Thuật toán | `pcst-fast`, gọi giống hệt code gốc: `pcst_fast(edges, prizes, costs, root=-1, num_clusters=1, pruning='gw', verbosity_level=0)`; đỉnh của đồ thị con gồm đỉnh được chọn và hai đầu của mọi cạnh được chọn |
@@ -59,14 +59,14 @@ Kết hợp điểm giữ như ADR-0047: `final = alpha·cos(q, x_i) + (1−alph
 | Test | Chạy **một lần** với cấu hình đã chốt, bằng script riêng không chọn gì, giống ADR-0047 |
 | Seed | Bậc 1 (`pcst`, `top_k_only`) **tất định**: ba seed cho kết quả giống hệt nhau, nên std = 0 (giống CLIP thuần trong `results/tables/main.csv`). Std = 0 đến từ tính tất định, **không** phải bằng chứng ổn định thống kê; không được diễn giải như vậy. Vẫn chạy `[0, 1, 2]` để `scripts/summarize_runs.py` hoạt động. Chỉ ablation xáo cạnh có seed thật (seed xáo = seed chạy): so sánh main với shuffled **theo từng seed**. Bậc 2 chạy `[0, 1, 2]`, báo cáo mean ± std |
 | Quy tắc dừng (ghi trước) | Nếu cả bậc 1 lẫn bậc 2 **không hơn `clip_nograph` trên val**, vẫn chạy test một lần và báo cáo trung thực kết quả âm. Chỉ chuyển sang AdaMF-MAT nếu còn thời gian. Không chỉnh lại tham số sau khi thấy kết quả test |
-| Đánh giá | (a) Giao thức chính trên VG test (region description, 5.000 ảnh); (b) bộ truy vấn trực tiếp/gián tiếp v2 (ADR-0050) khi đã được kiểm duyệt; (c) Flickr30k để sau, dùng cùng code khi có đồ thị khái niệm của Flickr |
+| Đánh giá | (a) Giao thức chính trên VG test (region description, 5.000 ảnh); (b) bộ truy vấn trực tiếp/gián tiếp v2 (ADR-0057) khi đã được kiểm duyệt; (c) Flickr30k để sau, dùng cùng code khi có đồ thị khái niệm của Flickr |
 
 ### 4. Ablation
 
 1. **Không dựng cây**: `S_q` chỉ gồm top-k khái niệm có thưởng, không có cầu nối. Ablation này kiểm phần đóng góp của PCST.
 2. **Xáo cạnh PMI**: xáo cạnh khái niệm–khái niệm, giữ bậc của từng đỉnh. Hàm shuffle hiện có chỉ xáo cạnh `contains`, nên cần thêm hàm mới.
-3. **Biến thể ConceptNet**: thêm cạnh ConceptNet (đã lọc theo ADR-0050) giữa các khái niệm VG. Kết quả ghi là kịch bản **"KG đã biết"**.
-4. Trên bộ truy vấn v2: **loại đúng các cạnh trong `kg_evidence`** của từng truy vấn (ADR-0050, Kênh rò 2).
+3. **Biến thể ConceptNet**: thêm cạnh ConceptNet (đã lọc theo ADR-0057) giữa các khái niệm VG. Kết quả ghi là kịch bản **"KG đã biết"**.
+4. Trên bộ truy vấn v2: **loại đúng các cạnh trong `kg_evidence`** của từng truy vấn (ADR-0057, Kênh rò 2).
 
 ### 5. Giải thích (ADR-0016)
 
@@ -106,7 +106,7 @@ Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. 
   - PCST chỉ dùng văn bản truy vấn.
   - Mọi tham số chọn trên val; test chạy một lần.
   - Bộ truy vấn v2 chỉ dùng để đánh giá.
-  - Bản chính không dùng ConceptNet nên tránh Kênh rò 2 của ADR-0050.
+  - Bản chính không dùng ConceptNet nên tránh Kênh rò 2 của ADR-0057.
 - **Khó hơn:**
   - Thêm dependency GPL.
   - Bậc 2 phải chạy PCST cho mọi câu train và cache kết quả. Thời gian chưa đo, phải đo trước khi chạy hết.
@@ -230,4 +230,4 @@ G-Retriever (phần truy xuất đồ thị con, bậc 1 và bậc 2) **không c
 - Đề bài, §2, §5, §6, §7, §10.
 - He et al., "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering", NeurIPS 2024. https://arxiv.org/abs/2402.07630, code https://github.com/XiaoxinHe/G-Retriever (MIT). Đã đối chiếu với code gốc ngày 2026-11-15: `src/dataset/utils/retrieval.py` (`retrieval_via_pcst`: giải thưởng đỉnh `topk..1`, phí cạnh hằng `cost_e`, giải thưởng cạnh chỉ khi cạnh có chữ) và `src/dataset/scene_graphs.py` (`topk=3, topk_e=3, cost_e=0.5`).
 - `pcst-fast`: https://pypi.org/project/pcst-fast/ (GPL).
-- ADR-0009, ADR-0016, ADR-0043, ADR-0045, ADR-0046, ADR-0047, ADR-0048, ADR-0050.
+- ADR-0009, ADR-0016, ADR-0043, ADR-0045, ADR-0046, ADR-0047, ADR-0048, ADR-0057.

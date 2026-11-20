@@ -1,4 +1,4 @@
-r"""Build the official KG benchmark from the human-reviewed manifest (ADR-0050).
+r"""Build the official KG benchmark from the human-reviewed manifest (ADR-0057).
 
 Logic: mmxai.queries.validator.run_build_benchmark.
 

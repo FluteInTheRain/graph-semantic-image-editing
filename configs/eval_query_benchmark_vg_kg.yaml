@@ -1,4 +1,4 @@
-# Plain CLIP on the verified query benchmark, direct and indirect reported apart (ADR-0050).
+# Plain CLIP on the verified query benchmark, direct and indirect reported apart (ADR-0057).
 # How to run: see the docstring of scripts/evaluate_query_benchmark.py.
 # Evaluation only: never tune anything on these numbers (PDF section 6).
 experiment: clip_vg_kg_query_benchmark

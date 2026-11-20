@@ -1,4 +1,4 @@
-# KG query benchmark for Visual Genome, test split (ADR-0050, status: Proposed).
+# KG query benchmark for Visual Genome, test split (ADR-0057, status: Proposed).
 # How to run: see the docstrings of scripts/generate_kg_queries.py and
 # scripts/build_kg_query_benchmark.py.
 # Every value below must be fixed on the val pilot BEFORE generating on test, and never
@@ -10,7 +10,7 @@ relationships_file: relationships.json
 split_file: splits/visual_genome/split_seed0.json
 # Decision (ADR-0009): the benchmark points to test images only.
 split: test
-# ConceptNet edges filtered once by scripts/prepare_conceptnet.py (ADR-0050).
+# ConceptNet edges filtered once by scripts/prepare_conceptnet.py (ADR-0057).
 conceptnet_edges: artifacts/conceptnet/en_edges.tsv
 # Same canonicalisation as ADR-0044, only for the activity predicates. VG writes
 # "riding on a horse" for the same act as "riding a horse", so both count as riding.
@@ -24,10 +24,10 @@ activity_predicates: [playing, riding, flying]
 # Predicates worded "A person playing tennis." (no article, "is played in" templates);
 # every other activity predicate is worded "A person riding a horse." with object_templates.
 play_predicates: [playing]
-# Decision (ADR-0050, proposed): subjects that count as "a person".
+# Decision (ADR-0057, proposed): subjects that count as "a person".
 person_synsets: [man.n.01, woman.n.01, boy.n.01, girl.n.01, child.n.01, person.n.01,
                  player.n.01, guy.n.01, lady.n.01, people.n.01, kid.n.01]
-# Decision (ADR-0050, proposed): category words an indirect query may name.
+# Decision (ADR-0057, proposed): category words an indirect query may name.
 category_words: [sport, game, activity, vehicle, animal, instrument, fruit, vegetable,
                  furniture, tool, food, toy, appliance, device, container, clothing]
 # Verb phrase per ConceptNet fact kind, for activity and object concepts.
@@ -45,7 +45,7 @@ num_properties: 2
 # Decision (pilot val 2026-11-15): ConceptNet weight-1 facts were often odd ("cable found at
 # a back of computer"), so a property fact needs weight >= 2. IsA categories are not filtered.
 min_fact_weight: 2.0
-# Decision (ADR-0050, proposed): thresholds, fixed on the val pilot.
+# Decision (ADR-0057, proposed): thresholds, fixed on the val pilot.
 #   A concept needs enough TRAIN images to be a fair target, and a small answer set
 #   in the queried split so a human can verify all of it.
 min_train_images: 20

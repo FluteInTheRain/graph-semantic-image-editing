@@ -1,4 +1,4 @@
-"""Generate KG direct/indirect query pairs for Visual Genome (ADR-0050).
+"""Generate KG direct/indirect query pairs for Visual Genome (ADR-0057).
 
 For each target concept (an activity a person plays, or an object), the direct
 query names it and the indirect query only describes it through ConceptNet facts

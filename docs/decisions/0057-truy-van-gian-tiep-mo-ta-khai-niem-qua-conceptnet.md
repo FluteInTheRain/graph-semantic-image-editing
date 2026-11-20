@@ -1,7 +1,8 @@
-# ADR-0050: Sinh truy vấn gián tiếp bằng cách mô tả khái niệm bị giấu qua tri thức ConceptNet
+# ADR-0057: Sinh truy vấn gián tiếp bằng cách mô tả khái niệm bị giấu qua tri thức ConceptNet
 
 - **Trạng thái:** Chấp nhận (nhóm chấp nhận 2026-11-17)
 - **Ngày:** 2026-11-15
+- **Số ADR:** ban đầu mang số 0050; khi vào `main`, số 0050 đã được ADR MMKG và ADR Flickr30k dùng, nên đổi thành 0057 (2026-11-21). Nội dung quyết định không đổi.
 
 ## Bối cảnh
 

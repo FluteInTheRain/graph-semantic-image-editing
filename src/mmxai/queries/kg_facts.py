@@ -2,7 +2,7 @@
 
 A fact is something true about a concept C read from one edge: "C is a sport",
 "C uses a racket" (racket -UsedFor-> C). An indirect query names one category and a
-few properties of C but never C itself (ADR-0050). To be a fair query it must point
+few properties of C but never C itself (ADR-0057). To be a fair query it must point
 to C alone: no other concept of the same group may have the same category and
 properties, otherwise images of that other concept would also be correct answers.
 """

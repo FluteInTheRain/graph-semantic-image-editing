@@ -1,4 +1,4 @@
-"""Facts per concept and the unique description (ADR-0050). Synthetic edges only."""
+"""Facts per concept and the unique description (ADR-0057). Synthetic edges only."""
 
 from conceptnet_fixtures import EDGES, edge
 from mmxai.queries.kg_facts import build_fact_index, choose_description, leaks_name, looks_plural

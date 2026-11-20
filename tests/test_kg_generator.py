@@ -1,4 +1,4 @@
-"""KG query generation end to end on synthetic data (ADR-0050)."""
+"""KG query generation end to end on synthetic data (ADR-0057)."""
 
 from dataclasses import replace
 

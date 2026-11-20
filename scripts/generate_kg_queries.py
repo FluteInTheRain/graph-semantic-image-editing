@@ -1,4 +1,4 @@
-r"""Generate candidate KG direct/indirect query pairs for Visual Genome (ADR-0050).
+r"""Generate candidate KG direct/indirect query pairs for Visual Genome (ADR-0057).
 
 Logic: mmxai.queries.kg_generator.
 
