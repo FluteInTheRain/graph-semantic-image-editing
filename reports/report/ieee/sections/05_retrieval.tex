@@ -272,48 +272,48 @@ $\alpha$ & $k=3$, $C=0,5$ ($|S_q|\approx 3$) & $k=10$, $C=0,25$ ($|S_q|\approx 1
 
 \begin{table}[t]
 \centering
-\caption{G-Retriever giai đoạn 2 trên test (5.000 ảnh, 25.000 truy vấn mỗi tập, 3 seed). Không so số tuyệt đối giữa hai tập}
+\caption{G-Retriever giai đoạn 2 trên test (5.000 ảnh, 25.000 truy vấn mỗi tập, 3 seed). Đối chứng: không đồ thị, cùng cấu hình huấn luyện (lr $10^{-4}$). Không so số tuyệt đối giữa hai tập}
 \label{tab:gret2}
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
-\begin{tabular}{@{}l c c c c c@{}}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l c c c c c@{}}
 \toprule
-\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
 \midrule
-\multicolumn{6}{@{}l}{\textit{Visual Genome}} \
-CLIP thuần & 0,0584 & 0,1422 & 0,2018 & 0,1076 & 1 \
-Đối chứng cùng cấu hình & 0,0697\pmm0,0008 & \textbf{0,1742}\pmm0,0017 & \textbf{0,2485}\pmm0,0007 & 0,1277\pmm0,0001 & 0,1--0,2 \
-G-Retriever GĐ2 & \textbf{0,0708}\pmm0,0006 & 0,1724\pmm0,0011 & 0,2474\pmm0,0001 & \textbf{0,1278}\pmm0,0005 & 0,2--0,3 \
+\multicolumn{6}{@{}l}{\textit{Visual Genome}} \\
+CLIP thuần & 0,0584 & 0,1422 & 0,2018 & 0,1076 & 1 \\
+Đối chứng & 0,0697\pmm0,0008 & \textbf{0,1742}\pmm0,0017 & \textbf{0,2485}\pmm0,0007 & 0,1277\pmm0,0001 & 0,1--0,2 \\
+G-Retriever & \textbf{0,0708}\pmm0,0006 & 0,1724\pmm0,0011 & 0,2474\pmm0,0001 & \textbf{0,1278}\pmm0,0005 & 0,2--0,3 \\
 \midrule
-\multicolumn{6}{@{}l}{\textit{Flickr30k}} \
-CLIP thuần & 0,4901 & 0,7426 & 0,8250 & 0,6045 & 1 \
-Đối chứng cùng cấu hình & \textbf{0,5314}\pmm0,0019 & \textbf{0,7805}\pmm0,0011 & 0,8548\pmm0,0011 & \textbf{0,6430}\pmm0,0016 & 0,5 \
-G-Retriever GĐ2 & 0,5278\pmm0,0002 & 0,7794\pmm0,0006 & \textbf{0,8555}\pmm0,0004 & 0,6408\pmm0,0003 & 0,5 \
+\multicolumn{6}{@{}l}{\textit{Flickr30k}} \\
+CLIP thuần & 0,4901 & 0,7426 & 0,8250 & 0,6045 & 1 \\
+Đối chứng cùng cấu hình & \textbf{0,5314}\pmm0,0019 & \textbf{0,7805}\pmm0,0011 & 0,8548\pmm0,0011 & \textbf{0,6430}\pmm0,0016 & 0,5 \\
+G-Retriever & 0,5278\pmm0,0002 & 0,7794\pmm0,0006 & \textbf{0,8555}\pmm0,0004 & 0,6408\pmm0,0003 & 0,5 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{G-Retriever giai đoạn 2 trên val (tập dùng để chọn epoch và $\alpha$), 3 seed}
+\caption{G-Retriever giai đoạn 2 trên val (tập dùng để chọn epoch và $\alpha$), 3 seed; đối chứng như Bảng~\ref{tab:gret2}}
 \label{tab:gret2-val}
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\begin{tabular}{@{}l c c c c@{}}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l c c c c@{}}
 \toprule
-\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \\
 \midrule
-\multicolumn{5}{@{}l}{\textit{Visual Genome}} \
-CLIP thuần & 0,0559 & 0,1443 & 0,2046 & 0,1061 \
-Đối chứng cùng cấu hình & 0,0680\pmm0,0000 & 0,1731\pmm0,0011 & 0,2406\pmm0,0005 & 0,1246\pmm0,0003 \
-G-Retriever GĐ2 & 0,0680\pmm0,0003 & 0,1731\pmm0,0008 & 0,2423\pmm0,0012 & 0,1244\pmm0,0003 \
+\multicolumn{5}{@{}l}{\textit{Visual Genome}} \\
+CLIP thuần & 0,0559 & 0,1443 & 0,2046 & 0,1061 \\
+Đối chứng & 0,0680\pmm0,0000 & 0,1731\pmm0,0011 & 0,2406\pmm0,0005 & 0,1246\pmm0,0003 \\
+G-Retriever & 0,0680\pmm0,0003 & 0,1731\pmm0,0008 & 0,2423\pmm0,0012 & 0,1244\pmm0,0003 \\
 \midrule
-\multicolumn{5}{@{}l}{\textit{Flickr30k}} \
-CLIP thuần & 0,4891 & 0,7368 & 0,8168 & 0,6016 \
-Đối chứng cùng cấu hình & 0,5281\pmm0,0017 & 0,7778\pmm0,0011 & 0,8513\pmm0,0010 & 0,6397\pmm0,0015 \
-G-Retriever GĐ2 & 0,5259\pmm0,0003 & 0,7768\pmm0,0002 & 0,8528\pmm0,0004 & 0,6381\pmm0,0002 \
+\multicolumn{5}{@{}l}{\textit{Flickr30k}} \\
+CLIP thuần & 0,4891 & 0,7368 & 0,8168 & 0,6016 \\
+Đối chứng & 0,5281\pmm0,0017 & 0,7778\pmm0,0011 & 0,8513\pmm0,0010 & 0,6397\pmm0,0015 \\
+G-Retriever & 0,5259\pmm0,0003 & 0,7768\pmm0,0002 & 0,8528\pmm0,0004 & 0,6381\pmm0,0002 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{table}[t]
@@ -324,11 +324,11 @@ G-Retriever GĐ2 & 0,5259\pmm0,0003 & 0,7768\pmm0,0002 & 0,8528\pmm0,0004 & 0,63
 \setlength{\tabcolsep}{2pt}
 \begin{tabular}{@{}l c c c c@{}}
 \toprule
-\textbf{Tập} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean \pmm{} std} \
+\textbf{Tập} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean \pmm{} std} \\
 \midrule
-VG, test & $-0,00042$ & +0,00031 & +0,00053 & +0,00014\pmm0,00050 \
-Flickr30k, test & $-0,00372$ & $-0,00119$ & $-0,00156$ & $-0,00216$\pmm0,00137 \
-Flickr30k, val & $-0,00340$ & $-0,00050$ & $-0,00115$ & $-0,00168$\pmm0,00152 \
+VG, test & $-0,00042$ & +0,00031 & +0,00053 & +0,00014\pmm0,00050 \\
+Flickr30k, test & $-0,00372$ & $-0,00119$ & $-0,00156$ & $-0,00216$\pmm0,00137 \\
+Flickr30k, val & $-0,00340$ & $-0,00050$ & $-0,00115$ & $-0,00168$\pmm0,00152 \\
 \bottomrule
 \end{tabular}
 \end{table}
