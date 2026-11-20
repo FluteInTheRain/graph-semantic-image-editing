@@ -1,0 +1,21 @@
+{
+  "R@1": 0.52856,
+  "R@5": 0.77796,
+  "R@10": 0.85304,
+  "MRR@100": 0.6407779132230104,
+  "num_queries": 25000,
+  "split": "test",
+  "split_file": "splits/flickr30k/split_seed0.json",
+  "split_sha256": "8b5c542761a198d09ff749566b0d32e1549731a552427e41c77cb7cfe56b440d",
+  "seed": 0,
+  "alpha": 0.5,
+  "best_epoch": 3,
+  "use_graph": true,
+  "graph_dir": "artifacts/graphs/flickr30k/contains_clip_top16_shuffled_seed0",
+  "concept_edges_dir": null,
+  "graph_edge_source": "clip_topk_shuffled",
+  "graph_git_commit": "fb62f690b90b60eecd2b93e5a5393e68f88419c6",
+  "features_code_hash": "6f1ebf3a94b9c652ac64a8c658269f752347842352ae933ebdd16c0dea3ba027",
+  "model_sha256": "411f7205a82233cf3255bef4d81bcc43307cd7f0be9bf44ef4cf79ef4bdc23f1",
+  "model_git_commit": "fb62f690b90b60eecd2b93e5a5393e68f88419c6"
+}

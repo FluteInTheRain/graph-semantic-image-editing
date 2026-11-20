@@ -1,0 +1,5 @@
+group,num_queries,distinct_top1_images,largest_top1_share,mean_query_cosine
+direct_en,80,57,0.0625,0.506
+direct_vi,80,10,0.6,0.8125
+indirect_en,79,28,0.2532,0.7041
+indirect_vi,79,3,0.6962,0.9215

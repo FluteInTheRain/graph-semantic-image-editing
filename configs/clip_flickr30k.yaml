@@ -1,0 +1,10 @@
+# configs/clip_vg.yaml on Flickr30k: only the dataset changes (ADR-0050).
+experiment: clip_flickr30k
+dataset: flickr30k
+split_file: splits/flickr30k/split_seed0.json
+features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k
+eval_split: val
+top_k: 100
+recall_ks: [1, 5, 10]
+same_text_threshold: 0.9999
+output_dir: results/runs

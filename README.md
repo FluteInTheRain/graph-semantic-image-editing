@@ -32,6 +32,7 @@
 16. [Gợi ý lộ trình thực hiện](#16-gợi-ý-lộ-trình-thực-hiện)
 17. [Bản đồ repo](#17-bản-đồ-repo)
 18. [Thành viên / Đóng góp](#18-thành-viên--đóng-góp)
+19. [Cài đặt và chạy lại](#19-cài-đặt-và-chạy-lại)
 
 ### 🧭 Gợi ý thứ tự đọc
 
@@ -40,6 +41,7 @@
 | Mới vào, chưa biết gì | §1 → §2 → §3 → §4 → §5 → §7 → §9 |
 | Chuẩn bị code | §5 → §6 → §10 → §11 → §12 → §17 |
 | Chuẩn bị nộp bài / vấn đáp | §9 → §13 → §14 (và ôn lại §10, §12 vì giảng viên hay hỏi) |
+| Muốn chạy lại kết quả | §19 |
 
 ---
 
@@ -394,7 +396,7 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 2 – trần 8.5
 
-- [ ] Thực nghiệm trên **ít nhất 2 tập công khai**.
+- [x] Thực nghiệm trên **ít nhất 2 tập công khai**. → Flickr30k chạy lại pipeline cấp độ 1 (ADR-0050), 3 seed, val + test (`results/tables/level1_flickr30k_test.csv`, `level1_flickr30k_val.csv`)
 - [ ] Triển khai hoặc tái lập **1 phương pháp mới từ năm 2024 trở lại đây** về multimodal KG, graph-enhanced retrieval hoặc explainable graph retrieval. Chỉ cần 1. Ví dụ: NativE (SIGIR 2024), AdaMF-MAT (LREC-COLING 2024), Mixed-Curvature MMKGC (AAAI 2025) (PDF §2, §10).
 - [ ] Đánh giá trên **cùng pipeline và cách chia** của cấp độ 1.
 - [ ] Xây bộ **tối thiểu 20 truy vấn đánh giá**, có nhóm **truy vấn gián tiếp** (kiểu child – plays – football).
@@ -402,12 +404,12 @@ Nguồn: PDF §3. Không bắt buộc web hoàn chỉnh; notebook hoặc giao di
 
 ### Cấp độ 3 – trần 10
 
-- [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016)
+- [x] Đánh giá giải thích **định lượng**: **fidelity**, **validity**, **sparsity**, bằng chứng cụ thể cho **tối thiểu 10 truy vấn**. → explainer chốt trên val (Integrated Gradients, `m = 10`), test chạy một lần trên 20 truy vấn × 3 seed: `results/tables/xai_level3.csv`, từng truy vấn: `results/tables/xai_level3_test_queries.csv` (ADR-0016); thêm trên MMKG tiếng Việt (318 truy vấn × 3 seed, cùng lựa chọn của VG): `results/tables/xai_mmkg.csv` (ADR-0054)
   - Fidelity theo đề: bỏ hoặc làm nhiễu cạnh/đường đi dùng làm giải thích thì điểm hoặc thứ hạng phải thay đổi theo hướng hợp lý.
-- [ ] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**.
-- [ ] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này.
-- [ ] Mô tả nguồn dữ liệu, cách liên kết ảnh – thực thể.
-- [ ] Phân tích **khả năng chuyển giao** (transferability).
+- [x] **Tự xây một MMKG nhỏ** cho một miền hẹp, **ưu tiên tiếng Việt**. Quy mô gợi ý: **50–150 thực thể**, **300–1.000 triple**, **200–500 ảnh**. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người (119 thực thể, 303 triple, 380 ảnh): `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
+- [x] Chạy **phương pháp tốt nhất** từ cấp độ 1/2 trên dữ liệu này. → 2 mô hình GNN của Visual Genome và đối chứng không đồ thị, dùng nguyên, không huấn luyện lại, 318 truy vấn × 3 seed: `results/tables/mmkg_transfer.csv`, `mmkg_transfer_groups.csv` (ADR-0053, báo cáo mục 8)
+- [x] Mô tả nguồn dữ liệu, cách liên kết ảnh – thực thể. → `data_cards/mmkg_vi.md` mục 2 và 5
+- [x] Phân tích **khả năng chuyển giao** (transferability). → VG → di sản Việt Nam: MRR tăng nhẹ nhưng đối chứng không đồ thị cũng đạt mức đó, nên mức tăng đến từ phép chiếu học trên VG chứ không từ đồ thị; tiếng Anh → tiếng Việt thất bại vì CLIP gom các câu tiếng Việt lại (`results/tables/mmkg_transfer_query_spread.csv`); báo cáo mục 8.3
 
 ### Cấp độ 4 – điểm cộng +1.0 đến +2.0
 
@@ -486,13 +488,13 @@ Nguồn: PDF §7. **Không bắt buộc** làm mọi mục ở cột Mở rộng
 
 Nguồn: PDF §8.
 
-- [ ] Mã nguồn: tiền xử lý, trích đặc trưng, tạo đồ thị, huấn luyện, đánh giá. Kèm file requirements/environment và hướng dẫn chạy lại.
+- [ ] Mã nguồn: tiền xử lý, trích đặc trưng, tạo đồ thị, huấn luyện, đánh giá. Kèm file requirements/environment và hướng dẫn chạy lại. → môi trường: `pyproject.toml` + `uv.lock`; hướng dẫn: [§19](#19-cài-đặt-và-chạy-lại)
 - [ ] Tập chia dữ liệu cố định hoặc mã tạo split; mô tả rõ cách phòng tránh rò rỉ.
 - [ ] Báo cáo kỹ thuật **khoảng 12–18 trang**, slide trình bày, và **bảng phân công đóng góp** từng thành viên.
 - [ ] Notebook hoặc giao diện nhỏ: nhập truy vấn → top-k kết quả → hiển thị quan hệ/đường đi giải thích.
 - [ ] Phân tích chi tiết **≥ 5 truy vấn thành công** và **≥ 5 truy vấn thất bại**.
 - [ ] Nếu làm cấp độ 2: bộ **≥ 20 truy vấn** đánh giá kèm mô tả cách xây dựng và kiểm tra.
-- [ ] Nếu làm cấp độ 3: MMKG tự xây kèm **data card**, nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng dữ liệu.
+- [x] Nếu làm cấp độ 3: MMKG tự xây kèm **data card**, nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng dữ liệu. → đã thu thập, dựng, duyệt sơ bộ bằng AI và duyệt bởi người: `mmkg/`, `data_cards/mmkg_vi.md`, ADR-0050, ADR-0052
 - [ ] **Demo chạy trực tiếp** khi vấn đáp + **video dự phòng ≤ 5 phút**.
 
 ---
@@ -590,8 +592,107 @@ Repo đang được dựng song song. Các tài liệu sau là nơi tra cứu ch
 
 | Thành viên | MSSV | Vai trò / Đóng góp |
 |---|---|---|
+| Nguyễn Nhật Khang (GitHub: FluteInTheRain) | 25C15013 | Dựng khung repo (môi trường `uv`, package `mmxai`, cấu hình công cụ AI, ADR, README); split cố định Visual Genome; baseline CLIP thuần (FAISS, Recall@K/MRR); CLIP + Graph: ablation đồ thị xáo, giải thích Occlusion, mở rộng đánh giá (nDCG, image-to-text, nhóm truy vấn); MMKG tiếng Việt cấp độ 3 (thu thập Wikidata/Commons, dựng bảng, tải ảnh, duyệt sơ bộ bằng AI) |
 | TBD | TBD | TBD |
 | TBD | TBD | TBD |
 | TBD | TBD | TBD |
 | TBD | TBD | TBD |
-| TBD | TBD | TBD |
+
+---
+
+## 19. Cài đặt và chạy lại
+
+Mục này gom các lệnh để chạy lại toàn bộ pipeline, theo đúng thứ tự. Chi tiết và lý do của từng bước nằm trong guide được dẫn ở mỗi bước. Mọi lệnh chạy từ thư mục gốc của repo. **Không cần GPU**: CLIP đóng băng, GNN chỉ khoảng 0,5–1 triệu tham số.
+
+### 19.1. Môi trường
+
+Môi trường được khoá trong [`pyproject.toml`](pyproject.toml) và [`uv.lock`](uv.lock) (thay cho `requirements.txt`, ADR-0002). `uv` tự tải Python 3.11 theo `.python-version`.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh     # cài uv (macOS: brew install uv)
+uv sync --all-groups                                 # dev + ml (torch, open_clip, faiss) + graph (PyG) + nlp + demo (gradio, jupyterlab)
+uv run pytest                                        # kiểm tra cài đặt: phải xanh
+```
+
+Các nhóm phụ thuộc (ADR-0006): chỉ cần `--group ml` cho CLIP/FAISS, thêm `--group graph` cho đồ thị và GNN, thêm `--group demo` cho giao diện. Lỗi trên macOS (`OMP: Error #15`) và mạng công ty (`UnknownIssuer`): xem [`docs/guides/huan-luyen-va-xep-hang-lai.md`](docs/guides/huan-luyen-va-xep-hang-lai.md) mục 4 và [`app/README.md`](app/README.md).
+
+### 19.2. Dữ liệu và embedding CLIP
+
+Dữ liệu (`data/`) và embedding (`artifacts/`) không được commit. Có hai cách:
+
+| Cách | Khi nào | Hướng dẫn |
+|---|---|---|
+| Tải embedding đã trích sẵn từ Kaggle | Chạy lại nhanh (khuyên dùng) | [`docs/guides/chuan-bi-embedding-clip.md`](docs/guides/chuan-bi-embedding-clip.md) mục 2 |
+| Tải dữ liệu thô rồi tự trích | Kiểm tra bước trích đặc trưng | Cùng guide, mục 3–5 |
+
+```bash
+# Chỉ khi tự trích (chậm trên CPU; dùng Kaggle cho toàn bộ dữ liệu)
+uv run python scripts/extract_features.py --config configs/features_visual_genome.yaml
+uv run python scripts/extract_features.py --config configs/features_flickr30k.yaml
+```
+
+Đồ thị còn cần `data/visual_genome/objects.json` và `image_data.json` ([`docs/guides/xay-do-thi.md`](docs/guides/xay-do-thi.md) mục 2).
+
+### 19.3. Split (đã commit, không cần chạy)
+
+`splits/visual_genome/split_seed0.json` và `splits/flickr30k/split_seed0.json` đã commit và đóng băng (ADR-0009, ADR-0042). Script từ chối ghi đè; chỉ chạy để kiểm tra tái lập (đổi `output_dir` sang thư mục khác):
+
+```bash
+uv run python scripts/make_splits.py --config configs/splits_visual_genome.yaml
+uv run python scripts/make_splits.py --config configs/splits_flickr30k.yaml
+```
+
+### 19.4. Thứ tự chạy pipeline
+
+Quy tắc chung (ADR-0009, ADR-0047): **commit code trước khi chạy**; mọi lựa chọn (`alpha`, epoch, siêu tham số) làm trên **val**; **test chạy đúng một lần** mỗi seed. Các experiment đã có trong `results/tables/` **không chạy test lại**; muốn kiểm tái lập thì chỉ chạy train + val rồi so với `selection.json` và số val trong guide.
+
+| Bước | Lệnh | Guide / ADR |
+|---|---|---|
+| 1. Baseline CLIP thuần | `uv run python scripts/evaluate_clip.py --config configs/clip_vg.yaml --seed 0` | ADR-0043 |
+| 2. Dựng đồ thị ảnh – khái niệm | `uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml` | [`xay-do-thi.md`](docs/guides/xay-do-thi.md), ADR-0045, ADR-0046 |
+| 3. Cạnh đồng xuất hiện (đếm trên train) | `uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml` | ADR-0048 |
+| 4. Đồ thị xáo cạnh (ablation) | `uv run python scripts/shuffle_graph.py --config configs/graph_vg_clip_topk_shuffled.yaml` | ADR-0046 mục 6 |
+| 5. Huấn luyện GraphSAGE + chọn `alpha` trên val | `uv run python scripts/train_graph_rerank.py --config configs/clip_graph_vg_lr1e4.yaml --seeds 0 1 2 --threads 4` (lặp lại với `clip_nograph_vg`, `clip_cooc_graph_vg_lr1e4`, `clip_graph_vg_lr1e4_shuffled`) | [`huan-luyen-va-xep-hang-lai.md`](docs/guides/huan-luyen-va-xep-hang-lai.md) mục 4, ADR-0047 |
+| 6. Chấm test (một lần mỗi seed) | `uv run python scripts/evaluate_graph_rerank.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0` | ADR-0047 |
+| 7. Đánh giá mở rộng (nDCG, ảnh → văn bản, nhóm truy vấn) | như bước 5–6 với các config `configs/*_eval2.yaml` | ADR-0049 |
+| 8. G-Retriever (PCST, phương pháp 2024) | `uv run python scripts/select_pcst_rerank.py --config configs/clip_pcst_vg.yaml --seed 0` (val), rồi `scripts/evaluate_pcst_rerank.py` (test) | guide trên mục 9, ADR-0051 |
+| 9. Tổng hợp bảng | `uv run python scripts/summarize_runs.py` (thêm `--experiment-suffix _eval2 --kind main\|groups\|image_to_text` cho bước 7) | ADR-0010 |
+| 10. Phân tích 5 thành công + 5 thất bại (val) | `uv run python scripts/explain.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 --split val --num-edges 3 --text-data-dir data/visual_genome` | ADR-0016 |
+| 11. Đánh giá giải thích cấp độ 3 (val, rồi test một lần) | `uv run python scripts/evaluate_explanations.py --config configs/explain_vg.yaml` | [`docs/research/xai-method-proposal.md`](docs/research/xai-method-proposal.md) mục 7d |
+
+**Tập thứ hai (Flickr30k, ADR-0050):** chạy lại bước 1, 5, 6, 9, 10 với các config `*_flickr30k*`. Đồ thị dựng bằng `scripts/build_graph_from_vocabulary.py --config configs/graph_flickr30k_clip_topk.yaml` (dùng lại khái niệm của đồ thị VG, vì Flickr30k không có nhãn đối tượng). Lần chạy đã báo cáo dùng notebook Kaggle `notebooks/20_kaggle_graph_pipeline.ipynb` (hồ sơ: `results/records/20261118_flickr30k-cap-do-1/`).
+
+### 19.5. MMKG tiếng Việt (cấp độ 3)
+
+Bảng `mmkg/*.csv` và bộ truy vấn `queries/mmkg_vi/queries.jsonl` đã commit, nên **không cần** thu thập lại (`scripts/collect_mmkg.py`, `scripts/build_mmkg.py`; ADR-0050, ADR-0052). Chỉ cần tải ảnh rồi đánh giá:
+
+```bash
+uv run python scripts/download_mmkg_images.py --collect-config configs/mmkg_vi_collect.yaml \
+    --build-config configs/mmkg_vi_build.yaml                                  # tải ảnh, kiểm sha1
+uv run python scripts/evaluate_mmkg_transfer.py features --config configs/mmkg_vi_transfer.yaml
+uv run python scripts/evaluate_mmkg_transfer.py evaluate --config configs/mmkg_vi_transfer.yaml   # cần mô hình VG ở bước 5
+uv run python scripts/evaluate_mmkg_explanations.py --config configs/explain_mmkg_vi.yaml \
+    --transfer-config configs/mmkg_vi_transfer.yaml
+```
+
+Đánh giá MMKG cũng chỉ chạy một lần (script từ chối chạy lại). Chi tiết: ADR-0053, ADR-0054, [`data_cards/mmkg_vi.md`](data_cards/mmkg_vi.md).
+
+### 19.6. Demo
+
+Cần mô hình `clip_graph_vg_lr1e4` seed 0 (bước 5). Hướng dẫn đầy đủ cho máy mới: [`app/README.md`](app/README.md).
+
+```bash
+uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
+    --vg-data-dir data/visual_genome
+```
+
+Mở <http://127.0.0.1:7860>, gõ truy vấn (ví dụ `man riding a horse`): app trả về top-k ảnh val và đường đi giải thích `truy vấn → khái niệm → contains → ảnh` của từng ảnh.
+
+### 19.7. Kết quả ra đâu
+
+| Đường dẫn | Nội dung | Commit? |
+|---|---|---|
+| `artifacts/` | Embedding, đồ thị, trọng số mô hình, `selection.json` | Không |
+| `results/runs/<thời điểm>_<experiment>_seed<k>/` | `config.yaml`, `metrics.json`, `env.json` của từng lần chạy | Không |
+| `results/records/` | Bản chép các run đã dùng cho báo cáo | Có |
+| `results/tables/` | Bảng mean ± std qua 3 seed: **nguồn duy nhất** cho số trong báo cáo ([`results/tables/README.md`](results/tables/README.md)) | Có |

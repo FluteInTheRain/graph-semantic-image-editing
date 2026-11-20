@@ -1,0 +1,4 @@
+# configs/graph_vg_clip_topk_shuffled.yaml on Flickr30k: only the dataset changes (ADR-0050).
+graph_dir: artifacts/graphs/flickr30k/contains_clip_top16_v1
+shuffle_seed: 0
+output_dir: artifacts/graphs/flickr30k/contains_clip_top16_shuffled_seed0

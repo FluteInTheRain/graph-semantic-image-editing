@@ -23,6 +23,7 @@ import numpy as np
 import torch
 import yaml
 
+from mmxai.data import flickr30k
 from mmxai.data.visual_genome import load_region_texts
 from mmxai.eval.graph_rerank import (
     MODEL_FILE,
@@ -46,21 +47,28 @@ from mmxai.rerank.fusion import Candidates, candidate_graph_scores, fuse_scores
 from mmxai.utils.runs import collect_env, make_run_dir
 
 QUERIES_PER_GROUP = 5
+# Feature-cache column that names each text inside its image (mmxai.features.pipeline).
+TEXT_ID_COLUMNS = {"visual_genome": "text_ids", "flickr30k": "caption_index"}
 # A concept -> image edge is the contains edge (ADR-0045) read from the concept's side.
 RELATION_NAME = "in"
 ANALYSIS_JSON = "analysis.json"
 ANALYSIS_MD = "analysis.md"
 
 
-def load_query_texts(vg_data_dir: str | Path) -> dict[int, str]:
-    """region_id -> phrase, from Visual Genome's region_descriptions.json.
+def load_query_texts(dataset: str, data_dir: str | Path) -> dict[tuple[int, int], str]:
+    """(image_id, text_id) -> sentence, read from the raw dataset files.
 
-    The feature cache keeps only region ids ("text_ids"), not the phrases, so the
-    text has to be read from the raw file (several GB).
+    The feature cache keeps only ids, not the sentences. Visual Genome: region
+    phrases from region_descriptions.json. Flickr30k: captions from
+    dataset_flickr30k.json, where text_id is the caption's position in its image.
     """
+    if dataset == "flickr30k":
+        records = flickr30k.load_captions(Path(data_dir))
+    else:
+        records = load_region_texts(Path(data_dir))
     texts = {}
-    for record in load_region_texts(Path(vg_data_dir)):
-        texts[record.text_id] = record.text
+    for record in records:
+        texts[(record.image_id, record.text_id)] = record.text
     return texts
 
 
@@ -69,12 +77,12 @@ def analyse_split(
     seed: int,
     split: str,
     num_edges: int,
-    vg_data_dir: str | Path | None,
+    text_data_dir: str | Path | None,
     log=print,
 ) -> dict:
     """Return every number of the analysis as a JSON-ready dict.
 
-    vg_data_dir: folder with region_descriptions.json for the query text, or None.
+    text_data_dir: folder with the raw sentences (load_query_texts), or None.
     """
     if split != "val":
         raise ValueError(
@@ -85,8 +93,8 @@ def analyse_split(
         raise ValueError("only the one-layer model (concept_edges_dir: null) can be explained")
 
     query_texts = None
-    if vg_data_dir is not None:
-        query_texts = load_query_texts(vg_data_dir)
+    if text_data_dir is not None:
+        query_texts = load_query_texts(config.dataset, text_data_dir)
 
     # 1. What training saved: weights and alpha. Nothing is chosen here.
     model_dir = seed_model_dir(config, seed)
@@ -104,11 +112,12 @@ def analyse_split(
     graph_scores = candidate_graph_scores(candidates, h, split_graph.image_ids)
     final_scores = fuse_scores(candidates.clip_scores, graph_scores, alpha)
 
-    if "text_ids" not in inputs.texts:
-        raise ValueError(f"{config.features_dir} has no text_ids (Visual Genome region ids)")
+    text_id_column = TEXT_ID_COLUMNS[config.dataset]
+    if text_id_column not in inputs.texts:
+        raise ValueError(f"{config.features_dir} has no {text_id_column}")
     # Query rows: the same mask retrieve_candidates uses, so row k is query k.
     is_split_text = np.isin(inputs.texts["image_ids"], inputs.split[split])
-    query_text_ids = inputs.texts["text_ids"][is_split_text]
+    query_text_ids = inputs.texts[text_id_column][is_split_text]
     query_image_ids = inputs.texts["image_ids"][is_split_text]
 
     # 3. and 4. Per-query ranks and the pre-declared pick.
@@ -120,8 +129,10 @@ def analyse_split(
         log("warning: query text not loaded, so repeated sentences cannot be picked once")
     else:
         query_keys = [
-            sentence_key(query_text(query_texts, int(text_id)), int(text_id))
-            for text_id in query_text_ids
+            sentence_key(
+                query_text(query_texts, int(image_id), int(text_id)), int(image_id), int(text_id)
+            )
+            for image_id, text_id in zip(query_image_ids, query_text_ids, strict=True)
         ]
     success, failure = select_queries(clip, fused, QUERIES_PER_GROUP, query_keys)
     for group, picked in (("success", success), ("failure", failure)):
@@ -169,12 +180,13 @@ def analyse_split(
                 explained.append(candidate_record(role, result, explanation))
 
             text_id = int(query_text_ids[query])
+            source_image_id = int(query_image_ids[query])
             record = {
                 "group": group,
                 "query_index": query,
                 "text_id": text_id,
-                "text": query_text(query_texts, text_id),
-                "source_image_id": int(query_image_ids[query]),
+                "text": query_text(query_texts, source_image_id, text_id),
+                "source_image_id": source_image_id,
                 "relevant_image_ids": sorted(candidates.relevant[query]),
                 "clip_rank": clip[query],
                 "graph_rank": fused[query],
@@ -217,17 +229,20 @@ def check_reproduces_training(
         )
 
 
-def query_text(query_texts: dict[int, str] | None, text_id: int) -> str | None:
-    """The region phrase, or None when the raw text was not loaded."""
+def query_text(
+    query_texts: dict[tuple[int, int], str] | None, image_id: int, text_id: int
+) -> str | None:
+    """The query sentence, or None when the raw text was not loaded."""
     if query_texts is None:
         return None
-    return query_texts.get(text_id)
+    return query_texts.get((image_id, text_id))
 
 
-def sentence_key(text: str | None, text_id: int) -> str:
+def sentence_key(text: str | None, image_id: int, text_id: int) -> str:
     """Key for "the same sentence": lower case, single spaces. A missing text is its own key."""
     if text is None:
-        return f"region {text_id}"
+        # Flickr30k caption ids repeat across images, so the image is part of the key.
+        return f"text {image_id}/{text_id}"
     return " ".join(text.lower().split())
 
 
@@ -378,7 +393,7 @@ def format_markdown(analysis: dict) -> str:
 def format_query(item: dict) -> list[str]:
     text = item["text"]
     if text is None:
-        text = f"(text not loaded; region id {item['text_id']})"
+        text = f"(text not loaded; image {item['source_image_id']}, text id {item['text_id']})"
     lines = [
         f'### Query {item["query_index"]}: "{text}"',
         "",

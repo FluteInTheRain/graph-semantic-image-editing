@@ -1,0 +1,49 @@
+{
+  "dataset": "flickr30k",
+  "edge_types": [
+    "contains"
+  ],
+  "edge_source": "clip_topk_shuffled",
+  "clip_topk_k": 16,
+  "num_images": 31014,
+  "num_concepts": 3880,
+  "num_edges": 496224,
+  "vocabulary_from": {
+    "graph_dir": "artifacts/graphs/visual_genome/contains_clip_top16_v1",
+    "dataset": "visual_genome",
+    "graph_sha256": "34a168c4dafcabe7a5333726068b1fcdb9a3fb1fb07684ee5508b3292d64319a"
+  },
+  "feature_dim": 512,
+  "split_sha256": "8b5c542761a198d09ff749566b0d32e1549731a552427e41c77cb7cfe56b440d",
+  "git": {
+    "git_commit": "3a516eb31fcaeff1276f37c95b7096ad6d6021a3",
+    "git_dirty": true
+  },
+  "created_at": "2026-11-16T17:05:00+00:00",
+  "config": {
+    "dataset": "flickr30k",
+    "split_file": "splits/flickr30k/split_seed0.json",
+    "features_dir": "artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k",
+    "vocabulary_graph_dir": "artifacts/graphs/visual_genome/contains_clip_top16_v1",
+    "clip_topk_k": 16,
+    "model": "ViT-B-32",
+    "pretrained": "laion2b_s34b_b79k",
+    "output_dir": "artifacts/graphs/flickr30k/contains_clip_top16_v1"
+  },
+  "shuffle": {
+    "method": "degree_preserving_within_split",
+    "seed": 0,
+    "source_graph_dir": "artifacts/graphs/flickr30k/contains_clip_top16_v1",
+    "source_graph_sha256": "9fdaf7e7861312536aac4e6537f0e8ac1e78a7a16813fe4bb01156711b963767",
+    "source_git": {
+      "git_commit": "3a516eb31fcaeff1276f37c95b7096ad6d6021a3",
+      "git_dirty": false
+    },
+    "source_created_at": "2026-11-16T17:03:43+00:00",
+    "config": {
+      "graph_dir": "artifacts/graphs/flickr30k/contains_clip_top16_v1",
+      "shuffle_seed": 0,
+      "output_dir": "artifacts/graphs/flickr30k/contains_clip_top16_shuffled_seed0"
+    }
+  }
+}

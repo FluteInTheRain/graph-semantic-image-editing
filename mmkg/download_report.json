@@ -1,0 +1,13 @@
+{
+  "counts": {
+    "already_present": 0,
+    "downloaded_original": 37,
+    "downloaded_thumbnail": 343,
+    "missing_on_commons": 0,
+    "relabelled_as_original": 0,
+    "removed_bad_file": 0,
+    "sha1_mismatch": 0
+  },
+  "missing": [],
+  "sha1_mismatches": []
+}

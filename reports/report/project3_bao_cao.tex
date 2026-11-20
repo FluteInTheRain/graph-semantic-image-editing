@@ -162,8 +162,8 @@
   \textbf{Giáo viên hướng dẫn:} & \dots \\[10pt]
   \textbf{Học viên thực hiện:}  & \dots \\[4pt]
                                  & \dots \\[4pt]
-                                 & \dots \\[4pt]
-                                 & \dots \\[4pt]
+                                 & 25C15060 -- Nguyễn Phước Thiện \\[4pt]
+                                 & 25C15050 -- Quan Phú Long \\[4pt]
                                  & 25C15068 -- Trần Hồ Thanh Vũ \\
 \end{tabular}
 
@@ -189,7 +189,6 @@
 % ══════════════════════════════════════════════════════════════
 \section*{Phân công công việc}
 \addcontentsline{toc}{section}{Phân công công việc và khai báo sử dụng AI}
-Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh chứng đóng góp. Mỗi thành viên tự điền phần việc của mình; lịch sử commit và pull request trên GitHub là minh chứng đi kèm.
 
 \begin{table}[H]
     \centering
@@ -197,16 +196,16 @@ Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh ch�
     \begin{tabularx}{\textwidth}{|c|c|l|X|c|}
         \hline
         \rowcolor{madrid}\textcolor{white}{\textbf{STT}} & \textcolor{white}{\textbf{MSHV}} & \textcolor{white}{\textbf{Họ và tên}} & \textcolor{white}{\textbf{Phân công công việc}} & \textcolor{white}{\textbf{Tỉ lệ}} \\ \hline
-        1 & & & & \\ \hline
+        1 & 25C15013 & Nguyễn Nhật Khang & - Dựng khung repo, môi trường, cấu hình công cụ AI, ADR \newline - Split cố định Visual Genome, baseline CLIP thuần (FAISS, Recall@K, MRR) \newline - Ablation đồ thị xáo, giải thích Occlusion, mở rộng đánh giá (nDCG, image-to-text, nhóm truy vấn) \newline - MMKG tiếng Việt cấp độ 3: thu thập, dựng bảng, tải ảnh, duyệt sơ bộ & \\ \hline
         2 & & & & \\ \hline
-        3 & & & & \\ \hline
-        4 & & & & \\ \hline
+        3 & 25C15060 & Nguyễn Phước Thiện & - Viết common function Giải thích cơ bản, Giải thích định lượng \newline - Dựng demo app hiển thị kết quả và đường đi \newline - Chạy thực nghiệm trên dataset Flickr30k \newline - Viết báo cáo cho các phần ở trên & \\ \hline
+        4 & 25C15050 & Quan Phú Long & - Trích đặc trưng CLIP đóng băng (Flickr30k, Visual Genome), notebook Kaggle (PR \#1) \newline - Dựng đồ thị ảnh--khái niệm từ Visual Genome, cạnh \code{contains} theo CLIP top-$k$ (PR \#6, ADR-0045) \newline - GraphSAGE, xếp hạng lại CLIP + Graph, chọn $\alpha$ trên val, cạnh đồng xuất hiện (PR \#7, ADR-0046--0048) \newline - Duyệt MMKG, đánh giá chuyển giao sang MMKG (PR \#24, ADR-0053) \newline - Đánh giá giải thích định lượng trên MMKG (PR \#25, ADR-0054) \newline - Viết phần MMKG trong báo cáo, tài liệu hướng dẫn & \\ \hline
         5 & 25C15068 & Trần Hồ Thanh Vũ & - Theo dõi tiến độ \newline - Viết báo cáo \newline - Làm slide \newline - Hỗ trợ (support) nhóm & \\ \hline
     \end{tabularx}
     \caption{Bảng phân công nhiệm vụ thành viên}
 \end{table}
 
-\subsection*{Khai báo sử dụng công cụ AI (đề §9)}
+\subsection*{Khai báo sử dụng công cụ AI}
 \begin{itemize}
 \item Nhóm dùng \textbf{Claude Code} để hỗ trợ viết code, test, tài liệu ADR và review. Mọi lần dùng được ghi trong \code{docs/ai-usage-log.md} của repo (ngày, việc, phần đã sửa). Các quyết định có giá trị do AI đề xuất mà nhóm chưa duyệt được đánh dấu ``nhóm chưa duyệt'' ngay trong ADR.
 \item Repo có ba agent review độc lập (kiểm rò rỉ dữ liệu, kiểm thiết kế thí nghiệm, kiểm độ trung thực của giải thích; định nghĩa trong \code{.claude/agents/}) chạy trên từng pull request; phát hiện và cách xử lý được ghi trong hồ sơ phiên ở \code{results/records/}.
@@ -220,7 +219,7 @@ Theo đề (§9), điểm cá nhân dựa trên phần vấn đáp và minh ch�
 \addcontentsline{toc}{section}{Tóm tắt}
 Khi tìm ảnh bằng văn bản, CLIP chỉ so khớp hai vectơ. Cách này không khai thác quan hệ giữa các khái niệm trong ảnh và không cho biết vì sao một ảnh được trả về. Nhóm xây dựng trên Visual Genome một hệ thống gồm ba bước: (i) CLIP ViT-B/32 đóng băng và FAISS lấy 100 ứng viên; (ii) một đồ thị hai phía ảnh -- khái niệm (3.880 synset WordNet, mỗi ảnh nối với 16 khái niệm) cùng một lớp GraphSAGE được huấn luyện để xếp hạng lại 100 ứng viên này; điểm cuối là $\alpha\cdot\cos + (1-\alpha)\cdot$điểm đồ thị; (iii) giải thích bằng các cạnh ảnh -- khái niệm, tính bằng can thiệp trên chính mô hình xếp hạng.
 
-Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Các phần chưa hoàn thành (cấp độ 2, MMKG tiếng Việt, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
+Trên tập test cố định (5.000 ảnh, 25.000 truy vấn, 3 seed), CLIP + Graph nâng \mrr{} từ 0.1076 lên 0.1284 \pmm{} 0.0006. Tuy nhiên mô hình đối chứng có cùng phép chiếu học được nhưng không dùng cạnh đã đạt 0.1266 \pmm{} 0.0006, và mô hình trên đồ thị xáo cạnh đạt 0.1272 \pmm{} 0.0003. Như vậy phần lớn mức tăng đến từ phép chiếu học được trên Visual Genome; cấu trúc ảnh -- khái niệm thật chỉ đóng góp thêm một phần nhỏ, nhưng nhất quán (+0.00126 \pmm{} 0.00042 so với đồ thị xáo). Vai trò của đồ thị rõ nhất ở nhóm truy vấn chung chung (câu có nhiều ảnh đúng): \mrr{} 0.1082 so với 0.0951 (xáo cạnh) và 0.0914 (không đồ thị). Giải thích được kiểm tra bằng can thiệp: trên val, bỏ các cạnh do Occlusion hoặc Integrated Gradients chọn làm ảnh tụt hạng nhiều hơn bỏ cùng số cạnh ngẫu nhiên (Wilcoxon một phía, $p\le 0.002$), còn GNNExplainer thì không. Trên tập thứ hai Flickr30k (chạy lại y nguyên pipeline), phép chiếu học được vẫn mang lại gần hết mức tăng (\mrr{} test 0.6045 $\to$ 0.6447), còn CLIP + Graph không hơn mô hình không đồ thị (0.6432 \pmm{} 0.0028). Các phần chưa hoàn thành (phần còn lại của cấp độ 2, MMKG tiếng Việt, kết quả test của phần đánh giá giải thích) được ghi rõ trong báo cáo.
 
 \vspace{0.3cm}
 \noindent\textbf{Từ khoá:} truy vấn đa phương thức, CLIP, GraphSAGE, xếp hạng lại, giải thích trung thực, fidelity.
@@ -262,7 +261,8 @@ Tình trạng từng cấp độ của đề được tổng hợp ở Bảng~\r
 \midrule
 1 (7.0) & Baseline CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, giải thích 5+5 & Hoàn thành \\
 NV1 mở rộng & nDCG, chiều ảnh $\to$ văn bản, đánh giá theo nhóm truy vấn & Hoàn thành \\
-2 (8.5) & Tập công khai thứ 2; phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
+2 (8.5) & Tập công khai thứ 2 (Flickr30k, chạy lại pipeline cấp độ 1) & Hoàn thành (val + test, 3 seed) \\
+2 (8.5) & Phương pháp từ 2024; bộ $\ge$20 truy vấn trực tiếp/gián tiếp & Chưa (mới có code sinh truy vấn) \\
 3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & Đã chạy val; test chưa chạy \\
 3 (10) & MMKG tiếng Việt tự xây & Chưa \\
 4 (+1--2) & Cải tiến riêng & Chưa (có ý tưởng, mục~\ref{sec:future}) \\
@@ -329,10 +329,14 @@ Dữ liệu có ảnh trùng: 5 cặp có embedding giống hệt, 247 cặp có
 \end{enumerate}
 
 \subsection{Flickr30k -- tập công khai thứ hai}
-Nhóm đã chọn Flickr30k~\cite{young2014flickr} với split Karpathy~\cite{karpathy2015} (29.000/1.014/1.000 ảnh) làm tập thứ hai, và đã trích embedding CLIP cho 31.014 ảnh và 155.070 caption (ADR-0040, \code{data\_cards/flickr30k.md}).
-\begin{chualam}{Split, đồ thị và thực nghiệm trên Flickr30k}
-Còn thiếu: chuyển split Karpathy sang \code{splits/flickr30k/} (gom 1 ảnh trùng), dựng đồ thị ảnh -- khái niệm (liên kết từ trong caption sang ConceptNet~\cite{speer2017conceptnet}/WordNet), chạy lại toàn bộ thí nghiệm với cùng giao thức và 3 seed. Đây là điều kiện bắt buộc của cấp độ 2.
-\end{chualam}
+Tập thứ hai là Flickr30k~\cite{young2014flickr} (bản Karpathy~\cite{karpathy2015}). Tập có 31.014 ảnh, mỗi ảnh 5 caption. Embedding CLIP được trích bằng cùng mô hình như Visual Genome (ADR-0040, ADR-0041, \code{data\_cards/flickr30k.md}). Nhóm chạy lại \textbf{y nguyên} pipeline cấp độ 1 và chỉ đổi dữ liệu (ADR-0050):
+\begin{itemize}
+\item \textbf{Split:} cùng quy trình như Visual Genome, gồm 5.000 val, 5.000 test và 21.014 train, seed 0. Ảnh có cosine $\ge 0.99$ được gom vào cùng tập (có 2 cặp như vậy). Trường \code{split} của bản Karpathy không được dùng. File split là \code{splits/flickr30k/split\_seed0.json} (sha256 \code{8b5c5427\dots}).
+\item \textbf{Giao thức:} truy vấn là cả 5 caption của mỗi ảnh val/test (25.000 câu), kho là 5.000 ảnh. Đáp án đúng được xác định theo cùng quy tắc ``câu trùng'' như mục~\ref{sec:protocol}. Chỉ 0,08\% truy vấn val có hơn một đáp án.
+\item \textbf{Đồ thị:} Flickr30k không có annotation đối tượng, nên không đếm được từ vựng khái niệm như mục~\ref{sec:graph}. Vì vậy nhóm \textbf{chép} 3.880 đỉnh khái niệm (synset, vectơ văn bản CLIP) từ đồ thị Visual Genome. Mỗi ảnh Flickr30k được nối với 16 khái niệm gần nhất theo cosine CLIP, cho tổng 496.224 cạnh. Từ vựng chỉ đếm trên train Visual Genome, và cạnh của mỗi ảnh chỉ phụ thuộc vectơ của chính ảnh đó, nên không có rò rỉ từ test Flickr30k.
+\item \textbf{Không chạy trên Flickr30k:} mô hình đồng xuất hiện (cần annotation đối tượng) và giao thức v2 (luật chia nhóm truy vấn chốt trên câu Visual Genome).
+\end{itemize}
+Kết quả nằm ở mục~\ref{sec:flickr}.
 
 % ================= 4. PHƯƠNG PHÁP =================
 \section{Phương pháp}
@@ -636,8 +640,91 @@ Còn thiếu: sinh ứng viên trên test; hai thành viên xem ảnh và xác n
 Các phương pháp gợi ý (NativE, AdaMF-MAT, Mixed-Curvature MMKGC) là phương pháp hoàn thiện KG nên không chạy thẳng trên bài toán truy vấn ảnh của nhóm (ADR-0040). Cần chọn một phương pháp graph-enhanced retrieval hoặc explainable graph retrieval có mã nguồn công khai, chạy trên cùng pipeline, cùng split, 3 seed, và đưa vào Bảng~\ref{tab:main}.
 \end{chualam}
 
-\subsubsection{Tập công khai thứ hai}
-Xem khung ``Split, đồ thị và thực nghiệm trên Flickr30k'' ở mục~\ref{sec:data}.
+\subsection{Cấp độ 2: tập công khai thứ hai Flickr30k}
+\label{sec:flickr}
+Bốn thí nghiệm của cấp độ 1 được chạy lại trên Flickr30k (thiết lập ở mục~\ref{sec:data}): CLIP thuần, không đồ thị, CLIP + Graph và đồ thị xáo cạnh.
+\begin{itemize}
+\item Config là bản sao config Visual Genome. Chỉ tên thí nghiệm và đường dẫn dữ liệu được đổi; một test tự động kiểm điều này.
+\item Không siêu tham số nào được chỉnh lại, kể cả lr và $k$.
+\item Epoch và $\alpha$ vẫn chọn trên val, như ADR-0047.
+\item Test chạy \textbf{đúng một lần} mỗi seed, ngay sau khi huấn luyện, với checkpoint và $\alpha$ đã chốt trên val.
+\item Các run chạy trên Kaggle tại commit \code{fb62f69}.
+\item Bảng test: \code{results/tables/level1\_flickr30k\_test.csv}.
+\item Bảng val: \code{results/tables/level1\_flickr30k\_val.csv}.
+\item Hồ sơ: \code{results/records/20261118\_flickr30k-cap-do-1/}.
+\end{itemize}
+
+\begin{table}[H]
+\centering\small
+\caption{Văn bản $\to$ ảnh trên \textbf{test} Flickr30k (5.000 ảnh, 25.000 truy vấn). Mean \pmm{} std mẫu qua 3 seed. CLIP tất định nên std của CLIP thuần bằng 0.}
+\label{tab:flickr}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
+\midrule
+CLIP thuần & 0.4901 \pmm{} 0.0000 & 0.7426 \pmm{} 0.0000 & 0.8250 \pmm{} 0.0000 & 0.6045 \pmm{} 0.0000 & 1 \\
+Không đồ thị (lr $10^{-3}$) & \textbf{0.5332 \pmm{} 0.0006} & \textbf{0.7825 \pmm{} 0.0005} & \textbf{0.8556 \pmm{} 0.0011} & \textbf{0.6447 \pmm{} 0.0003} & 0.6/0.6/0.6 \\
+CLIP + Graph (lr $10^{-4}$) & 0.5309 \pmm{} 0.0036 & 0.7811 \pmm{} 0.0022 & 0.8553 \pmm{} 0.0026 & 0.6432 \pmm{} 0.0028 & 0.5/0.5/0.5 \\
+Đồ thị xáo cạnh (ablation) & 0.5276 \pmm{} 0.0014 & 0.7775 \pmm{} 0.0014 & 0.8526 \pmm{} 0.0009 & 0.6399 \pmm{} 0.0015 & 0.5/0.5/0.4 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Cùng các mô hình trên \textbf{val} Flickr30k (tập dùng để chọn epoch và $\alpha$). CLIP thuần chỉ chạy seed 0 trên val; vì CLIP tất định, $\alpha=1$ trong cả 9 run huấn luyện cho đúng số này.}
+\label{tab:flickr_val}
+\resizebox{\linewidth}{!}{\begin{tabular}{l c c c c}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \\
+\midrule
+CLIP thuần & 0.4891 & 0.7368 & 0.8168 & 0.6016 \\
+Không đồ thị (lr $10^{-3}$) & 0.5288 \pmm{} 0.0003 & 0.7785 \pmm{} 0.0010 & 0.8519 \pmm{} 0.0008 & 0.6403 \pmm{} 0.0000 \\
+CLIP + Graph (lr $10^{-4}$) & 0.5298 \pmm{} 0.0026 & 0.7782 \pmm{} 0.0038 & 0.8517 \pmm{} 0.0028 & 0.6408 \pmm{} 0.0026 \\
+Đồ thị xáo cạnh (ablation) & 0.5269 \pmm{} 0.0002 & 0.7753 \pmm{} 0.0013 & 0.8495 \pmm{} 0.0012 & 0.6383 \pmm{} 0.0007 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{\mrr{} Flickr30k ghép cặp theo seed (hiệu của hai mô hình cùng seed).}
+\label{tab:flickr_paired}
+\begin{tabular}{l l c c c c}
+\toprule
+\textbf{Tập} & \textbf{Hiệu} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean \pmm{} std} \\
+\midrule
+Test & Thật -- không đồ thị & +0.00032 & $-$0.00006 & $-$0.00474 & $-$0.00149 \pmm{} 0.00282 \\
+Test & Thật -- xáo & +0.00444 & +0.00354 & +0.00184 & +0.00327 \pmm{} 0.00132 \\
+Test & Xáo -- không đồ thị & $-$0.00412 & $-$0.00360 & $-$0.00658 & $-$0.00477 \pmm{} 0.00159 \\
+\midrule
+Val & Thật -- không đồ thị & +0.00222 & +0.00191 & $-$0.00253 & +0.00053 \pmm{} 0.00266 \\
+Val & Thật -- xáo & +0.00400 & +0.00328 & +0.00023 & +0.00250 \pmm{} 0.00200 \\
+Val & Xáo -- không đồ thị & $-$0.00178 & $-$0.00137 & $-$0.00276 & $-$0.00197 \pmm{} 0.00072 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Nhận xét.}
+\begin{itemize}
+\item \textbf{Kết luận chính của Visual Genome lặp lại trên test:} gần như toàn bộ mức tăng so với CLIP đến từ phép chiếu học được. \mrr{} test tăng từ 0.6045 lên 0.6447 (+0.040, khoảng 6,6\% tương đối; ổn định qua seed: +0.0401 \pmm{} 0.0003). So với Visual Genome (+0.019, khoảng 18\%), mức tăng tuyệt đối lớn hơn nhưng mức tăng tương đối nhỏ hơn, vì CLIP vốn đã mạnh trên caption Flickr30k.
+\item \textbf{Trên Flickr30k, đồ thị không thêm được gì.} Trên test, CLIP + Graph kém mô hình không đồ thị $-$0.0015 \pmm{} 0.0028 \mrr. Seed 0 và 1 gần như bằng nhau, còn seed 2 kém 0.0047. Seed 2 dừng sớm ở epoch 2, trong khi seed 0 và 1 dừng ở epoch 6 và 5; vì vậy std của mô hình chính lớn hơn hẳn. Trên val hiệu này là +0.0005. Cả hai đều nhỏ hơn std, nên hai mô hình coi như ngang nhau.
+\item \textbf{Đồ thị thật vẫn hơn đồ thị xáo} ở cả 3 seed, trên cả val và test (test: +0.0033 \pmm{} 0.0013), cùng chiều với Visual Genome. Tuy vậy, bản xáo \textbf{kém} mô hình không đồ thị ở cả 3 seed (test: $-$0.0048 \pmm{} 0.0016). Trên Flickr30k, cạnh nhiễu làm hại, còn cạnh thật chỉ đủ bù lại phần hại đó. Như trên Visual Genome, đây là dao động theo seed với một bản xáo, không phải kiểm định.
+\item \textbf{Val và test cùng thứ tự,} trừ cặp CLIP + Graph -- không đồ thị (đổi dấu nhưng đều nằm trong std). Số test của mọi mô hình cao hơn val khoảng 0.003--0.004 \mrr, kể cả CLIP thuần không học gì; vậy chênh lệch đến từ độ khó của hai tập, không phải do quá khớp val.
+\item \textbf{$\alpha$ chọn được là 0.4--0.6}, so với khoảng 0 trên Visual Genome. Trên Flickr30k, điểm cuối chia gần đều giữa CLIP và nhánh học được.
+\item \textbf{Giới hạn:} từ vựng khái niệm lấy từ Visual Genome, nên một số khái niệm hay gặp trong caption Flickr30k (hoạt động của người) có thể không có trong từ vựng. Train Flickr30k (21.014 ảnh) cũng nhỏ hơn Visual Genome khoảng 4,7 lần.
+\end{itemize}
+
+\paragraph{Giải thích cơ bản trên Flickr30k (val, seed 0).} Nhóm chạy cùng \code{scripts/explain.py} như mục~\ref{sec:xai}: Occlusion, 5 thành công + 5 thất bại, xoá 3 cạnh và bỏ mọi cạnh.
+\begin{itemize}
+\item Chốt chặn khớp mô hình chạy qua: \mrr{} trong phân tích bằng số lúc huấn luyện (0.64250).
+\item Ở 25.000 truy vấn, hạng ảnh đúng tăng ở 7.306 truy vấn, giảm ở 3.557 và giữ nguyên ở 13.288. Với 849 truy vấn, ảnh đúng nằm ngoài top 100.
+\item Input Kaggle thiếu file caption (\code{dataset\_flickr30k.json}), nên phân tích ghi truy vấn bằng id ảnh và vị trí caption, không có câu.
+\item \textbf{Xoá 3 cạnh do Occlusion chọn làm điểm đồ thị giảm ở cả 15 ảnh} được giải thích.
+\item \textbf{Khác Visual Genome, cạnh đóng vai trò lớn hơn trong các ca thành công.} Bỏ mọi cạnh làm 5 ảnh thành công tụt từ hạng 5/8/11/14/9 xuống 37/25/15/44/50. Trên Visual Genome, các ảnh này gần như giữ hạng. Điều này khớp với việc $\alpha \approx 0.5$ và nhánh láng giềng có trọng số đáng kể.
+\item Ở 5 ca thất bại (ảnh đúng từ hạng 8--24 theo CLIP rơi xuống 61--83), bỏ mọi cạnh làm ảnh đúng tụt \textbf{thêm} (ví dụ 70 $\to$ 95). Vậy thất bại không do cạnh, mà do phép chiếu của chính ảnh.
+\item Khái niệm đẩy lên thường hợp ngữ cảnh: \code{ballplayer.n.01} và \code{player.n.01} cho một ảnh thể thao; \code{lap.n.01} và \code{pace.n.04} cho một ảnh chạy bộ. Vẫn có cạnh lạc nghĩa do từ vựng Visual Genome, ví dụ \code{main.n.01}.
+\end{itemize}
 
 % ================= 7. GIẢI THÍCH =================
 \section{Kết quả Nhiệm vụ 3: giải thích}
@@ -759,19 +846,98 @@ val & GNNExplainer & .0022\pmm.0007 & .0004\pmm.0003 & 0.45\pmm0.30 & 0.22\pmm0.
 \section{MMKG tiếng Việt tự xây}
 \label{sec:mmkg}
 Thiết kế đã chốt về định dạng (ADR-0015, \code{mmkg/README.md}): \code{entities.csv} (\code{entity\_id, name\_vi, name\_en, type, source\_url}), \code{triples.csv} (\code{head\_id, relation, tail\_id, source}), \code{images.csv} (\code{image\_id, entity\_id, file\_name, source\_url, license, author}), kèm data card \code{data\_cards/mmkg\_vi.md}. Quy mô mục tiêu theo đề: 50--150 thực thể, 300--1.000 triple, 200--500 ảnh trong một miền hẹp.
-\begin{chualam}{Xây MMKG và chạy chuyển giao}
+\subsection{Dữ liệu}
+Miền: \textbf{di tích và di sản Việt Nam} (Wikidata \code{P1435}, \code{P17 = Q881}; ADR-0050). Thực thể, triple và ảnh lấy tự động từ Wikidata và Wikimedia Commons, lưu snapshot gốc nguyên trạng rồi lọc ở bước dựng (ADR-0052). Toàn bộ 962 dòng duyệt đã qua AI duyệt sơ bộ và người duyệt; ảnh có mặt người, ảnh không đúng hiện vật, ảnh trùng bị loại. Bộ chính thức: \textbf{119 thực thể} (80 hiện vật + 39 khái niệm, đều có tên tiếng Việt), \textbf{303 triple}, \textbf{380 ảnh} (3--5 ảnh mỗi hiện vật), mọi ảnh có giấy phép tự do (CC0, Public domain, CC BY, CC BY-SA), tác giả và link nguồn. Liên kết ảnh -- thực thể: ảnh lấy từ trang Commons của chính hiện vật (\code{P18}, \code{P373}). Chi tiết nguồn, giấy phép, cách tạo triple, thống kê và quy trình duyệt: \code{data\_cards/mmkg\_vi.md}.
+
+\subsection{Chạy phương pháp tốt nhất: chuyển giao không huấn luyện lại}
+\textbf{Ý tưởng.} ``Chuyển giao'' là lấy mô hình học ở một nơi (Visual Genome: ảnh đời thường, khái niệm như \emph{man}, \emph{tree}, câu tiếng Anh) dùng ở nơi khác (di sản Việt Nam, câu tiếng Việt) mà không học lại. Hai mô hình tốt nhất của cấp độ 1 làm được điều này vì trọng số chỉ là các ma trận $512\times512$ nhân lên vector CLIP đóng băng, không gắn với danh sách khái niệm nào: đổi tập khái niệm chỉ đổi đồ thị. G-Retriever bậc 1 chọn $\alpha=1$ (trùng CLIP) trên val nên không phải ứng viên.
+
+\textbf{Giao thức} (ADR-0053, chốt trước khi chạy; MMKG chỉ dùng để đánh giá, không chọn gì trên nó):
 \begin{itemize}[leftmargin=*]
-\item Chọn miền (ví dụ món ăn Việt Nam, di tích), thu thập ảnh có giấy phép rõ, không dữ liệu cá nhân nhạy cảm.
-\item Tạo triple (nguồn: Wikidata, ConceptNet, mô tả tự viết), mô tả cách liên kết ảnh -- thực thể.
-\item Chạy phương pháp tốt nhất của cấp độ 1/2 trên MMKG này; phân tích khả năng chuyển giao (CLIP với truy vấn tiếng Việt, đồ thị nhỏ).
-\item Data card: nguồn ảnh/văn bản, cách tạo triple, điều kiện sử dụng.
+\item \textbf{Mô hình}: GraphSAGE một lớp (\code{clip\_\allowbreak graph\_\allowbreak vg\_\allowbreak lr1e4}) và hai lớp (\code{clip\_\allowbreak cooc\_\allowbreak graph\_\allowbreak vg\_\allowbreak lr1e4}), trọng số và $\alpha$ của từng seed 0/1/2 giữ nguyên như chọn trên val VG. So với CLIP thuần trên cùng 100 ứng viên.
+\item \textbf{Đồ thị}: đỉnh khái niệm là 119 thực thể, vector = CLIP văn bản của ``a photo of a \{tên tiếng Anh\}''; cạnh \code{contains} ảnh $\to$ 16 thực thể gần nhất theo CLIP (như VG, \textbf{không} đọc \code{entity\_id} vì đó là đáp án). Mô hình hai lớp dùng \textbf{303 triple MMKG} (hai chiều) thay cho cạnh đồng xuất hiện của VG, nên triple thực sự đi vào điểm.
+\item \textbf{Truy vấn}: 318 câu sinh tự động (\code{queries/mmkg\_vi/queries.jsonl}): mỗi hiện vật một câu \emph{trực tiếp} (tên) và một câu \emph{gián tiếp} (giấu tên, mô tả bằng triple, ví dụ ``a heritage of Vietnam, made of bronze, of the Dong Son culture, kept at National Museum of Vietnamese History\dots''), mỗi câu có bản tiếng Anh và tiếng Việt cùng nội dung. Một hiện vật không có triple nên không có câu gián tiếp. Đáp án là mọi ảnh của mọi hiện vật khớp câu; câu gián tiếp chia \emph{cụ thể} (1 hiện vật khớp, 35 câu mỗi ngôn ngữ) và \emph{chung chung} (nhiều hiện vật khớp, 44 câu).
 \end{itemize}
-\end{chualam}
+
+\begin{table}[H]
+\centering\small
+\caption{Chuyển giao sang MMKG tiếng Việt (318 truy vấn, 380 ảnh, 3 seed, mean \pmm{} std). Nguồn: \code{results/tables/mmkg\_transfer.csv}, \code{mmkg\_transfer\_groups.csv}. CLIP tất định nên std = 0. ``Không đồ thị'' là đối chứng \code{clip\_nograph\_vg} của VG: cùng phép chiếu học được, $W_{\text{nb}}=0$. $\alpha$ lấy từ val VG cho seed 0/1/2: 0.3/0.4/0.2 (không đồ thị), 0.0/0.0/0.1 (một lớp), 0.0/0.1/0.0 (hai lớp).}
+\label{tab:mmkg}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l l c c c c}
+\toprule
+\textbf{Nhóm} & \textbf{Chỉ số} & \textbf{CLIP} & \textbf{Không đồ thị} & \textbf{GNN một lớp} & \textbf{GNN hai lớp} \\
+\midrule
+Toàn bộ (318) & \mrr{} & 0.2766 & 0.2861 \pmm{} 0.0035 & 0.2836 \pmm{} 0.0006 & \textbf{0.2872} \pmm{} 0.0019 \\
+ & R@1 & 0.1792 & 0.1939 \pmm{} 0.0036 & 0.1855 \pmm{} 0.0000 & \textbf{0.1950} \pmm{} 0.0031 \\
+ & R@10 & 0.4686 & 0.4623 \pmm{} 0.0063 & \textbf{0.4696} \pmm{} 0.0048 & 0.4623 \pmm{} 0.0094 \\
+\midrule
+Trực tiếp, Anh (80) & \mrr{} & \textbf{0.464} & 0.458 \pmm{} 0.012 & 0.459 \pmm{} 0.005 & 0.462 \pmm{} 0.006 \\
+Gián tiếp, Anh (79) & \mrr{} & 0.418 & 0.442 \pmm{} 0.004 & 0.436 \pmm{} 0.007 & \textbf{0.458} \pmm{} 0.010 \\
+\quad chung chung (44) & \mrr{} & 0.539 & 0.592 \pmm{} 0.006 & 0.575 \pmm{} 0.006 & \textbf{0.609} \pmm{} 0.011 \\
+\quad cụ thể (35) & \mrr{} & 0.266 & 0.254 \pmm{} 0.011 & 0.261 \pmm{} 0.008 & \textbf{0.268} \pmm{} 0.009 \\
+Trực tiếp, Việt (80) & \mrr{} & \textbf{0.123} & 0.118 \pmm{} 0.005 & 0.115 \pmm{} 0.001 & 0.114 \pmm{} 0.000 \\
+Gián tiếp, Việt (79) & \mrr{} & 0.101 & \textbf{0.126} \pmm{} 0.004 & 0.124 \pmm{} 0.005 & 0.115 \pmm{} 0.006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phân tích khả năng chuyển giao}
+Các nhận xét dưới đây là xu hướng, \textbf{chưa kiểm định theo truy vấn}: mỗi nhóm chỉ 35--80 câu, và std chỉ phản ánh 3 bộ trọng số VG.
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Chuyển miền (VG $\to$ di sản Việt Nam): mô hình VG vẫn giúp, nhưng phần giúp đến từ phép chiếu, không đến từ đồ thị.} Không huấn luyện lại, cả ba mô hình học trên VG đều nâng \mrr{} tổng so với CLIP (0.2766 $\to$ 0.2836--0.2872, tức +2.5\% đến +3.8\%). Nhưng đối chứng \textbf{không đồ thị} (cùng phép chiếu, $W_{\text{nb}}=0$) đã đạt 0.2861 \pmm{} 0.0035: cao hơn mô hình một lớp (0.2836) và ngang mô hình hai lớp (0.2872 \pmm{} 0.0019, chênh 0.0011, nhỏ hơn std). Như vậy, giống trên VG (đối chứng không đồ thị 0.1266 so với 0.1284), \textbf{gần như toàn bộ mức tăng trên MMKG là của phép chiếu tuyến tính học trên VG}; cạnh ảnh -- thực thể không thêm gì rõ rệt ở kết quả tổng.
+\item \textbf{Đồ thị chỉ còn dấu hiệu nhỏ ở vài nhóm.} So với đối chứng không đồ thị (thay vì so với CLIP): mô hình hai lớp cao hơn ở câu gián tiếp tiếng Anh (\mrr{} 0.458 so với 0.442), nhất là câu chung chung (0.609 so với 0.592), và R@5 ở câu gián tiếp chung chung tiếng Việt tăng từ 0.477 lên 0.568 với cả hai mô hình có đồ thị (\code{mmkg\_transfer\_groups.csv}). Mô hình một lớp thì thấp hơn đối chứng ở gần như mọi nhóm. Ở câu trực tiếp (tên riêng), mọi mô hình học trên VG đều hơi thấp hơn CLIP (tiếng Anh 0.464 $\to$ 0.458--0.462), nên nguyên nhân là phép chiếu chứ không riêng đồ thị.
+\item \textbf{Triple MMKG: chưa kết luận được.} Mô hình hai lớp, nơi triple đi vào điểm, là mô hình duy nhất vượt đối chứng ở câu gián tiếp tiếng Anh, nhưng lại kém mô hình một lớp và đối chứng ở câu gián tiếp tiếng Việt (0.115 so với 0.124 và 0.126). Mô hình hai lớp khác mô hình một lớp cả kiến trúc lẫn trọng số VG, và chưa có lần chạy nào bỏ hoặc xáo triple, nên chênh lệch chưa thể quy cho triple. Lớp khái niệm $\to$ khái niệm của nó được học trên cạnh đồng xuất hiện của VG chứ không phải quan hệ tri thức.
+\item \textbf{Chuyển ngôn ngữ (Anh $\to$ Việt): thất bại, và nguyên nhân chính nằm ở CLIP.} Cùng nội dung, \mrr{} của CLIP rơi từ 0.464 xuống 0.123 (trực tiếp) và từ 0.418 xuống 0.101 (gián tiếp); CLIP đạt R@1 = 0 trên cả 79 câu gián tiếp tiếng Việt. Phân tích khám phá sau khi có kết quả (\code{results/tables/mmkg\_transfer\_query\_spread.csv}, không thuộc giao thức chốt trước) cho thấy lý do: bộ mã hoá văn bản của CLIP \code{laion2b} (học chủ yếu trên tiếng Anh) đặt các câu tiếng Việt gần nhau (cosine trung bình giữa hai câu: 0.92 với câu gián tiếp tiếng Việt, so với 0.70 tiếng Anh), nên 79 câu chỉ trả về 3 ảnh top-1 khác nhau, và 70\% số câu trả về cùng một ảnh. Đồ thị không sửa được gốc rễ, vì điểm đồ thị $\cos(q, h_i)$ vẫn dùng chính vector truy vấn $q$. Các mô hình học trên VG nâng \mrr{} gián tiếp tiếng Việt từ 0.101 lên 0.115--0.126, nhưng đối chứng không đồ thị cũng đạt mức đó (0.126), nên phần lớn đây cũng là tác dụng của phép chiếu.
+\item \textbf{Đồ thị nhỏ và ``thế giới đóng''.} Với 119 thực thể, mỗi ảnh nối tới 16 thực thể, tức khoảng 13\% số đỉnh khái niệm, nên cạnh \code{contains} kém phân biệt hơn trên VG. Đỉnh khái niệm gồm cả 80 hiện vật, tức chính tập tên của các đáp án: ảnh không nối với hiện vật của nó qua nhãn mà qua CLIP, nhưng đồ thị biết trước danh sách tên (trên VG, đỉnh là từ vựng đối tượng chung). Theo giao thức, $k$ và tập đỉnh không được chỉnh trên MMKG.
+\end{enumerate}
+
+\textbf{Hạn chế.} Truy vấn sinh bằng mẫu câu cố định, chưa có người viết câu tự nhiên; mỗi nhóm chỉ 35--80 câu; 2/158 câu gián tiếp vẫn chứa tên hiện vật qua tên của thực thể đích (ví dụ \code{has\_part} của chùa Tây Phương). Đã có đối chứng không đồ thị; chưa có ablation bỏ/xáo triple, xáo cạnh \code{contains}, và chưa có kiểm định cặp theo truy vấn. Trong \code{metrics.json}, nhãn \code{split = test} chỉ có nghĩa ``ảnh đánh giá'': MMKG không có train/val. Std chỉ phản ánh 3 bộ trọng số VG, không phản ánh độ biến thiên của truy vấn. Muốn chuyển ngôn ngữ thật sự cần bộ mã hoá văn bản đa ngôn ngữ (ví dụ CLIP đa ngôn ngữ); khi đó không gian vector đổi, nên phải huấn luyện lại GNN trên VG. Đánh giá giải thích trên MMKG: mục~\ref{sec:mmkg-xai}.
+
+Tái lập (đối chứng không đồ thị là thí nghiệm thứ tư trong cùng config, chốt ở phần bổ sung của ADR-0053 trước khi chạy):
+\begin{itemize}[leftmargin=*]
+\item \code{scripts/make\_mmkg\_queries.py}
+\item \code{scripts/evaluate\_mmkg\_transfer.py} với bước \code{features}, \code{evaluate}, \code{diagnose} và \code{configs/mmkg\_vi\_transfer.yaml}
+\item \code{scripts/summarize\_runs.py --experiment-suffix \_mmkg\_vi}
+\end{itemize}
+
+\subsection{Đánh giá giải thích định lượng trên MMKG}
+\label{sec:mmkg-xai}
+Cùng thước đo như mục 7.3 nhưng trên MMKG (ADR-0054, chốt trước khi chạy, chạy một lần). Mọi lựa chọn lấy nguyên từ val VG: mô hình một lớp, $\alpha$ của từng seed, Integrated Gradients, $m=10$ cạnh (trong 16 cạnh của mỗi ảnh). Giải thích ảnh hạng 1 của \textbf{toàn bộ 318 truy vấn} $\times$ 3 seed = 954 giải thích. Trước khi giải thích, xếp hạng lại phải cho đúng \mrr{} của run chuyển giao ở từng seed (đã khớp). Nguồn: \code{results/tables/xai\_mmkg.csv}.
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Giải thích trên MMKG (IG, $m=10$, 3 seed, mean \pmm{} std) so với VG test (mục 7.3). ``Ngẫu nhiên'': bỏ 10 cạnh ngẫu nhiên của cùng ảnh, 20 lần. $p$: Wilcoxon một phía theo truy vấn, ``tụt hạng do giải thích > ngẫu nhiên''.}
+\label{tab:mmkg-xai}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r c c c}
+\toprule
+\textbf{Nhóm} & \textbf{Số} & \textbf{Fid\textsuperscript{+}} & \textbf{Tụt hạng} & $p$ \\
+ & & (ngẫu nhiên) & (ngẫu nhiên) & \\
+\midrule
+MMKG, toàn bộ & 954 & 0.0094 \pmm{} 0.0003 (0.0001) & 0.82 \pmm{} 0.04 (0.10) & $10^{-59}$ \\
+\quad trực tiếp, Anh & 240 & 0.0090 (0.0003) & 0.68 (0.09) & $10^{-13}$ \\
+\quad gián tiếp, Anh & 237 & 0.0081 (0.0004) & 1.12 (0.12) & $7\cdot10^{-18}$ \\
+\quad trực tiếp, Việt & 240 & 0.0107 (0.0000) & 0.73 (0.08) & $3\cdot10^{-14}$ \\
+\quad gián tiếp, Việt & 237 & 0.0097 (0.0000) & 0.77 (0.11) & $4\cdot10^{-16}$ \\
+\midrule
+VG test (mục 7.3) & 60 & 0.0225 \pmm{} 0.0010 (0.0006) & 2.57 \pmm{} 0.29 (0.26) & $5\cdot10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Giải thích trung thực với mô hình, cả trên miền mới.} Bỏ 10 cạnh IG chọn làm điểm đồ thị giảm 0.0094, gấp khoảng 90 lần bỏ 10 cạnh ngẫu nhiên (0.0001), và làm ảnh tụt trung bình 0.82 bậc so với 0.10 bậc ($p \approx 10^{-59}$ trên 318 truy vấn). Điều này đúng ở cả bốn nhóm, kể cả truy vấn tiếng Việt. Validity 100\% (mọi cạnh có thật và nối tới ảnh), sparsity 0.375 (10/16 cạnh), như VG.
+\item \textbf{Hiệu ứng nhỏ hơn VG} (tụt 0.82 so với 2.57 bậc; Fid\textsuperscript{+} 0.0094 so với 0.0225). Giả thuyết, chưa kiểm: đồ thị MMKG ít phân biệt hơn (16 trong 119 thực thể, mục~\ref{sec:mmkg}), nên mỗi cạnh mang ít thông tin riêng hơn.
+\item \textbf{Trung thực không có nghĩa là đúng.} Giải thích mô tả vì sao \emph{mô hình} xếp ảnh lên đầu, không phải vì sao ảnh đó đúng: chỉ 18.6\% ảnh hạng 1 được giải thích là ảnh đúng (\code{evaluation.json} của run). Mục 8.3 cũng cho thấy trên MMKG mô hình một lớp không hơn đối chứng không đồ thị; giải thích ở đây đo độ trung thực với cơ chế chấm điểm, không chứng minh đồ thị giúp xếp hạng.
+\item \textbf{Characterization không dùng được trên MMKG.} Giá trị chuẩn hoá (chia cho tác động của \emph{toàn bộ} cạnh) bị cắt về $[0,1]$ ở mọi truy vấn, tức tác động của các cạnh không cộng dồn; với truy vấn tiếng Việt, Fid\textsuperscript{+} chuẩn hoá về 0 nên characterization $\approx 0$ (0.01 và 0.00), trong khi Fid\textsuperscript{+} thô vẫn cao. Vì vậy ta dựa vào Fid\textsuperscript{+} thô và tụt hạng so với ngẫu nhiên. Triple MMKG không xuất hiện trong giải thích vì mô hình một lớp chỉ có cạnh \code{contains}; giải thích mô hình hai lớp là việc sau.
+\end{enumerate}
 
 % ================= 9. THẢO LUẬN =================
 \section{Thảo luận và hạn chế}
 \begin{enumerate}
 \item \textbf{Đồ thị đóng góp ít trên toàn tập.} Khoảng 91\% mức tăng so với CLIP đến từ một phép chiếu tuyến tính học trên Visual Genome. Đây là phát hiện quan trọng: nếu không có đối chứng không đồ thị, toàn bộ mức tăng 19\% sẽ bị gán nhầm cho đồ thị.
+\item \textbf{Trên Flickr30k, đồ thị không thêm được mức tăng nào} so với mô hình không đồ thị (test: $-$0.0015 \pmm{} 0.0028 \mrr, mục~\ref{sec:flickr}). Kết luận ``phần lớn mức tăng đến từ phép chiếu'' lặp lại trên hai tập. Kết luận ``đồ thị thật hơn đồ thị xáo'' cũng cùng chiều trên cả hai tập (Flickr30k test: +0.0033 \pmm{} 0.0013), nhưng trên Flickr30k bản xáo còn kém cả mô hình không đồ thị.
 \item \textbf{Đồ thị hiện tại ít ``quan hệ''.} Cạnh \code{contains} được suy ra từ chính CLIP (16 khái niệm gần nhất), không có cạnh quan hệ giữa đối tượng trong scene graph và chưa có ConceptNet. Lựa chọn này giúp hệ thống chạy được với ảnh chưa gán nhãn và tránh rò rỉ, nhưng khiến đồ thị mang ít thông tin mới so với những gì CLIP đã có. Đây có lẽ là lý do chính khiến đồ thị chỉ giúp ở các truy vấn chung chung, và là điểm cần cải thiện để trả lời được câu hỏi về truy vấn gián tiếp.
 \item \textbf{$\alpha \approx 0$} khiến điểm cuối gần như chỉ còn nhánh đồ thị; các ca thất bại lớn (hạng 7--15 rơi xuống 92--100) cho thấy một $\alpha$ cố định cho mọi truy vấn là chưa tốt.
 \item \textbf{Thống kê:} 3 seed và một bản xáo; t, p theo seed chỉ là số mô tả; chưa có kiểm định theo truy vấn. Recall là cận dưới, MRR cắt ở 100. Hai câu khác chữ cùng nghĩa (``a man'', ``man'') vẫn tính là khác nhau.
@@ -785,7 +951,7 @@ Nhóm đã hoàn thành cấp độ 1 trên Visual Genome với quy trình chố
 
 Việc cần làm tiếp, theo thứ tự ưu tiên của đề:
 \begin{enumerate}
-\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, Flickr30k, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
+\item Cấp độ 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test, một phương pháp 2024+; khi có bộ truy vấn, tách đánh giá giải thích theo trực tiếp/gián tiếp.
 \item Cấp độ 3: MMKG tiếng Việt.
 \end{enumerate}
 
@@ -824,6 +990,7 @@ ADR-0046 & GNN một lớp, cạnh CLIP top-$k$ cho mọi split \\
 ADR-0047 & Quy trình huấn luyện, chọn $\alpha$, chạy test một lần \\
 ADR-0048 & Cạnh đồng xuất hiện đếm trên train, GraphSAGE hai lớp \\
 ADR-0049 & Giao thức đánh giá v2: nDCG, ảnh $\to$ văn bản, nhóm truy vấn \\
+ADR-0050 & Flickr30k: chạy lại pipeline cấp độ 1, chỉ đổi dữ liệu, từ vựng chép từ Visual Genome \\
 \bottomrule
 \end{tabularx}
 \end{table}
