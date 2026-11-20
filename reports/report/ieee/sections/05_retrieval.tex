@@ -268,7 +268,73 @@ $\alpha$ & $k=3$, $C=0,5$ ($|S_q|\approx 3$) & $k=10$, $C=0,25$ ($|S_q|\approx 1
 \end{tabular}
 \end{table}
 
-\textbf{Giai đoạn 2.} Giai đoạn này thay điểm tỉ lệ bằng GraphSAGE trên đồ thị con. Trên test Visual Genome, mô hình đạt \mrr{} 0,1278 \pmm{} 0,0005, ngang với đối chứng không đồ thị cùng cấu hình huấn luyện (0,1277 \pmm{} 0,0001). Chạy lại trên Flickr30k (dùng lại cạnh PMI đếm trên train Visual Genome, không dùng thống kê nào của Flickr30k), mô hình đạt 0,6408 \pmm{} 0,0003, thấp hơn đối chứng (0,6430 \pmm{} 0,0016). Theo quy tắc dừng đã chốt trước, nhóm ghi nhận đây là kết quả âm: đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được. Tại thời điểm viết báo cáo, mã nguồn và bảng số của giai đoạn 2 (\code{g\_retriever\_test.csv}, \code{g\_retriever\_flickr30k\_test.csv}) nằm ở hai pull request \#22 và \#23, chưa được hợp nhất vào nhánh chính.
+\textbf{Giai đoạn 2.} Giai đoạn này thay điểm tỉ lệ bằng GraphSAGE trên đồ thị con và được chạy trên cả hai tập với cùng cấu hình. Đối chứng là mô hình không đồ thị có \emph{cùng} cấu hình huấn luyện (lr $10^{-4}$), để mọi khác biệt chỉ đến từ đồ thị con. Bảng~\ref{tab:gret2} cho kết quả trên test, Bảng~\ref{tab:gret2-val} trên val (tập dùng để chọn epoch và $\alpha$), Bảng~\ref{tab:gret2-paired} cho hiệu ghép cặp theo seed.
+
+\begin{table}[t]
+\centering
+\caption{G-Retriever giai đoạn 2 trên test (5.000 ảnh, 25.000 truy vấn mỗi tập, 3 seed). Đối chứng: không đồ thị, cùng cấu hình huấn luyện (lr $10^{-4}$). Không so số tuyệt đối giữa hai tập}
+\label{tab:gret2}
+\scriptsize
+\setlength{\tabcolsep}{1.5pt}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l c c c c c@{}}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{Visual Genome}} \\
+CLIP thuần & 0,0584 & 0,1422 & 0,2018 & 0,1076 & 1 \\
+Đối chứng & 0,0697\pmm0,0008 & \textbf{0,1742}\pmm0,0017 & \textbf{0,2485}\pmm0,0007 & 0,1277\pmm0,0001 & 0,1--0,2 \\
+G-Retriever & \textbf{0,0708}\pmm0,0006 & 0,1724\pmm0,0011 & 0,2474\pmm0,0001 & \textbf{0,1278}\pmm0,0005 & 0,2--0,3 \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{Flickr30k}} \\
+CLIP thuần & 0,4901 & 0,7426 & 0,8250 & 0,6045 & 1 \\
+Đối chứng cùng cấu hình & \textbf{0,5314}\pmm0,0019 & \textbf{0,7805}\pmm0,0011 & 0,8548\pmm0,0011 & \textbf{0,6430}\pmm0,0016 & 0,5 \\
+G-Retriever & 0,5278\pmm0,0002 & 0,7794\pmm0,0006 & \textbf{0,8555}\pmm0,0004 & 0,6408\pmm0,0003 & 0,5 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{G-Retriever giai đoạn 2 trên val (tập dùng để chọn epoch và $\alpha$), 3 seed; đối chứng như Bảng~\ref{tab:gret2}}
+\label{tab:gret2-val}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l c c c c@{}}
+\toprule
+\textbf{Mô hình} & \textbf{R@1} & \textbf{R@5} & \textbf{R@10} & \textbf{\mrr} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Visual Genome}} \\
+CLIP thuần & 0,0559 & 0,1443 & 0,2046 & 0,1061 \\
+Đối chứng & 0,0680\pmm0,0000 & 0,1731\pmm0,0011 & 0,2406\pmm0,0005 & 0,1246\pmm0,0003 \\
+G-Retriever & 0,0680\pmm0,0003 & 0,1731\pmm0,0008 & 0,2423\pmm0,0012 & 0,1244\pmm0,0003 \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Flickr30k}} \\
+CLIP thuần & 0,4891 & 0,7368 & 0,8168 & 0,6016 \\
+Đối chứng & 0,5281\pmm0,0017 & 0,7778\pmm0,0011 & 0,8513\pmm0,0010 & 0,6397\pmm0,0015 \\
+G-Retriever & 0,5259\pmm0,0003 & 0,7768\pmm0,0002 & 0,8528\pmm0,0004 & 0,6381\pmm0,0002 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{\mrr{} G-Retriever giai đoạn 2 trừ đối chứng cùng cấu hình, ghép cặp theo seed}
+\label{tab:gret2-paired}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}l c c c c@{}}
+\toprule
+\textbf{Tập} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean \pmm{} std} \\
+\midrule
+VG, test & $-0,00042$ & +0,00031 & +0,00053 & +0,00014\pmm0,00050 \\
+Flickr30k, test & $-0,00372$ & $-0,00119$ & $-0,00156$ & $-0,00216$\pmm0,00137 \\
+Flickr30k, val & $-0,00340$ & $-0,00050$ & $-0,00115$ & $-0,00168$\pmm0,00152 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Trên Visual Genome, giai đoạn 2 ngang đối chứng cùng cấu hình: hiệu \mrr{} test ghép cặp là +0,00014 \pmm{} 0,00050 và đổi dấu giữa các seed; trên val hiệu trung bình là $-0,0002$. Chỉ R@1 test cao hơn (+0,0011), nhưng R@5 và R@10 lại thấp hơn, nên không có chỉ số nào cho thấy đồ thị con giúp ổn định. Trên Flickr30k, cạnh đồng xuất hiện được dùng lại từ train Visual Genome (không dùng thống kê nào của Flickr30k), và giai đoạn 2 \emph{thấp hơn} đối chứng ở cả 3 seed, trên cả val và test (test: $-0,0022$ \pmm{} 0,0014). Cả hai mô hình vẫn vượt CLIP thuần rõ rệt, nên mức tăng một lần nữa đến từ phép chiếu học được. $\alpha$ chọn được gần với đối chứng (0,2--0,3 so với 0,1--0,2 trên Visual Genome; 0,5 như nhau trên Flickr30k), tức nhánh đồ thị con không làm mô hình bớt dựa vào CLIP. Như trong phần ablation, std ở đây chỉ đo dao động theo seed với 3 seed, không phải kiểm định theo truy vấn.
+ Theo quy tắc dừng đã chốt trước, nhóm ghi nhận đây là kết quả âm: đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được. Tại thời điểm viết báo cáo, mã nguồn và bảng số của giai đoạn 2 (\code{g\_retriever\_test.csv}, \code{g\_retriever\_flickr30k\_test.csv}) nằm ở hai pull request \#22 và \#23, chưa được hợp nhất vào nhánh chính.
 
 \subsection{Bộ truy vấn trực tiếp và gián tiếp}
-Đề yêu cầu một bộ ít nhất 20 truy vấn, trong đó có nhóm truy vấn gián tiếp, để đánh giá riêng vai trò của đồ thị. Phiên bản đầu sinh truy vấn từ scene graph: tìm trong một ảnh hai quan hệ nối với nhau qua một đối tượng chung, viết câu trực tiếp gọi tên mọi đối tượng và câu gián tiếp giấu tên đối tượng ở giữa. Ví dụ, từ \code{person -holding-> kite} và \code{kite -in-> sky}, câu trực tiếp là ``A person is holding a kite, and the kite is in a sky'', còn câu gián tiếp là ``A person is holding something that is in a sky''. Phiên bản thứ hai mô tả khái niệm bị giấu bằng một từ chỉ loại và hai tính chất ConceptNet~\cite{speer2017conceptnet} chỉ đúng với khái niệm đó, ví dụ ``a person playing a sport that uses a bat and is played in a park''. Code sinh và kiểm tra đã có và luật đã được thử trên val, nhưng bộ truy vấn trên test chưa được người kiểm và chưa được đánh giá. Phần này vì vậy chưa có trong báo cáo. Riêng trên MMKG (Mục~\ref{sec:mmkg}), nhóm đã có bộ 318 truy vấn trực tiếp và gián tiếp được đánh giá đầy đủ.
+Đề yêu cầu một bộ ít nhất 20 truy vấn, trong đó có nhóm truy vấn gián tiếp, để đánh giá riêng vai trò của đồ thị. Phiên bản đầu sinh truy vấn từ scene graph: tìm trong một ảnh hai quan hệ nối với nhau qua một đối tượng chung, viết câu trực tiếp gọi tên mọi đối tượng và câu gián tiếp giấu tên đối tượng ở giữa. Ví dụ, từ \code{person -holding-> kite} và \code{kite -in-> sky}, câu trực tiếp là ``A person is holding a kite, and the kite is in a sky'', còn câu gián tiếp là ``A person is holding something that is in a sky''. Phiên bản thứ hai mô tả khái niệm bị giấu bằng một từ chỉ loại và hai tính chất ConceptNet~\cite{speer2017conceptnet} chỉ đúng với khái niệm đó, ví dụ ``a person playing a sport that uses a bat and is played in a park''. Code sinh và kiểm tra đã có, luật được chốt trên val, và 28 cặp ứng viên (8 hoạt động, 20 đồ vật) đã được sinh trên test bằng luật đã chốt; các cặp này chưa được hai thành viên kiểm và chưa được đánh giá. Phần này vì vậy chưa có trong báo cáo. Riêng trên MMKG (Mục~\ref{sec:mmkg}), nhóm đã có bộ 318 truy vấn trực tiếp và gián tiếp được đánh giá đầy đủ.

@@ -99,6 +99,9 @@ class PcstSageConfig:
     alpha_grid: list[float]
     selection_metric: str
     output_dir: str
+    # Flickr30k borrows VG's vocabulary and PMI edges (ADR-0056);
+    # None = this experiment's own split_file.
+    concept_edges_split_file: str | None = None
 
 
 def load_pcst_sage_config(path: str | Path) -> PcstSageConfig:

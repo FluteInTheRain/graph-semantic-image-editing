@@ -97,7 +97,9 @@ Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung các
 \code{clip\_graph\_vg\_lr1e4} & $10^{-4}$ & Mô hình chính: GraphSAGE một lớp \\
 \code{clip\_cooc\_graph\_\dots} & $10^{-4}$ & Cạnh đồng xuất hiện có giúp thêm không? \\
 \code{\dots\_shuffled} & $10^{-4}$ & Cấu trúc thật có quan trọng không? \\
-\code{clip\_pcst\_\dots} & -- & Đồ thị con phụ thuộc truy vấn (G-Retriever) \\
+\code{clip\_pcst\_vg} & -- & G-Retriever GĐ1: đồ thị con theo truy vấn \\
+\code{clip\_pcst\_sage\_\dots} & $10^{-4}$ & G-Retriever GĐ2: GraphSAGE trên đồ thị con \\
+\code{clip\_nograph\_\dots\_lr1e4} & $10^{-4}$ & Đối chứng cùng cấu hình của GĐ2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -110,7 +112,7 @@ Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung các
 \item Chọn một cây liên thông $S_q$ trên đồ thị đồng xuất hiện bằng PCST, gọi thư viện \code{pcst\_fast} với tham số giống mã gốc. PCST giữ cả những đỉnh không có thưởng nếu chúng là cầu nối giữa hai đỉnh có thưởng, phù hợp với kiểu truy vấn gián tiếp như \emph{child -- plays -- football}.
 \item Chấm điểm ứng viên dựa trên đồ thị con. Giai đoạn 1 dùng tỉ lệ khái niệm của ảnh nằm trong $S_q$. Giai đoạn 2 thay tỉ lệ này bằng một GraphSAGE một lớp chỉ gộp các khái niệm thuộc $S_q$, huấn luyện bằng InfoNCE như trên.
 \end{enumerate}
-Các tham số $k \in \{3, 5, 10\}$, phí cạnh $C \in \{0,25; 0,5; 1\}$ và $\alpha$ được chọn trên val. Hai ablation đi kèm là bỏ bước dựng cây (chỉ giữ top-$k$ khái niệm) và xáo cạnh. Thư viện \code{pcst\_fast} chỉ cho kết quả đúng với numpy 1.x nên dự án ghim phiên bản \code{numpy<2}.
+Ở giai đoạn 1, các tham số $k \in \{3, 5, 10\}$, phí cạnh $C \in \{0,25; 0,5; 1\}$ và $\alpha$ được chọn trên val. Giai đoạn 2 dùng cố định $k = 3$, $C = 0,5$ (giá trị của mã gốc cho SceneGraphs), vì mỗi lượt PCST trên toàn bộ câu train mất khoảng một giờ; epoch và $\alpha$ chọn trên val, lr $10^{-4}$ giống mô hình chính. Đối chứng của giai đoạn 2 là mô hình không đồ thị cùng cấu hình huấn luyện. Trên Flickr30k không có annotation đối tượng để đếm đồng xuất hiện, nên nhóm dùng lại cạnh đồng xuất hiện đếm trên train Visual Genome; làm được vì đồ thị Flickr30k chép nguyên 3.880 khái niệm của Visual Genome, cùng thứ tự. Hai ablation đi kèm giai đoạn 1 là bỏ bước dựng cây (chỉ giữ top-$k$ khái niệm) và xáo cạnh. Thư viện \code{pcst\_fast} chỉ cho kết quả đúng với numpy 1.x nên dự án ghim phiên bản \code{numpy<2}.
 
 \subsection{Giải thích trung thực}
 \label{sec:xai-method}

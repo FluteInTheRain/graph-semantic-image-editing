@@ -27,7 +27,11 @@ from mmxai.eval.graph_rerank import (  # noqa: E402
 from mmxai.features.cache import save_features  # noqa: E402
 from mmxai.graph.clip_edges import clip_topk_concepts  # noqa: E402
 from mmxai.graph.contains import build_contains_graph, save_contains_graph  # noqa: E402
-from mmxai.graph.cooccurrence import ConceptEdges, save_concept_edges  # noqa: E402
+from mmxai.graph.cooccurrence import (  # noqa: E402
+    ConceptEdges,
+    load_concept_edges,
+    save_concept_edges,
+)
 from mmxai.graph.shuffle import ShuffleGraphConfig, run_shuffle_graph  # noqa: E402
 from mmxai.utils.runs import file_sha256  # noqa: E402
 
@@ -535,3 +539,32 @@ def test_evaluate_test_raises_when_selection_lacks_alpha_image_to_text(tmp_path,
 
     with pytest.raises(ValueError, match="alpha_image_to_text"):
         evaluate_test(extended, seed=0, log=str)
+
+
+def edges_counted_on_split_a(tmp_path, monkeypatch):
+    """Config whose concept edges were counted on split A, while the experiment uses split B."""
+    config = write_inputs(tmp_path, monkeypatch)
+    split_a = tmp_path / "split_a.json"
+    split_a.write_text('{"split": "a"}', encoding="utf-8")
+    with_edges = with_concept_edges(config, tmp_path)
+    edges, _ = load_concept_edges(with_edges.concept_edges_dir)
+    edges_dir = tmp_path / "edges_on_split_a"
+    save_concept_edges(edges_dir, edges, {"split_sha256": file_sha256(split_a)})
+    return dataclasses.replace(with_edges, concept_edges_dir=str(edges_dir)), split_a
+
+
+def test_concept_edges_counted_on_another_split_file_are_accepted(tmp_path, monkeypatch):
+    config, split_a = edges_counted_on_split_a(tmp_path, monkeypatch)
+    config = dataclasses.replace(config, concept_edges_split_file=str(split_a))
+
+    assert load_inputs(config).concept_edges is not None
+
+
+def test_concept_edges_counted_on_a_third_split_file_are_rejected(tmp_path, monkeypatch):
+    config, _ = edges_counted_on_split_a(tmp_path, monkeypatch)
+    split_c = tmp_path / "split_c.json"
+    split_c.write_text('{"split": "c"}', encoding="utf-8")
+    config = dataclasses.replace(config, concept_edges_split_file=str(split_c))
+
+    with pytest.raises(ValueError, match="different split"):
+        load_inputs(config)

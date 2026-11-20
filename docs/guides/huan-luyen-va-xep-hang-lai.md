@@ -552,3 +552,55 @@ Fidelity, validity, sparsity: xem `src/mmxai/explain/` và ADR-0016.
 | Selection (epoch, alpha) | `artifacts/models/.../selection.json` | Không |
 
 **Symlink kết quả lên Colab Drive:** tương tự mục 4 và 9.4–9.5 của hướng dẫn bậc 1.
+
+## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0056)
+
+> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0056 đã được nhóm **chấp nhận** (2026-11-17), nên bước test được phép chạy, mỗi seed đúng một lần.
+
+### 11.1. Ý tưởng
+
+Mục 10 chạy G-Retriever bậc 2 trên VG. Mục này chạy lại **y nguyên** trên Flickr30k, chỉ đổi dữ liệu, không chỉnh siêu tham số. PCST cần cạnh PMI giữa các khái niệm. Flickr30k không có annotation đối tượng để đếm PMI, nên ta **dùng lại cạnh PMI của VG**. Điều này hợp lệ vì đồ thị Flickr30k chép nguyên từ vựng 3.880 khái niệm của VG, cùng thứ tự. Cạnh VG chỉ đếm trên train VG nên không rò rỉ dữ liệu Flickr30k. Config trỏ tới cạnh VG bằng trường `concept_edges_split_file` (kiểm trong `load_concept_edges_for`, `src/mmxai/eval/graph_rerank.py`).
+
+### 11.2. Cần có trước khi chạy
+
+| Thứ cần có | Nơi lưu | Cách tạo |
+|---|---|---|
+| Đặc trưng CLIP Flickr30k | `artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k` | `uv run python scripts/extract_features.py --config configs/features_flickr30k.yaml` (xem `docs/guides/chuan-bi-embedding-clip.md`) |
+| Split Flickr30k | `splits/flickr30k/split_seed0.json` | `uv run python scripts/make_splits.py --config configs/splits_flickr30k.yaml` (ADR-0050) |
+| Đồ thị VG (nguồn từ vựng) | `artifacts/graphs/visual_genome/contains_clip_top16_v1` | Dựng ở bước chạy VG (mục 4) |
+| Đồ thị Flickr30k | `artifacts/graphs/flickr30k/contains_clip_top16_v1` | `uv run python scripts/build_graph_from_vocabulary.py --config configs/graph_flickr30k_clip_topk.yaml` (cần đồ thị VG ở dòng trên) |
+| Cạnh PMI của VG | `artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1` | `uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml` |
+
+### 11.3. Thứ tự chạy
+
+Config chính: `configs/clip_pcst_sage_flickr30k.yaml`. Config đối chứng: `configs/clip_nograph_flickr30k_lr1e4.yaml`.
+
+| Bước | Lệnh | Chú thích |
+|---|---|---|
+| 1. Đo thời gian | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0 --estimate 1000` | Không ghi gì, chỉ dự báo thời gian |
+| 2. Cache train + val | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0` | Cache dùng chung 3 seed (không xáo) |
+| 3. Huấn luyện bản chính | `uv run python scripts/train_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` với `k` = 0, 1, 2 | 3 lần. Chọn epoch và `alpha` trên val |
+| 4. Huấn luyện đối chứng | `uv run python scripts/train_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seeds 0 1 2 --threads 4` | Không đồ thị, cùng cấu hình |
+| 5. Test bản chính | `uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
+| 6. Test đối chứng | `uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
+
+### 11.4. Ghi chú Colab
+
+- Symlink `artifacts/pcst_cache` lên Drive, giống `artifacts/models` và `results/runs` (mục 4 và 9.4). Bài học 2026-11-17: cache bị mất khi runtime bị xoá, phải tính lại PCST.
+- Cuối mỗi phiên chạy `drive.flush_and_unmount()` (`from google.colab import drive`) để chắc chắn file đã ghi lên Drive.
+
+### 11.5. Thời gian ước tính
+
+Khoảng 25 ms cho mỗi lần gọi PCST.
+
+| Tập | Số caption | Thời gian |
+|---|---|---|
+| train | khoảng 105 nghìn | khoảng 45 phút |
+| val | khoảng 25 nghìn | khoảng 10 phút |
+| test | khoảng 25 nghìn | khoảng 10 phút |
+
+Cache dùng chung cho 3 seed. Đây là ước tính, bước 1 cho số thật.
+
+### 11.6. Quy tắc dừng
+
+Giống mục 10.8. Bản chính phải **hơn `clip_nograph_flickr30k_lr1e4` trên val** (MRR@100) để chứng tỏ đồ thị con có ích. Nếu không, vẫn chạy test một lần mỗi seed và báo cáo trung thực kết quả âm. Không chỉnh lại tham số sau khi thấy kết quả test.
