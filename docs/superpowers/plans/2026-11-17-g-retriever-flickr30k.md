@@ -18,7 +18,7 @@ Sau mỗi batch, Haiku review chỉ theo spec.
   - `GraphRerankConfig` (`src/mmxai/eval/graph_rerank.py`);
   - `PcstRerankConfig` (`src/mmxai/eval/pcst_rerank.py`);
   - `PcstSageConfig` (`src/mmxai/eval/pcst_sage_rerank.py`).
-  Thêm một comment ngắn giải thích vì sao: Flickr30k mượn từ vựng và cạnh PMI của VG, theo ADR-0052.
+  Thêm một comment ngắn giải thích vì sao: Flickr30k mượn từ vựng và cạnh PMI của VG, theo ADR-0056.
 - [x] Sửa `load_concept_edges_for` trong `graph_rerank.py`:
   - nếu `config.concept_edges_split_file` khác `None`, so `meta["split_sha256"]` với `file_sha256(config.concept_edges_split_file)`;
   - ngược lại, so với `file_sha256(config.split_file)` như cũ;
@@ -26,7 +26,7 @@ Sau mỗi batch, Haiku review chỉ theo spec.
 - [x] Thêm test vào `tests/test_graph_rerank_pipeline.py`. Dùng lại helper `write_inputs` có sẵn; nếu helper chưa dựng cạnh PMI thì đọc cách các test hiện có tạo `concept_edges_dir` rồi làm theo. Viết hai test:
   1. Cạnh đếm trên split A, thí nghiệm dùng split B và đặt `concept_edges_split_file = A`: `load_inputs` nạp được và `inputs.concept_edges` khác `None`.
   2. Cùng tình huống nhưng đặt `concept_edges_split_file` là một split thứ ba: báo `ValueError` khớp "different split".
-- [x] Commit: `feat(rerank): allow concept edges counted on another dataset's split (ADR-0052)`.
+- [x] Commit: `feat(rerank): allow concept edges counted on another dataset's split (ADR-0056)`.
 
 ### T2 [S]: config Flickr30k cho G-Retriever bậc 2 và đối chứng
 - [x] Tạo `configs/clip_pcst_sage_flickr30k.yaml` bằng cách chép `configs/clip_pcst_sage_vg.yaml`, rồi chỉ đổi những khoá sau:
@@ -38,7 +38,7 @@ Sau mỗi batch, Haiku review chỉ theo spec.
   - `cache_dir: artifacts/pcst_cache/clip_pcst_sage_flickr30k`
   - `model_dir: artifacts/models/flickr30k/clip_pcst_sage_flickr30k`
   - thêm `concept_edges_split_file: splits/visual_genome/split_seed0.json`, đặt ngay dưới `concept_edges_dir`. **Không** đổi `concept_edges_dir`, vì đó là cạnh PMI của VG.
-  Giữ các comment quyết định của bản VG. Sửa comment đầu file thành "configs/clip_pcst_sage_vg.yaml on Flickr30k: only the dataset changes; PMI concept edges are borrowed from VG (ADR-0052)".
+  Giữ các comment quyết định của bản VG. Sửa comment đầu file thành "configs/clip_pcst_sage_vg.yaml on Flickr30k: only the dataset changes; PMI concept edges are borrowed from VG (ADR-0056)".
 - [x] Tạo `configs/clip_nograph_flickr30k_lr1e4.yaml` bằng cách chép `configs/clip_nograph_vg_lr1e4.yaml`, rồi chỉ đổi:
   - `experiment: clip_nograph_flickr30k_lr1e4`
   - `dataset: flickr30k`
@@ -46,7 +46,7 @@ Sau mỗi batch, Haiku review chỉ theo spec.
   - `features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k`
   - `graph_dir: artifacts/graphs/flickr30k/contains_clip_top16_v1`
   - `model_dir: artifacts/models/flickr30k/clip_nograph_flickr30k_lr1e4`
-  Comment đầu file: "configs/clip_nograph_vg_lr1e4.yaml on Flickr30k: same-config control for clip_pcst_sage_flickr30k (ADR-0052)".
+  Comment đầu file: "configs/clip_nograph_vg_lr1e4.yaml on Flickr30k: same-config control for clip_pcst_sage_flickr30k (ADR-0056)".
 - [x] Tạo `tests/test_flickr30k_pcst_configs.py`, theo kiểu của `tests/test_flickr30k_configs.py`:
   - So hai cặp (VG, Flickr30k). Mọi khoá ngoài nhóm dataset (`experiment`, `dataset`, `split_file`, `features_dir`, `graph_dir`, `cache_dir`, `model_dir`, `output_dir`) phải bằng nhau.
   - Flickr30k chỉ được có thêm đúng một khoá: `concept_edges_split_file`, và khoá này chỉ xuất hiện ở bản pcst.
@@ -54,17 +54,17 @@ Sau mỗi batch, Haiku review chỉ theo spec.
   - `concept_edges_dir` của bản Flickr30k bằng của bản VG.
   - `concept_edges_split_file == "splits/visual_genome/split_seed0.json"`.
   - Cả hai config nạp được bằng `load_pcst_sage_config` và `load_graph_rerank_config`.
-- [x] Commit: `feat(configs): G-Retriever stage 2 and its same-config control on Flickr30k (ADR-0052)`.
+- [x] Commit: `feat(configs): G-Retriever stage 2 and its same-config control on Flickr30k (ADR-0056)`.
 
 ## Batch B2
 
-### T3 [M]: ADR-0052 và hướng dẫn chạy
-- [x] Tạo `docs/decisions/0052-g-retriever-tren-flickr30k-dung-lai-canh-pmi-cua-vg.md` theo template ADR-0001, viết tiếng Việt.
+### T3 [M]: ADR-0056 và hướng dẫn chạy
+- [x] Tạo `docs/decisions/0056-g-retriever-tren-flickr30k-dung-lai-canh-pmi-cua-vg.md` theo template ADR-0001, viết tiếng Việt.
   - Trạng thái "Đề xuất", ngày 2026-11-17.
   - Nội dung lấy từ spec, mục 2–8: bối cảnh, quyết định (nhóm chọn ngày 2026-11-17), hai phương án bị loại, rò rỉ, hệ quả.
   - Ghi chú trùng số ADR-0050 (spec mục 8).
 - [x] Thêm dòng 0052 vào cuối bảng "Quyết định khi cài đặt" trong `docs/decisions/README.md`, bắt đầu bằng "(Đề xuất)".
-- [x] Thêm mục `## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0052)` vào cuối `docs/guides/huan-luyen-va-xep-hang-lai.md`. Mục gồm:
+- [x] Thêm mục `## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0056)` vào cuối `docs/guides/huan-luyen-va-xep-hang-lai.md`. Mục gồm:
   1. Ý tưởng, 3–4 câu.
   2. Bảng "cần có trước khi chạy". Mỗi dòng ghi thêm cách tạo:
      - đặc trưng Flickr30k;
@@ -81,7 +81,7 @@ Sau mỗi batch, Haiku review chỉ theo spec.
      - symlink **cả** `artifacts/pcst_cache` lên Drive (bài học 2026-11-17: cache mất khi xoá runtime);
      - `drive.flush_and_unmount()` sau mỗi phiên.
   5. Thời gian ước tính (spec mục 7) và quy tắc dừng giống mục 10.8.
-- [x] Commit: `docs: ADR-0052 and guide for G-Retriever stage 2 on Flickr30k`.
+- [x] Commit: `docs: ADR-0056 and guide for G-Retriever stage 2 on Flickr30k`.
 
 ### T4 [S]: nhật ký AI
 - [x] Thêm một dòng vào cuối bảng `docs/ai-usage-log.md`, giữ CRLF như các dòng khác:

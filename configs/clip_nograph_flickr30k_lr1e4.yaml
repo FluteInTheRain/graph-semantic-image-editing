@@ -1,4 +1,4 @@
-# configs/clip_nograph_vg_lr1e4.yaml on Flickr30k: same-config control for clip_pcst_sage_flickr30k (ADR-0052).
+# configs/clip_nograph_vg_lr1e4.yaml on Flickr30k: same-config control for clip_pcst_sage_flickr30k (ADR-0056).
 # No-graph control of ADR-0046 section 6: the same training as clip_graph_vg.yaml, but W_nb is fixed at 0.
 # It answers: does a gain come from the graph, or only from a linear projection learned on VG?
 # One file = one experiment. Every value below is chosen on val only, never on test or queries/.

@@ -1,0 +1,28 @@
+\section{Cơ sở lý thuyết và công trình liên quan}
+\label{sec:background}
+
+\subsection{Truy vấn văn bản--ảnh bằng CLIP}
+CLIP~\cite{radford2021clip} huấn luyện song song một bộ mã hóa ảnh $f_I$ và một bộ mã hóa văn bản $f_T$ bằng học tương phản trên các cặp ảnh--chú thích. Sau khi chuẩn hóa L2, độ phù hợp giữa truy vấn $q$ và ảnh $i$ là $\cos(f_T(q), f_I(i))$, và việc tìm kiếm quy về tìm láng giềng gần nhất. Nhóm dùng bản OpenCLIP~\cite{cherti2023openclip} ViT-B/32 huấn luyện trên LAION-2B~\cite{schuhmann2022laion}, giữ đóng băng toàn bộ, và dùng FAISS~\cite{johnson2019faiss} với chỉ mục \code{IndexFlatIP} để tìm kiếm chính xác.
+
+\subsection{Mạng nơ-ron đồ thị}
+Mạng nơ-ron đồ thị (GNN) cập nhật biểu diễn của một đỉnh bằng cách gom thông tin từ các đỉnh láng giềng. GCN~\cite{kipf2017gcn} lấy trung bình có chuẩn hóa theo bậc, GAT~\cite{velickovic2018gat} dùng trọng số chú ý, còn GraphSAGE~\cite{hamilton2017sage} tách riêng phần của chính đỉnh và phần của láng giềng:
+\begin{equation}
+h_v = W_{\text{self}}\,x_v + W_{\text{nb}}\cdot \operatorname{mean}_{u\in N(v)} x_u + b.
+\end{equation}
+Nhóm chọn GraphSAGE vì cách tách này cho phép khởi tạo mô hình bằng đúng CLIP và giúp việc giải thích đơn giản hơn (Mục~\ref{sec:model}). Phần cài đặt dùng \code{SAGEConv} của PyTorch Geometric~\cite{fey2019pyg}.
+
+\subsection{Đồ thị tri thức đa phương thức}
+Scene graph của Visual Genome~\cite{krishna2017vg} mô tả đối tượng, thuộc tính và quan hệ trong từng ảnh. Đồ thị tri thức đa phương thức (multimodal knowledge graph, MMKG) gắn ảnh vào các thực thể của một đồ thị tri thức; khảo sát của Chen và cộng sự~\cite{chen2024kgmm} tổng hợp các hướng nghiên cứu chính. Những phương pháp MMKG gần đây được đề bài gợi ý, như MKGformer~\cite{chen2022mkgformer}, NativE~\cite{zhang2024native} và AdaMF-MAT~\cite{zhang2024adamf}, giải bài toán hoàn thiện đồ thị (dự đoán liên kết) trên các bộ MKG-W, MKG-Y hay FB15k-237-IMG. Chúng không áp dụng trực tiếp được cho bài toán xếp hạng ảnh theo câu truy vấn của nhóm.
+
+Gần với bài toán của nhóm hơn là G-Retriever~\cite{he2024gretriever}, một phương pháp hỏi đáp trên đồ thị có thuộc tính văn bản. G-Retriever chấm độ liên quan của từng đỉnh với câu hỏi, chọn một đồ thị con liên thông bằng bài toán cây Steiner có thưởng (prize-collecting Steiner tree, PCST)~\cite{hegde2015pcst}, mã hóa đồ thị con bằng GNN rồi đưa cho mô hình ngôn ngữ lớn sinh câu trả lời. Bước chọn đồ thị con phụ thuộc vào câu hỏi, và đó là phần nhóm tái lập trong Mục~\ref{sec:gret}.
+
+\subsection{Giải thích GNN và đánh giá giải thích}
+Ba nhóm phương pháp giải thích được dùng trong đồ án:
+\begin{itemize}
+\item \textbf{Occlusion}: xóa lần lượt từng cạnh và đo điểm thay đổi bao nhiêu. Cách này đơn giản và bám sát mô hình, nhưng cần một lần chạy cho mỗi cạnh.
+\item \textbf{Integrated Gradients} (IG)~\cite{sundararajan2017ig}: gán cho mỗi cạnh một trọng số rồi tích phân gradient của điểm theo trọng số đó từ 0 đến 1.
+\item \textbf{GNNExplainer}~\cite{ying2019gnnexplainer}: học một mặt nạ cạnh vừa giữ được dự đoán vừa thưa nhất có thể.
+\end{itemize}
+Để đánh giá, GraphFramEx~\cite{amara2022graphframex} tách Fid$^+$ (bỏ phần giải thích thì dự đoán thay đổi bao nhiêu, phản ánh tính cần thiết) và Fid$^-$ (chỉ giữ phần giải thích thì dự đoán thay đổi bao nhiêu, phản ánh tính đủ), rồi gộp hai đại lượng thành chỉ số characterization. Zheng và cộng sự~\cite{zheng2024robust} chỉ ra rằng xóa cạnh tạo ra những đồ thị lệch khỏi phân phối lúc huấn luyện, và đề xuất robust fidelity, trong đó mỗi cạnh chỉ bị xóa với một xác suất nhất định.
+
+Yêu cầu xuyên suốt của đề là giải thích phải xuất phát từ chính cơ chế xếp hạng. Một đường đi ``hợp lý'' được tìm sau khi đã có kết quả, nếu không ảnh hưởng tới dự đoán, thì không được coi là giải thích. Vì vậy nhóm chỉ dùng các phương pháp chạy lại đúng mô hình xếp hạng trên đồ thị đã bị sửa.

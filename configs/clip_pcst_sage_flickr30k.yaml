@@ -1,4 +1,4 @@
-# configs/clip_pcst_sage_vg.yaml on Flickr30k: only the dataset changes; PMI concept edges are borrowed from VG (ADR-0052).
+# configs/clip_pcst_sage_vg.yaml on Flickr30k: only the dataset changes; PMI concept edges are borrowed from VG (ADR-0056).
 # How to run: scripts/prepare_pcst_cache.py, scripts/train_pcst_sage.py (val), then
 # scripts/evaluate_pcst_sage.py (test, once). See the docstrings of those scripts.
 # One file = one experiment. Every value below is chosen on val only, never on test or queries/.

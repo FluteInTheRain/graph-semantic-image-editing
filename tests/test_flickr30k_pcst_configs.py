@@ -1,4 +1,4 @@
-"""The Flickr30k G-Retriever configs change only the dataset (ADR-0052)."""
+"""The Flickr30k G-Retriever configs change only the dataset (ADR-0056)."""
 
 from pathlib import Path
 

@@ -1,0 +1,71 @@
+\section{Chuyển giao sang MMKG tiếng Việt}
+\label{sec:mmkg}
+
+\subsection{Giao thức}
+Ý tưởng chuyển giao là lấy mô hình học trên Visual Genome (ảnh đời thường, khái niệm như \emph{man}, \emph{tree}, câu tiếng Anh) và dùng ngay trên miền di sản Việt Nam, với câu tiếng Việt, mà không huấn luyện lại. Các mô hình học được của cấp độ 1 làm được điều này vì trọng số của chúng chỉ là các ma trận $512 \times 512$ nhân với vectơ CLIP đóng băng và không gắn với một danh sách khái niệm cố định; đổi tập khái niệm chỉ làm thay đổi đồ thị. G-Retriever giai đoạn 1 chọn $\alpha = 1$ trên val nên không được xét.
+
+Giao thức được chốt trong ADR trước khi chạy. Hai mô hình được dùng là GraphSAGE một lớp và hai lớp, giữ nguyên trọng số và $\alpha$ của từng seed như đã chọn trên val Visual Genome, so với CLIP thuần trên cùng 100 ứng viên. Đỉnh khái niệm là 119 thực thể của MMKG với vectơ là embedding văn bản CLIP của ``a photo of a \{tên tiếng Anh\}''. Mỗi ảnh được nối với 16 thực thể gần nhất theo CLIP, giống như trên Visual Genome; nhóm không dùng cột thực thể của ảnh vì đó chính là đáp án. Mô hình hai lớp dùng 303 bộ ba của MMKG (theo cả hai chiều) thay cho cạnh đồng xuất hiện, nhờ đó tri thức trong đồ thị thực sự đi vào điểm xếp hạng. Đối chứng không đồ thị của Visual Genome được bổ sung vào giao thức trước khi chạy.
+
+\begin{table}[t]
+\centering
+\caption{Chuyển giao sang MMKG tiếng Việt (318 truy vấn, 380 ảnh). Mô hình lấy nguyên từ Visual Genome; độ lệch chuẩn chỉ phản ánh 3 bộ trọng số}
+\label{tab:mmkg}
+\scriptsize
+\setlength{\tabcolsep}{1.6pt}
+\begin{tabular}{@{}l c c c c@{}}
+\toprule
+\textbf{\mrr} & \textbf{CLIP} & \textbf{Không ĐT} & \textbf{Một lớp} & \textbf{Hai lớp} \\
+\midrule
+Toàn bộ (318) & 0,2766 & 0,2861\pmm0,0035 & 0,2836\pmm0,0006 & \textbf{0,2872}\pmm0,0019 \\
+R@1 toàn bộ & 0,1792 & 0,1939\pmm0,0036 & 0,1855\pmm0,0000 & \textbf{0,1950}\pmm0,0031 \\
+\midrule
+Trực tiếp, Anh (80) & \textbf{0,464} & 0,458 & 0,459 & 0,462 \\
+Gián tiếp, Anh (79) & 0,418 & 0,442 & 0,436 & \textbf{0,458} \\
+\quad chung chung (44) & 0,539 & 0,592 & 0,575 & \textbf{0,609} \\
+\quad cụ thể (35) & 0,266 & 0,254 & 0,261 & \textbf{0,268} \\
+Trực tiếp, Việt (80) & \textbf{0,123} & 0,118 & 0,115 & 0,114 \\
+Gián tiếp, Việt (79) & 0,101 & \textbf{0,126} & 0,124 & 0,115 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Kết quả chuyển giao}
+Các nhận xét dưới đây là xu hướng và chưa được kiểm định theo truy vấn, vì mỗi nhóm chỉ có 35--80 câu.
+
+\textit{Chuyển miền.} Không cần huấn luyện lại, cả ba mô hình học trên Visual Genome đều nâng \mrr{} so với CLIP, từ 0,2766 lên 0,2836--0,2872 (tăng 2,5--3,8\%). Tuy nhiên đối chứng không đồ thị đã đạt 0,2861 \pmm{} 0,0035, cao hơn mô hình một lớp và ngang mô hình hai lớp (chênh 0,0011, nhỏ hơn độ lệch chuẩn). Giống như trên Visual Genome, gần như toàn bộ mức tăng trên MMKG thuộc về phép chiếu tuyến tính học được.
+
+\textit{Đóng góp của đồ thị theo nhóm câu.} So với đối chứng không đồ thị, mô hình hai lớp cao hơn ở câu gián tiếp tiếng Anh (0,458 so với 0,442), rõ nhất ở câu chung chung (0,609 so với 0,592). R@5 của câu gián tiếp chung chung tiếng Việt tăng từ 0,477 lên 0,568 với cả hai mô hình có đồ thị. Ngược lại, mô hình một lớp thấp hơn đối chứng ở gần như mọi nhóm. Ở câu trực tiếp (gọi tên riêng), mọi mô hình học trên Visual Genome đều hơi thấp hơn CLIP, nên nguyên nhân nằm ở phép chiếu chứ không riêng ở đồ thị.
+
+\textit{Vai trò của bộ ba MMKG.} Mô hình hai lớp, nơi bộ ba đi vào điểm, là mô hình duy nhất vượt đối chứng ở câu gián tiếp tiếng Anh, nhưng lại kém cả mô hình một lớp lẫn đối chứng ở câu gián tiếp tiếng Việt (0,115 so với 0,124 và 0,126). Hai mô hình khác nhau cả về kiến trúc lẫn trọng số, và nhóm chưa chạy ablation bỏ hoặc xáo bộ ba, nên chưa thể quy chênh lệch này cho tri thức trong đồ thị.
+
+\textit{Chuyển ngôn ngữ.} Cùng một nội dung, \mrr{} của CLIP rơi từ 0,464 xuống 0,123 với câu trực tiếp và từ 0,418 xuống 0,101 với câu gián tiếp; CLIP đạt R@1 bằng 0 trên cả 79 câu gián tiếp tiếng Việt. Một phân tích khám phá (thực hiện sau khi có kết quả, không thuộc giao thức đã chốt) cho thấy lý do: bộ mã hóa văn bản của CLIP \code{laion2b}, vốn học chủ yếu trên tiếng Anh, đặt các câu tiếng Việt rất gần nhau (cosine trung bình giữa hai câu là 0,92, so với 0,70 ở tiếng Anh). Kết quả là 79 câu gián tiếp tiếng Việt chỉ trả về 3 ảnh hạng 1 khác nhau, và 70\% số câu trả về cùng một ảnh. Đồ thị không sửa được gốc rễ này, vì điểm đồ thị $\cos(q, h_i)$ vẫn dùng chính vectơ truy vấn $q$.
+
+\textit{Quy mô đồ thị.} Với 119 thực thể, mỗi ảnh nối tới 16 thực thể, tức khoảng 13\% số đỉnh khái niệm, nên cạnh \code{contains} kém phân biệt hơn nhiều so với trên Visual Genome. Ngoài ra, đồ thị có tính ``thế giới đóng: đỉnh khái niệm gồm cả 80 hiện vật, tức chính tập tên của các đáp án; ảnh không được nối với hiện vật của nó qua nhãn mà qua CLIP, nhưng đồ thị biết trước danh sách tên. Theo giao thức, $k$ và tập đỉnh không được điều chỉnh trên MMKG.
+
+\subsection{Giải thích trên MMKG}
+Nhóm đánh giá giải thích trên MMKG với cùng thước đo như Mục~\ref{sec:xai}, giao thức được chốt trước và chạy một lần. Mọi lựa chọn được lấy nguyên từ val Visual Genome: mô hình một lớp, $\alpha$ của từng seed, IG và $m = 10$. Nhóm giải thích ảnh hạng 1 của toàn bộ 318 truy vấn với 3 seed, tổng cộng 954 giải thích. Trước khi giải thích, kết quả xếp hạng lại phải cho đúng \mrr{} của lần chạy chuyển giao ở từng seed, và điều kiện này được thỏa mãn.
+
+\begin{table}[t]
+\centering
+\caption{Giải thích trên MMKG (IG, $m = 10$, 3 seed). Trong ngoặc là giá trị khi bỏ 10 cạnh ngẫu nhiên của cùng ảnh, lặp 20 lần. $p$: Wilcoxon một phía cho hạng tụt trên các bản ghi (truy vấn, seed); vì mỗi truy vấn lặp 3 seed, $p$ chỉ mang tính tham khảo}
+\label{tab:mmkg-xai}
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}l r c c c@{}}
+\toprule
+\textbf{Nhóm} & \textbf{Số} & \textbf{Fid$^+$} & \textbf{Hạng tụt} & $p$ \\
+\midrule
+MMKG, toàn bộ & 954 & 0,0094 (0,0001) & 0,82 (0,10) & $\approx 10^{-59}$ \\
+\quad trực tiếp, Anh & 240 & 0,0090 (0,0003) & 0,68 (0,09) & $10^{-13}$ \\
+\quad gián tiếp, Anh & 237 & 0,0081 (0,0004) & 1,12 (0,12) & $7{\cdot}10^{-18}$ \\
+\quad trực tiếp, Việt & 240 & 0,0107 (0,0000) & 0,73 (0,08) & $3{\cdot}10^{-14}$ \\
+\quad gián tiếp, Việt & 237 & 0,0097 (0,0000) & 0,77 (0,11) & $4{\cdot}10^{-16}$ \\
+\midrule
+Visual Genome test & 60 & 0,0225 (0,0006) & 2,57 (0,26) & $5{\cdot}10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bảng~\ref{tab:mmkg-xai} cho thấy giải thích vẫn trung thực với mô hình trên miền mới. Bỏ 10 cạnh do IG chọn làm điểm đồ thị giảm 0,0094, gấp khoảng 90 lần bỏ 10 cạnh ngẫu nhiên, và làm ảnh tụt trung bình 0,82 bậc so với 0,10 bậc. Kết quả này đúng ở cả bốn nhóm, kể cả với truy vấn tiếng Việt. Validity đạt 100\% và sparsity bằng 0,375, giống Visual Genome. Hiệu ứng nhỏ hơn trên Visual Genome (0,82 so với 2,57 bậc); giả thuyết của nhóm, chưa được kiểm chứng, là đồ thị MMKG kém phân biệt hơn nên mỗi cạnh mang ít thông tin riêng hơn.
+
+Độ trung thực của giải thích không cho biết ảnh có đúng hay không: chỉ 18,6\% ảnh hạng 1 được giải thích là ảnh đúng. Giải thích cho biết vì sao \emph{mô hình} xếp ảnh đó lên đầu, không cho biết vì sao ảnh đó đúng; và như đã thấy ở trên, trên MMKG mô hình một lớp không hơn đối chứng không đồ thị. Chỉ số characterization cũng không dùng được trên MMKG: giá trị chuẩn hóa (chia cho tác động của \emph{toàn bộ} cạnh) bị cắt về đoạn $[0, 1]$ ở mọi truy vấn, và với truy vấn tiếng Việt nó gần bằng 0 trong khi Fid$^+$ thô vẫn cao. Vì vậy nhóm dựa vào Fid$^+$ thô và hạng tụt so với ngẫu nhiên. Bộ ba MMKG không xuất hiện trong giải thích vì mô hình một lớp chỉ có cạnh \code{contains}; giải thích cho mô hình hai lớp là việc của giai đoạn sau.

@@ -64,6 +64,19 @@ Quy tắc:
 - Dòng `val` lấy từ lần chạy lại trên val (`20261116-2252_explain_vg_val`, commit `59d088c`) với **đúng checkpoint của lần test**, nên val và test dùng cùng mô hình. Lần chạy lại cho cùng lựa chọn (`integrated_gradients`, `m = 10`) như lần val đầu trên Kaggle (`20261114-0453_explain_vg_val`, checkpoint train lại trên Kaggle); hai lần lệch nhau ≤ 0,001 ở hạng tụt ngẫu nhiên, các cột khác trùng tới 4 chữ số.
 - Bản sao các run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của `20261116-2252_explain_vg_val` và `20261116-2245_explain_vg_test`, không sửa tay số.
 
+## Flickr30k: pipeline cấp độ 1 trên tập thứ hai
+
+Quyết định: ADR-0050. Pipeline giữ nguyên, chỉ đổi dữ liệu.
+
+| Bảng | Nội dung |
+|---|---|
+| `level1_flickr30k_test.csv` | Mean ± std qua 3 seed trên **test** Flickr30k: `clip_flickr30k`, `clip_nograph_flickr30k`, `clip_graph_flickr30k_lr1e4`, `clip_graph_flickr30k_lr1e4_shuffled` |
+| `level1_flickr30k_val.csv` | Như trên nhưng trên **val** (tập chọn epoch và `alpha`), chỉ 3 mô hình có học |
+
+- Test chạy **đúng một lần** mỗi seed, cùng phiên Kaggle với huấn luyện (commit `fb62f69`, `git_dirty: false`), bằng checkpoint và `alpha` đã chọn trên val.
+- CLIP thuần chỉ chạy seed 0 trên val, nên không có trong bảng val (`summarize_runs.py` cần ≥ 3 seed). Số của nó nằm trong hồ sơ.
+- Hai bảng sinh bằng `scripts/summarize_runs.py --split {val,test}` trên bản chép các run Kaggle (`results/records/20261118_flickr30k-cap-do-1/run_copies/`); không sửa tay.
+
 ## `g_retriever_test.csv`: G-Retriever bậc 2 (ADR-0051)
 
 Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_test.csv`. Không ghi đè `main.csv`, vì máy chạy không có các run cũ.
@@ -79,13 +92,13 @@ Ghi chú minh bạch:
 - Run: `20261117-1300/1305/1309_clip_pcst_sage_vg_seed0/1/2`, `20261117-1301/1305/1310_clip_nograph_vg_lr1e4_seed0/1/2`. Commit code `4afb770`, cùng `split_sha256` với `main.csv`.
 
 
-## `g_retriever_flickr30k_test.csv`: G-Retriever bậc 2 trên Flickr30k (ADR-0052)
+## `g_retriever_flickr30k_test.csv`: G-Retriever bậc 2 trên Flickr30k (ADR-0056)
 
 Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_flickr30k_test.csv`.
 
 | Dòng (`experiment`) | `lr` | Vai trò |
 |---|---|---|
-| `clip_pcst_sage_flickr30k` | 1e-4 | G-Retriever bậc 2 trên Flickr30k, cấu hình y hệt `clip_pcst_sage_vg`; cạnh PMI mượn từ VG (ADR-0052) |
+| `clip_pcst_sage_flickr30k` | 1e-4 | G-Retriever bậc 2 trên Flickr30k, cấu hình y hệt `clip_pcst_sage_vg`; cạnh PMI mượn từ VG (ADR-0056) |
 | `clip_nograph_flickr30k_lr1e4` | 1e-4 | Đối chứng cùng cấu hình huấn luyện với dòng trên |
 
 Ghi chú:

@@ -2,7 +2,7 @@
 
 - **Ngày:** 2026-11-17
 - **Nhánh:** `feat/g-retriever-flickr30k`, tách từ `feat/g-retriever-stage2` rồi gộp `origin/feat/run-pipeline-on-flickr30k`.
-- **Liên quan:** ADR-0051 (G-Retriever), ADR-0048 (cạnh PMI), ADR Flickr30k của nhánh `feat/run-pipeline-on-flickr30k` (đang đánh số 0050). ADR mới cho thiết kế này: **ADR-0052**.
+- **Liên quan:** ADR-0051 (G-Retriever), ADR-0048 (cạnh PMI), ADR Flickr30k của nhánh `feat/run-pipeline-on-flickr30k` (đang đánh số 0050). ADR mới cho thiết kế này: **ADR-0056**.
 
 ## 1. Mục tiêu
 

@@ -553,9 +553,9 @@ Fidelity, validity, sparsity: xem `src/mmxai/explain/` và ADR-0016.
 
 **Symlink kết quả lên Colab Drive:** tương tự mục 4 và 9.4–9.5 của hướng dẫn bậc 1.
 
-## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0052)
+## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0056)
 
-> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0052 đã được nhóm **chấp nhận** (2026-11-17), nên bước test được phép chạy, mỗi seed đúng một lần.
+> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0056 đã được nhóm **chấp nhận** (2026-11-17), nên bước test được phép chạy, mỗi seed đúng một lần.
 
 ### 11.1. Ý tưởng
 
@@ -581,8 +581,8 @@ Config chính: `configs/clip_pcst_sage_flickr30k.yaml`. Config đối chứng: `
 | 2. Cache train + val | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0` | Cache dùng chung 3 seed (không xáo) |
 | 3. Huấn luyện bản chính | `uv run python scripts/train_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` với `k` = 0, 1, 2 | 3 lần. Chọn epoch và `alpha` trên val |
 | 4. Huấn luyện đối chứng | `uv run python scripts/train_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seeds 0 1 2 --threads 4` | Không đồ thị, cùng cấu hình |
-| 5. Test bản chính | `uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0052. Mỗi seed một lần |
-| 6. Test đối chứng | `uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0052. Mỗi seed một lần |
+| 5. Test bản chính | `uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
+| 6. Test đối chứng | `uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
 
 ### 11.4. Ghi chú Colab
 

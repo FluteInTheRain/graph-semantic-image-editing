@@ -103,7 +103,7 @@ class GraphRerankConfig:
     extra_action_predicates: list[str] | None = None
     extra_spatial_predicates: list[str] | None = None
     excluded_predicates: list[str] | None = None
-    # Flickr30k borrows VG's vocabulary and PMI edges (ADR-0052);
+    # Flickr30k borrows VG's vocabulary and PMI edges (ADR-0056);
     # None = this experiment's own split_file.
     concept_edges_split_file: str | None = None
 
@@ -163,7 +163,7 @@ def load_concept_edges_for(config: GraphRerankConfig, graph: ContainsGraph) -> C
     if config.concept_edges_dir is None:
         return None
     edges, meta = load_concept_edges(config.concept_edges_dir)
-    # The edges may have been counted on another dataset's split (ADR-0052).
+    # The edges may have been counted on another dataset's split (ADR-0056).
     edges_split_file = config.concept_edges_split_file or config.split_file
     if meta["split_sha256"] != file_sha256(edges_split_file):
         raise ValueError(f"{config.concept_edges_dir} was counted on a different split file")
