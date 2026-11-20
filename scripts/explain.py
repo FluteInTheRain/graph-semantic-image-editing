@@ -18,12 +18,15 @@ What it does:
 Before running:
     uv sync --group ml --group graph
     The trained model: scripts/train_graph_rerank.py with the same --config and seed.
-    Optional, for the query text: Visual Genome region_descriptions.json (several GB).
-    The feature cache holds only region ids, so without it the text shows as an id.
+    Optional, for the query text: Visual Genome region_descriptions.json (several GB)
+    or Flickr30k dataset_flickr30k.json. The feature cache holds only ids, so without
+    it the text shows as an id.
 
 Run (from the repo root; a few minutes on a laptop CPU):
     uv run python scripts/explain.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
-        --split val --num-edges 3 --vg-data-dir data/visual_genome
+        --split val --num-edges 3 --text-data-dir data/visual_genome
+    uv run python scripts/explain.py --config configs/clip_graph_flickr30k_lr1e4.yaml --seed 0 \
+        --split val --num-edges 3 --text-data-dir data/flickr30k
 
 Output:
     results/runs/<YYYYMMDD-HHMM>_<experiment>_explain_seed<k>/ with analysis.json (all
@@ -48,19 +51,24 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--split", default="val", help="only val is allowed (ADR-0009)")
     parser.add_argument("--num-edges", type=int, default=3, help="relations shown and removed")
-    parser.add_argument("--vg-data-dir", help="folder with region_descriptions.json (optional)")
+    parser.add_argument(
+        "--text-data-dir",
+        "--vg-data-dir",
+        dest="text_data_dir",
+        help="raw sentences (optional): VG region_descriptions.json or dataset_flickr30k.json",
+    )
     parser.add_argument("--threads", type=int, help="CPU threads for torch (default: torch's)")
     args = parser.parse_args()
 
     if args.threads is not None:
         torch.set_num_threads(args.threads)
     config = load_graph_rerank_config(args.config)
-    analysis = analyse_split(config, args.seed, args.split, args.num_edges, args.vg_data_dir)
+    analysis = analyse_split(config, args.seed, args.split, args.num_edges, args.text_data_dir)
     cli_settings = {
         "seed": args.seed,
         "split": args.split,
         "num_edges": args.num_edges,
-        "vg_data_dir": args.vg_data_dir,
+        "text_data_dir": args.text_data_dir,
     }
     run_dir = write_analysis(config, analysis, cli_settings, datetime.now())
     print(f"saved {run_dir}")

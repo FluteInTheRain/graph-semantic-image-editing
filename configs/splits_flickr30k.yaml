@@ -1,0 +1,8 @@
+# configs/splits_visual_genome.yaml on Flickr30k: only the dataset changes (ADR-0050).
+dataset: flickr30k
+features_dir: artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k
+output_dir: splits/flickr30k
+split_seed: 0
+num_val: 5000
+num_test: 5000
+duplicate_threshold: 0.99

@@ -431,3 +431,176 @@ Ba config chỉ khác `experiment`, `subgraph_mode`, `shuffle_concept_edges`, `s
 ### 9.7. Giải thích
 
 Giải thích của một ảnh là `explain_overlap` (`src/mmxai/models/subgraph_scorer.py`): danh sách khái niệm thuộc `N(i) ∩ S_q`, đánh dấu cái nào là cầu nối, và điểm khi bỏ từng khái niệm. Nó lấy **đúng từ phép tính `g`**: bỏ một khái niệm trùng thì tử số giảm đúng 1, tức `g` giảm `1/|S_q|`. Không có bước dựng đường đi riêng sau khi đã có kết quả.
+
+## 10. G-Retriever bậc 2: GNN trên đồ thị con của truy vấn (ADR-0051)
+
+> **Trạng thái 2026-11-16:** bậc 1 không hơn CLIP thuần trên val (kết quả âm). Bậc 2 chạy GNN để học cách dùng đồ thị con, dùng code và test, **chưa chạy trên dữ liệu thật**. ADR-0051 bậc 2 (mục "Thiết kế bậc 2") **Đề xuất**, nhóm chưa duyệt.
+
+### 10.1. Ý tưởng
+
+Bậc 1 (mục 9) chỉ **đếm** khái niệm của ảnh nằm trong đồ thị con truy vấn: `g(q, i) = |N(i) ∩ S_q| / |S_q|`. Vì các điểm chỉ nhận giá trị `{0, 1/|S_q|, 2/|S_q|, …}`, chênh lệch giữa ảnh liền nhau thường lớn, lấn át những chênh nhỏ của CLIP. Điểm đồ thị như vậy quá thô.
+
+Bậc 2 để **mô hình học** cách dùng đồ thị con. Mỗi ảnh `i` giờ có một đầu ra `h_i(q)` **phụ thuộc truy vấn** `q`, từ một mạng nhỏ gọi là `SubgraphSage`. Điểm là `cos(q, h_i(q))`, liên tục và có thể huấn luyện.
+
+### 10.2. Công thức
+
+```
+m_i(q) = trung_bình{x_c : c ∈ N(i) ∩ S_q}, rỗng thì là vector 0
+h_i(q) = W_self·x_i + W_nb·m_i(q) + b
+final  = alpha·cos(q, x_i) + (1−alpha)·cos(q, h_i(q))
+```
+
+- `x_i`, `x_c`, `q` là vector CLIP **đóng băng**.
+- Chỉ `W_self`, `W_nb`, `b` được huấn luyện (khoảng 525 nghìn số).
+- Khởi tạo `W_self = I`, `W_nb = 0`, `b = 0`: lúc chưa học thì `h_i(q) = x_i` (giống bậc 1).
+- Ảnh không chạm `S_q` (tức `N(i) ∩ S_q = ∅`) thì `h_i(q) = W_self·x_i + b`, không có đóng góp từ `W_nb`.
+- Code: `src/mmxai/models/subgraph_sage.py`.
+
+### 10.3. Vì sao cần bậc 2
+
+Bậc 1 lấn át CLIP vì điểm thô. Bậc 2 cho phép mô hình **học** cách kết hợp thông tin từ `N(i) ∩ S_q` với vector ảnh. Hai thay đổi:
+
+1. Điểm trở nên **liên tục**: không chỉ nhận giá trị rời rạc, nên nhạy hơn với hiệu ứng nhỏ của CLIP.
+2. Mô hình có thể học `W_nb` để quyết định: từng khái niệm trong `S_q` góp ích bao nhiêu vào ảnh?
+
+Kết quả bậc 1 trên val (mục 9 của ADR-0051) cho thấy tất cả lưới tham số đều chọn `alpha = 1,0`, tức CLIP thuần. Bậc 2 có cơ hội học `W_nb` sao cho `alpha < 1` có ý nghĩa.
+
+### 10.4. Giữ nguyên gì
+
+Cố định theo bài gốc:
+- `k = 3` khái niệm top giải thưởng.
+- `C = 0,5` phí cạnh.
+
+**Không lưới tham số** cho `k` và `C`. Lý do: một lượt PCST trên khoảng 200 nghìn câu train mất khoảng 1 giờ ước tính; 9 tổ hợp `(k, C)` không khả thi. Cache đồ thị con (`S_q`) **được tính một lần** và lưu, rồi dùng cho mọi epoch huấn luyện.
+
+### 10.5. Cache và dữ liệu
+
+| Thành phần | Quy định |
+|---|---|
+| Cache `S_q` | Tính bằng `src/mmxai/graph/pcst_cache.py`: với mỗi câu, chạy PCST rồi lưu danh sách khái niệm của `S_q`. Lưu tại `artifacts/pcst_cache/<experiment>/<split>.npz` + `meta.json` (ghi `k`, `C`, chế độ, seed xáo, hash đồ thị, hash split). Không ghi đè; mỗi config có cache riêng |
+| Cache train | Chỉ câu có ảnh đúng nằm trong top 100 của CLIP (ADR-0047), từ `retrieve_candidates` |
+| Cache val / test | **Mọi** câu của split (không chọn gì) |
+| Test cache | Chỉ tạo trong bước chấm test, dùng **chung** giữa 3 seed (không phụ thuộc seed huấn luyện, không xáo cạnh) |
+
+### 10.6. Huấn luyện
+
+Nối chủ yếu từ bậc 1 (mục 2–4) và ADR-0047:
+
+- **Loss:** InfoNCE với 15 hard negative trên train (lấy từ top 100 của CLIP).
+- **Tham số huấn luyện:** `lr = 1e-4` (chốt từ bậc 1), batch 512, tối đa 10 epoch, patience 2, early stopping theo **MRR@100 của điểm đồ thị một mình** trên val (`alpha = 0`).
+- **Chọn `alpha` trên val:** thử từ 0,0 tới 1,0, chọn MRR@100 cao nhất (hoà thì ưu tiên `alpha` lớn).
+- **Test:** chạy **một lần**, không chọn gì, dùng `alpha` đã lưu.
+- **Seed:** 3 seed `[0, 1, 2]`, báo cáo mean ± std.
+
+### 10.7. Ba bản chạy (3 seed mỗi bản)
+
+| Config | Mục đích | Chế độ |
+|---|---|---|
+| `configs/clip_pcst_sage_vg.yaml` | Chính | PCST với `k = 3`, `C = 0,5` trên cạnh PMI thật |
+| `configs/clip_pcst_sage_vg_no_tree.yaml` | Ablation: bỏ cầu nối | `S_q` chỉ top-3 khái niệm có thưởng, không PCST |
+| `configs/clip_pcst_sage_vg_shuffled.yaml` | Ablation: cạnh xáo | PCST trên cạnh PMI đã xáo, seed xáo = seed chạy |
+
+Thứ tự chạy trên Colab:
+
+| Bước | Lệnh | Chú thích |
+|---|---|---|
+| 1. Đo thời gian | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_vg.yaml --seed 0 --estimate 1000` | Không ghi gì, chỉ để dự báo thời gian |
+| 2. Cache train + val | `python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_vg.yaml --seed 0` (lặp 2 config không xáo) và `--seed 0 1 2` cho config shuffled | Seed 0 cho 2 config chính (cache dùng chung 3 seed); 3 seed cho shuffled (seed xáo = seed chạy) |
+| 3. Huấn luyện | `uv run python scripts/train_pcst_sage.py --config <cfg> --seed <k>` với 3 config × 3 seed = 9 lần | Chọn epoch trên val (`alpha = 0`), lưu checkpoint |
+| 4. Chọn `alpha` trên val | Tự động khi `train_pcst_sage.py` kết thúc | Thử `alpha` từ 0–1, chọn MRR@100 cao nhất |
+| 5. Test | `uv run python scripts/evaluate_pcst_sage.py --config <cfg> --seed <k>` cho mỗi config × seed | **Chỉ khi** nhóm duyệt ADR-0051 bậc 2 |
+
+### 10.8. Quy tắc dừng
+
+Bậc 2 phải **hơn `clip_nograph_vg_lr1e4` trên val** (MRR@100) để chứng tỏ đồ thị con có ích. Nếu không, vẫn chạy test một lần và báo cáo trung thực kết quả âm. Không chỉnh lại tham số sau khi thấy kết quả test.
+
+**So thêm:** `clip_graph_vg_lr1e4` từ bậc 1 (mục 6–7 của hướng dẫn này). Lấy số val từ `artifacts/models/visual_genome/clip_nograph_vg_lr1e4/seed*/selection.json` và `clip_graph_vg_lr1e4/seed*/selection.json`, hoặc chạy lại nếu chưa có.
+
+### 10.9. Cache test và tái lập
+
+Cache test được tạo **chỉ trong bước chấm test** (`scripts/evaluate_pcst_sage.py`). Để tái lập test, chỉ cần lưu cache này một lần rồi dùng chung. Nó không xáo, nên giống nhau ở cả 3 seed của bản chính (`clip_pcst_sage_vg`). Bản no_tree dùng cache chung, bản shuffled có cache riêng (vì seed xáo khác).
+
+### 10.10. Rò rỉ dữ liệu
+
+Kiểm theo ADR-0009 / PDF §6:
+
+- PMI và hard negative chỉ dùng **train**.
+- `contains` lấy từ CLIP top-16 của chính ảnh, không dùng annotation.
+- Chỉ dùng **val** để chọn epoch (bằng điểm đồ thị một mình) và `alpha`.
+- Test chạy **một lần** với cấu hình đã chốt.
+- Kiểm thêm: `edge_source = 'clip_topk'` ở config (không dùng annotation hay ConceptNet).
+
+### 10.11. Giải thích
+
+Từ ADR-0051 mục 5: occlusion chính xác trên chính mô hình `SubgraphSage` đã huấn luyện.
+
+1. Nạp mô hình đã train.
+2. Bỏ lần lượt từng khái niệm trong `N(i) ∩ S_q`, tính lại `h_i(q)` (không thay đổi `S_q`).
+3. Đo độ giảm điểm: `score_drop = score_full - score_reduced`.
+4. Ghi rõ khái niệm nào là cầu nối (có thưởng 0 nhưng nằm trong `S_q`).
+
+Fidelity, validity, sparsity: xem `src/mmxai/explain/` và ADR-0016.
+
+### 10.12. Artifact và kết quả
+
+| Loại | Nơi lưu | Commit? |
+|---|---|---|
+| Cache `S_q` | `artifacts/pcst_cache/...` | Không |
+| Model checkpoint | `artifacts/models/visual_genome/clip_pcst_sage_vg/<seed>/model.pt` | Không |
+| Run output | `results/runs/<timestamp>_clip_pcst_sage_vg_seed<k>/` | Không (gitignored) |
+| Bảng kết quả | `results/tables/main.csv` | Có |
+| Selection (epoch, alpha) | `artifacts/models/.../selection.json` | Không |
+
+**Symlink kết quả lên Colab Drive:** tương tự mục 4 và 9.4–9.5 của hướng dẫn bậc 1.
+
+## 11. G-Retriever bậc 2 trên Flickr30k (ADR-0056)
+
+> **Trạng thái 2026-11-17:** code, config và test đã có, **chưa chạy trên dữ liệu thật**. ADR-0056 đã được nhóm **chấp nhận** (2026-11-17), nên bước test được phép chạy, mỗi seed đúng một lần.
+
+### 11.1. Ý tưởng
+
+Mục 10 chạy G-Retriever bậc 2 trên VG. Mục này chạy lại **y nguyên** trên Flickr30k, chỉ đổi dữ liệu, không chỉnh siêu tham số. PCST cần cạnh PMI giữa các khái niệm. Flickr30k không có annotation đối tượng để đếm PMI, nên ta **dùng lại cạnh PMI của VG**. Điều này hợp lệ vì đồ thị Flickr30k chép nguyên từ vựng 3.880 khái niệm của VG, cùng thứ tự. Cạnh VG chỉ đếm trên train VG nên không rò rỉ dữ liệu Flickr30k. Config trỏ tới cạnh VG bằng trường `concept_edges_split_file` (kiểm trong `load_concept_edges_for`, `src/mmxai/eval/graph_rerank.py`).
+
+### 11.2. Cần có trước khi chạy
+
+| Thứ cần có | Nơi lưu | Cách tạo |
+|---|---|---|
+| Đặc trưng CLIP Flickr30k | `artifacts/features/flickr30k/ViT-B-32__laion2b_s34b_b79k` | `uv run python scripts/extract_features.py --config configs/features_flickr30k.yaml` (xem `docs/guides/chuan-bi-embedding-clip.md`) |
+| Split Flickr30k | `splits/flickr30k/split_seed0.json` | `uv run python scripts/make_splits.py --config configs/splits_flickr30k.yaml` (ADR-0050) |
+| Đồ thị VG (nguồn từ vựng) | `artifacts/graphs/visual_genome/contains_clip_top16_v1` | Dựng ở bước chạy VG (mục 4) |
+| Đồ thị Flickr30k | `artifacts/graphs/flickr30k/contains_clip_top16_v1` | `uv run python scripts/build_graph_from_vocabulary.py --config configs/graph_flickr30k_clip_topk.yaml` (cần đồ thị VG ở dòng trên) |
+| Cạnh PMI của VG | `artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1` | `uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml` |
+
+### 11.3. Thứ tự chạy
+
+Config chính: `configs/clip_pcst_sage_flickr30k.yaml`. Config đối chứng: `configs/clip_nograph_flickr30k_lr1e4.yaml`.
+
+| Bước | Lệnh | Chú thích |
+|---|---|---|
+| 1. Đo thời gian | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0 --estimate 1000` | Không ghi gì, chỉ dự báo thời gian |
+| 2. Cache train + val | `uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0` | Cache dùng chung 3 seed (không xáo) |
+| 3. Huấn luyện bản chính | `uv run python scripts/train_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` với `k` = 0, 1, 2 | 3 lần. Chọn epoch và `alpha` trên val |
+| 4. Huấn luyện đối chứng | `uv run python scripts/train_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seeds 0 1 2 --threads 4` | Không đồ thị, cùng cấu hình |
+| 5. Test bản chính | `uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
+| 6. Test đối chứng | `uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seed <k>` cho `k` = 0, 1, 2 | **Chỉ khi** nhóm duyệt ADR-0056. Mỗi seed một lần |
+
+### 11.4. Ghi chú Colab
+
+- Symlink `artifacts/pcst_cache` lên Drive, giống `artifacts/models` và `results/runs` (mục 4 và 9.4). Bài học 2026-11-17: cache bị mất khi runtime bị xoá, phải tính lại PCST.
+- Cuối mỗi phiên chạy `drive.flush_and_unmount()` (`from google.colab import drive`) để chắc chắn file đã ghi lên Drive.
+
+### 11.5. Thời gian ước tính
+
+Khoảng 25 ms cho mỗi lần gọi PCST.
+
+| Tập | Số caption | Thời gian |
+|---|---|---|
+| train | khoảng 105 nghìn | khoảng 45 phút |
+| val | khoảng 25 nghìn | khoảng 10 phút |
+| test | khoảng 25 nghìn | khoảng 10 phút |
+
+Cache dùng chung cho 3 seed. Đây là ước tính, bước 1 cho số thật.
+
+### 11.6. Quy tắc dừng
+
+Giống mục 10.8. Bản chính phải **hơn `clip_nograph_flickr30k_lr1e4` trên val** (MRR@100) để chứng tỏ đồ thị con có ích. Nếu không, vẫn chạy test một lần mỗi seed và báo cáo trung thực kết quả âm. Không chỉnh lại tham số sau khi thấy kết quả test.

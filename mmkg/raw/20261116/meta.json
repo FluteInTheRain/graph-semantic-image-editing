@@ -1,0 +1,31 @@
+{
+  "collected_on": "2026-11-16",
+  "queries": {
+    "domain": "PREFIX wd: <http://www.wikidata.org/entity/>\nPREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?item ?name_vi ?name_en ?category ?image WHERE {\n  ?item wdt:P1435 ?designation ;\n        wdt:P17 wd:Q881 .\n  OPTIONAL { ?item rdfs:label ?name_vi FILTER(LANG(?name_vi) = \"vi\") }\n  OPTIONAL { ?item rdfs:label ?name_en FILTER(LANG(?name_en) = \"en\") }\n  OPTIONAL { ?item wdt:P373 ?category }\n  OPTIONAL { ?item wdt:P18 ?image }\n}\n",
+    "triples": "PREFIX wd: <http://www.wikidata.org/entity/>\nPREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?h ?p ?t WHERE {\n  ?h wdt:P1435 ?designation ;\n     wdt:P17 wd:Q881 .\n  ?h ?p ?t .\n  FILTER(STRSTARTS(STR(?p), \"http://www.wikidata.org/prop/direct/P\"))\n  FILTER(STRSTARTS(STR(?t), \"http://www.wikidata.org/entity/Q\"))\n}\n",
+    "target_labels": "PREFIX wd: <http://www.wikidata.org/entity/>\nPREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?item ?name_vi ?name_en WHERE {\n  VALUES ?item { __IDS__ }\n  OPTIONAL { ?item rdfs:label ?name_vi FILTER(LANG(?name_vi) = \"vi\") }\n  OPTIONAL { ?item rdfs:label ?name_en FILTER(LANG(?name_en) = \"en\") }\n}\n",
+    "concept_triples": "PREFIX wd: <http://www.wikidata.org/entity/>\nPREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?h ?p ?t WHERE {\n  VALUES ?h { __IDS__ }\n  ?h ?p ?t .\n  FILTER(STRSTARTS(STR(?p), \"http://www.wikidata.org/prop/direct/P\"))\n  FILTER(STRSTARTS(STR(?t), \"http://www.wikidata.org/entity/Q\"))\n}\n"
+  },
+  "row_counts": {
+    "entities_raw": 848,
+    "triples_raw": 3581,
+    "image_candidates": 5093,
+    "image_credits": 4979
+  },
+  "missing_files": [],
+  "git_commit": "8a75f310259a646d75bbe33c4f33f49d1b9df299",
+  "user_agent": "mmxai-course-project/0.1 (research script)",
+  "sparql_url": "https://qlever.dev/api/wikidata",
+  "sparql_index": "Complete Wikidata, TTL from https://dumps.wikimedia.org/wikidatawiki/entities (latest-all.ttl.bz2 from 10.08.2026 munged, latest-lexemes.ttl.bz2 from 07.08.2026), updated LIVE",
+  "config": {
+    "output_root": "mmkg/raw",
+    "sparql_url": "https://qlever.dev/api/wikidata",
+    "country_qid": "Q881",
+    "designation_property": "P1435",
+    "user_agent": "mmxai-course-project/0.1 (research script)",
+    "request_interval_seconds": 1.5,
+    "max_attempts": 5,
+    "max_retry_wait_seconds": 1800,
+    "max_file_bytes": 1048576
+  }
+}

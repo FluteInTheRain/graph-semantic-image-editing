@@ -63,3 +63,46 @@ Quy tắc:
 - Test chạy **đúng một lần** (`results/runs/20261116-2245_explain_vg_test`, commit `8a2f137`, `git_dirty: false`). Script từ chối lần chạy test thứ hai.
 - Dòng `val` lấy từ lần chạy lại trên val (`20261116-2252_explain_vg_val`, commit `59d088c`) với **đúng checkpoint của lần test**, nên val và test dùng cùng mô hình. Lần chạy lại cho cùng lựa chọn (`integrated_gradients`, `m = 10`) như lần val đầu trên Kaggle (`20261114-0453_explain_vg_val`, checkpoint train lại trên Kaggle); hai lần lệch nhau ≤ 0,001 ở hạng tụt ngẫu nhiên, các cột khác trùng tới 4 chữ số.
 - Bản sao các run: `results/records/20261114_xai-cap-do-3/run_copies/`. Hai CSV sinh từ `evaluation.json` của `20261116-2252_explain_vg_val` và `20261116-2245_explain_vg_test`, không sửa tay số.
+
+## Flickr30k: pipeline cấp độ 1 trên tập thứ hai
+
+Quyết định: ADR-0050. Pipeline giữ nguyên, chỉ đổi dữ liệu.
+
+| Bảng | Nội dung |
+|---|---|
+| `level1_flickr30k_test.csv` | Mean ± std qua 3 seed trên **test** Flickr30k: `clip_flickr30k`, `clip_nograph_flickr30k`, `clip_graph_flickr30k_lr1e4`, `clip_graph_flickr30k_lr1e4_shuffled` |
+| `level1_flickr30k_val.csv` | Như trên nhưng trên **val** (tập chọn epoch và `alpha`), chỉ 3 mô hình có học |
+
+- Test chạy **đúng một lần** mỗi seed, cùng phiên Kaggle với huấn luyện (commit `fb62f69`, `git_dirty: false`), bằng checkpoint và `alpha` đã chọn trên val.
+- CLIP thuần chỉ chạy seed 0 trên val, nên không có trong bảng val (`summarize_runs.py` cần ≥ 3 seed). Số của nó nằm trong hồ sơ.
+- Hai bảng sinh bằng `scripts/summarize_runs.py --split {val,test}` trên bản chép các run Kaggle (`results/records/20261118_flickr30k-cap-do-1/run_copies/`); không sửa tay.
+
+## `g_retriever_test.csv`: G-Retriever bậc 2 (ADR-0051)
+
+Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_test.csv`. Không ghi đè `main.csv`, vì máy chạy không có các run cũ.
+
+| Dòng (`experiment`) | `lr` | Vai trò |
+|---|---|---|
+| `clip_pcst_sage_vg` | 1e-4 | G-Retriever bậc 2: GraphSAGE chỉ gộp khái niệm trong đồ thị con PCST (`k = 3`, `C = 0,5` cố định theo bài gốc) |
+| `clip_nograph_vg_lr1e4` | 1e-4 | Đối chứng **cùng cấu hình huấn luyện** với dòng trên, đúng như thiết kế bậc 2 trong ADR-0051 |
+
+Ghi chú minh bạch:
+- Theo quy tắc chọn `lr` ở mục `main.csv`, đối chứng không đồ thị **chính thức** vẫn là `clip_nograph_vg` (1e-3, val tốt hơn 1e-4).
+- Dòng `clip_nograph_vg_lr1e4` ở đây được chạy test ngày 2026-11-17, **sau khi nhóm đồng ý**, chỉ để so cùng cấu hình với G-Retriever. Không có lựa chọn nào dựa trên số test này.
+- Run: `20261117-1300/1305/1309_clip_pcst_sage_vg_seed0/1/2`, `20261117-1301/1305/1310_clip_nograph_vg_lr1e4_seed0/1/2`. Commit code `4afb770`, cùng `split_sha256` với `main.csv`.
+
+
+## `g_retriever_flickr30k_test.csv`: G-Retriever bậc 2 trên Flickr30k (ADR-0056)
+
+Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_flickr30k_test.csv`.
+
+| Dòng (`experiment`) | `lr` | Vai trò |
+|---|---|---|
+| `clip_pcst_sage_flickr30k` | 1e-4 | G-Retriever bậc 2 trên Flickr30k, cấu hình y hệt `clip_pcst_sage_vg`; cạnh PMI mượn từ VG (ADR-0056) |
+| `clip_nograph_flickr30k_lr1e4` | 1e-4 | Đối chứng cùng cấu hình huấn luyện với dòng trên |
+
+Ghi chú:
+- Đối chứng không đồ thị chính thức của cấp độ 1 trên Flickr30k là `clip_nograph_flickr30k` (lr 1e-3), thuộc nhánh Flickr30k; dòng lr 1e-4 ở đây chỉ để so cùng cấu hình với G-Retriever.
+- Epoch và `alpha` chọn trên val; test chạy một lần mỗi seed. Không có lựa chọn nào dựa trên số test.
+- Run test: `20261118-0039/0042/0045_clip_pcst_sage_flickr30k_seed0/1/2`, `20261118-0025/0025/0026_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Run train (val): `20261117-1812/1901/1933_clip_pcst_sage_flickr30k_seed0/1/2`, `20261117-1819/1823/1827_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Commit code `f03a156`, `split_sha256` `8b5c5427…b440d` (`splits/flickr30k/split_seed0.json`).
+- Không so số tuyệt đối với bảng VG: caption Flickr30k tả cả ảnh, region description VG chỉ tả một vùng, nên Flickr30k dễ hơn nhiều. So mức chênh so với đối chứng.

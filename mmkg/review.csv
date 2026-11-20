@@ -1,0 +1,963 @@
+kind,key,review_status,reason,fix_name_vi,reviewer,date
+entity,Q101687,ok,,,claude-ai,2026-11-17
+entity,Q102128030,ok,,,claude-ai,2026-11-17
+entity,Q102142197,ok,,,claude-ai,2026-11-17
+entity,Q102146607,ok,,,claude-ai,2026-11-17
+entity,Q106379705,drop,,,qphulong,2026-11-17
+entity,Q106653085,ok,,,claude-ai,2026-11-17
+entity,Q106653114,ok,,,claude-ai,2026-11-17
+entity,Q106654643,ok,,,claude-ai,2026-11-17
+entity,Q106654819,ok,,,claude-ai,2026-11-17
+entity,Q106654903,ok,,,claude-ai,2026-11-17
+entity,Q106656518,ok,,,claude-ai,2026-11-17
+entity,Q10739843,ok,,,claude-ai,2026-11-17
+entity,Q10748470,ok,,,claude-ai,2026-11-17
+entity,Q10748567,ok,,,claude-ai,2026-11-17
+entity,Q10752804,ok,,,claude-ai,2026-11-17
+entity,Q10752805,ok,,,claude-ai,2026-11-17
+entity,Q10753291,ok,,,claude-ai,2026-11-17
+entity,Q10755057,ok,,,claude-ai,2026-11-17
+entity,Q10755061,ok,,,claude-ai,2026-11-17
+entity,Q10768928,ok,,,claude-ai,2026-11-17
+entity,Q10769129,ok,,,claude-ai,2026-11-17
+entity,Q10784247,ok,,,claude-ai,2026-11-17
+entity,Q10788178,ok,,,claude-ai,2026-11-17
+entity,Q10788196,ok,,,claude-ai,2026-11-17
+entity,Q10801136,ok,,,claude-ai,2026-11-17
+entity,Q10810559,ok,,,claude-ai,2026-11-17
+entity,Q10831449,ok,,,claude-ai,2026-11-17
+entity,Q10833485,ok,,,claude-ai,2026-11-17
+entity,Q10834099,ok,,,claude-ai,2026-11-17
+entity,Q10841005,ok,,,claude-ai,2026-11-17
+entity,Q108822561,ok,,,claude-ai,2026-11-17
+entity,Q108859850,ok,,,claude-ai,2026-11-17
+entity,Q108860598,ok,,,claude-ai,2026-11-17
+entity,Q108865105,ok,,,claude-ai,2026-11-17
+entity,Q108865176,ok,,,claude-ai,2026-11-17
+entity,Q108866893,ok,,,claude-ai,2026-11-17
+entity,Q108881843,ok,,,claude-ai,2026-11-17
+entity,Q108884966,ok,,,claude-ai,2026-11-17
+entity,Q109317842,ok,,,claude-ai,2026-11-17
+entity,Q109406846,ok,,,claude-ai,2026-11-17
+entity,Q111033900,ok,,,claude-ai,2026-11-17
+entity,Q111079381,ok,,,claude-ai,2026-11-17
+entity,Q111148688,ok,,,claude-ai,2026-11-17
+entity,Q111188049,ok,,,claude-ai,2026-11-17
+entity,Q11404,ok,,,claude-ai,2026-11-17
+entity,Q1202019,ok,,,claude-ai,2026-11-17
+entity,Q120835889,ok,,Bậc thềm điện Kính Thiên,qphulong,2026-11-17
+entity,Q130218170,ok,,,claude-ai,2026-11-17
+entity,Q13085,ok,,,claude-ai,2026-11-17
+entity,Q131914016,ok,,,claude-ai,2026-11-17
+entity,Q131914172,ok,,,claude-ai,2026-11-17
+entity,Q131914511,ok,,,claude-ai,2026-11-17
+entity,Q131914762,ok,,,claude-ai,2026-11-17
+entity,Q131920509,ok,,,claude-ai,2026-11-17
+entity,Q131925836,ok,,,claude-ai,2026-11-17
+entity,Q131925974,ok,,,claude-ai,2026-11-17
+entity,Q131931059,ok,,,claude-ai,2026-11-17
+entity,Q131931278,ok,,,claude-ai,2026-11-17
+entity,Q131931447,ok,,,claude-ai,2026-11-17
+entity,Q131941729,ok,,,claude-ai,2026-11-17
+entity,Q131983947,ok,,,claude-ai,2026-11-17
+entity,Q1328473,ok,,,claude-ai,2026-11-17
+entity,Q135336978,ok,,,claude-ai,2026-11-17
+entity,Q135479494,ok,,,claude-ai,2026-11-17
+entity,Q1421202,ok,,,claude-ai,2026-11-17
+entity,Q1459900,ok,,Di sản thế giới dự kiến,qphulong,2026-11-17
+entity,Q1583627,ok,,,claude-ai,2026-11-17
+entity,Q162875,ok,,,claude-ai,2026-11-17
+entity,Q16511573,ok,,,claude-ai,2026-11-17
+entity,Q178743,ok,,,claude-ai,2026-11-17
+entity,Q179700,ok,,,claude-ai,2026-11-17
+entity,Q18461327,ok,,,claude-ai,2026-11-17
+entity,Q1858,ok,,,claude-ai,2026-11-17
+entity,Q190060,ok,,,claude-ai,2026-11-17
+entity,Q190128,ok,,,claude-ai,2026-11-17
+entity,Q19683138,ok,,Khu Ramsar,qphulong,2026-11-17
+entity,Q1968747,ok,,,claude-ai,2026-11-17
+entity,Q206219,ok,,,claude-ai,2026-11-17
+entity,Q220659,ok,,,claude-ai,2026-11-17
+entity,Q2344822,ok,,,claude-ai,2026-11-17
+entity,Q23513,ok,,,claude-ai,2026-11-17
+entity,Q245117,ok,,,claude-ai,2026-11-17
+entity,Q25282,ok,,,claude-ai,2026-11-17
+entity,Q2668072,ok,,,claude-ai,2026-11-17
+entity,Q287,ok,,,claude-ai,2026-11-17
+entity,Q29778318,drop,,,qphulong,2026-11-17
+entity,Q30920268,ok,,,claude-ai,2026-11-17
+entity,Q3096348,ok,,,claude-ai,2026-11-17
+entity,Q34095,ok,,đồng thanh,qphulong,2026-11-17
+entity,Q36160,ok,,,claude-ai,2026-11-17
+entity,Q36167,ok,,,claude-ai,2026-11-17
+entity,Q3654706,ok,,,claude-ai,2026-11-17
+entity,Q381885,ok,,,claude-ai,2026-11-17
+entity,Q386724,ok,,,claude-ai,2026-11-17
+entity,Q391406,ok,,,claude-ai,2026-11-17
+entity,Q41179,ok,,,claude-ai,2026-11-17
+entity,Q43113623,ok,,một phần của Di sản thế giới UNESCO,qphulong,2026-11-17
+entity,Q4361432,ok,,,claude-ai,2026-11-17
+entity,Q46169,ok,,,claude-ai,2026-11-17
+entity,Q49054330,ok,,,claude-ai,2026-11-17
+entity,Q4989906,ok,,,claude-ai,2026-11-17
+entity,Q532,drop,,,qphulong,2026-11-17
+entity,Q5370414,ok,,,claude-ai,2026-11-17
+entity,Q586985,ok,,,claude-ai,2026-11-17
+entity,Q5929149,ok,,,claude-ai,2026-11-17
+entity,Q5965459,ok,,,claude-ai,2026-11-17
+entity,Q6500483,ok,,,claude-ai,2026-11-17
+entity,Q6940790,ok,,,claude-ai,2026-11-17
+entity,Q6941045,ok,,,claude-ai,2026-11-17
+entity,Q748,ok,,,claude-ai,2026-11-17
+entity,Q7481070,ok,,,claude-ai,2026-11-17
+entity,Q7481171,ok,,,claude-ai,2026-11-17
+entity,Q7559,ok,,,claude-ai,2026-11-17
+entity,Q7619083,ok,,,claude-ai,2026-11-17
+entity,Q7818615,ok,,,claude-ai,2026-11-17
+entity,Q7818621,ok,,,claude-ai,2026-11-17
+entity,Q7928443,ok,,,claude-ai,2026-11-17
+entity,Q8032387,ok,,,claude-ai,2026-11-17
+entity,Q8086,ok,,,claude-ai,2026-11-17
+entity,Q830393,drop,,,qphulong,2026-11-17
+entity,Q839954,ok,,,claude-ai,2026-11-17
+entity,Q9089,ok,,,claude-ai,2026-11-17
+entity,Q910146,ok,,,claude-ai,2026-11-17
+entity,Q9259,ok,,,claude-ai,2026-11-17
+entity,Q9441,ok,,,claude-ai,2026-11-17
+entity,Q975568,ok,,,claude-ai,2026-11-17
+entity,Q993402,ok,,,claude-ai,2026-11-17
+entity,Q996912,ok,,,claude-ai,2026-11-17
+image,"'Dragon', 13th century, Museum of Cham Sculpture.JPG",ok,,,claude-ai,2026-11-17
+image,"'Gajasimha', Museum of Cham Sculpture.JPG",ok,,,claude-ai,2026-11-17
+image,"'The Goddess Uma' (Parvati), 10th century, Museum of Cham Sculpture.JPG",ok,,,claude-ai,2026-11-17
+image,-i---i- (39312478014).jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,"0040223 Anantasayana Sheshashayi Vishnu, Museum of Cham Sculpture, Da Nang Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,"0040223 My Son Group A, Cham Hindu temples complex, Vietnam 108.jpg",ok,,,claude-ai,2026-11-17
+image,"0040223 My Son Group A, Cham Hindu temples complex, Vietnam 124.jpg",ok,,,claude-ai,2026-11-17
+image,"0040223 My Son UNESCO site entrance, Cham Hindu temples complex, Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,"0040223 Shiva linga, Cham Hindu artwork, Museum of Cham Sculpture, Da Nang Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,"0040323 Shiva Mua, Nataraja Cham Hindu artwork, Museum of Cham Sculpture, Da Nang Vietnam - 1 Background Removed.jpg",ok,,,claude-ai,2026-11-17
+image,"01 Map of the Mausoleum of Emperor Minh Mạng, Huế (unannotated).png",drop,not_the_object,,qphulong,2026-11-17
+image,"02 Map of the Mausoleum of Emperor Minh Mạng, Huế (annotated with numbers).png",drop,not_the_object,,qphulong,2026-11-17
+image,"03 Map of the Mausoleum of Emperor Minh Mạng, Huế (with text).png",drop,not_the_object,,qphulong,2026-11-17
+image,03801-Hanoi (32800622512).jpg,ok,,,claude-ai,2026-11-17
+image,03806-Hanoi (32111269204).jpg,ok,,,claude-ai,2026-11-17
+image,03816-Hanoi (32111273334).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,03819-Hanoi (32111279854).jpg,ok,,,qphulong,2026-11-17
+image,03934-Hanoi (32573170290).jpg,ok,,,claude-ai,2026-11-17
+image,04529-Hanoi (32206504662).jpg,ok,,,claude-ai,2026-11-17
+image,04546-Hanoi (32206503032).jpg,ok,,,claude-ai,2026-11-17
+image,04547-Hanoi (31545552143).jpg,ok,,,claude-ai,2026-11-17
+image,1 Hội An Jardin intérieur.jpg,ok,,,claude-ai,2026-11-17
+image,1 trong 18 La Hán chùa Tây Phương.jpg,ok,,,claude-ai,2026-11-17
+image,10511-Hoi-An (37158496013).jpg,ok,,,claude-ai,2026-11-17
+image,10519-Hoi-An (37621340030).jpg,ok,,,claude-ai,2026-11-17
+image,10562-Hoi-An (37621351830).jpg,ok,,,claude-ai,2026-11-17
+image,10654-Hoi-An (42438247002).jpg,drop,duplicate,,qphulong,2026-11-17
+image,10678-Hoi-An (41587070385).jpg,ok,,,qphulong,2026-11-17
+image,12-gieng vua-dan te nam giao.JPG,ok,,,claude-ai,2026-11-17
+image,20-Ngói đầu đao.jpg,ok,,,claude-ai,2026-11-17
+image,2008-02-Cat Tien National Park.jpg,ok,,,claude-ai,2026-11-17
+image,2013-10-19-IMG 0546 (16281009626).jpg,ok,,,claude-ai,2026-11-17
+image,2013-10-19-IMG 0555 (16306079332).jpg,ok,,,claude-ai,2026-11-17
+image,2013-10-20-IMG 0580 (16281007856).jpg,ok,,,claude-ai,2026-11-17
+image,2013-10-20-IMG 0590 (16119568980).jpg,ok,,,claude-ai,2026-11-17
+image,2016-Vietnam-Abuelita mochilera 04.jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,20171031 Administration office Xuan Thuy National Park HDR.jpg,ok,,,claude-ai,2026-11-17
+image,"2023-12-10 T-54 tank No. 390 at the Independence Palace, Saigon 01.jpg",ok,,,claude-ai,2026-11-17
+image,"2023-12-10 T-54 tank No. 390 at the Independence Palace, Saigon 02.jpg",ok,,,claude-ai,2026-11-17
+image,"2023-12-10 T-54 tank No. 843 at the Independence Palace, Saigon 01.jpg",ok,,,claude-ai,2026-11-17
+image,"2023-12-10 T-54 tank No. 843 at the Independence Palace, Saigon 02.jpg",ok,,,claude-ai,2026-11-17
+image,2024 - Mỹ Sơn Group A - img 03.jpg,ok,,,claude-ai,2026-11-17
+image,2024 - Mỹ Sơn Group E & F - img 20.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,2024 - Mỹ Sơn Group E & F - img 21.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,2024 - Mỹ Sơn Sanctuary Temple E7 - img 01.jpg,ok,,,claude-ai,2026-11-17
+image,225Park der Thien Mu Pagode.jpg,ok,,,claude-ai,2026-11-17
+image,303 Vietnam Wahrzeichen von Hue bei der Pagode der himmlischen Frau.jpg,ok,,,claude-ai,2026-11-17
+image,3518. ANNAM - Hué - La Salle du Trône.jpg,ok,,,claude-ai,2026-11-17
+image,37mm Anti-aircraft Gun (9732044283).jpg,ok,,,claude-ai,2026-11-17
+image,37mm Anti-aircraft Gun (9735273026).jpg,ok,,,claude-ai,2026-11-17
+image,37mm Anti-aircraft Gun (9735273686).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,37mm Anti-aircraft Gun (9735274720).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,37mm anti-air.JPG,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-32 (35792236574).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-33 (35792226214).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-34 (36458160422).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-36 (36627246135).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-38 (36580736876).jpg,ok,,,qphulong,2026-11-17
+image,4.4 Hue-40 (36489224871).jpg,ok,,,qphulong,2026-11-17
+image,4.4 Hue-41 (36489218221).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-42 (36230499560).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-46 (35792133084).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-47 (35792123054).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-49 (36627171105).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-50 (36452523882).jpg,ok,,,claude-ai,2026-11-17
+image,4.4 Hue-58 (36483450781).jpg,ok,,,claude-ai,2026-11-17
+image,46 Trạng Nguyên (Văn Miếu - Quốc Tử Giám).JPG,drop,not_the_object,,qphulong,2026-11-17
+image,46 Trạng Nguyên.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,680 Der Wasserfall des Nam Nang.JPG,drop,not_the_object,,qphulong,2026-11-17
+image,702 Ausblick auf die Witweninsel.JPG,drop,not_the_object,,qphulong,2026-11-17
+image,A clear summer day at Vinpearl Nam Hoi An.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,A far view of the ruins at My Son (30992152933).jpg,ok,,,claude-ai,2026-11-17
+image,A set of incense burners- you can imagine the scale and grandeur in the citadel's heydays (30961094834).jpg,ok,,,claude-ai,2026-11-17
+image,"AP0028-Sallet Environs de Hué, 1930 – Tombeau de Gia Long – Un pagodon.jpg",ok,,,claude-ai,2026-11-17
+image,ARMY MUSEUM HA NOI VIETNAM FEB 2012 (7033211675).jpg,ok,,,claude-ai,2026-11-17
+image,ARMY MUSEUM HANOI VIETNAM FEB 2012 (6865903414).jpg,ok,,,claude-ai,2026-11-17
+image,ASI of India helps Vietnam to restore the Mỹ Sơn Sanctuary.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,ATSUBETSUGAWA HIKOBOSHI.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,ATSUBETSUGAWA ORIHIME.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,AU Vietnam.png,drop,duplicate,,qphulong,2026-11-17
+image,Aboard the Boat on Ba Be Lake - Ba Be National Park - Vietnam (48102408917).jpg,ok,,,claude-ai,2026-11-17
+image,"Admiralty Chart No 3875 Haiphong to Cam Pha, Published 1944.jpg",drop,not_the_object,,qphulong,2026-11-17
+image,Aegithina tiphia on Cassia javanica.jpg,ok,,,claude-ai,2026-11-17
+image,"Altar 22.2, view 1, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01647.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar 22.2, view 2, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01652.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar 22.2, view 3, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01657.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar 22.2, view 4, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01660.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar with Apsaras, view 1, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01495.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar with Apsaras, view 2, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01497.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar with Apsaras, view 3, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01499.JPG",ok,,,claude-ai,2026-11-17
+image,"Altar with Apsaras, view 4, Tra Kieu, 7th-8th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01501.JPG",ok,,,claude-ai,2026-11-17
+image,Am Mekong gegenüber von Vietiane- Fluchtursachen (1981).jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,"Amitabha Buddha, 1057, Museum of Fine Arts, Hanoi (1) (37614172635).jpg",ok,,,claude-ai,2026-11-17
+image,"Amitabha Buddha, 1057, Museum of Fine Arts, Hanoi (2) (38468797422).jpg",ok,,,claude-ai,2026-11-17
+image,"Amitabha Buddha, 1057, Museum of Fine Arts, Hanoi (3) (24628740168).jpg",ok,,,claude-ai,2026-11-17
+image,"Amitabha of Phat Tich pagoda (reproduction), Bac Ninh province, 1057 AD - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04836.JPG",ok,,,claude-ai,2026-11-17
+image,"Amitabha of Phat Tich pagoda (reproduction), Bac Ninh province, 1057 AD DSC04838.JPG",ok,,,claude-ai,2026-11-17
+image,An ancient bell in the grounds of the Thien Mu Pagoda (30992219743).jpg,ok,,,claude-ai,2026-11-17
+image,An ancient engraved rock of Sapa.JPG,ok,,,claude-ai,2026-11-17
+image,An incense burner forms a foreground to a large shrine inside (31429217850).jpg,ok,,,claude-ai,2026-11-17
+image,An lang.jpg,ok,,,claude-ai,2026-11-17
+image,Anastomus oscitans Tràm Chim 1.JPG,ok,,,claude-ai,2026-11-17
+image,Anastomus oscitans Tràm Chim 2.JPG,ok,,,claude-ai,2026-11-17
+image,Ancistrocladus tectorius CTNP RPB flowers.jpg,ok,,,claude-ai,2026-11-17
+image,Ancistrocladus tectorius CTNP RPB roofing.jpg,ok,,,claude-ai,2026-11-17
+image,Anhdinh-Thuan dinh-Dudinh.jpg,ok,,,claude-ai,2026-11-17
+image,Annam - Hué - Cour devant la Pagode de Gia-Long dans le Palais.jpg,ok,,,claude-ai,2026-11-17
+image,"Annam. Près Hué. Au tombeau de Thieu-tri, vue vers la colline où le corps est caché - (photogr.) A. S(alles) - btv1b53013120r (1 of 2).jpg",ok,,,claude-ai,2026-11-17
+image,"Around Na Hang, near Ba Be lake (6223574117).jpg",drop,not_the_object,,qphulong,2026-11-17
+image,Arrival on Cat Ba.jpg,ok,,,claude-ai,2026-11-17
+image,Asian Buddha Statue (9980645965).jpg,ok,,,claude-ai,2026-11-17
+image,"Asvaghesa, Tay Phuong pagoda, Ha Tay province, 1794 AD, lacquered wood - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC05064.JPG",ok,,,claude-ai,2026-11-17
+image,"At the beach, Cat Ba Island (4856529828).jpg",ok,,,claude-ai,2026-11-17
+image,"August 2003, temple in Hanoi 5.jpg",ok,,,claude-ai,2026-11-17
+image,"August 2003, temple in Hanoi 6.jpg",ok,,,claude-ai,2026-11-17
+image,"August 2003, temple in Hanoi 7.jpg",drop,duplicate,,qphulong,2026-11-17
+image,Autel de la pagode But Thap.jpg,ok,,,claude-ai,2026-11-17
+image,"Avalokiteshvara, 1656, Museum of Fine Arts, Hanoi (1) (38468779992).jpg",ok,,,claude-ai,2026-11-17
+image,"Avalokiteshvara, 1656, Museum of Fine Arts, Hanoi (2) (38468770192).jpg",ok,,,claude-ai,2026-11-17
+image,"Avalokiteshvara, 1656, Museum of Fine Arts, Hanoi (3) (26725125569).jpg",ok,,,claude-ai,2026-11-17
+image,BBQ bên hồ bơi - Thung Nham Resort.jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,BTLSQG 11.jpg,ok,,,claude-ai,2026-11-17
+image,BTLSQG 51.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Ba Be (43867711525).jpg,ok,,,claude-ai,2026-11-17
+image,Ba Be (49309919936).jpg,ok,,,claude-ai,2026-11-17
+image,Ba Be Cave (33215585468).jpg,ok,,,claude-ai,2026-11-17
+image,Ba Be Lake - 01.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Ba Be Lake Morning (40116008593).jpg,ok,,,claude-ai,2026-11-17
+image,Babenp 2007 01 3.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,"Bahulater, Tay Phuong pagoda, Ha Tay province, 1794 AD, lacquered wood - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC05074.JPG",ok,,,claude-ai,2026-11-17
+image,Bai tam Cat Ba 1.JPG,ok,,,claude-ai,2026-11-17
+image,Ban do Phong Nha-Ke Bang.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,"Bank Erosion at Song Tien of Mekong, Binh Dai, Ben Tre, Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,"Bar y piscina del Hotel Heritage By Night, Phong Nha, Vietnam (40523001205).jpg",drop,not_the_object,,qphulong,2026-11-17
+image,"Barquero en el Río Son, Phong Nha, Vietnam (43409828472).jpg",drop,identifiable_person,,qphulong,2026-11-17
+image,Bateau Phong Nha.jpg,ok,,,claude-ai,2026-11-17
+image,Bath where prisoners live were cooked Hue Vietnam.jpg,ok,,,claude-ai,2026-11-17
+image,Bia Vinh Lang.JPG,ok,,,qphulong,2026-11-17
+image,Bia vinh lang.JPG,ok,,,claude-ai,2026-11-17
+image,Bia đá Chùa Dạm.JPG,ok,,,qphulong,2026-11-17
+image,"Bia đá ở chùa Thiên Mụ, tháng 3 năm 2021 (1).jpg",ok,,,claude-ai,2026-11-17
+image,"Bia đá ở chùa Thiên Mụ, tháng 3 năm 2021 (2).jpg",drop,duplicate,,qphulong,2026-11-17
+image,BiaTS1838Hue.jpg,ok,,,qphulong,2026-11-17
+image,BiaTienSi1442.jpg,ok,,,claude-ai,2026-11-17
+image,Boat by the water - Hoi An (16922189291).jpg,ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Avalokiteshvara, 16th cent., Museum of Fine Arts, Hanoi (1) (38445265226).jpg",ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Avalokiteshvara, 16th cent., Museum of Fine Arts, Hanoi (2) (38500781241).jpg",ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Avalokiteshvara, 16th cent., Museum of Fine Arts, Hanoi (3) (24628686708).jpg",ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Avalokiteshvara, 16th cent., Museum of Fine Arts, Hanoi (4) (37614084485).jpg",ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Tara, view 1, Dong Duong, late 9 to early 10th century, Quang Nam, bronze - Museum of Cham Sculpture - Danang, Vietnam - DSC01735.JPG",ok,,,claude-ai,2026-11-17
+image,"Boddhisattva Tara, view 2, Dong Duong, late 9 to early 10th century, Quang Nam, bronze - Museum of Cham Sculpture - Danang, Vietnam - DSC01738.JPG",ok,,,claude-ai,2026-11-17
+image,Bodhisattva statue.jpg,drop,duplicate,,qphulong,2026-11-17
+image,"Bronze Buddha (8–9th century), Museum of Vietnamese History, Ho Chi Minh City - 20121014.2.jpg",ok,,,claude-ai,2026-11-17
+image,"Bronze Buddha (8–9th century), Museum of Vietnamese History, Ho Chi Minh City - 20121014.JPG",ok,,,qphulong,2026-11-17
+image,"Bronze Drum, Tay Son Dynasty, 1800 (9738817964).jpg",ok,,,claude-ai,2026-11-17
+image,"Buddha, Thap Muoi, Dong Thap, 6th-7th century AD, wood - Museum of Vietnamese History - Ho Chi Minh City - DDSC06057.JPG",ok,,,claude-ai,2026-11-17
+image,"Buddha, Tượng Phật Đồng Dương (BTLS. 4419), the Museum of Vietnamese History01.jpg",ok,,,claude-ai,2026-11-17
+image,"Buddha, Tượng Phật Đồng Dương (BTLS. 4419), the Museum of Vietnamese History02.jpg",ok,,,claude-ai,2026-11-17
+image,"Buddha, Tượng Phật Đồng Dương, the Museum of Vietnamese History.jpg",ok,,,claude-ai,2026-11-17
+image,"Buddhanandi, Tay Phuong pagoda, Ha Tay province, 1794 AD, lacquered wood - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC05080.JPG",ok,,,claude-ai,2026-11-17
+image,Bust of Kazik at Hoi An Ancient Town.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,But Thap Temple - 08.jpg,ok,,,claude-ai,2026-11-17
+image,But Thap Temple - 23.jpg,ok,,,claude-ai,2026-11-17
+image,Báo cáo ngày 28.2.1952 của Quận trưởng quận hành chính Quảng Bá – Yên Thái.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Bãi đá cổ.jpg,ok,,,claude-ai,2026-11-17
+image,Bên trong Động Vái Giời.jpg,ok,,,claude-ai,2026-11-17
+image,Bên trong điện Thái Hòa(1).jpg,ok,,,claude-ai,2026-11-17
+image,"Bůh severu v chrámu Quan Thanh, Hanoj.jpg",ok,,,claude-ai,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế).jpg",ok,,,claude-ai,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, cận cảnh bầu ngực) (1).jpg",ok,,,claude-ai,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, cận cảnh bầu ngực) (2).jpg",drop,duplicate,,qphulong,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, cận cảnh bầu ngực) (3).jpg",drop,duplicate,,qphulong,2026-11-17
+image,Bảo tàng Lịch sử TP (Cổ vật Champa) (8).jpg,ok,,,claude-ai,2026-11-17
+image,"Bảo tàng Lịch sử TP (cổ vật Tây Sơn, trống Cảnh Thịnh) (1).jpg",ok,,,claude-ai,2026-11-17
+image,"Bảo tàng Lịch sử TP (cổ vật Tây Sơn, trống Cảnh Thịnh) (2).jpg",ok,,,claude-ai,2026-11-17
+image,Bảo tàng Mỹ thuật Tp (Vườn xuân Bắc Trung Nam) (1).jpg,ok,,,claude-ai,2026-11-17
+image,Bảo tàng Mỹ thuật Tp (Vườn xuân Bắc Trung Nam) (2).jpg,ok,,,claude-ai,2026-11-17
+image,Bảo tàng Mỹ thuật Tp (Vườn xuân Bắc Trung Nam) (3).jpg,ok,,,claude-ai,2026-11-17
+image,Bảo tàng Mỹ thuật Tp (Vườn xuân Bắc Trung Nam) (6).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,"Bốn khẩu trong Cửu vị thần công Xuân, Hạ, Thu, Đông.JPG",ok,,,claude-ai,2026-11-17
+image,Carved Box with Figure Design.jpg,ok,,,claude-ai,2026-11-17
+image,Cat Ba Vietnam-Feb06.jpg,ok,,,claude-ai,2026-11-17
+image,"Cat Tien National Park, Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,Cay den dong nguoi quy va tuong dong hai nguoi cong nhau thoi khen.JPG,ok,,,claude-ai,2026-11-17
+image,"Champa Harp, detail of Shiva, Phong Le, 10th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01588.jpg",ok,,,qphulong,2026-11-17
+image,Champa Harp.jpg,ok,,,qphulong,2026-11-17
+image,"Chaudron (Cité impériale, Hué) (4381968462).jpg",ok,,,claude-ai,2026-11-17
+image,Cheo cheo trên vạc đồng ở Đại nội Huế (1).jpg,ok,,,claude-ai,2026-11-17
+image,Cheo cheo trên vạc đồng ở Đại nội Huế (2).jpg,ok,,,claude-ai,2026-11-17
+image,"Chiang Saen, Mekong River, Thailand.jpg",ok,,,claude-ai,2026-11-17
+image,Chim Hạc ở Vườn Quốc Gia Tràm Chim.jpg,ok,,,claude-ai,2026-11-17
+image,Chim Trong Dong.PNG,drop,other,,qphulong,2026-11-17
+image,Chinese Flag on Barge along Mekong River - Laos on Other Side - Chiang Saen - Golden Triangle - Thailand (34478955674).jpg,ok,,,claude-ai,2026-11-17
+image,Chinese made 'T-59' tank ..JPG,ok,,,claude-ai,2026-11-17
+image,Chiếc máy ủi công thần của Thụng Nham.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chua Thay Haudien.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chua Thien Mu (bia).jpg,ok,,,claude-ai,2026-11-17
+image,"Chòi Canh vuon Tram Chim, phu Duc, Tam Nong, Dong Thap,Vietnam - panoramio.jpg",ok,,,claude-ai,2026-11-17
+image,Chùa Thiên Mụ - Ngự kiến Thiên Mụ tự Stele (2024) - img 01.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Chùa Thiên Mụ - Ngự kiến Thiên Mụ tự Stele (2024) - img 02.jpg,ok,,,claude-ai,2026-11-17
+image,Chùa Thầy (52664216051).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chùa Thầy (9411972929).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chùa Thầy (9414542634).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chùa Thầy 2.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Chùa Tây Phương 2.JPG,ok,,,claude-ai,2026-11-17
+image,Chùa Tây Phương.JPG,ok,,,claude-ai,2026-11-17
+image,Chạm rồng trên cột đá Chùa Dạm.JPG,ok,,,qphulong,2026-11-17
+image,"Column engraved with dragons, Dam Pagoda, Bac Ninh Province, 11th century - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04725.JPG",ok,,,qphulong,2026-11-17
+image,"Column engraved with dragons, Dam Pagoda, Bac Ninh Province, 11th century - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC05404.JPG",ok,,,qphulong,2026-11-17
+image,Cong An lang.jpg,ok,,,claude-ai,2026-11-17
+image,Cuudinh.JPG,ok,,,claude-ai,2026-11-17
+image,Các la Hán chùa Tây Phương.jpg,ok,,,claude-ai,2026-11-17
+image,Cánh cửa bằng đồng ở lăng Gia Long.JPG,ok,,,claude-ai,2026-11-17
+image,Công điện số 1087-CAB-TX ngày 5 tháng 3 năm 1952.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Cổng Bắc thành nhà Hồ .jpg,ok,,,claude-ai,2026-11-17
+image,Cổng Nam.jpg,ok,,,claude-ai,2026-11-17
+image,Cột đá Chùa Dạm.JPG,ok,,,qphulong,2026-11-17
+image,Cụm tâm linh chiêm bái Thung Nham.jpg,ok,,,claude-ai,2026-11-17
+image,Cửu vị thần công 2.JPG,ok,,,claude-ai,2026-11-17
+image,Cửu vị thần công 4.jpg,ok,,,claude-ai,2026-11-17
+image,Cửu vị thần công1 .jpg,ok,,,claude-ai,2026-11-17
+image,DA LAT GA VIETNAM JAN 2012 (6821825330).jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,DA LAT GA VIETNAM JAN 2012 (6821839496).jpg,ok,,,claude-ai,2026-11-17
+image,DA LAT GA VIETNAM JAN 2012 (6964311027).jpg,ok,,,qphulong,2026-11-17
+image,DGJ 1279 - Ding Dong anyone home? (3471863720).jpg,ok,,,claude-ai,2026-11-17
+image,DL train stn back.JPG,ok,,,qphulong,2026-11-17
+image,Da Lat train station 37.jpg,ok,,,qphulong,2026-11-17
+image,Da co Sa Pa.jpg,ok,,,claude-ai,2026-11-17
+image,DaNang Ganesha.JPG,ok,,,claude-ai,2026-11-17
+image,DaNang Tara.jpg,ok,,,claude-ai,2026-11-17
+image,Daco at Sapa.jpg,ok,,,claude-ai,2026-11-17
+image,Dai Thanh gate.jpg,ok,,,claude-ai,2026-11-17
+image,Dancing Shiva 10th c.jpg,ok,,,claude-ai,2026-11-17
+image,"Danh sách các kim bảo, ngọc bài, bảo kiếm quan trọng mang theo nhà vua trong lễ tế Nam giao trong đó đứng đầu là “Hoàng đế chi bảo”.jpg",drop,not_the_object,,qphulong,2026-11-17
+image,"Danseuse et musicien (musée Cham, Da Nang) (4395499696).jpg",ok,,,claude-ai,2026-11-17
+image,"Dao Thinh jar with typical characteristics of Dong Son culture, Dao Thinh village, Yen Bai province, c. 2500-2000 years before present, bronze - National Museum of Vietnamese History - Hanoi, Vietnam - DSC05483.JPG",ok,,,claude-ai,2026-11-17
+image,"Devi Goddess, the Museum of Vietnamese History.jpg",ok,,,claude-ai,2026-11-17
+image,Di chỉ Gò Cây Thị.jpg,ok,,,claude-ai,2026-11-17
+image,Di tích Gò Cây Thị A.jpg,ok,,,claude-ai,2026-11-17
+image,Di tích Gò Cây Thị B.jpg,ok,,,claude-ai,2026-11-17
+image,Dien Kinh Thien 002.jpg,ok,,,claude-ai,2026-11-17
+image,Dinh Độc lập.JPG,ok,,,claude-ai,2026-11-17
+image,DoanHoanhTuanTrenBiaTS1478.jpg,ok,,,claude-ai,2026-11-17
+image,"Documental ""EL RIU DELS SET NOMS"", de Sergi Ricart.jpg",drop,not_the_object,,qphulong,2026-11-17
+image,DoiSon-HegoIV.jpg,ok,,,claude-ai,2026-11-17
+image,"Dong Duong pedestal, Museum of Cham Sculpture, Da Nang, 24 August 2024.jpg",ok,,,claude-ai,2026-11-17
+image,Dong Son Boat Coffin with Bronze Funerary Artifacts a.jpg,ok,,,claude-ai,2026-11-17
+image,Dong Son Boat Coffin with Bronze Funerary Artifacts b.jpg,ok,,,claude-ai,2026-11-17
+image,Dong Son Boat Shaped Wooden Coffin (replica) (9980438175).jpg,ok,,,claude-ai,2026-11-17
+image,Dong Son Boat Shaped Wooden Coffin (replica) (9980440345).jpg,ok,,,claude-ai,2026-11-17
+image,Dong Son Boat Shaped Wooden Coffin (replica) (9980443865).jpg,ok,,,claude-ai,2026-11-17
+image,"Dragon (Le dynasty, Vietnam).jpg",ok,,,claude-ai,2026-11-17
+image,"Dragon (musée Cham, Da Nang) (4394722803).jpg",ok,,,claude-ai,2026-11-17
+image,"Dragon (musée Cham, Da Nang) (4396474706).jpg",ok,,,claude-ai,2026-11-17
+image,"Dragon Makara (Culture Cham, Musée Guimet) (5174382704).jpg",ok,,,qphulong,2026-11-17
+image,"Dragon, Thap Mam, 13th century, Binh Dinh - Museum of Cham Sculpture - Danang, Vietnam - DSC01386.JPG",drop,duplicate,,qphulong,2026-11-17
+image,Du khách picnic bên Lăng Gia Long.JPG,ok,,,claude-ai,2026-11-17
+image,Duong Kach Menh (Original).jpg,ok,,,claude-ai,2026-11-17
+image,Duong Kach Menh - image on page 63.png,drop,not_the_object,,qphulong,2026-11-17
+image,Duong Kach Menh - image on page 72.png,drop,not_the_object,,qphulong,2026-11-17
+image,Duongkachmenh.jpg,ok,,,claude-ai,2026-11-17
+image,"Elephant, rhino, and horse, Le Loi mausoleum, Thanh Hoa province, 1433 AD, stone - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04853.JPG",ok,,,claude-ai,2026-11-17
+image,Emperor Khai Dinh in Hue (39543600561).jpg,ok,,,claude-ai,2026-11-17
+image,Entrée du tombeau de la 2e femme de Gia-Long.jpg,ok,,,claude-ai,2026-11-17
+image,Exit gate of Thiên Mụ Pagoda.jpg,ok,,,claude-ai,2026-11-17
+image,"Female dancer decorated brick, Long Doi pagoda, Duy Tien, Ha Nam, 1118-1121 AD, terracotta - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04768.JPG",ok,,,claude-ai,2026-11-17
+image,Fig. 30.png,ok,,,claude-ai,2026-11-17
+image,Fig. 45.png,ok,,,qphulong,2026-11-17
+image,"Gajasimha, view 1, Thap Mam, 13th century, Binh Dinh - Museum of Cham Sculpture - Danang, Vietnam - DSC01444.JPG",ok,,,claude-ai,2026-11-17
+image,"Gajasimha, view 2, Thap Mam, 13th century, Binh Dinh - Museum of Cham Sculpture - Danang, Vietnam - DSC01446.2.jpg",drop,duplicate,,qphulong,2026-11-17
+image,"Gajasimha, view 2, Thap Mam, 13th century, Binh Dinh - Museum of Cham Sculpture - Danang, Vietnam - DSC01446.JPG",ok,,,claude-ai,2026-11-17
+image,"Ganesh debout (musée Cham, Da Nang) (4394718791).jpg",ok,,,claude-ai,2026-11-17
+image,"Ganesh, My Son E5, 7th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01715.JPG",ok,,,claude-ai,2026-11-17
+image,Grazing buffalos in corezone.jpg,ok,,,claude-ai,2026-11-17
+image,Grenouilles et crapauds.png,drop,duplicate,,qphulong,2026-11-17
+image,"Guan Yin of Hoi Ha pagoda, Vinh Phuc province, 16th century AD, lacquered wood - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04867.JPG",ok,,,claude-ai,2026-11-17
+image,Guangzhou Tianhe Guangdong Sheng Bowuguan 2024-01-30 15.31.41.jpg,ok,,,claude-ai,2026-11-17
+image,Gò Cây Thị.jpg,ok,,,claude-ai,2026-11-17
+image,Halong ensemble (colour corrected).jpg,ok,,,claude-ai,2026-11-17
+image,Hanoi - Literaturtempel 0011.JPG,ok,,,claude-ai,2026-11-17
+image,Hanoi Citadel 0355.JPG,ok,,,claude-ai,2026-11-17
+image,Hanoi Citadel 0356 stitched.jpg,ok,,,claude-ai,2026-11-17
+image,Hanoi Citadel 0357.JPG,ok,,,claude-ai,2026-11-17
+image,Hanoi Temple of Literature.jpg,ok,,,claude-ai,2026-11-17
+image,"Harp, detail from pedestal, My Son E1, view 4, 7th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01721.jpg",ok,,,claude-ai,2026-11-17
+image,Ho Chi Minh's prison diary in 2016.jpg,ok,,,claude-ai,2026-11-17
+image,"Ho dynasty's citadel, Vietnam.jpg",ok,,,claude-ai,2026-11-17
+image,Hoang Ha bronze drum surface.JPG,ok,,,qphulong,2026-11-17
+image,HoangHa.jpg,ok,,,claude-ai,2026-11-17
+image,HoangHaBronzeDrum.jpg,ok,,,claude-ai,2026-11-17
+image,Hoàng Đế chi bảo (皇帝之寶) 13 June 1991.png,ok,,,claude-ai,2026-11-17
+image,"Hue, le Temple de la littérature.jpg",drop,duplicate,,qphulong,2026-11-17
+image,Hué. Pagode et cour d'honneur du tombeau de Thieu Tri.jpg,ok,,,claude-ai,2026-11-17
+image,Hué. Tombeau de l'empereur Thieu Tri.jpg,ok,,,claude-ai,2026-11-17
+image,Huế (2333172817).jpg,ok,,,claude-ai,2026-11-17
+image,Hình dấu 皇帝之寶 trong hồ sơ.jpg,ok,,,claude-ai,2026-11-17
+image,Hồ Thủy Đình - Đền Nội Bình Đà.jpg,ok,,,claude-ai,2026-11-17
+image,ICHueTMP03.jpg,ok,,,claude-ai,2026-11-17
+image,Illustration on the cover of Duong Kach Menh.png,drop,other,,qphulong,2026-11-17
+image,Khai Dinh2.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Khuon vien den tho lac long quan.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Khán báo lan.jpg,ok,,,claude-ai,2026-11-17
+image,"Kneeling man carrying lamp with both hands, 3rd century BC - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04731.JPG",ok,,,claude-ai,2026-11-17
+image,La Granda Sonorilo en la Pagodo Thiên Mụ 02.jpg,ok,,,claude-ai,2026-11-17
+image,La statue de Quan Am dans la pagode But Thap 2.jpg,ok,,,claude-ai,2026-11-17
+image,Lam Kinh.jpg,ok,,,claude-ai,2026-11-17
+image,Landscape Xuan Thuy National Park.JPG,ok,,,claude-ai,2026-11-17
+image,Laterite - Đá ong 1.JPG,drop,identifiable_person,,qphulong,2026-11-17
+image,Laterite - Đá ong 2.JPG,ok,,,qphulong,2026-11-17
+image,Laterite - Đá ong thềm chùa Tây Phương.JPG,ok,,,qphulong,2026-11-17
+image,"Le Dynasty Stele, 1433, Copy (9738952790).jpg",ok,,,claude-ai,2026-11-17
+image,"Le tombeau du Prince Kiên-Thái-Vương - vue prise de la terrasse du tombeau; portique, temple cultuel de S.M. Dong-Khanh.jpg",ok,,,qphulong,2026-11-17
+image,"Legendary lion (Nghe), Le Thanh Tong king's temple, Thanh Hoa province, early 17th century AD, lacquered wood - Vietnam National Museum of Fine Arts - Hanoi, Vietnam - DSC04875.JPG",ok,,,claude-ai,2026-11-17
+image,Long Doi Son Bronze Drum a.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Long Doi Son Bronze Drum b.jpg,ok,,,claude-ai,2026-11-17
+image,"Long Doi Son bronze drum, Type IV, heger, Duy Tien district, Ha Nam province, bronze - National Museum of Vietnamese History - Hanoi, Vietnam - DSC05550.JPG",ok,,,claude-ai,2026-11-17
+image,Lăng Hiếu Đông.webp,ok,,,claude-ai,2026-11-17
+image,Lăng Minh Mạng - Mausoleum of Emperor Minh Mạng (2024) - img 05.jpg,ok,,,claude-ai,2026-11-17
+image,Lễ dâng hương tại Đền Nội Bình Đà.jpg,ok,,,claude-ai,2026-11-17
+image,MIG21 MF so 5121.JPG,ok,,,claude-ai,2026-11-17
+image,MIMVietnamDrum.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,MYSON VIETNAM JAN 2012 (7060096405).jpg,ok,,,claude-ai,2026-11-17
+image,Main Gate - Citadel of Hanoi.jpg,ok,,,claude-ai,2026-11-17
+image,Male dancer My Son E1 pedestal.jpg,ok,,,claude-ai,2026-11-17
+image,Mangrove forest in phase of regeneration.JPG,ok,,,claude-ai,2026-11-17
+image,Master and Disciple.jpg,ok,,,claude-ai,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 01.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 02.jpg,ok,,,claude-ai,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 03.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 20.jpg,ok,,,claude-ai,2026-11-17
+image,Mig 21MF.jpg,ok,,,claude-ai,2026-11-17
+image,Mikoyan-Gurevich MiG-21MF-75 ‘5121’ (9732279875).jpg,ok,,,claude-ai,2026-11-17
+image,Mikoyan-Gurevich MiG-21MF-75 ‘5121’ (9735510298).jpg,ok,,,claude-ai,2026-11-17
+image,Mushroom Club Xuan Thuy National Park.jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,Musician on pedestal MySonE1.jpg,ok,,,claude-ai,2026-11-17
+image,My Son A10 altar - August 2024 (1).jpg,ok,,,claude-ai,2026-11-17
+image,Môn Hạ Sảnh ấn (門下省印) print - Bảo tàng lịch sử Quốc gia.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Mỹ Sơn Vietnam Temple.jpg,ok,,,claude-ai,2026-11-17
+image,National Museum Vietnamese History 24.jpg,ok,,,claude-ai,2026-11-17
+image,National Museum Vietnamese History 27.jpg,ok,,,claude-ai,2026-11-17
+image,National Museum Vietnamese History 28.jpg,ok,,,claude-ai,2026-11-17
+image,"Ngai rồng của vua Nguyễn tại Điện Cần Chánh, Huế, tháng 3 năm 2021.jpg",ok,,,claude-ai,2026-11-17
+image,Ngai vàng trong điện Thái Hòa(1).jpg,ok,,,claude-ai,2026-11-17
+image,Nhatholaclongquan.jpg,ok,,,claude-ai,2026-11-17
+image,Nine Holy Cannons of Nguyen Dynasty.JPG,ok,,,claude-ai,2026-11-17
+image,Niulang and Zhinv (Long Corridor).JPG,ok,,,claude-ai,2026-11-17
+image,Oc-Eo Culture (9980748446).jpg,ok,,,claude-ai,2026-11-17
+image,P1460593 - chùa Quán Thánh ( Trấn Vũ Quán ) - Hoàn Kiếm - Hà Nội.jpg,ok,,,claude-ai,2026-11-17
+image,Pagode du Tombeau de Duc-Duc.jpg,ok,,,claude-ai,2026-11-17
+image,Pagodo Bút Tháp 11.jpg,ok,,,claude-ai,2026-11-17
+image,"Pedestal, Dong Duong, view 1, late 9th to early 10th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01758.JPG",ok,,,claude-ai,2026-11-17
+image,"Pedestal, Dong Duong, view 2, late 9th to early 10th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01762.JPG",ok,,,claude-ai,2026-11-17
+image,"Pedestal, Dong Duong, view 3, late 9th to early 10th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01764.JPG",ok,,,claude-ai,2026-11-17
+image,"Pedestal, My Son E1, view 2, 7th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01702.JPG",ok,,,claude-ai,2026-11-17
+image,Phongnhatourism.jpg,ok,,,claude-ai,2026-11-17
+image,"Phù điêu nữ thần ánh sáng Uma, phát hiện tại Chánh Lộ.jpg",ok,,,claude-ai,2026-11-17
+image,Piedestalo Dong Duong en la Muzeo de la Ĉama Skulptarto 01.jpg,ok,,,claude-ai,2026-11-17
+image,Portes d'entrees du Tombeau de Duc-Duc.jpg,ok,,,claude-ai,2026-11-17
+image,"Replica of Cảnh Thịnh bronze drum, Museum of Vietnamese History, HCMC, 2021.jpg",ok,,,claude-ai,2026-11-17
+image,"Ruins of Nam Linh Son archaeological site, Oc Eo.jpg",ok,,,claude-ai,2026-11-17
+image,"Shiva, Phong Le, 10th century, Quang Nam - Museum of Cham Sculpture - Danang, Vietnam - DSC01588.JPG",ok,,,claude-ai,2026-11-17
+image,"Statue of a tiger, Lê Lợi mausoleum, Thanh Hóa Province (1433), Vietnam National Museum of Fine Arts, Hanoi, Vietnam - 20131030.JPG",ok,,,claude-ai,2026-11-17
+image,Stele bearing list of doctors.jpg,ok,,,claude-ai,2026-11-17
+image,T-54 Tank No. 843 Used in 1975 Victory in Saigon (9732237015).jpg,ok,,,claude-ai,2026-11-17
+image,T-54A or Type 59 main battle tank at the Reunification Palace.jpg,ok,,,claude-ai,2026-11-17
+image,"Tara (musée Cham, Da Nang) (4395487718).jpg",ok,,,claude-ai,2026-11-17
+image,Temple Main gate.jpg,ok,,,claude-ai,2026-11-17
+image,Thap dong Dao Thinh.JPG,ok,,,claude-ai,2026-11-17
+image,Thap dong thoi Tay Son 1800.png,ok,,,claude-ai,2026-11-17
+image,The Bronze Lamp in the Shape of a Kneeling Man (Original).jpg,ok,,,claude-ai,2026-11-17
+image,ThienMuBell01.JPG,ok,,,claude-ai,2026-11-17
+image,ThienMuPagoda.jpg,ok,,,claude-ai,2026-11-17
+image,Tomb of ThieuTri.jpg,ok,,,claude-ai,2026-11-17
+image,Tombe de Gia Long.JPG,ok,,,claude-ai,2026-11-17
+image,Tombeau de Duc-Duc - Portique du temple de Culte.jpg,ok,,,claude-ai,2026-11-17
+image,Tombeau de Tu Duc (Hué) (4387395141).jpg,ok,,,claude-ai,2026-11-17
+image,"Tran Dynasty Bronze Official Seal, 1377 (cropped).jpg",drop,duplicate,,qphulong,2026-11-17
+image,"Tran Dynasty Bronze Official Seal, 1377.jpg",ok,,,claude-ai,2026-11-17
+image,"Trang An Scenic Landscape Complex, northern Vietnam (354) (38540830421).jpg",ok,,,claude-ai,2026-11-17
+image,TuDucTombeau 06.jpg,ok,,,claude-ai,2026-11-17
+image,Tờ cuối tập thơ Nhật ký trong tù.jpg,ok,,,claude-ai,2026-11-17
+image,Uma Parvati The Goddess of Light in Vietnam.jpg,ok,,,claude-ai,2026-11-17
+image,Van Trach Hoa altar (back view).jpg,ok,,,claude-ai,2026-11-17
+image,Van Trach Hoa altar (front view detail).jpg,ok,,,claude-ai,2026-11-17
+image,Van Trach Hoa altar (front view).jpg,ok,,,claude-ai,2026-11-17
+image,Van Trach Hoa altar (left front corner detail).jpg,ok,,,claude-ai,2026-11-17
+image,Van Trach Hoa altar (left-hand side view).jpg,ok,,,claude-ai,2026-11-17
+image,Vietnam - Da nang - Musée de la sculpture Cham (18).JPG,ok,,,claude-ai,2026-11-17
+image,"Vishnu Brahma My Son E1, July 2007.jpg",ok,,,claude-ai,2026-11-17
+image,Vishnu Brahma My Son E1.jpg,ok,,,claude-ai,2026-11-17
+image,"Vishnu et la naissance de Brahma (musée Cham, Da Nang) (4394720501).jpg",ok,,,claude-ai,2026-11-17
+image,Vuon Xuan Bac Trung Nam.jpg,ok,,,claude-ai,2026-11-17
+image,Vạc đồng 3.jpg,ok,,,claude-ai,2026-11-17
+image,Woodblocks of the Nguyễn Dynasty 01.jpg,ok,,,claude-ai,2026-11-17
+image,Woodblocks of the Nguyễn Dynasty 02.jpg,ok,,,claude-ai,2026-11-17
+image,Woodblocks of the Nguyễn Dynasty 03.jpg,drop,duplicate,,qphulong,2026-11-17
+image,"Wooden Buddha statue, Museum of Vietnamese History, Ho Chi Minh City - 20121014-01.JPG",ok,,,claude-ai,2026-11-17
+image,"Wooden Buddha statue, Museum of Vietnamese History, Ho Chi Minh City - 20121014-02.JPG",ok,,,claude-ai,2026-11-17
+image,"Đền Nội Bình Đà,.jpg",ok,,,claude-ai,2026-11-17
+image,Đồng cỏ và chim nước.jpg,ok,,,claude-ai,2026-11-17
+image,Độc thư lan.jpg,ok,,,claude-ai,2026-11-17
+image,弘宗宣皇帝冕服坐像照.webp,ok,,,qphulong,2026-11-17
+image,越南阮朝弘宗宣皇帝阮福晙（启定1916年—1925年）31岁登基时的冕服照片（1916年）.jpg,ok,,,qphulong,2026-11-17
+triple,Q102128030|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P2596|Q996912,ok,,,claude-ai,2026-11-17
+triple,Q102128030|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P31|Q11404,ok,,,claude-ai,2026-11-17
+triple,Q102142197|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q102146607|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q102146607|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q102146607|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102146607|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q102146607|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P138|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P2348|Q8086,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q106653085|P737|Q9089,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P2348|Q8086,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P31|Q101687,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q106653114|P737|Q9089,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P180|Q9441,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P2348|Q8086,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P276|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q106654643|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P138|Q532,drop,,,qphulong,2026-11-17
+triple,Q106654819|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P276|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P31|Q386724,ok,,,claude-ai,2026-11-17
+triple,Q106654819|P737|Q9089,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q106654903|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P180|Q7559,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q106656518|P793|Q106379705,drop,,,qphulong,2026-11-17
+triple,Q106656518|P793|Q830393,drop,,,qphulong,2026-11-17
+triple,Q10739843|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10739843|P195|Q10784247,ok,,,claude-ai,2026-11-17
+triple,Q10739843|P276|Q10784247,ok,,,claude-ai,2026-11-17
+triple,Q10739843|P31|Q178743,ok,,,claude-ai,2026-11-17
+triple,Q10739843|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q10748470|P1435|Q10755061,ok,,,claude-ai,2026-11-17
+triple,Q10748567|P1435|Q10755057,ok,,,claude-ai,2026-11-17
+triple,Q10748567|P1435|Q10755061,ok,,,claude-ai,2026-11-17
+triple,Q10748567|P527|Q111079381,ok,,,claude-ai,2026-11-17
+triple,Q10748567|P793|Q830393,drop,,,qphulong,2026-11-17
+triple,Q10752804|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10752804|P195|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q10752804|P2348|Q6500483,ok,,,claude-ai,2026-11-17
+triple,Q10752805|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10752805|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q10752805|P195|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q10752805|P2348|Q6500483,ok,,,claude-ai,2026-11-17
+triple,Q10752805|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P138|Q532,drop,,,qphulong,2026-11-17
+triple,Q10768928|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P2596|Q996912,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P31|Q11404,ok,,,claude-ai,2026-11-17
+triple,Q10768928|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q10784247|P1435|Q10755057,ok,,,claude-ai,2026-11-17
+triple,Q10784247|P1435|Q10755061,ok,,,claude-ai,2026-11-17
+triple,Q10784247|P31|Q4989906,ok,,,claude-ai,2026-11-17
+triple,Q10788178|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q10788178|P31|Q381885,ok,,,claude-ai,2026-11-17
+triple,Q10788178|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q10788196|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q10788196|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q10788196|P31|Q381885,ok,,,claude-ai,2026-11-17
+triple,Q10788196|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q10801136|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10810559|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q10810559|P793|Q29778318,drop,,,qphulong,2026-11-17
+triple,Q10831449|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q10831449|P793|Q106379705,drop,,,qphulong,2026-11-17
+triple,Q10833485|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q10833485|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q10833485|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P195|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P276|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q10834099|P31|Q2668072,ok,,,claude-ai,2026-11-17
+triple,Q10841005|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q10841005|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q10841005|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P276|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q108822561|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q108859850|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108860598|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108865105|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108865176|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108866893|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108866893|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q108866893|P2596|Q996912,ok,,,claude-ai,2026-11-17
+triple,Q108866893|P31|Q11404,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P195|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P2348|Q6500483,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P276|Q975568,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q108881843|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P195|Q975568,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P2348|Q6500483,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P276|Q975568,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P31|Q178743,ok,,,claude-ai,2026-11-17
+triple,Q108884966|P31|Q386724,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P180|Q9441,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P276|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q109317842|P31|Q386724,ok,,,claude-ai,2026-11-17
+triple,Q109406846|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q111033900|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q111033900|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q111033900|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q111033900|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P195|Q10748567,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P195|Q3654706,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P276|Q10748567,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P31|Q2668072,ok,,,claude-ai,2026-11-17
+triple,Q111079381|P737|Q748,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P180|Q7481171,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P195|Q7481171,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P276|Q7481171,ok,,,claude-ai,2026-11-17
+triple,Q111148688|P31|Q178743,ok,,,claude-ai,2026-11-17
+triple,Q111188049|P138|Q532,drop,,,qphulong,2026-11-17
+triple,Q111188049|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q111188049|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q111188049|P31|Q101687,ok,,,claude-ai,2026-11-17
+triple,Q111188049|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q111188049|P737|Q9089,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P1435|Q10755057,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P1435|Q10755061,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P31|Q4989906,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P527|Q7619083,ok,,,claude-ai,2026-11-17
+triple,Q1202019|P793|Q106379705,drop,,,qphulong,2026-11-17
+triple,Q1202019|P793|Q830393,drop,,,qphulong,2026-11-17
+triple,Q120835889|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q120835889|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q120835889|P195|Q206219,ok,,,claude-ai,2026-11-17
+triple,Q120835889|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P195|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P276|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P31|Q101687,ok,,,claude-ai,2026-11-17
+triple,Q130218170|P361|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q131914016|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131914172|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131914172|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q131914511|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131914511|P180|Q7559,ok,,,claude-ai,2026-11-17
+triple,Q131914511|P195|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q131914511|P276|Q5929149,ok,,,claude-ai,2026-11-17
+triple,Q131914762|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q131914762|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131914762|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q131914762|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q131920509|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131920509|P31|Q101687,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P180|Q9441,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131925836|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P189|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131925974|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931059|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P189|Q391406,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931278|P31|Q245117,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131931447|P31|Q101687,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131941729|P31|Q245117,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q131983947|P31|Q245117,ok,,,claude-ai,2026-11-17
+triple,Q1328473|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q135336978|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q135336978|P180|Q7559,ok,,,claude-ai,2026-11-17
+triple,Q135336978|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P180|Q7559,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P186|Q13085,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P195|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P276|Q6940790,ok,,,claude-ai,2026-11-17
+triple,Q135479494|P31|Q179700,ok,,,claude-ai,2026-11-17
+triple,Q1421202|P1435|Q1459900,ok,,,claude-ai,2026-11-17
+triple,Q1421202|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q1421202|P31|Q46169,ok,,,claude-ai,2026-11-17
+triple,Q1459900|P361|Q9259,drop,,,qphulong,2026-11-17
+triple,Q1583627|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q1583627|P31|Q46169,ok,,,claude-ai,2026-11-17
+triple,Q16511573|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q16511573|P31|Q381885,ok,,,claude-ai,2026-11-17
+triple,Q16511573|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q178743|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q190060|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q190128|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q190128|P793|Q29778318,drop,,,qphulong,2026-11-17
+triple,Q1968747|P1435|Q1459900,ok,,,claude-ai,2026-11-17
+triple,Q1968747|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q1968747|P31|Q46169,ok,,,claude-ai,2026-11-17
+triple,Q206219|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q206219|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q2344822|P1435|Q1459900,ok,,,claude-ai,2026-11-17
+triple,Q2344822|P31|Q839954,ok,,,claude-ai,2026-11-17
+triple,Q23513|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q23513|P793|Q29778318,drop,,,qphulong,2026-11-17
+triple,Q30920268|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q30920268|P186|Q34095,ok,,,claude-ai,2026-11-17
+triple,Q30920268|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q30920268|P2596|Q996912,ok,,,claude-ai,2026-11-17
+triple,Q30920268|P276|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q3096348|P1435|Q10755061,ok,,,claude-ai,2026-11-17
+triple,Q36160|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q3654706|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q386724|P361|Q2668072,drop,,,qphulong,2026-11-17
+triple,Q391406|P131|Q25282,ok,,,claude-ai,2026-11-17
+triple,Q391406|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q391406|P2596|Q18461327,ok,,,claude-ai,2026-11-17
+triple,Q391406|P31|Q839954,ok,,,claude-ai,2026-11-17
+triple,Q41179|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q43113623|P361|Q9259,ok,,,qphulong,2026-11-17
+triple,Q4361432|P1435|Q1459900,ok,,,claude-ai,2026-11-17
+triple,Q49054330|P1435|Q10755057,ok,,,claude-ai,2026-11-17
+triple,Q586985|P1435|Q19683138,ok,,,claude-ai,2026-11-17
+triple,Q586985|P31|Q46169,ok,,,claude-ai,2026-11-17
+triple,Q5965459|P131|Q36160,ok,,,claude-ai,2026-11-17
+triple,Q5965459|P1435|Q9259,ok,,,claude-ai,2026-11-17
+triple,Q7481070|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q7481070|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q7481070|P31|Q162875,ok,,,claude-ai,2026-11-17
+triple,Q7481070|P31|Q381885,ok,,,claude-ai,2026-11-17
+triple,Q7481070|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q7481171|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q7481171|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q7481171|P31|Q162875,ok,,,claude-ai,2026-11-17
+triple,Q7481171|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P131|Q1858,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P195|Q1202019,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P276|Q1202019,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P31|Q220659,ok,,,claude-ai,2026-11-17
+triple,Q7619083|P31|Q2668072,ok,,,claude-ai,2026-11-17
+triple,Q7818615|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q7818615|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q7818615|P31|Q381885,ok,,,claude-ai,2026-11-17
+triple,Q7818615|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q7818621|P131|Q36167,ok,,,claude-ai,2026-11-17
+triple,Q7818621|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q7818621|P31|Q162875,ok,,,claude-ai,2026-11-17
+triple,Q7818621|P31|Q4989906,ok,,,claude-ai,2026-11-17
+triple,Q7818621|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P138|Q532,drop,,,qphulong,2026-11-17
+triple,Q7928443|P1435|Q10753291,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P186|Q287,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P195|Q5370414,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P195|Q6941045,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P2596|Q996912,ok,,,claude-ai,2026-11-17
+triple,Q7928443|P31|Q839954,ok,,,claude-ai,2026-11-17
+triple,Q975568|P1435|Q43113623,ok,,,claude-ai,2026-11-17
+triple,Q975568|P361|Q10769129,ok,,,claude-ai,2026-11-17
+triple,Q993402|P1435|Q1459900,ok,,,claude-ai,2026-11-17
+triple,Q993402|P1435|Q9259,ok,,,claude-ai,2026-11-17
+image,03826-Hanoi (32342212946).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,"37mm-AA gun captured by 1st Squadron, 7th Cavalry, displayed at Camp Evans.jpg",ok,,,qphulong,2026-11-17
+image,AATTV and U.S. Marine advisers check for booby-traps before entering an imperial tomb near Hue.jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,"AP0030-Sallet Environs de Hué, vers 1930 – Pagode Thien Mu.jpg",ok,,,claude-ai,2026-11-17
+image,ARMY MUSEUM HA NOI VIETNAM FEB 2012 (7013700855).jpg,ok,,,claude-ai,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (1).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (2).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (3).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Ancient Writings (148483745).jpeg,ok,,,claude-ai,2026-11-17
+image,Annam - Hué - Pagode où se font les cérémonies rituelles au tombeau de Minh-Mang.jpg,ok,,,claude-ai,2026-11-17
+image,Annam - Hué - Porte de l'enceinte extérieure au tombeau de Minh Mang.jpg,ok,,,claude-ai,2026-11-17
+image,Bai tam Cat Ba.JPG,ok,,,claude-ai,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, cận cảnh bầu ngực) (4).jpg",ok,,,claude-ai,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, cận cảnh bầu ngực) (5).jpg",drop,duplicate,,qphulong,2026-11-17
+image,"Bảo tàng Mỹ thuật Tp (Vườn xuân Bắc Trung Nam, khung tranh).jpg",ok,,,claude-ai,2026-11-17
+image,Cyrtodactylus phongnhakebangensis.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Cửa ra Động Tiên Cá - Thung Nham Ninh Bình.jpg,ok,,,claude-ai,2026-11-17
+image,Da Lat - Train Station.jpg,ok,,,qphulong,2026-11-17
+image,DoanMauKhoiTrenBiaTS1502.jpg,ok,,,claude-ai,2026-11-17
+image,Doctors' Stelae (4856350688).jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,Dong Hoi Phong Nha grotten (18347).jpg,ok,,,claude-ai,2026-11-17
+image,Dong Hoi Phong Nha grotten (19075).jpg,ok,,,claude-ai,2026-11-17
+image,Down The Mekong River (23495549714).jpg,ok,,,claude-ai,2026-11-17
+image,Down The Mekong River (23496932043).jpg,ok,,,claude-ai,2026-11-17
+image,Dragon-makara.jpg,ok,,,claude-ai,2026-11-17
+image,"Hue - historic ""Ngự Kiến Thiên Mụ Tự"" stone stele.jpg",ok,,,qphulong,2026-11-17
+image,ICHueTMP02.jpg,ok,,,claude-ai,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 04.jpg,drop,duplicate,,qphulong,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 05.jpg,ok,,,claude-ai,2026-11-17
+image,National Museum Vietnamese History 65 (cropped).jpg,ok,,,claude-ai,2026-11-17
+image,Office Xuan Thuy National Park.JPG,ok,,,claude-ai,2026-11-17
+image,Phần đế bia Sùng Thiện Diên Linh.jpg,ok,,,claude-ai,2026-11-17
+image,Procès-verbal for the recovery of the items the Bảo Đại Emperor gave to the Democratic Republic of Vietnam during his abdication ceremony (1952) 01.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Procès-verbal for the recovery of the items the Bảo Đại Emperor gave to the Democratic Republic of Vietnam during his abdication ceremony (1952) 02.jpg,ok,,,claude-ai,2026-11-17
+image,"Quan Thanh Taoist Temple, Hanoi, 11th century and later (14) (37610248455).jpg",ok,,,claude-ai,2026-11-17
+image,"Statue of the Hoàng Đế chi bảo (皇帝之寶) at the Imperial Citadel, Huế (2009).png",drop,not_the_object,,qphulong,2026-11-17
+image,"The front cover of ""Duong Kach Menh"" at HCMC Museum 2021.jpg",ok,,,claude-ai,2026-11-17
+image,VanMieuHue.jpg,ok,,,qphulong,2026-11-17
+image,03828-Hanoi (32800667972).jpg,ok,,,claude-ai,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (4).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (5).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio (6).jpg,drop,not_the_object,,qphulong,2026-11-17
+image,"Bảo tàng LsTp, Cổ vật Chăm (Nữ thần Devi-Haradevi làng Hương Quế, nhìn ngang) (1).jpg",ok,,,claude-ai,2026-11-17
+image,Doctors' Stelae (4856353228).jpg,drop,identifiable_person,,qphulong,2026-11-17
+image,Dong Hoi Phong Nha grotten (24670).jpg,ok,,,claude-ai,2026-11-17
+image,"Ghi chú trong Lăng Minh Mạng, tháng 3 năm 2021.jpg",drop,not_the_object,,qphulong,2026-11-17
+image,Mausoleum of Emperor Dong Khanh (Hue) - Lăng Đồng Khánh (2024 July) - img 06.jpg,ok,,,claude-ai,2026-11-17
+image,Điện gửi từ Văn Phòng Đà Lạt cho Văn phòng ở Huế thông báo về việc ấn kiếm đã được Lê Thanh Cảnh đưa về Ban Mê Thuột.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agribank - Hoi An Bearch Resort - panoramio.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Agrikultura kampo en Hoi An.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Assembly Hall - Hoi An (39627874985).jpg,ok,,,claude-ai,2026-11-17
+image,Doctors' Stelae (4856371606).jpg,ok,,,claude-ai,2026-11-17
+image,Hue Vietnam Tomb-of-Emperor-Minh-Mang-04.jpg,ok,,,claude-ai,2026-11-17
+image,Bamboo statue.jpg,drop,not_the_object,,qphulong,2026-11-17
+image,Banana couple (39645015985).jpg,ok,,,claude-ai,2026-11-17
+image,10545-Hoi-An (37621344830).jpg,ok,,,qphulong,2026-11-17
+image,Ba Be Lake - 02.jpg,ok,,,qphulong,2026-11-17
+image,Ba Be Lake 1.jpg,ok,,,qphulong,2026-11-17
+image,Ba Be Lake 2.jpg,ok,,,qphulong,2026-11-17
+image,Ba Be Lake 2014.jpg,ok,,,qphulong,2026-11-17
+image,Ba Be Lake 3.jpg,ok,,,qphulong,2026-11-17
+image,Basket Boat and the Bamboo forest (Unsplash).jpg,ok,,,qphulong,2026-11-17
+image,Chùa Thầy Quốc Oai Hà Nội.jpg,ok,,,qphulong,2026-11-17
+image,Chùa Thầy Quốc Oai.jpg,ok,,,qphulong,2026-11-17
+image,Giếng Ngọc - Thung Nham Resort.jpg,ok,,,qphulong,2026-11-17
+image,Guangzhou Tianhe Guangdong Sheng Bowuguan 2024-01-30 15.32.25.jpg,ok,,,qphulong,2026-11-17
+image,Gyeonu and Jiknyeo.webp,ok,,,qphulong,2026-11-17
+image,Ngang qua Chùa Thầy.jpg,ok,,,qphulong,2026-11-17
+image,Phù điêu Quốc tổ Lạc Long Quân dẫn 50 người con xuống biển.jpg,ok,,,qphulong,2026-11-17
+image,Thầy Temple - 01.jpg,ok,,,qphulong,2026-11-17
+image,Thầy Temple - 02.jpg,ok,,,qphulong,2026-11-17

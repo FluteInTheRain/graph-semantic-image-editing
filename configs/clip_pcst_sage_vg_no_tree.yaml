@@ -1,0 +1,47 @@
+# G-Retriever stage 2 on Visual Genome (ADR-0051): ablation 1, top-k concepts only (no PCST tree).
+# How to run: scripts/prepare_pcst_cache.py, scripts/train_pcst_sage.py (val), then
+# scripts/evaluate_pcst_sage.py (test, once). See the docstrings of those scripts.
+# One file = one experiment. Every value below is chosen on val only, never on test or queries/.
+experiment: clip_pcst_sage_vg_no_tree
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+# Decision (ADR-0046): contains edges from CLIP top-k for every split (built by configs/graph_vg_clip_topk.yaml).
+#   Decided by: qphulong, 2026-11-10.
+graph_dir: artifacts/graphs/visual_genome/contains_clip_top16_v1
+# Decision (ADR-0051): PCST runs on the train-counted PMI co-occurrence edges (ADR-0048),
+# built by configs/concept_edges_vg_cooccurrence.yaml.
+concept_edges_dir: artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1
+# "pcst" = the PCST tree (main); "top_k_only" and shuffled edges are the two ablations.
+subgraph_mode: top_k_only
+shuffle_concept_edges: false
+# Decision (ADR-0051, stage 2): fixed G-Retriever SceneGraphs values, no grid.
+#   Why: one PCST pass over the train texts takes about an hour.
+#   Proposed by Claude Code, 2026-11-16; not yet approved by the team.
+prize_k: 3
+edge_cost: 0.5
+# Cached subgraphs S_q (artifacts/ is gitignored) and trained weights, one folder per seed.
+cache_dir: artifacts/pcst_cache/clip_pcst_sage_vg_no_tree
+model_dir: artifacts/models/visual_genome/clip_pcst_sage_vg_no_tree
+# Decision (ADR-0043): re-rank the same 100 candidates as plain CLIP.
+#   Decided by: FluteInTheRain, ADR-0043.
+top_k: 100
+recall_ks: [1, 5, 10]
+# Decision (ADR-0043): equal sentences are relevant; also never used as hard negatives.
+#   Decided by: FluteInTheRain, 2026-11-05.
+same_text_threshold: 0.9999
+# Training values copied from configs/clip_graph_vg_lr1e4.yaml (ADR-0046, ADR-0047) so that
+# stage 1 and stage 2 are compared fairly.
+num_hard_negatives: 15
+temperature: 0.05
+learning_rate: 0.0001
+batch_size: 512
+max_epochs: 10
+patience: 2
+# Memory setting, not a method hyperparameter: it never changes a score.
+score_chunk: 128
+# Decision (ADR-0016, PDF section 4.2): alpha chosen on val from this grid.
+alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# Decision (ADR-0047): choose alpha (and early-stop) on val MRR@100; ties go to the larger alpha.
+selection_metric: MRR@100
+output_dir: results/runs

@@ -50,6 +50,8 @@
 \author[Nhóm Project 3]{
   \textbf{Học viên thực hiện:}\\
   \dots\\
+  Nguyễn Phước Thiện (25C15060)\\
+  Quan Phú Long (25C15050)\\
   Trần Hồ Thanh Vũ (25C15068)\\[1ex]
   \textbf{Giáo viên hướng dẫn:} \dots
 }
@@ -76,7 +78,7 @@
         \end{enumerate}
       \end{block}
       \begin{exampleblock}{Phạm vi}
-        Nhánh A (văn bản $\to$ ảnh) trên Visual Genome, thêm chiều ảnh $\to$ văn bản để đo mở rộng.
+        Nhánh A (văn bản $\to$ ảnh) trên Visual Genome và Flickr30k, thêm chiều ảnh $\to$ văn bản; chuyển giao sang MMKG di sản Việt Nam tự xây.
       \end{exampleblock}
   \end{columns}
 \end{frame}
@@ -102,17 +104,19 @@
 
 \begin{frame}{Tiến độ theo các cấp độ của đề}
   \centering\small
-  \begin{tabular}{l p{6.6cm} l}
+  \begin{tabular}{l p{6.0cm} l}
     \toprule
     \textbf{Cấp độ} & \textbf{Yêu cầu} & \textbf{Tình trạng} \\
     \midrule
     1 (7.0) & CLIP, đồ thị, GNN, xếp hạng lại, 3 seed, ablation, 5+5 truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     NV1 mở rộng & nDCG, ảnh $\to$ văn bản, nhóm truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} \\
-    2 (8.5) & Tập thứ 2, phương pháp 2024+, bộ $\ge$20 truy vấn & \textcolor{do}{Chưa} (có code sinh truy vấn) \\
-    3 (10) & Fidelity, validity, sparsity & Đã chạy val, chưa chạy test \\
-    3 (10) & MMKG tiếng Việt & \textcolor{do}{Chưa} \\
-    4 (+1--2) & Cải tiến riêng & \textcolor{do}{Chưa} (có ý tưởng) \\
-    Sản phẩm & Notebook demo & \textcolor{do}{Chưa} \\
+    2 (8.5) & Tập công khai thứ hai (Flickr30k) & \textcolor{xanh}{\textbf{Hoàn thành}} \\
+    2 (8.5) & Phương pháp từ năm 2024 (G-Retriever) & \textcolor{xanh}{\textbf{Hoàn thành}}, kết quả âm \\
+    2 (8.5) & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & \textcolor{cam}{Đang làm} trên VG; có 318 câu trên MMKG \\
+    3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} (val + test) \\
+    3 (10) & MMKG tiếng Việt tự xây & \textcolor{xanh}{\textbf{Hoàn thành}} \\
+    4 (+1--2) & Cải tiến riêng & \textcolor{do}{Chưa làm} \\
+    Sản phẩm & Giao diện demo (Gradio), slide & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     \bottomrule
   \end{tabular}
 \end{frame}
@@ -163,6 +167,29 @@
       \end{itemize}
   \end{columns}
   \nhanxet{Recall tuyệt đối là cận dưới (chỉ xét 5 câu mỗi ảnh), nhưng so sánh giữa các mô hình vẫn công bằng.}
+\end{frame}
+
+\begin{frame}{Hai bộ dữ liệu bổ sung: Flickr30k và MMKG tiếng Việt}
+  \begin{columns}[T]
+    \column{.48\textwidth}
+      \begin{block}{Flickr30k (tập công khai thứ hai)}
+        \begin{itemize}
+          \item 31.014 ảnh, 5 chú thích mỗi ảnh; cùng CLIP như VG.
+          \item Chia lại theo cùng quy trình: train 21.014 · val 5.000 · test 5.000; gom 2 cặp ảnh gần trùng.
+          \item Không có annotation đối tượng: chép nguyên 3.880 khái niệm từ đồ thị VG, nối mỗi ảnh với 16 khái niệm gần nhất (496.224 cạnh).
+        \end{itemize}
+      \end{block}
+    \column{.5\textwidth}
+      \begin{block}{MMKG di tích -- di sản Việt Nam (tự xây)}
+        \begin{itemize}
+          \item Thu từ Wikidata (\code{P1435}, \code{P17 = Q881}) và Wikimedia Commons; lưu snapshot thô rồi mới lọc.
+          \item Duyệt: AI duyệt sơ bộ, một thành viên duyệt lại từng dòng (962 dòng).
+          \item \textbf{119 thực thể} (80 hiện vật + 39 khái niệm), \textbf{303 bộ ba}, 17 quan hệ, \textbf{380 ảnh} giấy phép tự do.
+          \item \textbf{318 truy vấn} sinh tự động: trực tiếp / gián tiếp $\times$ Anh / Việt; chỉ dùng để đánh giá.
+        \end{itemize}
+      \end{block}
+  \end{columns}
+  \nhanxet{data card đầy đủ (nguồn, giấy phép, cách tạo bộ ba) trong \code{data\_cards/mmkg\_vi.md}.}
 \end{frame}
 
 % ══════════════════════════════════════════════════════════════
@@ -248,16 +275,6 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Một lỗi huấn luyện đáng nhớ}
-  \begin{alertblock}{Mô hình học một ``mẹo''}
-    Bản đầu dùng mọi câu train. Ảnh đúng luôn có trong danh sách ứng viên, kể cả khi CLIP xếp nó ngoài top-100; còn 15 ảnh sai thì luôn trong top-100.\\[2pt]
-    $\Rightarrow$ Mô hình học cách chọn ứng viên mà CLIP đánh giá \textbf{thấp nhất}. Loss train giảm, nhưng \mrr{} val tụt từ \textbf{0,106 xuống 0,038} sau một epoch.
-  \end{alertblock}
-  \begin{block}{Cách sửa}
-    Chỉ giữ các câu train có ảnh đúng nằm trong top-100 CLIP. Ảnh đúng và ảnh sai khi đó đến từ cùng một phân bố, đúng với bài toán xếp hạng lại.
-  \end{block}
-  \nhanxet{loss train giảm chưa đủ để tin mô hình; phải nhìn chỉ số trên val.}
-\end{frame}
 
 \begin{frame}{Các mô hình đối chứng}
   \centering\small
@@ -270,6 +287,7 @@
     \textbf{CLIP + Graph} & $10^{-4}$ & \textbf{Mô hình chính} \\
     + Đồng xuất hiện & $10^{-4}$ & Quan hệ khái niệm -- khái niệm có giúp thêm không? \\
     Đồ thị xáo cạnh & $10^{-4}$ & Ablation: xáo cạnh, giữ nguyên bậc, huấn luyện y hệt mô hình chính \\
+    G-Retriever (PCST) & -- & Phương pháp 2024: đồ thị con phụ thuộc truy vấn \\
     \bottomrule
   \end{tabular}
   \vfill
@@ -432,6 +450,55 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}{Tập thứ hai: Flickr30k (test, 3 seed)}
+  \centering\small
+  \begin{tabular}{l c c c c}
+    \toprule
+    \textbf{Mô hình} & \textbf{R@1} & \textbf{R@10} & \textbf{\mrr} & $\alpha$ \\
+    \midrule
+    CLIP thuần & 0.4901 & 0.8250 & 0.6045 & 1 \\
+    \textbf{Không đồ thị} & \textbf{0.5332 \pmm{} 0.0006} & \textbf{0.8556 \pmm{} 0.0011} & \textbf{0.6447 \pmm{} 0.0003} & 0,6 \\
+    CLIP + Graph & 0.5309 \pmm{} 0.0036 & 0.8553 \pmm{} 0.0026 & 0.6432 \pmm{} 0.0028 & 0,5 \\
+    Đồ thị xáo cạnh & 0.5276 \pmm{} 0.0014 & 0.8526 \pmm{} 0.0009 & 0.6399 \pmm{} 0.0015 & 0,4--0,5 \\
+    \bottomrule
+  \end{tabular}
+  \par\smallskip{\scriptsize\color{xam} Cấu hình chép nguyên từ VG, không chỉnh siêu tham số; epoch và $\alpha$ chọn trên val, test chạy một lần.}
+  \vfill
+  \begin{columns}[T]
+    \column{.5\textwidth}
+      \begin{block}{Lặp lại kết luận của VG}
+        \mrr{} 0,6045 $\to$ 0,6447 (+6,6\%), gần như toàn bộ nhờ phép chiếu học được.
+      \end{block}
+    \column{.48\textwidth}
+      \begin{alertblock}{Khác VG}
+        Đồ thị không thêm gì: Graph -- không đồ thị $= -0{,}0015 \pmm{} 0{,}0028$. Đồ thị thật vẫn hơn bản xáo (+0,0033 \pmm{} 0,0013), nhưng bản xáo kém cả mô hình không đồ thị.
+      \end{alertblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Phương pháp năm 2024: G-Retriever (PCST)}
+  \begin{columns}[T]
+    \column{.5\textwidth}
+      \begin{block}{Tái lập 3 bước đầu (bỏ bước sinh câu bằng LLM)}
+        \begin{enumerate}\small
+          \item Gán thưởng cho $k$ khái niệm liên quan nhất với truy vấn.
+          \item PCST (\code{pcst\_fast}) chọn cây liên thông $S_q$ trên đồ thị đồng xuất hiện; giữ cả đỉnh ``cầu nối''.
+          \item Chấm ứng viên theo $S_q$: GĐ1 tỉ lệ khái niệm thuộc $S_q$; GĐ2 GraphSAGE chỉ gộp khái niệm trong $S_q$.
+        \end{enumerate}
+      \end{block}
+      {\scriptsize Chọn trong 9 ứng viên (NativE, AdaMF-MAT, \dots): G-Retriever 33/40 điểm.}
+    \column{.48\textwidth}
+      \begin{alertblock}{Kết quả âm (theo quy tắc dừng đã chốt)}
+        \begin{itemize}\small
+          \item \textbf{GĐ1:} cả 9 lượt val chọn $\alpha = 1$ (= CLIP). Chênh điểm CLIP giữa hai ứng viên liền kề có trung vị 0,00037; tỉ lệ chạm $S_q$ quá thô.
+          \item \textbf{GĐ2, test VG:} \mrr{} 0,1278 \pmm{} 0,0005, ngang đối chứng không đồ thị 0,1277 \pmm{} 0,0001.
+          \item \textbf{GĐ2, Flickr30k:} 0,6408 \pmm{} 0,0003, thấp hơn đối chứng 0,6430 \pmm{} 0,0016.
+        \end{itemize}
+      \end{alertblock}
+  \end{columns}
+  \nhanxet{đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được.}
+\end{frame}
+
 % ══════════════════════════════════════════════════════════════
 \section{Kết quả Nhiệm vụ 3: giải thích}
 
@@ -495,56 +562,146 @@
 
 \begin{frame}{Cấp độ 3: đánh giá giải thích định lượng}
   \begin{columns}[T]
-    \column{.52\textwidth}
+    \column{.4\textwidth}
       \textbf{Thước đo}
       \begin{itemize}\small
         \item \textbf{Fid$^+$}: bỏ giải thích thì điểm, hạng giảm bao nhiêu.
-        \item \textbf{Fid$^-$}: chỉ giữ giải thích thì điểm giảm bao nhiêu.
-        \item \textbf{Robust Fid}: xoá mỗi cạnh với xác suất 0,1 (Zheng et al., 2024).
+        \item \textbf{Fid$^-$}: chỉ giữ giải thích thì điểm đổi bao nhiêu.
         \item \textbf{Sparsity}, \textbf{validity}.
-        \item \textbf{Đối chứng}: xoá cùng số cạnh ngẫu nhiên, $R\ge 20$ lần, Wilcoxon một phía.
+        \item \textbf{Đối chứng}: xoá cùng số cạnh ngẫu nhiên, Wilcoxon một phía.
       \end{itemize}
-    \column{.46\textwidth}
-      \begin{block}{Kết quả trên val (20 truy vấn × 3 seed)}
+      {\scriptsize 20 truy vấn bốc ngẫu nhiên một lần, 3 seed; ảnh giải thích = ảnh hạng 1. Chọn explainer và $m$ trên val, test chạy một lần.}
+    \column{.58\textwidth}
+      \centering\scriptsize\setlength{\tabcolsep}{3pt}
+      \begin{tabular}{l l c c c c}
+        \toprule
+        \textbf{Tập} & \textbf{Explainer} & \textbf{Fid$^+$} & \textbf{Hạng tụt} & \textbf{Fid$^-$} & $p$ \\
+        \midrule
+        val & Occlusion & 0,0192 (0,0004) & 3,47 (0,22) & $-0{,}0107$ & $3{\cdot}10^{-5}$ \\
+        val & IG & 0,0192 (0,0004) & 3,47 (0,22) & $-0{,}0107$ & $3{\cdot}10^{-5}$ \\
+        val & GNNExplainer & 0,0022 (0,0004) & 0,45 (0,22) & $-0{,}0008$ & 0,29 \\
+        \textbf{test} & \textbf{IG} & \textbf{0,0225} (0,0006) & \textbf{2,57} (0,26) & $-0{,}0124$ & $5{\cdot}10^{-4}$ \\
+        \bottomrule
+      \end{tabular}
+      \par{\tiny\color{xam} $m = 10$; trong ngoặc: xoá 10 cạnh ngẫu nhiên.}
+      \begin{block}{Trên test (IG, $m=10$)}
         \begin{itemize}\small
-          \item \textbf{Occlusion}, \textbf{IG}: tụt hạng rõ hơn ngẫu nhiên, $p \le 0{,}002$ ở mọi $m \in\{3,5,10\}$.
-          \item \textbf{GNNExplainer}: không hơn ngẫu nhiên.
-          \item Đề xuất: IG, $m = 10$ (chưa chốt).
+          \item Fid$^+$ gấp $\sim$37 lần ngẫu nhiên; 20/20 truy vấn hơn ngẫu nhiên; 11/20 ảnh tụt hạng.
+          \item Validity 100\%, sparsity 0,375 (10/16 cạnh).
+          \item Fid$^-$ âm: 6 cạnh còn lại kéo ảnh xuống.
         \end{itemize}
       \end{block}
-      \begin{alertblock}{Chưa làm}
-        Bảng số chi tiết, chốt explainer, chạy test một lần.
+  \end{columns}
+\end{frame}
+
+% ══════════════════════════════════════════════════════════════
+\section{Chuyển giao sang MMKG tiếng Việt}
+
+\begin{frame}{Chuyển giao mô hình VG sang MMKG, không huấn luyện lại}
+  \begin{columns}[T]
+    \column{.38\textwidth}
+      \begin{itemize}\small
+        \item Trọng số và $\alpha$ giữ nguyên từ val VG; giao thức chốt trong ADR trước khi chạy.
+        \item Đỉnh khái niệm: 119 thực thể MMKG; mỗi ảnh nối 16 thực thể gần nhất theo CLIP (không dùng nhãn).
+        \item Hai lớp: dùng 303 bộ ba MMKG thay cạnh đồng xuất hiện.
+      \end{itemize}
+    \column{.6\textwidth}
+      \centering\scriptsize\setlength{\tabcolsep}{3pt}
+      \begin{tabular}{l c c c c}
+        \toprule
+        \textbf{\mrr} & \textbf{CLIP} & \textbf{Không ĐT} & \textbf{Một lớp} & \textbf{Hai lớp} \\
+        \midrule
+        Toàn bộ (318) & 0,2766 & 0,2861\pmm0,0035 & 0,2836\pmm0,0006 & \textbf{0,2872}\pmm0,0019 \\
+        \midrule
+        Trực tiếp, Anh (80) & \textbf{0,464} & 0,458 & 0,459 & 0,462 \\
+        Gián tiếp, Anh (79) & 0,418 & 0,442 & 0,436 & \textbf{0,458} \\
+        \quad chung chung (44) & 0,539 & 0,592 & 0,575 & \textbf{0,609} \\
+        Trực tiếp, Việt (80) & \textbf{0,123} & 0,118 & 0,115 & 0,114 \\
+        Gián tiếp, Việt (79) & 0,101 & \textbf{0,126} & 0,124 & 0,115 \\
+        \bottomrule
+      \end{tabular}
+  \end{columns}
+  \vfill
+  \begin{columns}[T]
+    \column{.5\textwidth}
+      \begin{block}{Đọc bảng}
+        Mọi mô hình học trên VG vượt CLIP (+2,5--3,8\%), nhưng đối chứng không đồ thị đã đạt 0,2861. Hai lớp (có bộ ba) chỉ nổi ở câu gián tiếp tiếng Anh.
+      \end{block}
+    \column{.48\textwidth}
+      \begin{alertblock}{Câu tiếng Việt}
+        CLIP \code{laion2b} đặt các câu tiếng Việt rất gần nhau (cosine TB 0,92 so với 0,70): \mrr{} rơi từ 0,464 xuống 0,123. Đồ thị không sửa được gốc rễ này.
       \end{alertblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Giải thích trên MMKG (IG, $m = 10$, 3 seed)}
+  \centering\small
+  \begin{tabular}{l r c c c}
+    \toprule
+    \textbf{Nhóm} & \textbf{Số} & \textbf{Fid$^+$} & \textbf{Hạng tụt} & $p$ \\
+    \midrule
+    MMKG, toàn bộ & 954 & 0,0094 (0,0001) & 0,82 (0,10) & $\approx 10^{-59}$ \\
+    \quad trực tiếp, Anh & 240 & 0,0090 (0,0003) & 0,68 (0,09) & $10^{-13}$ \\
+    \quad gián tiếp, Anh & 237 & 0,0081 (0,0004) & 1,12 (0,12) & $7{\cdot}10^{-18}$ \\
+    \quad trực tiếp, Việt & 240 & 0,0107 (0,0000) & 0,73 (0,08) & $3{\cdot}10^{-14}$ \\
+    \quad gián tiếp, Việt & 237 & 0,0097 (0,0000) & 0,77 (0,11) & $4{\cdot}10^{-16}$ \\
+    \midrule
+    Visual Genome test & 60 & 0,0225 (0,0006) & 2,57 (0,26) & $5{\cdot}10^{-4}$ \\
+    \bottomrule
+  \end{tabular}
+  \par\smallskip{\scriptsize\color{xam} Trong ngoặc: bỏ 10 cạnh ngẫu nhiên của cùng ảnh, lặp 20 lần. Mọi lựa chọn lấy nguyên từ val VG; chạy một lần.}
+  \vfill
+  \begin{columns}[T]
+    \column{.5\textwidth}
+      \begin{block}{Giải thích vẫn trung thực trên miền mới}
+        Fid$^+$ gấp $\sim$90 lần ngẫu nhiên, đúng ở cả 4 nhóm; validity 100\%, sparsity 0,375.
+      \end{block}
+    \column{.48\textwidth}
+      \begin{alertblock}{Trung thực $\neq$ đúng}
+        Chỉ 18,6\% ảnh hạng 1 là ảnh đúng: giải thích cho biết vì sao \textit{mô hình} chọn ảnh, không phải vì sao ảnh đúng.
+      \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ══════════════════════════════════════════════════════════════
+\section{Demo}
+
+\begin{frame}{Demo: truy vấn $\to$ top-$k$ + đường đi giải thích}
+  \begin{columns}[c]
+    \column{.62\textwidth}
+      \hinh[0.72]{\includegraphics{../../results/figures/query_path.png}}
+    \column{.36\textwidth}
+      \begin{itemize}\small
+        \item Gradio (\code{app/gradio\_app.py}), chạy được không cần GPU.
+        \item Nhập câu, trả top-$k$ ảnh val và đường đi truy vấn $\to$ khái niệm $\to$ ảnh.
+        \item \textcolor{xanh}{Cạnh xanh}: xoá thì $g$ giảm; \textcolor{do}{cạnh đỏ}: kéo ảnh xuống (Occlusion có dấu).
+        \item Chỉ gọi hàm trong \code{src/mmxai/}: hiển thị đúng mô hình đã báo cáo.
+      \end{itemize}
+      {\scriptsize Ví dụ: ``man riding a horse''.}
   \end{columns}
 \end{frame}
 
 % ══════════════════════════════════════════════════════════════
 \section{Hạn chế và hướng tiếp theo}
 
-\begin{frame}{Hạn chế}
-  \begin{enumerate}
-    \item \textbf{Đồ thị đóng góp ít trên toàn tập}: khoảng 91\% mức tăng đến từ phép chiếu tuyến tính.
-    \item \textbf{Đồ thị hiện tại ít ``quan hệ''}: cạnh suy ra từ chính CLIP; chưa có cạnh quan hệ scene graph, chưa có ConceptNet. Đây có lẽ là lý do đồ thị chỉ giúp ở truy vấn chung chung.
-    \item \textbf{$\alpha$ cố định} cho mọi truy vấn gây ra các ca thất bại lớn (hạng 7--15 rơi xuống 92--100).
-    \item \textbf{Thống kê}: 3 seed, một bản xáo, chưa kiểm định theo truy vấn; Recall là cận dưới.
-  \end{enumerate}
-\end{frame}
-
-\begin{frame}{Việc tiếp theo}
+\begin{frame}{Hạn chế và hướng tiếp theo}
   \begin{columns}[T]
-    \column{.5\textwidth}
-      \begin{alertblock}{Chưa thực hiện}
-        \begin{itemize}
-          \item Cấp 2: bộ $\ge$20 truy vấn trực tiếp/gián tiếp trên test; Flickr30k; một phương pháp 2024+.
-          \item Cấp 3: bảng số xAI và chạy test; MMKG tiếng Việt.
-          \item Notebook demo: nhập truy vấn, trả top-$k$ kèm cạnh giải thích.
-        \end{itemize}
+    \column{.55\textwidth}
+      \begin{alertblock}{Hạn chế}
+        \begin{enumerate}\small
+          \item \textbf{Đồ thị đóng góp ít}: $\sim$91\% mức tăng trên VG đến từ phép chiếu; trên Flickr30k, MMKG và G-Retriever đồ thị không hơn mô hình không đồ thị.
+          \item \textbf{Đồ thị ít ``quan hệ''}: cạnh suy từ chính CLIP, chưa có quan hệ scene graph, chưa dùng ConceptNet.
+          \item \textbf{$\alpha$ cố định} gây các ca thất bại lớn (hạng 7--15 rơi xuống 92--100).
+          \item \textbf{Thống kê}: 3 seed, một bản xáo, chưa kiểm định theo truy vấn.
+          \item \textbf{Chưa xong}: bộ $\ge$20 truy vấn trên test VG; cấp độ 4.
+        \end{enumerate}
       \end{alertblock}
-    \column{.48\textwidth}
-      \begin{exampleblock}{Ý tưởng cấp độ 4}
-        \begin{itemize}
-          \item \textbf{$\alpha(q)$ thích nghi theo truy vấn} thay cho một $\alpha$ cố định.
+    \column{.43\textwidth}
+      \begin{exampleblock}{Hướng tiếp theo}
+        \begin{itemize}\small
+          \item \textbf{$\alpha(q)$ thích nghi theo truy vấn}.
           \item Thêm cạnh quan hệ scene graph + ConceptNet để kiểm giả thuyết ``đồ thị giàu quan hệ giúp truy vấn gián tiếp''.
+          \item Bộ mã hoá văn bản đa ngôn ngữ cho truy vấn tiếng Việt (phải huấn luyện lại GNN).
         \end{itemize}
       \end{exampleblock}
   \end{columns}
@@ -552,10 +709,10 @@
 
 \begin{frame}{Kết luận}
   \begin{itemize}
-    \item Hoàn thành cấp độ 1 trên Visual Genome với quy trình chống rò rỉ chặt chẽ: \mrr{} test \textbf{0,1076 $\to$ 0,1284}.
-    \item Đối chứng cho thấy phần lớn mức tăng đến từ phép chiếu học được; cấu trúc ảnh -- khái niệm thật đóng góp \textbf{nhỏ nhưng nhất quán} qua 3 seed.
-    \item Vai trò của đồ thị rõ nhất ở \textbf{truy vấn chung chung} (\mrr{} 0,1082 so với 0,0951 và 0,0914).
-    \item Giải thích tính trên chính mô hình xếp hạng; trên val, Occlusion và IG \textbf{vượt đối chứng ngẫu nhiên} có ý nghĩa thống kê.
+    \item Visual Genome, quy trình chống rò rỉ chặt chẽ: \mrr{} test \textbf{0,1076 $\to$ 0,1284}.
+    \item Đối chứng cho thấy $\sim$91\% mức tăng đến từ phép chiếu học được; cấu trúc ảnh -- khái niệm thật đóng góp \textbf{nhỏ nhưng nhất quán} so với đồ thị xáo, rõ nhất ở \textbf{truy vấn chung chung}.
+    \item Kết luận ``phần lớn nhờ phép chiếu'' lặp lại trên \textbf{Flickr30k}, \textbf{MMKG tiếng Việt} và với \textbf{G-Retriever} (kết quả âm, báo cáo đúng quy tắc).
+    \item Giải thích bằng \textbf{IG} tính trên chính mô hình xếp hạng: trên test VG và MMKG, bỏ cạnh giải thích làm tụt hạng \textbf{nhiều hơn rõ rệt} so với bỏ cạnh ngẫu nhiên.
   \end{itemize}
   \vfill
   \begin{block}{Mã nguồn}

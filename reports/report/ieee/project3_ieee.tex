@@ -1,0 +1,75 @@
+% Báo cáo đồ án Project 3 theo mẫu IEEE Conference của phần seminar
+% (vkgqa/ieee_template/conference_101719.tex).
+% Biên dịch: latexmk -xelatex project3_ieee.tex  (hoặc xelatex 2 lần)
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[vietnamese]{babel}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{icomma}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\makeatletter
+\newcommand{\linebreakand}{\end{@IEEEauthorhalign}\hfill\mbox{}\par\mbox{}\hfill\begin{@IEEEauthorhalign}}
+\makeatother
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\mrr}{MRR@100}
+\newcommand{\pmm}{$\pm$}
+\newcommand{\GHrepo}{https://github.com/FluteInTheRain/graph-semantic-image-editing}
+
+\renewcommand{\IEEEkeywordsname}{Từ khóa}
+\addto\captionsvietnamese{\renewcommand{\refname}{Tài liệu tham khảo}\renewcommand{\abstractname}{Tóm tắt}\renewcommand{\tablename}{Bảng}\renewcommand{\figurename}{Hình}}
+
+\begin{document}
+
+\input{sections/00_cover}
+
+\title{Đồ thị có thật sự giúp truy vấn ảnh bằng văn bản? Xếp hạng lại CLIP bằng GraphSAGE, giải thích trung thực và chuyển giao sang MMKG tiếng Việt}
+
+\author{
+\IEEEauthorblockN{…}
+\IEEEauthorblockA{MSHV: …}
+\and
+\IEEEauthorblockN{Nguyễn Thiện Thuật}
+\IEEEauthorblockA{MSHV: 25C15025}
+\and
+\IEEEauthorblockN{Nguyễn Phước Thiện}
+\IEEEauthorblockA{MSHV: 25C15060}
+\linebreakand
+\IEEEauthorblockN{Quan Phú Long}
+\IEEEauthorblockA{MSHV: 25C15050}
+\and
+\IEEEauthorblockN{Trần Hồ Thanh Vũ}
+\IEEEauthorblockA{MSHV: 25C15068}
+\linebreakand
+\IEEEauthorblockA{\textit{Trường Đại học Khoa học Tự nhiên, ĐHQG TP.HCM}}
+}
+
+\maketitle
+
+\input{sections/01_abstract_intro}
+\input{sections/02_background}
+\input{sections/03_data}
+\input{sections/04_method}
+\input{sections/05_retrieval}
+\input{sections/06_xai}
+\input{sections/07_mmkg}
+\input{sections/08_discussion}
+\input{sections/99_refs}
+\input{sections/10_appendix}
+
+\end{document}
