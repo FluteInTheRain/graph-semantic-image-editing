@@ -146,6 +146,85 @@ Quyết định bởi: Thuat Nguyen (brainstorm với Claude Code), 2026-11-15. 
 
 **Kết luận theo quy tắc dừng (mục 3):** bậc 1 **không hơn CLIP thuần trên val**. Đây là kết quả âm thật, sẽ báo cáo trung thực. Nguyên nhân nằm ở **cách dùng** đồ thị con (đếm thô), không nằm ở bản thân đồ thị con. Bước tiếp theo là **bậc 2**. Test của bậc 1 để sau: với `alpha` = 1,0, kết quả test sẽ trùng hệt CLIP thuần. Ghi nhận bởi Thuat Nguyen, 2026-11-16.
 
+### Thiết kế bậc 2 (2026-11-16)
+
+Bậc 1 không hơn CLIP vì đếm thô (xem mục trên). Bậc 2 dùng **cùng đồ thị con**, nhưng để GNN **học** cách dùng nó.
+
+| Thành phần | Quy định |
+|---|---|
+| `S_q` | `graph/pcst.py`, **cố định `k = 3`, `C = 0,5`** theo bài gốc (SceneGraphs), không chọn lưới. Lý do: một lượt PCST trên khoảng 200 nghìn câu train mất khoảng 1 giờ (ước tính, phải đo); lưới 9 tổ hợp không khả thi |
+| Cache | `S_q` của mọi câu train dùng để huấn luyện (chỉ câu có ảnh đúng trong top 100 của CLIP, ADR-0047), mọi câu val, mọi câu test. Lưu ở `artifacts/pcst_cache/<experiment>/<split>.npz` + `meta.json` (`k`, `C`, chế độ, seed xáo, sha256 của đồ thị và split). Không ghi đè. Cache test chỉ được tạo và đọc trong bước chấm test |
+| Mô hình `SubgraphSage` | `m_i(q)` = trung bình `x_c` với `c ∈ N(i) ∩ S_q`, rỗng thì là vector 0; `h_i(q) = W_self·x_i + W_nb·m_i(q) + b`; điểm = `cos(q, h_i(q))`. Tham số và khởi tạo giống ADR-0046 (`W_self = I`, `W_nb = 0`, `b = 0`): chưa học thì bằng CLIP. Ảnh không chạm `S_q` chỉ còn `W_self·x_i + b`, giống `clip_nograph` |
+| Huấn luyện, chọn | Như ADR-0047 và `clip_graph_vg_lr1e4`: InfoNCE, 15 hard negative trên train, `τ = 0,05`, `lr = 1e-4`, batch 512, tối đa 10 epoch, patience 2, early stopping theo MRR@100 trên val của điểm đồ thị một mình, rồi chọn `alpha` trên val (hoà thì lấy `alpha` lớn hơn). Test chạy một lần |
+| Bản chạy (3 seed mỗi bản) | `clip_pcst_sage_vg` (chính); `clip_pcst_sage_vg_no_tree` (`S_q` = top-3 khái niệm có thưởng); `clip_pcst_sage_vg_shuffled` (PCST trên cạnh PMI đã xáo, seed xáo = seed chạy) |
+| Đối chứng (quy tắc dừng) | Phải **hơn `clip_nograph_vg_lr1e4` trên val**; so thêm với `clip_graph_vg_lr1e4`. Số trên val của hai mô hình này lấy từ `selection.json` của người đã chạy, hoặc chạy lại `train_graph_rerank.py` (chỉ train + val) |
+| Giải thích | Occlusion chính xác: bỏ lần lượt từng khái niệm trong `N(i) ∩ S_q`, tính lại điểm bằng chính mô hình. Ghi rõ khái niệm nào là cầu nối |
+
+Code (bậc 2): `src/mmxai/graph/pcst_cache.py`, `src/mmxai/models/subgraph_sage.py`, `src/mmxai/models/train.py` (`loss_fn`), `src/mmxai/eval/pcst_sage_rerank.py`, `scripts/prepare_pcst_cache.py`, `scripts/train_pcst_sage.py`, `scripts/evaluate_pcst_sage.py`, `configs/clip_pcst_sage_vg.yaml`, `configs/clip_pcst_sage_vg_no_tree.yaml`, `configs/clip_pcst_sage_vg_shuffled.yaml`.
+
+Quyết định bởi Thuat Nguyen (brainstorm với Claude Code), 2026-11-16. Nhóm chưa duyệt.
+
+### Kết quả bậc 2 trên val, seed 0 (2026-11-16)
+
+Chạy trên Colab, commit `4afb770`, chỉ **val**, **chưa chạy test**. Có 69.490 / 490.383 câu train dùng để huấn luyện (câu có ảnh đúng trong top 100 của CLIP, ADR-0047). PCST mất khoảng 8,2 ms mỗi câu. Bậc 2 mất khoảng 5,5 phút mỗi epoch (cả lượt 74 phút); `clip_nograph` mất khoảng 55 giây mỗi epoch (cả lượt 31 phút).
+
+| Val, seed 0 | MRR@100 sau trộn | R@1 | R@5 | R@10 | `alpha` | Epoch tốt nhất | MRR đồ thị một mình |
+|---|---|---|---|---|---|---|---|
+| CLIP thuần | 0,1061 | 0,0559 | 0,1443 | 0,2046 | — | — | — |
+| `clip_nograph_vg_lr1e4` (đối chứng) | **0,1247** | 0,0680 | 0,1736 | 0,2410 | 0,2 | 7 | 0,1241 |
+| `clip_pcst_sage_vg` (bậc 2) | **0,1243** | 0,0682 | 0,1722 | 0,2420 | 0,3 | 6 | 0,1239 |
+
+**Diễn giải:**
+- Bậc 2 và đối chứng gần như bằng nhau: chênh MRR −0,0004, nằm trong nhiễu của một seed. Đường val qua từng epoch của hai mô hình gần trùng nhau.
+- Toàn bộ mức tăng so với CLIP (+0,018) đến từ phần học thêm `W_self` và `b`, phần mà đối chứng cũng có. **Đồ thị con không đóng góp thêm.** Đây là cùng hiện tượng với GraphSAGE ở cấp độ 1 (ADR-0047, ADR-0048).
+
+**Kết luận theo quy tắc dừng (mục 3):** bậc 2 **không hơn `clip_nograph` trên val**. Đây là kết quả âm.
+
+**Việc tiếp theo** (quyết định bởi Thuat Nguyen, 2026-11-16):
+- Chạy seed 1 và 2 cho bậc 2 và đối chứng để xác nhận (≥ 3 seed, mean ± std).
+- **Không chạy** ablation xáo cạnh, vì không có cải thiện nào cần giải thích. Bản không dựng cây là tuỳ chọn.
+- Test chạy một lần khi nhóm đồng ý. AdaMF-MAT chỉ làm nếu còn thời gian.
+
+**Giả thuyết cho báo cáo:** đỉnh khái niệm (vector CLIP text) và cạnh `contains` (CLIP top-16) đều sinh ra từ chính CLIP, nên đồ thị không mang thông tin ngoài CLIP. Cạnh PMI đếm trên train là nguồn duy nhất ngoài CLIP, nhưng nó chỉ quyết định khái niệm nào vào `S_q`, chứ không thêm nội dung vector mới.
+
+### Kết quả bậc 2 trên val, 3 seed (2026-11-17)
+
+Chạy trên Colab, commit `4afb770`, chỉ **val**, **chưa chạy test**. Cache `S_q` được tạo lại cho seed 2 (PCST tất định, `meta` khớp). Std là std mẫu (`ddof = 1`, ADR-0011).
+
+| Val (mean ± std, 3 seed) | MRR@100 | R@1 | R@5 | R@10 | `alpha` (seed 0/1/2) | Epoch tốt nhất |
+|---|---|---|---|---|---|---|
+| CLIP thuần | 0,1061 | 0,0559 | 0,1443 | 0,2046 | — | — |
+| `clip_nograph_vg_lr1e4` (đối chứng) | **0,1246 ± 0,0003** | 0,0680 ± 0,0000 | 0,1731 ± 0,0011 | 0,2406 ± 0,0005 | 0,2 / 0,2 / 0,1 | 7 / 7 / 8 |
+| `clip_pcst_sage_vg` (bậc 2) | **0,1244 ± 0,0003** | 0,0680 ± 0,0003 | 0,1731 ± 0,0008 | 0,2423 ± 0,0012 | 0,3 / 0,3 / 0,2 | 6 / 7 / 6 |
+
+Run: `20261116-0809/1041/1808_clip_pcst_sage_vg_seed0/1/2`, `20261116-0919/1457/1553_clip_nograph_vg_lr1e4_seed0/1/2` (lưu trên Drive, chưa đưa vào `results/tables/`).
+
+**Kết luận:**
+- Xác nhận kết quả của seed 0. Bậc 2 và đối chứng **bằng nhau trong khoảng std**: MRR chênh −0,0002, R@1 và R@5 bằng nhau.
+- R@10 cao hơn +0,0017. Mức này cỡ một std và chỉ có 3 seed, nên **không đủ để kết luận**.
+- Toàn bộ mức tăng so với CLIP (+0,018 MRR) đến từ phần học thêm `W_self` và `b`. Đồ thị con của G-Retriever **không đóng góp đo được** trên val.
+
+**Theo quy tắc dừng (mục 3):** bậc 2 không hơn `clip_nograph` trên val. G-Retriever trên đồ thị khái niệm sinh từ CLIP **không cải thiện** truy vấn so với đối chứng không đồ thị. Báo cáo trung thực, kèm giả thuyết ở mục trên. Test chạy một lần cho cả hai mô hình khi nhóm đồng ý, để có bảng báo cáo.
+
+### Kết quả bậc 2 trên test (2026-11-17)
+
+Chạy **một lần** cho mỗi seed, sau khi nhóm đồng ý; commit code `4afb770`, cùng split với `main.csv`. Số lấy từ `results/tables/g_retriever_test.csv` (ADR-0010). Hai dòng có dấu * lấy từ `results/tables/main.csv`.
+
+| Test (mean ± std, 3 seed) | `lr` | MRR@100 | R@1 | R@5 | R@10 |
+|---|---|---|---|---|---|
+| CLIP thuần `clip_vg`* | – | 0,1076 | | | 0,2018 |
+| `clip_nograph_vg`* (đối chứng chính theo quy tắc chọn `lr` trên val) | 1e-3 | 0,1266 | | | |
+| `clip_nograph_vg_lr1e4` (đối chứng cùng cấu hình) | 1e-4 | **0,1277 ± 0,0001** | 0,0697 ± 0,0008 | 0,1742 ± 0,0017 | 0,2485 ± 0,0007 |
+| **`clip_pcst_sage_vg` (G-Retriever bậc 2)** | 1e-4 | **0,1278 ± 0,0005** | 0,0708 ± 0,0006 | 0,1724 ± 0,0011 | 0,2474 ± 0,0001 |
+| `clip_graph_vg_lr1e4`* (GraphSAGE cấp độ 1) | 1e-4 | 0,1284 ± 0,0006 | | | 0,2492 ± 0,0015 |
+
+**Kết luận:**
+- Test **khớp với val**: G-Retriever bậc 2 bằng đối chứng cùng cấu hình trong khoảng std (MRR chênh +0,0001). Đồ thị con không đóng góp thêm.
+- So với đối chứng chính `clip_nograph_vg` (0,1266) thì cao hơn +0,0012. Nhưng hai mô hình khác `lr`, nên mức chênh này không cho biết đồ thị có ích.
+- Đối chứng `clip_nograph_vg_lr1e4` không phải cấu hình chính theo quy tắc trong `results/tables/README.md`; nó được chạy test chỉ để so cùng cấu hình (đã ghi rõ ở đó).
+
+G-Retriever (phần truy xuất đồ thị con, bậc 1 và bậc 2) **không cải thiện truy vấn** so với đối chứng không đồ thị trên Visual Genome. Kết quả âm này nhất quán với GraphSAGE ở cấp độ 1, và được báo cáo cùng giả thuyết: đồ thị sinh từ CLIP nên không mang thông tin mới.
+
 ## Nguồn tham khảo
 
 - Đề bài, §2, §5, §6, §7, §10.

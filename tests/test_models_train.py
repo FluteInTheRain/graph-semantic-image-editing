@@ -208,3 +208,30 @@ def test_only_texts_with_their_image_among_the_candidates_are_kept():
     keep = texts_with_positive_in_candidates(text_image_row, candidate_rows)
 
     assert keep.tolist() == [True, False, True]
+
+
+def test_fit_uses_the_given_loss_function():
+    data = tiny_training_data()
+    model = ConceptToImageSage(8)
+    batch_sizes = []
+
+    def recording_loss(model, data, text_rows, num_negatives, temperature, generator):
+        batch_sizes.append(len(text_rows))
+        return batch_loss(model, data, text_rows, num_negatives, temperature, generator)
+
+    fit(
+        model,
+        data,
+        lambda m: 0.0,
+        0.01,
+        4,
+        3,
+        0.05,
+        max_epochs=1,
+        patience=1,
+        generator=torch.Generator().manual_seed(0),
+        log=str,
+        loss_fn=recording_loss,
+    )
+
+    assert batch_sizes

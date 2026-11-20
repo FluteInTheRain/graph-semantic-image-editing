@@ -76,3 +76,18 @@ Quyết định: ADR-0050. Pipeline giữ nguyên, chỉ đổi dữ liệu.
 - Test chạy **đúng một lần** mỗi seed, cùng phiên Kaggle với huấn luyện (commit `fb62f69`, `git_dirty: false`), bằng checkpoint và `alpha` đã chọn trên val.
 - CLIP thuần chỉ chạy seed 0 trên val, nên không có trong bảng val (`summarize_runs.py` cần ≥ 3 seed). Số của nó nằm trong hồ sơ.
 - Hai bảng sinh bằng `scripts/summarize_runs.py --split {val,test}` trên bản chép các run Kaggle (`results/records/20261118_flickr30k-cap-do-1/run_copies/`); không sửa tay.
+
+## `g_retriever_test.csv`: G-Retriever bậc 2 (ADR-0051)
+
+Tạo bằng `uv run python scripts/summarize_runs.py --runs-dir <thư mục chỉ chứa 6 run test dưới đây> --split test --output results/tables/g_retriever_test.csv`. Không ghi đè `main.csv`, vì máy chạy không có các run cũ.
+
+| Dòng (`experiment`) | `lr` | Vai trò |
+|---|---|---|
+| `clip_pcst_sage_vg` | 1e-4 | G-Retriever bậc 2: GraphSAGE chỉ gộp khái niệm trong đồ thị con PCST (`k = 3`, `C = 0,5` cố định theo bài gốc) |
+| `clip_nograph_vg_lr1e4` | 1e-4 | Đối chứng **cùng cấu hình huấn luyện** với dòng trên, đúng như thiết kế bậc 2 trong ADR-0051 |
+
+Ghi chú minh bạch:
+- Theo quy tắc chọn `lr` ở mục `main.csv`, đối chứng không đồ thị **chính thức** vẫn là `clip_nograph_vg` (1e-3, val tốt hơn 1e-4).
+- Dòng `clip_nograph_vg_lr1e4` ở đây được chạy test ngày 2026-11-17, **sau khi nhóm đồng ý**, chỉ để so cùng cấu hình với G-Retriever. Không có lựa chọn nào dựa trên số test này.
+- Run: `20261117-1300/1305/1309_clip_pcst_sage_vg_seed0/1/2`, `20261117-1301/1305/1310_clip_nograph_vg_lr1e4_seed0/1/2`. Commit code `4afb770`, cùng `split_sha256` với `main.csv`.
+

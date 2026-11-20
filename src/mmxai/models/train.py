@@ -164,14 +164,19 @@ def train_one_epoch(
     num_negatives: int,
     temperature: float,
     generator: torch.Generator,
+    loss_fn: Callable[..., torch.Tensor] = batch_loss,
 ) -> float:
-    """One pass over every training text in random order; returns the mean loss."""
+    """One pass over every training text in random order; returns the mean loss.
+
+    loss_fn: batch loss to minimise; the default is the ADR-0046 loss. Stage 2 of ADR-0051
+    passes its own.
+    """
     model.train()
     order = torch.randperm(len(data.text_x), generator=generator)
     total = 0.0
     for start in range(0, len(order), batch_size):
         text_rows = order[start : start + batch_size]
-        loss = batch_loss(model, data, text_rows, num_negatives, temperature, generator)
+        loss = loss_fn(model, data, text_rows, num_negatives, temperature, generator)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -198,11 +203,14 @@ def fit(
     patience: int,
     generator: torch.Generator,
     log: Callable[[str], None] = print,
+    loss_fn: Callable[..., torch.Tensor] = batch_loss,
 ) -> FitResult:
     """Train with early stopping: keep the weights of the epoch with the best val score.
 
     validate(model) returns the val score to maximise. It is called before training
     too, so if training never beats the untrained model, the untrained model is kept.
+    loss_fn: batch loss to minimise; the default is the ADR-0046 loss. Stage 2 of ADR-0051
+    passes its own.
     """
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     optimizer = torch.optim.Adam(trainable, lr=learning_rate)
@@ -216,7 +224,7 @@ def fit(
     for epoch in range(1, max_epochs + 1):
         started = time.time()
         loss = train_one_epoch(
-            model, data, optimizer, batch_size, num_negatives, temperature, generator
+            model, data, optimizer, batch_size, num_negatives, temperature, generator, loss_fn
         )
         score = validate(model)
         history.append({"epoch": epoch, "train_loss": loss, "val_score": score})
