@@ -378,3 +378,114 @@ Trước hết tự tải `conceptnet-assertions-5.7.0.csv.gz` (xem `data_cards/
 - Pilot chạy trên val. Không chỉnh quy tắc sau khi nhìn kết quả truy hồi trên bộ test.
 - Đáp án lấy từ annotation của ảnh test. Mô hình đồ thị **không được dựng cạnh từ annotation ảnh test** và không được đọc `hidden_concept`, `kg_evidence`, `path_hint`.
 - Dùng cạnh ConceptNet bên trong mô hình là việc ngoài ADR-0057, cần ADR riêng.
+
+## Đánh giá các mô hình đã huấn luyện trên bộ truy vấn KG (ADR-0057)
+
+### Ý tưởng
+
+Phần trên mới chấm **CLIP thuần** trên bộ truy vấn. Đề yêu cầu so nhiều mô hình trên cùng bộ truy vấn, tách truy vấn trực tiếp và gián tiếp. Vì vậy ta chấm thêm các mô hình đã huấn luyện và đã chốt, theo đúng cách của CLIP + Graph (ADR-0043):
+
+1. CLIP lấy 100 ảnh gần câu truy vấn nhất trong 5.000 ảnh test (cosine chính xác).
+2. Mô hình đồ thị chấm lại 100 ảnh này; điểm cuối là `alpha * clip + (1 - alpha) * graph`.
+3. Xếp lại 100 ảnh theo điểm cuối rồi tính Recall@1/5/10 và MRR@100.
+
+Mô hình chỉ nhận **câu truy vấn** (đã mã hoá bằng CLIP đóng băng), không bao giờ đọc `hidden_concept`, `kg_evidence`, `path_hint` hay `relevant`. Code: `src/mmxai/eval/query_benchmark_models.py` (`run_model_benchmark_evaluation`, `summarize_benchmark_runs`).
+
+### 5 experiment được chấm
+
+| Experiment | Loại | Vì sao |
+|---|---|---|
+| `clip_nograph_vg` | `graph_rerank` | Đối chứng không đồ thị chính thức (lr 1e-3) |
+| `clip_graph_vg_lr1e4` | `graph_rerank` | Mô hình chính CLIP + GraphSAGE |
+| `clip_cooc_graph_vg_lr1e4` | `graph_rerank` | Có cạnh đồng xuất hiện (khái niệm - khái niệm) |
+| `clip_nograph_vg_lr1e4` | `graph_rerank` | Đối chứng cùng cấu hình của G-Retriever |
+| `clip_pcst_sage_vg` | `pcst_sage` | G-Retriever giai đoạn 2 |
+
+Cộng với CLIP thuần (`clip_vg_kg_query_benchmark`) là 6 dòng trong bảng tổng hợp.
+
+### Điều kiện cần có
+
+- Bộ truy vấn đã được duyệt và build bằng `scripts/build_kg_query_benchmark.py` (có `queries/visual_genome_kg_test.jsonl`).
+- Đặc trưng và đồ thị Visual Genome trong `artifacts/features`, `artifacts/graphs`.
+- Checkpoint `artifacts/models/visual_genome/<experiment>/seed{0,1,2}/` gồm `model.pt` và `selection.json`:
+  - `clip_pcst_sage_vg` và `clip_nograph_vg_lr1e4`: đã có trên Drive của Thuật.
+  - `clip_nograph_vg`, `clip_graph_vg_lr1e4`, `clip_cooc_graph_vg_lr1e4`: xin các thành viên khác, hoặc huấn luyện lại bằng đúng config (huấn luyện tất định nên tái lập được).
+- `clip_pcst_sage_vg` cần thêm các cạnh khái niệm PMI `artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1` (config huấn luyện của nó trỏ tới đây). `clip_cooc_graph_vg_lr1e4` cũng dùng thư mục này. CLIP thuần và ba mô hình còn lại thì không cần.
+
+### Lệnh chạy theo thứ tự
+
+Mỗi (experiment, seed) chỉ chạy **một lần**; chạy lại bị từ chối. Mọi run ghi vào `results/query_benchmark/runs/`.
+
+```bash
+# 1. CLIP thuần (một seed; CLIP không có seed huấn luyện)
+uv run python scripts/evaluate_query_benchmark.py --config configs/eval_query_benchmark_vg_kg.yaml --seed 0
+
+# 2. Từng mô hình đã huấn luyện, mỗi seed 0 1 2
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 2
+
+# 3. Gom thành một bảng
+uv run python scripts/summarize_query_benchmark.py
+```
+
+Bảng ra ở `results/tables/kg_query_benchmark.csv`: mỗi dòng một experiment, R@1/5/10 và MRR@100 dạng mean và std mẫu (`ddof=1`) qua seed, cho `all`, `direct`, `indirect` và từng nhóm `activity` / `object` x loại. Hàm tổng hợp từ chối seed trùng và các run chấm trên bộ truy vấn khác nhau (`benchmark_sha256`).
+
+### Chạy trên Colab
+
+Đóng gói nhánh thành git bundle, để trên Drive (`/content/drive/MyDrive/mmxai/<bundle>`). Mỗi khối dưới đây là một ô Colab.
+
+Ô 1: gắn Drive và lấy code.
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+!git clone -q --branch <branch> /content/drive/MyDrive/mmxai/<bundle> /content/repo
+%cd /content/repo
+!pip -q install uv && uv sync -q --python 3.11 --group ml --group graph
+```
+
+Ô 2: nối `artifacts/` và `results/` với Drive để không mất dữ liệu khi phiên kết thúc.
+
+```bash
+!mkdir -p artifacts results /content/drive/MyDrive/mmxai/query_benchmark
+!ln -s /content/drive/MyDrive/mmxai/features artifacts/features
+!ln -s /content/drive/MyDrive/mmxai/graphs artifacts/graphs
+!ln -s /content/drive/MyDrive/mmxai/models artifacts/models
+!ln -s /content/drive/MyDrive/mmxai/pcst_cache artifacts/pcst_cache
+!ln -s /content/drive/MyDrive/mmxai/query_benchmark results/query_benchmark
+```
+
+Ô 3: chạy các lệnh ở mục trước, viết từng dòng với đường dẫn đầy đủ (tiền tố `!uv run ...`), không dùng biến trong vòng lặp.
+
+Ô cuối: bảo đảm kết quả đã ghi lên Drive.
+
+```python
+drive.flush_and_unmount()
+```
+
+### Quy tắc chống rò rỉ
+
+- Bộ truy vấn **chỉ để đánh giá** (PDF §6): không chọn mô hình, `alpha`, top-k hay ngưỡng nào dựa trên kết quả ở đây.
+- Mỗi mô hình dùng đúng checkpoint và `alpha` trong `selection.json` (đã chọn trên val).
+- Mô hình không đọc `hidden_concept`, `kg_evidence`, `path_hint`, `relevant`.
+- Một run cho mỗi (experiment, seed); các mô hình cùng một file split và cùng một bộ truy vấn.
