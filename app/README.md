@@ -92,9 +92,12 @@ uv run python scripts/build_graph.py --config configs/graph_vg_clip_topk.yaml
 **Bước 6. Chạy demo**
 
 ```bash
-uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
-    --vg-data-dir data/visual_genome
+./demo.sh
 ```
+
+`demo.sh` gói sẵn lệnh đầy đủ (`HF_HUB_OFFLINE=1 uv run --system-certs --all-groups python
+app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 --vg-data-dir data/visual_genome`).
+Tham số thêm vào sẽ ghi đè mặc định, ví dụ `./demo.sh --seed 1`.
 
 Mở <http://127.0.0.1:7860>, gõ truy vấn (ví dụ `man riding a horse`), bấm **Search**. Nạp mất khoảng
 10 giây, mỗi truy vấn khoảng 0,1 giây trên CPU laptop.

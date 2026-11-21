@@ -682,9 +682,12 @@ uv run python scripts/evaluate_mmkg_explanations.py --config configs/explain_mmk
 Cần mô hình `clip_graph_vg_lr1e4` seed 0 (bước 5). Hướng dẫn đầy đủ cho máy mới: [`app/README.md`](app/README.md).
 
 ```bash
-uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 \
-    --vg-data-dir data/visual_genome
+./demo.sh
 ```
+
+`demo.sh` gói sẵn lệnh đầy đủ (`HF_HUB_OFFLINE=1 uv run --system-certs --all-groups python
+app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed 0 --vg-data-dir data/visual_genome`).
+Tham số thêm vào sẽ ghi đè mặc định, ví dụ `./demo.sh --seed 1`.
 
 Mở <http://127.0.0.1:7860>, gõ truy vấn (ví dụ `man riding a horse`): app trả về top-k ảnh val và đường đi giải thích `truy vấn → khái niệm → contains → ảnh` của từng ảnh.
 
