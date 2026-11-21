@@ -79,6 +79,36 @@ class ImagePath:
     occlusion_drop: dict[int, float]  # concept row -> graph score lost without that edge
 
 
+@dataclass(frozen=True)
+class ClipHit:
+    """One result image of plain CLIP (no graph, so nothing to explain)."""
+
+    rank: int  # 1 = best
+    image_id: int
+    clip_score: float
+
+
+def search_clip(engine: QueryEngine, query: np.ndarray, k: int) -> list[ClipHit]:
+    """Return the first k images of plain CLIP: the baseline the graph re-ranks.
+
+    Same index and search as step 1 of search_and_explain, so it equals CLIP + Graph
+    with alpha = 1.
+    """
+    if not 1 <= k <= engine.top_k:
+        raise ValueError(f"k must be between 1 and top_k={engine.top_k}, got {k}")
+    clip_scores, image_ids = search_images(engine.image_index, query[None, :], k)
+    hits = []
+    for column in range(k):
+        hits.append(
+            ClipHit(
+                rank=column + 1,
+                image_id=int(image_ids[0, column]),
+                clip_score=float(clip_scores[0, column]),
+            )
+        )
+    return hits
+
+
 def search_and_explain(engine: QueryEngine, query: np.ndarray, k: int) -> list[ImagePath]:
     """Return the first k images under CLIP + Graph for this query, each with its paths.
 
