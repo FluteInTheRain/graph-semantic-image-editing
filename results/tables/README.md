@@ -106,3 +106,20 @@ Ghi chú:
 - Epoch và `alpha` chọn trên val; test chạy một lần mỗi seed. Không có lựa chọn nào dựa trên số test.
 - Run test: `20261118-0039/0042/0045_clip_pcst_sage_flickr30k_seed0/1/2`, `20261118-0025/0025/0026_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Run train (val): `20261117-1812/1901/1933_clip_pcst_sage_flickr30k_seed0/1/2`, `20261117-1819/1823/1827_clip_nograph_flickr30k_lr1e4_seed0/1/2`. Commit code `f03a156`, `split_sha256` `8b5c5427…b440d` (`splits/flickr30k/split_seed0.json`).
 - Không so số tuyệt đối với bảng VG: caption Flickr30k tả cả ảnh, region description VG chỉ tả một vùng, nên Flickr30k dễ hơn nhiều. So mức chênh so với đối chứng.
+
+## `kg_query_benchmark.csv`: bộ 38 truy vấn KG trực tiếp / gián tiếp (ADR-0057, ADR-0058)
+
+Tạo bằng `uv run python scripts/summarize_query_benchmark.py --runs-dir <thư mục chỉ chứa 7 run dưới đây> --output results/tables/kg_query_benchmark.csv`.
+Mỗi dòng là một experiment. Mỗi phạm vi (`all`, `direct`, `indirect`, `activity_*`, `object_*`) có R@1/5/10/100 và MRR@100, kèm mean và std mẫu (`ddof=1`) qua seed.
+
+| Dòng | Vai trò |
+|---|---|
+| `clip_vg_kg_query_benchmark` | CLIP thuần; tất định nên chỉ có seed 0 |
+| `clip_nograph_vg_lr1e4_kg_query_benchmark` | Đối chứng không đồ thị cùng cấu hình với G-Retriever |
+| `clip_pcst_sage_vg_kg_query_benchmark` | G-Retriever giai đoạn 2 |
+
+Ghi chú:
+- Bộ truy vấn chỉ dùng để đánh giá: mỗi mô hình dùng checkpoint và `alpha` đã chọn trên val, không chọn gì trên bộ này. Mỗi (experiment, seed) chạy một lần.
+- Bộ chỉ có 38 câu (19 gián tiếp; nhóm đồ vật gián tiếp có 12 câu), nên chênh lệch chỉ là xu hướng, chưa kiểm định theo truy vấn. Đáp án do một người duyệt (ADR-0058).
+- Chưa có `clip_nograph_vg`, `clip_graph_vg_lr1e4`, `clip_cooc_graph_vg_lr1e4`: còn chờ checkpoint.
+- Run (2026-11-21, Colab, code `6666631`, `benchmark_sha256` `8057c4c7…`): `20261121-0151_clip_vg_kg_query_benchmark_seed0`, `20261121-0152_clip_pcst_sage_vg_kg_query_benchmark_seed0/1/2`, `20261121-0153_clip_nograph_vg_lr1e4_kg_query_benchmark_seed0/1/2`.

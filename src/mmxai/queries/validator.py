@@ -3,7 +3,9 @@
 Workflow (ADR-0044):
     generator -> candidates JSONL + review manifest CSV (status "candidate")
     member A looks at the images, fills reviewer + verified_relevant -> "reviewed"
-    member B (not A) re-checks, fills checker -> "verified"
+    member B (not A) re-checks, fills checker -> "verified"   (required_reviewers=2)
+    With required_reviewers=1 (KG benchmark, ADR-0058) the reviewer alone is enough:
+    checker may be empty or the same person.
     build_verified_benchmark keeps ONLY verified pairs -> queries/visual_genome_test.jsonl
 
 Relevance (ADR-0044): an image is a candidate answer when its scene graph holds the
@@ -42,6 +44,9 @@ MANIFEST_COLUMNS = [
     "indirect_text",
     "path_hint",
     "relationship_ids",
+    "query_group",
+    "hidden_concept",
+    "kg_edges",
     "hidden_names",
     "candidate_relevant",
     "num_candidates",
@@ -217,6 +222,16 @@ def check_evidence(record: dict, graphs: dict[int, SceneGraph]) -> list[str]:
     return problems
 
 
+def check_kg_evidence(records: list[dict], edge_uris: set[str]) -> list[str]:
+    """Every ConceptNet edge a KG query cites must exist in the filtered edge file."""
+    problems = []
+    for record in records:
+        for item in record.get("kg_evidence", []):
+            if item["uri"] not in edge_uris:
+                problems.append(f"{record['qid']}: ConceptNet edge {item['uri']} not found")
+    return problems
+
+
 def validate_queries(
     records: list[dict],
     split_image_ids: set[str],
@@ -277,20 +292,29 @@ def manifest_rows(candidates: list[dict]) -> list[dict]:
     for pair_id in sorted(by_pair):
         direct = by_pair[pair_id]["direct"]
         indirect = by_pair[pair_id]["indirect"]
-        relationship_ids = [str(item["relationship_id"]) for item in direct["relation_evidence"]]
+        # v1 records cite scene-graph relations, KG records cite ConceptNet edges (ADR-0057).
+        relationship_ids = []
+        for item in direct.get("relation_evidence", []):
+            relationship_ids.append(str(item["relationship_id"]))
+        kg_edges = []
+        for item in direct.get("kg_evidence", []):
+            kg_edges.append(item["uri"])
         rows.append(
             {
                 "pair_id": pair_id,
-                "source_image_id": direct["source_image_id"],
-                "hop_count": direct["hop_count"],
-                "reasoning_type": indirect["reasoning_type"],
+                "source_image_id": direct.get("source_image_id", ""),
+                "hop_count": direct.get("hop_count", ""),
+                "reasoning_type": indirect.get("reasoning_type", ""),
                 "direct_qid": direct["qid"],
                 "direct_text": direct["text"],
                 "indirect_qid": indirect["qid"],
                 "indirect_text": indirect["text"],
                 "path_hint": direct["path_hint"],
                 "relationship_ids": " ".join(relationship_ids),
-                "hidden_names": " | ".join(indirect["hidden_names"]),
+                "query_group": direct.get("query_group", ""),
+                "hidden_concept": direct.get("hidden_concept", ""),
+                "kg_edges": " ".join(kg_edges),
+                "hidden_names": " | ".join(indirect.get("hidden_names", [])),
                 "candidate_relevant": " ".join(direct["relevant"]),
                 "num_candidates": len(direct["relevant"]),
                 "verification_status": STATUS_CANDIDATE,
@@ -329,11 +353,22 @@ def read_review_manifest(path: str | Path) -> list[dict]:
     return rows
 
 
-def check_verified_row(row: dict, test_image_ids: set[str]) -> list[str]:
-    """A verified row needs two different people and human-confirmed test image ids."""
+def check_verified_row(
+    row: dict, test_image_ids: set[str], required_reviewers: int = 2
+) -> list[str]:
+    """A verified row needs human-confirmed test image ids and 1 or 2 people (see below).
+
+    required_reviewers=2: reviewer and a different checker (ADR-0044).
+    required_reviewers=1: only a reviewer; checker may be empty or the same person.
+    """
+    if required_reviewers not in (1, 2):
+        raise ValueError(f"required_reviewers must be 1 or 2, got {required_reviewers!r}")
     pair_id = row["pair_id"]
     problems = []
-    if not row["reviewer"] or not row["checker"]:
+    if required_reviewers == 1:
+        if not row["reviewer"]:
+            problems.append(f"pair {pair_id}: verified needs a reviewer")
+    elif not row["reviewer"] or not row["checker"]:
         problems.append(f"pair {pair_id}: verified needs both reviewer and checker")
     elif row["reviewer"].lower() == row["checker"].lower():
         # queries/README.md rule 2: another member re-checks the answers.
@@ -348,7 +383,10 @@ def check_verified_row(row: dict, test_image_ids: set[str]) -> list[str]:
 
 
 def build_verified_benchmark(
-    candidates: list[dict], rows: list[dict], test_image_ids: set[str]
+    candidates: list[dict],
+    rows: list[dict],
+    test_image_ids: set[str],
+    required_reviewers: int = 2,
 ) -> list[dict]:
     """Return the final queries: only pairs whose row is "verified", with human answers.
 
@@ -371,7 +409,7 @@ def build_verified_benchmark(
         if row["pair_id"] not in by_pair:
             problems.append(f"pair {row['pair_id']}: not in the candidates file")
             continue
-        row_problems = check_verified_row(row, test_image_ids)
+        row_problems = check_verified_row(row, test_image_ids, required_reviewers)
         if row_problems:
             problems.extend(row_problems)
             continue
@@ -402,6 +440,7 @@ def run_build_benchmark(
     split_file: str | Path,
     benchmark_path: str | Path,
     min_verified_pairs: int,
+    required_reviewers: int = 2,
 ) -> int:
     """Write the official benchmark from the reviewed manifest; return the number of pairs.
 
@@ -417,7 +456,7 @@ def run_build_benchmark(
     test_ids = {str(image_id) for image_id in split["test"].tolist()}
     candidates = load_jsonl(candidates_path)
     rows = read_review_manifest(manifest_path)
-    final = build_verified_benchmark(candidates, rows, test_ids)
+    final = build_verified_benchmark(candidates, rows, test_ids, required_reviewers)
     num_pairs = len(final) // 2
     if num_pairs < min_verified_pairs:
         raise ValueError(

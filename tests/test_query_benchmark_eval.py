@@ -118,3 +118,19 @@ def test_clip_index_ranker_returns_image_ids():
     retrieved = ranker.rank(["a query"], np.array([[0, 1, 0]], dtype=np.float32), top_k=2)
 
     assert retrieved[0, 0] == 8
+
+
+def test_scores_are_split_by_query_group():
+    queries = [
+        {"qid": "a-d", "type": "direct", "relevant": ["1"], "query_group": "activity"},
+        {"qid": "a-i", "type": "indirect", "relevant": ["1"], "query_group": "activity"},
+        {"qid": "o-d", "type": "direct", "relevant": ["2"], "query_group": "object"},
+    ]
+    retrieved = np.array([[1, 2], [2, 1], [3, 4]])
+
+    metrics = score_rankings(queries, retrieved, recall_ks=[1], top_k=2)
+
+    assert metrics["by_query_group"]["activity"]["direct"]["R@1"] == 1.0
+    assert metrics["by_query_group"]["activity"]["indirect"]["R@1"] == 0.0
+    assert metrics["by_query_group"]["object"]["indirect"] is None
+    assert metrics["per_query"][0]["query_group"] == "activity"

@@ -41,6 +41,8 @@ Mỗi quyết định thiết kế quan trọng được ghi thành một ADR (a
 0053 & Đánh giá chuyển giao sang MMKG, không huấn luyện lại \\
 0054 & Đánh giá giải thích định lượng trên MMKG \\
 0056 & G-Retriever trên Flickr30k: dùng lại cạnh đồng xuất hiện của Visual Genome \\
+0057 & Truy vấn gián tiếp mô tả khái niệm bị giấu qua ConceptNet \\
+0058 & Bộ truy vấn KG do một thành viên duyệt \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -75,7 +77,7 @@ Mỗi quyết định thiết kế quan trọng được ghi thành một ADR (a
 
 \textit{Giới hạn của MMKG.} Truy vấn được sinh bằng mẫu câu cố định, chưa có câu tự nhiên do người viết; mỗi nhóm chỉ có 35--80 câu; 2/158 câu gián tiếp vẫn để lộ tên hiện vật qua tên của thực thể đích. Nhóm chưa chạy ablation bỏ hoặc xáo bộ ba. Muốn chuyển ngôn ngữ thật sự, cần một bộ mã hóa văn bản đa ngôn ngữ; khi đó không gian vectơ thay đổi và phải huấn luyện lại GNN.
 
-\textit{Phần chưa hoàn thành.} Bộ ít nhất 20 truy vấn trực tiếp và gián tiếp trên test Visual Genome chưa được người kiểm và đánh giá; cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
+\textit{Phần chưa hoàn thành.} Bộ 38 truy vấn trực tiếp và gián tiếp trên test Visual Genome đã được xây, duyệt và chấm cho CLIP thuần, G-Retriever và đối chứng (Mục~\ref{sec:kgbench}); ba mô hình cấp độ 1 còn chờ checkpoint; cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
 
 \section{Kết luận và hướng phát triển}
 \label{sec:conclusion}

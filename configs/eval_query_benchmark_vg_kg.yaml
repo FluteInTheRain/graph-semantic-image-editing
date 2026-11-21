@@ -1,0 +1,20 @@
+# Plain CLIP on the verified query benchmark, direct and indirect reported apart (ADR-0057).
+# How to run: see the docstring of scripts/evaluate_query_benchmark.py.
+# Evaluation only: never tune anything on these numbers (PDF section 6).
+experiment: clip_vg_kg_query_benchmark
+dataset: visual_genome
+split_file: splits/visual_genome/split_seed0.json
+features_dir: artifacts/features/visual_genome/ViT-B-32__laion2b_s34b_b79k
+benchmark_path: queries/visual_genome_kg_test.jsonl
+# Must equal the model of the cached image embeddings (checked against meta.json).
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto
+text_batch_size: 256
+# Same 100 candidates as the plain-CLIP protocol and CLIP + Graph re-ranking (ADR-0043).
+top_k: 100
+# R@100 = share of queries that any top-100 re-ranker could still get right.
+recall_ks: [1, 5, 10, 100]
+# Separate from results/runs/ so scripts/summarize_runs.py (main.csv) never mixes these
+# nested direct/indirect metrics with the flat ADR-0043 runs. Gitignored ("runs/").
+output_dir: results/query_benchmark/runs

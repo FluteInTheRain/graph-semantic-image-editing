@@ -1,0 +1,17 @@
+# A trained model on the verified KG query benchmark, direct and indirect apart (ADR-0057).
+# How to run: see the docstring of scripts/evaluate_query_benchmark_models.py.
+# Evaluation only: never tune anything on these numbers (PDF section 6).
+experiment: clip_nograph_vg_lr1e4_kg_query_benchmark
+model_kind: graph_rerank
+# The config the model was trained with: it gives the split, features, graph and top_k.
+model_config: configs/clip_nograph_vg_lr1e4.yaml
+benchmark_path: queries/visual_genome_kg_test.jsonl
+# Must equal the model of the cached image embeddings (checked against meta.json).
+model: ViT-B-32
+pretrained: laion2b_s34b_b79k
+device: auto
+text_batch_size: 256
+# R@100 = share of queries that any top-100 re-ranker could still get right.
+recall_ks: [1, 5, 10, 100]
+# Same folder as the CLIP baseline runs; gitignored ("runs/").
+output_dir: results/query_benchmark/runs

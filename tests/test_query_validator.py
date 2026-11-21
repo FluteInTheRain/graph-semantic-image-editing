@@ -16,6 +16,7 @@ from mmxai.queries.schema import load_jsonl
 from mmxai.queries.validator import (
     MANIFEST_COLUMNS,
     build_verified_benchmark,
+    check_kg_evidence,
     images_matching_pattern,
     manifest_rows,
     pattern_from_record,
@@ -158,6 +159,48 @@ def test_reviewer_cannot_check_their_own_review():
 
     with pytest.raises(ValueError, match="different member"):
         build_verified_benchmark(records, [row], TEST_ID_STRINGS)
+
+
+def test_single_reviewer_mode_accepts_an_empty_checker():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], checker="")
+
+    final = build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+    assert len(final) == 2
+
+
+def test_single_reviewer_mode_accepts_checker_equal_to_reviewer():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], reviewer="an", checker="An")
+
+    final = build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+    assert len(final) == 2
+
+
+def test_single_reviewer_mode_still_needs_a_reviewer():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], reviewer="", checker="binh")
+
+    with pytest.raises(ValueError, match="needs a reviewer"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+
+def test_two_reviewer_mode_rejects_an_empty_checker():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], checker="")
+
+    with pytest.raises(ValueError, match="both reviewer and checker"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS)
+
+
+def test_required_reviewers_must_be_one_or_two():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0])
+
+    with pytest.raises(ValueError, match="required_reviewers"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=3)
 
 
 def test_verified_answer_outside_test_is_refused():
@@ -305,3 +348,50 @@ def test_pattern_from_record_reads_synset_keys_from_evidence():
     }
 
     assert pattern_from_record(record) == (["man.n.01", "horse"], [("riding", True)])
+
+
+def kg_pair() -> list[dict]:
+    shared = {
+        "dataset": "visual_genome",
+        "relevant": ["100"],
+        "path_hint": "racket - UsedFor - tennis",
+        "author": "test",
+        "pair_id": "vgkg-test-a001",
+        "split": "test",
+        "verification_status": "candidate",
+        "hidden_concept": "tennis.n.01",
+        "query_group": "activity",
+        "kg_evidence": [
+            {"uri": "/a/x", "rel": "UsedFor", "start": "racket", "end": "tennis", "weight": 2.0}
+        ],
+    }
+    direct = {"qid": "vgkg-test-a001-d", "text": "A person playing tennis.", "type": "direct"}
+    direct.update(shared, reasoning_type="explicit", hidden_names=[])
+    indirect = {
+        "qid": "vgkg-test-a001-i",
+        "text": "A person playing a sport that uses a racket.",
+        "type": "indirect",
+    }
+    indirect.update(shared, reasoning_type="kg_description", hidden_names=["tennis"])
+    return [direct, indirect]
+
+
+def test_manifest_rows_accept_kg_records():
+    rows = manifest_rows(kg_pair())
+
+    assert rows[0]["query_group"] == "activity"
+    assert rows[0]["hidden_concept"] == "tennis.n.01"
+    assert rows[0]["kg_edges"] == "/a/x"
+    assert rows[0]["relationship_ids"] == ""
+    assert list(rows[0]) == MANIFEST_COLUMNS
+
+
+def test_kg_pair_passes_the_generic_checks():
+    assert validate_queries(kg_pair(), {"100"}) == []
+
+
+def test_check_kg_evidence_rejects_unknown_edges():
+    assert check_kg_evidence(kg_pair(), {"/a/x"}) == []
+    problems = check_kg_evidence(kg_pair(), {"/a/other"})
+    assert len(problems) == 2
+    assert "/a/x" in problems[0]

@@ -118,6 +118,8 @@ Quy tắc khi xem ảnh: câu gián tiếp phải đúng với ảnh **và** ch�
 
 `build_query_benchmark.py` chỉ lấy dòng `verified`; dòng `verified` mà thiếu người kiểm, trùng người, hay có ảnh ngoài test thì script **dừng và báo lỗi**, không lặng lẽ bỏ qua.
 
+**Bộ KG (ADR-0057) chỉ cần một người duyệt (ADR-0058).** Config `configs/query_benchmark_vg_kg.yaml` đặt `required_reviewers: 1`: dòng `verified` cần `reviewer` và `verified_relevant`, còn `checker` có thể trống. Bộ v1 vẫn cần hai người khác nhau (mặc định `required_reviewers: 2`). Ngày 2026-11-21, Nguyễn Thiện Thuật duyệt cả 28 cặp: giữ 19, bỏ 9. Báo cáo phải ghi rõ đáp án do một người kiểm.
+
 
 ## 5. Quy tắc sinh truy vấn
 
@@ -162,7 +164,8 @@ Vị từ trong Visual Genome rất lộn xộn ("ON", "is wearing", "on a"). Ta
 | Hai node trong chuỗi **cùng synset** (`man`/`guy` cùng `man.n.01`) | `repeated_synset_in_chain` | Đáp án khớp theo synset; có thể là cùng một người với hai tên |
 | Dạng chuỗi `shared_subject` | `shared_subject_chain` | Mục 5.2 |
 | Không có vị từ hành động | `no_action_predicate` | Mục 5.2 |
-| Tên node cầu (bị giấu) xuất hiện trong câu gián tiếp | `hidden_name_in_indirect_text` | Nếu không, đó chỉ là câu trực tiếp viết lại |
+| Tên node cầu (bị giấu) xuất hiện trong câu gián tiếp | `excluded_concept` | Tên nằm trong `excluded_concepts` của config (quá chung chung như "game", "toy", "thing") |
+| `hidden_name_in_indirect_text` | Nếu không, đó chỉ là câu trực tiếp viết lại |
 | Câu trùng (tối đa 1 cặp mỗi ảnh) | `duplicate_query_text` | Bộ truy vấn trải trên nhiều ảnh |
 | Chuỗi có > `max_candidate_images = 25` ảnh test khớp | `too_many_candidate_images` | Quá chung, không kiểm tay được |
 
@@ -257,3 +260,234 @@ uv run pytest tests/test_scene_graph.py tests/test_query_generator.py tests/test
 ```
 
 `tests/test_queries_committed.py` kiểm mọi file `queries/*.jsonl` đã commit: đúng schema, đáp án thuộc test; file `*_test.jsonl` phải toàn truy vấn `verified`.
+
+
+---
+
+## Bộ truy vấn v2: khái niệm mô tả qua ConceptNet (ADR-0057)
+
+### Ý tưởng
+
+Bộ v1 (các mục trên) sinh câu gián tiếp từ chuỗi quan hệ trong annotation ảnh. Bộ v2 làm khác: lấy **một khái niệm** C (ví dụ môn `tennis` hoặc vật `train`), rồi **mô tả C mà không nói tên C**, bằng tri thức thường thức của ConceptNet.
+
+| | Câu trực tiếp | Câu gián tiếp |
+|---|---|---|
+| Nói gì | Gọi tên C | Chỉ nêu 1 từ loại + 2 tính chất của C |
+| Đáp án | Cùng một tập ảnh | Cùng một tập ảnh |
+| Cần gì để trả lời | Khớp chữ | Biết "môn chơi trên sân và dùng vợt" là tennis |
+
+Điều kiện công bằng: mô tả phải đúng với **chỉ C** trong nhóm của nó. Nếu "dùng vợt" cũng đúng với badminton thì ảnh badminton cũng là đáp án đúng, nên mô tả đó bị loại.
+
+### Các loại fact (`src/mmxai/queries/kg_facts.py`, hàm `facts_from_edge`)
+
+Một cạnh ConceptNet cho ra một fact về một khái niệm. Chiều cạnh quyết định khái niệm nào "sở hữu" fact.
+
+| Cạnh | Khái niệm sở hữu | `kind` | Ví dụ cụm trong câu |
+|---|---|---|---|
+| `C IsA K` | C | `isa` (chỉ dùng làm từ loại) | "a sport" |
+| `X UsedFor C` | C | `uses` | "uses a racket" |
+| `C AtLocation Y` | C | `location` | "is played on a court" |
+| `C HasA X` | C | `has` | "has a X" |
+| `X PartOf C` | C | `has` | "has a X" |
+| `C CapableOf V` | C | `can` | "can carry passengers" (động từ, không có "a") |
+
+Cạnh khác bị bỏ. Cùng (khái niệm, `kind`, giá trị) từ nhiều cạnh thì giữ cạnh nặng nhất (`build_fact_index`).
+
+### Cách chọn mô tả duy nhất (`choose_description`)
+
+1. **Kho so sánh** (`pool`) là mọi khái niệm cùng nhóm xuất hiện ở ít nhất 1 ảnh train, không chỉ các khái niệm đích.
+2. Chọn **từ loại**: cạnh `IsA` có giá trị nằm trong `category_words` của config. Ưu tiên từ loại ít khái niệm khác chung nhất, hoà thì theo thứ tự chữ.
+3. Chọn **tính chất** theo kiểu tham lam: mỗi lần lấy fact mà ít khái niệm còn lại (cùng từ loại) có nhất. Hoà thì lấy cạnh có `weight` cao hơn, rồi theo thứ tự chữ.
+4. Bỏ tính chất có `weight` nhỏ hơn `min_fact_weight` (config, hiện 2.0; không áp cho `IsA`). Phần so với khái niệm giống vẫn dùng mọi fact của khái niệm khác, vì fact yếu vẫn đúng.
+5. Bỏ tính chất lộ tên (`leaks_name`: "tennis ball" khi C là tennis) và tính chất không phải chữ thường đơn giản.
+6. Sau `num_properties` tính chất mà vẫn còn khái niệm giống C thì bỏ C (`no_unique_description`).
+
+Thứ tự duyệt khái niệm cũng tất định: nhiều ảnh train nhất trước, hoà thì theo tên synset. Cả quy trình **không dùng seed**.
+
+Các trường config liên quan (cùng giá trị ở config val và test; lý do: pilot val 2026-11-15, ADR-0057):
+
+| Trường | Ý nghĩa |
+|---|---|
+| `min_fact_weight` | Tính chất nhẹ hơn ngưỡng này bị bỏ |
+| `activity_play_categories` | Từ loại chơi trực tiếp ("playing a sport"); từ loại khác viết "playing with a toy" |
+| `activity_predicates` | Vị từ của nhóm activity, duyệt theo thứ tự: `playing`, `riding`, `flying` (thêm riding và flying vì pilot val lần 2 chỉ có 4 ứng viên activity) |
+| `play_predicates` | Vị từ giữ cách viết cũ "A person playing tennis." (không mạo từ, `activity_templates`); vị từ activity khác viết "A person riding a horse." với mạo từ và `object_templates`. Phải là tập con của `activity_predicates` |
+| `limit_activity_pairs` | Tổng số cặp activity cho mọi vị từ (12) |
+| `excluded_concepts` | Khái niệm quá chung chung không được làm khái niệm ẩn |
+| `activity_templates.location`, `object_templates.location` | Giới từ vị trí: `is played in`, `is found in` |
+
+### Vì sao một khái niệm bị loại
+
+`run_kg_generation` in số khái niệm bị loại theo lý do (`rejected_concepts`). Ghi các số này vào báo cáo.
+
+| Lý do | Nghĩa |
+|---|---|
+| `too_few_train_images` | Ít hơn `min_train_images` ảnh train |
+| `concept_already_used` | Synset hoặc tên (term) này đã có cặp, ở nhóm này hoặc nhóm kia |
+| `term_has_several_synsets` | Tên có nhiều synset trong cùng nhóm (`bat.n.01` con dơi, `bat.n.05` cây gậy): câu truy vấn giống nhau nhưng đáp án khác nhau |
+| `name_not_plain_words` | Tên không phải chữ thường đơn giản |
+| `no_conceptnet_facts` | Tên không có trong ConceptNet |
+| `answer_count_out_of_range` | Số ảnh đáp án ngoài `[min_answer_images, max_answer_images]` |
+| `no_unique_description` | Không có mô tả đúng riêng cho C |
+| `excluded_concept` | Tên nằm trong `excluded_concepts` của config (quá chung chung như "game", "toy", "thing") |
+| `hidden_name_in_indirect_text` | Câu gián tiếp hoặc giá trị của loại vẫn chứa tên bị giấu; bỏ riêng cặp này thay vì dừng cả lần chạy |
+
+### Ví dụ (DỮ LIỆU TỔNG HỢP, không phải ConceptNet hay Visual Genome)
+
+Ví dụ lấy từ test fixture `tests/conceptnet_fixtures.py` và `tests/test_kg_text.py`. Các cạnh do nhóm tự bịa để biết trước đáp án: tennis và badminton cùng "dùng vợt", chỉ tennis có "sân".
+
+| Thành phần | Giá trị tổng hợp |
+|---|---|
+| Cạnh | `tennis IsA sport`, `racket UsedFor tennis`, `tennis AtLocation court`, `racket UsedFor badminton` |
+| Câu trực tiếp | `A person playing tennis.` |
+| Câu gián tiếp | `A person playing a sport that is played on a court and uses a racket.` |
+| Vì sao đủ | "dùng vợt" cũng đúng với badminton, nhưng "chơi trên sân" chỉ đúng với tennis |
+
+Nhóm object, cũng từ fixture: `A train.` và `A vehicle that is found at a railway and can carry passengers.`
+
+Activity cưỡi, cũng từ fixture (cạnh tự bịa: `horse IsA animal`, `horse AtLocation barn`, `horse CapableOf carry rider`, `elephant IsA animal`, `elephant AtLocation zoo`; các câu dưới là đầu ra của test với `object_templates` của test): `A person riding a horse.` và `A person riding an animal that is found at a barn and can carry rider.` Trong config thật, riding và flying dùng `object_templates` nên giới từ là "in".
+
+### Các trường mới trong JSONL và manifest
+
+| Trường | Nghĩa |
+|---|---|
+| `hidden_concept` | Synset bị giấu (ví dụ `tennis.n.01`) |
+| `query_group` | `activity` hoặc `object` |
+| `activity_verb` | Vị từ của khái niệm activity (`playing`, `riding`, `flying`); `null` với nhóm object |
+| `kg_evidence` | Danh sách cạnh ConceptNet đã dùng: `{uri, rel, start, end, weight}`. `check_kg_evidence` kiểm mỗi `uri` có trong file cạnh |
+| `path_hint` | Các cạnh viết thành chuỗi "start - rel - end" |
+
+Manifest CSV thêm cột `query_group`, `hidden_concept`, `kg_edges` (các URI cách nhau bằng dấu cách) để người duyệt đối chiếu. Kết quả đánh giá thêm `by_query_group` (direct/indirect cho từng nhóm) bên cạnh `all/direct/indirect`.
+
+### Lệnh chạy theo thứ tự
+
+Trước hết tự tải `conceptnet-assertions-5.7.0.csv.gz` (xem `data_cards/conceptnet.md`) và đặt vào `data/conceptnet/`. File này không được commit.
+
+| # | Việc | Lệnh |
+|---|---|---|
+| 1 | Lọc ConceptNet một lần (chỉ cạnh tiếng Anh, 6 quan hệ) | `uv run python scripts/prepare_conceptnet.py --config configs/conceptnet_en.yaml` |
+| 2 | Pilot trên **val**, đọc thử câu | `uv run python scripts/generate_kg_queries.py --config configs/query_benchmark_vg_kg_pilot.yaml` |
+| 3 | Chốt quy tắc (chỉ dựa trên val) | sửa `configs/query_benchmark_vg_kg.yaml` và bản pilot cho giống nhau |
+| 4 | Chạy test | `uv run pytest` |
+| 5 | Sinh ứng viên trên **test** | `uv run python scripts/generate_kg_queries.py --config configs/query_benchmark_vg_kg.yaml` |
+| 6 | Review: A duyệt, B kiểm lại (mục 4) | sửa `queries/query_review_manifest_kg.csv` |
+| 7 | Dựng bộ chính thức từ các cặp `verified` (cần ít nhất `min_verified_pairs` = 10) | `uv run python scripts/build_kg_query_benchmark.py --config configs/query_benchmark_vg_kg.yaml` |
+| 8 | Đánh giá CLIP, mỗi seed một lần | `uv run python scripts/evaluate_query_benchmark.py --config configs/eval_query_benchmark_vg_kg.yaml --seed <k>` |
+
+### Lưu ý rò rỉ
+
+- Khái niệm đích và kho so sánh chỉ đếm trên **train**. Ảnh test chỉ dùng để lấy đáp án.
+- Pilot chạy trên val. Không chỉnh quy tắc sau khi nhìn kết quả truy hồi trên bộ test.
+- Đáp án lấy từ annotation của ảnh test. Mô hình đồ thị **không được dựng cạnh từ annotation ảnh test** và không được đọc `hidden_concept`, `kg_evidence`, `path_hint`.
+- Dùng cạnh ConceptNet bên trong mô hình là việc ngoài ADR-0057, cần ADR riêng.
+
+## Đánh giá các mô hình đã huấn luyện trên bộ truy vấn KG (ADR-0057)
+
+### Ý tưởng
+
+Phần trên mới chấm **CLIP thuần** trên bộ truy vấn. Đề yêu cầu so nhiều mô hình trên cùng bộ truy vấn, tách truy vấn trực tiếp và gián tiếp. Vì vậy ta chấm thêm các mô hình đã huấn luyện và đã chốt, theo đúng cách của CLIP + Graph (ADR-0043):
+
+1. CLIP lấy 100 ảnh gần câu truy vấn nhất trong 5.000 ảnh test (cosine chính xác).
+2. Mô hình đồ thị chấm lại 100 ảnh này; điểm cuối là `alpha * clip + (1 - alpha) * graph`.
+3. Xếp lại 100 ảnh theo điểm cuối rồi tính Recall@1/5/10 và MRR@100.
+
+Mô hình chỉ nhận **câu truy vấn** (đã mã hoá bằng CLIP đóng băng), không bao giờ đọc `hidden_concept`, `kg_evidence`, `path_hint` hay `relevant`. Code: `src/mmxai/eval/query_benchmark_models.py` (`run_model_benchmark_evaluation`, `summarize_benchmark_runs`).
+
+### 5 experiment được chấm
+
+| Experiment | Loại | Vì sao |
+|---|---|---|
+| `clip_nograph_vg` | `graph_rerank` | Đối chứng không đồ thị chính thức (lr 1e-3) |
+| `clip_graph_vg_lr1e4` | `graph_rerank` | Mô hình chính CLIP + GraphSAGE |
+| `clip_cooc_graph_vg_lr1e4` | `graph_rerank` | Có cạnh đồng xuất hiện (khái niệm - khái niệm) |
+| `clip_nograph_vg_lr1e4` | `graph_rerank` | Đối chứng cùng cấu hình của G-Retriever |
+| `clip_pcst_sage_vg` | `pcst_sage` | G-Retriever giai đoạn 2 |
+
+Cộng với CLIP thuần (`clip_vg_kg_query_benchmark`) là 6 dòng trong bảng tổng hợp.
+
+### Điều kiện cần có
+
+- Bộ truy vấn đã được duyệt và build bằng `scripts/build_kg_query_benchmark.py` (có `queries/visual_genome_kg_test.jsonl`).
+- Đặc trưng và đồ thị Visual Genome trong `artifacts/features`, `artifacts/graphs`.
+- Checkpoint `artifacts/models/visual_genome/<experiment>/seed{0,1,2}/` gồm `model.pt` và `selection.json`:
+  - `clip_pcst_sage_vg` và `clip_nograph_vg_lr1e4`: đã có trên Drive của Thuật.
+  - `clip_nograph_vg`, `clip_graph_vg_lr1e4`, `clip_cooc_graph_vg_lr1e4`: xin các thành viên khác, hoặc huấn luyện lại bằng đúng config (huấn luyện tất định nên tái lập được).
+- `clip_pcst_sage_vg` cần thêm các cạnh khái niệm PMI `artifacts/graphs/visual_genome/concept_cooccurrence_pmi10_top10_v1` (config huấn luyện của nó trỏ tới đây). `clip_cooc_graph_vg_lr1e4` cũng dùng thư mục này. CLIP thuần và ba mô hình còn lại thì không cần.
+
+### Lệnh chạy theo thứ tự
+
+Mỗi (experiment, seed) chỉ chạy **một lần**; chạy lại bị từ chối. Mọi run ghi vào `results/query_benchmark/runs/`.
+
+```bash
+# 1. CLIP thuần (một seed; CLIP không có seed huấn luyện)
+uv run python scripts/evaluate_query_benchmark.py --config configs/eval_query_benchmark_vg_kg.yaml --seed 0
+
+# 2. Từng mô hình đã huấn luyện, mỗi seed 0 1 2
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_graph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_cooc_graph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_nograph_vg_lr1e4.yaml --seed 2
+
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 0
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 1
+uv run python scripts/evaluate_query_benchmark_models.py --config configs/eval_query_benchmark_vg_kg_clip_pcst_sage_vg.yaml --seed 2
+
+# 3. Gom thành một bảng
+uv run python scripts/summarize_query_benchmark.py
+```
+
+Bảng ra ở `results/tables/kg_query_benchmark.csv`: mỗi dòng một experiment, R@1/5/10 và MRR@100 dạng mean và std mẫu (`ddof=1`) qua seed, cho `all`, `direct`, `indirect` và từng nhóm `activity` / `object` x loại. Hàm tổng hợp từ chối seed trùng và các run chấm trên bộ truy vấn khác nhau (`benchmark_sha256`).
+
+### Chạy trên Colab
+
+Đóng gói nhánh thành git bundle, để trên Drive (`/content/drive/MyDrive/mmxai/<bundle>`). Mỗi khối dưới đây là một ô Colab.
+
+Ô 1: gắn Drive và lấy code.
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+!git clone -q --branch <branch> /content/drive/MyDrive/mmxai/<bundle> /content/repo
+%cd /content/repo
+!pip -q install uv && uv sync -q --python 3.11 --group ml --group graph
+```
+
+Ô 2: nối `artifacts/` và `results/` với Drive để không mất dữ liệu khi phiên kết thúc.
+
+```bash
+!mkdir -p artifacts results /content/drive/MyDrive/mmxai/query_benchmark
+!ln -s /content/drive/MyDrive/mmxai/features artifacts/features
+!ln -s /content/drive/MyDrive/mmxai/graphs artifacts/graphs
+!ln -s /content/drive/MyDrive/mmxai/models artifacts/models
+!ln -s /content/drive/MyDrive/mmxai/pcst_cache artifacts/pcst_cache
+!ln -s /content/drive/MyDrive/mmxai/query_benchmark results/query_benchmark
+```
+
+Ô 3: chạy các lệnh ở mục trước, viết từng dòng với đường dẫn đầy đủ (tiền tố `!uv run ...`), không dùng biến trong vòng lặp.
+
+Ô cuối: bảo đảm kết quả đã ghi lên Drive.
+
+```python
+drive.flush_and_unmount()
+```
+
+### Quy tắc chống rò rỉ
+
+- Bộ truy vấn **chỉ để đánh giá** (PDF §6): không chọn mô hình, `alpha`, top-k hay ngưỡng nào dựa trên kết quả ở đây.
+- Mỗi mô hình dùng đúng checkpoint và `alpha` trong `selection.json` (đã chọn trên val).
+- Mô hình không đọc `hidden_concept`, `kg_evidence`, `path_hint`, `relevant`.
+- Một run cho mỗi (experiment, seed); các mô hình cùng một file split và cùng một bộ truy vấn.

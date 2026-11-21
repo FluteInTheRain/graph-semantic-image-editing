@@ -337,4 +337,54 @@ Trên Visual Genome, giai đoạn 2 ngang đối chứng cùng cấu hình: hi�
  Theo quy tắc dừng đã chốt trước, nhóm ghi nhận đây là kết quả âm: đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được. Mã nguồn và bảng số của giai đoạn 2 nằm trong kho mã (\code{g\_retriever\_test.csv}, \code{g\_retriever\_flickr30k\_test.csv}, ADR-0051 và ADR-0056).
 
 \subsection{Bộ truy vấn trực tiếp và gián tiếp}
-Đề yêu cầu một bộ ít nhất 20 truy vấn, trong đó có nhóm truy vấn gián tiếp, để đánh giá riêng vai trò của đồ thị. Phiên bản đầu sinh truy vấn từ scene graph: tìm trong một ảnh hai quan hệ nối với nhau qua một đối tượng chung, viết câu trực tiếp gọi tên mọi đối tượng và câu gián tiếp giấu tên đối tượng ở giữa. Ví dụ, từ \code{person -holding-> kite} và \code{kite -in-> sky}, câu trực tiếp là ``A person is holding a kite, and the kite is in a sky'', còn câu gián tiếp là ``A person is holding something that is in a sky''. Phiên bản thứ hai mô tả khái niệm bị giấu bằng một từ chỉ loại và hai tính chất ConceptNet~\cite{speer2017conceptnet} chỉ đúng với khái niệm đó, ví dụ ``a person playing a sport that uses a bat and is played in a park''. Code sinh và kiểm tra đã có, luật được chốt trên val, và 28 cặp ứng viên (8 hoạt động, 20 đồ vật) đã được sinh trên test bằng luật đã chốt; các cặp này chưa được hai thành viên kiểm và chưa được đánh giá. Phần này vì vậy chưa có trong báo cáo. Riêng trên MMKG (Mục~\ref{sec:mmkg}), nhóm đã có bộ 318 truy vấn trực tiếp và gián tiếp được đánh giá đầy đủ.
+\label{sec:kgbench}
+Đề yêu cầu một bộ ít nhất 20 truy vấn có nhóm gián tiếp, kiểu \emph{child -- plays -- football}, để đánh giá riêng vai trò của đồ thị. Phiên bản đầu sinh truy vấn từ scene graph: câu gián tiếp giấu đối tượng ở giữa hai quan hệ, ví dụ ``A person is holding something that is in a sky''. Pilot trên val cho thấy kiểu câu này mơ hồ, vì ``something'' khớp với quá nhiều thứ. Phiên bản dùng trong báo cáo (ADR-0057) vì vậy giấu một \emph{khái niệm} và mô tả nó bằng tri thức ConceptNet~\cite{speer2017conceptnet}.
+
+\textbf{Cách sinh.} Khái niệm đích là một hoạt động (\code{playing}, \code{riding}, \code{flying}) hoặc một đồ vật. Câu trực tiếp gọi tên khái niệm (``A person playing tennis.''). Câu gián tiếp chỉ dùng một từ chỉ loại và hai tính chất ConceptNet, sao cho trong kho khái niệm so sánh chỉ khái niệm đích thỏa cả ba (``A person playing a sport that has an advantage and uses a ball.''). Cạnh tính chất phải có trọng số ConceptNet $\ge 2$. Khái niệm đích cần ít nhất 20 ảnh train. Đáp án ứng viên là các ảnh test có annotation của khái niệm, từ 3 đến 50 ảnh. Kho so sánh và ngưỡng ảnh train chỉ đếm trên train. Mọi luật được chốt sau ba lần pilot trên val, trước khi sinh trên test; từ đó config không đổi giá trị nào.
+
+\textbf{Duyệt bởi người.} Trên test, bộ sinh cho 28 cặp (8 hoạt động, 20 đồ vật). Một thành viên duyệt cả 28 cặp trên một trang có ảnh (ADR-0058). Trang chỉ hiện câu, khái niệm bị giấu, các cạnh ConceptNet và ảnh ứng viên, không hiện kết quả của mô hình nào. Với mỗi cặp, người duyệt giữ những ảnh thật sự khớp câu trực tiếp, hoặc bỏ cả cặp kèm lý do. Bảng~\ref{tab:kgbench} tóm tắt kết quả. Sáu cặp bị bỏ vì gần như không có ảnh ứng viên nào thật sự chứa khái niệm, ví dụ \code{measure}, \code{cart}, \code{jar}. Ba cặp bị bỏ vì câu gián tiếp mơ hồ hoặc lệch nghĩa, ví dụ ``pan'' bị hiểu thành cái khay. Trong 19 cặp được giữ, người duyệt giữ 291/426 ảnh ứng viên (68\%). Như vậy annotation Visual Genome thường gắn nhãn khái niệm cho cả ảnh mà khái niệm chỉ xuất hiện rất nhỏ hoặc không đúng nghĩa.
+
+\begin{table}[t]
+\centering
+\caption{Bộ truy vấn KG trên test Visual Genome sau khi duyệt}
+\label{tab:kgbench}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+ & \textbf{Hoạt động} & \textbf{Đồ vật} & \textbf{Tổng} \\
+\midrule
+Cặp sinh trên test & 8 & 20 & 28 \\
+Cặp bị bỏ & 1 & 8 & 9 \\
+Cặp được giữ & 7 & 12 & \textbf{19} \\
+Truy vấn (trực tiếp + gián tiếp) & 14 & 24 & \textbf{38} \\
+\midrule
+\multicolumn{4}{@{}l}{Ảnh đúng mỗi cặp: trung vị 12 (3--37); giữ 291/426 ảnh ứng viên} \\
+\multicolumn{4}{@{}l}{Độ dài câu: trực tiếp 2,9 từ, gián tiếp 12,5 từ (trung bình)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Giao thức đánh giá.} Bộ truy vấn chỉ dùng để đánh giá, không chọn hay chỉnh gì trên nó. Mỗi câu được mã hóa bằng đúng CLIP đóng băng và lấy 100 ảnh test gần nhất, như giao thức chính. Mỗi mô hình xếp lại 100 ảnh này bằng đúng checkpoint và $\alpha$ đã chọn trên val, không đọc khái niệm bị giấu hay các cạnh ConceptNet của câu. Nhóm chấm CLIP thuần, đối chứng không đồ thị (lr $10^{-3}$ và $10^{-4}$), CLIP + Graph, mô hình có cạnh đồng xuất hiện và G-Retriever giai đoạn 2. Mỗi mô hình huấn luyện được chấm với 3 seed, báo cáo R@1/5/10 và \mrr{} tách riêng trực tiếp và gián tiếp, và tách theo nhóm hoạt động và đồ vật. Code (\code{scripts/evaluate\_query\_benchmark\_models.py}) đã có và đã qua kiểm tra rò rỉ. Bảng~\ref{tab:kgbench-res} cho kết quả của CLIP thuần, G-Retriever giai đoạn 2 và đối chứng cùng cấu hình. Ba mô hình còn lại chưa được chấm vì còn chờ checkpoint.
+
+\begin{table}[t]
+\centering
+\caption{\mrr{} trên bộ 38 truy vấn KG (test Visual Genome), mean \pmm{} std qua 3 seed; CLIP thuần tất định. Đối chứng: không đồ thị, cùng cấu hình huấn luyện (lr $10^{-4}$)}
+\label{tab:kgbench-res}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l c c c c c@{}}
+\toprule
+\textbf{Mô hình} & \textbf{Trực tiếp} & \textbf{Gián tiếp} & \textbf{GT -- hoạt động} & \textbf{GT -- đồ vật} & \textbf{Tất cả} \\
+ & (19) & (19) & (7) & (12) & (38) \\
+\midrule
+CLIP thuần & 0,531 & 0,205 & 0,341 & 0,126 & 0,368 \\
+Đối chứng & \textbf{0,585}\pmm0,037 & 0,331\pmm0,013 & \textbf{0,423}\pmm0,018 & 0,277\pmm0,027 & 0,458\pmm0,015 \\
+G-Retriever GĐ2 & 0,559\pmm0,010 & \textbf{0,377}\pmm0,032 & 0,368\pmm0,048 & \textbf{0,382}\pmm0,028 & \textbf{0,468}\pmm0,021 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\textbf{Đọc kết quả.} Trên cả hai nhóm câu, cả hai mô hình có học đều vượt CLIP thuần. Mức tăng ở câu gián tiếp lớn hơn nhiều so với câu trực tiếp (0,205 lên 0,33--0,38, so với 0,531 lên 0,56--0,59). Phần lớn mức tăng này đã có ở đối chứng không đồ thị, tức là đến từ phép chiếu học được, giống kết luận trên giao thức chính. So với đối chứng, G-Retriever cao hơn ở câu gián tiếp nói chung (hiệu ghép cặp +0,046 \pmm{} 0,042, 2/3 seed), rõ nhất ở câu gián tiếp về đồ vật, cao hơn ở cả 3 seed (+0,105 \pmm{} 0,051), nhưng thấp hơn ở câu gián tiếp về hoạt động ($-0,055$ \pmm{} 0,061) và ở câu trực tiếp ($-0,026$ \pmm{} 0,028). Trên toàn bộ 38 câu, hai mô hình gần như ngang nhau (+0,010 \pmm{} 0,009). Như vậy chưa có bằng chứng ổn định rằng đồ thị con PCST giúp truy vấn gián tiếp nói chung. Riêng nhóm đồ vật gián tiếp có xu hướng được lợi, nhưng nhóm này chỉ có 12 câu nên cần thêm câu mới kết luận được.
+
+\textbf{Giới hạn.} Đáp án do một người kiểm, không có người thứ hai đối chiếu. Đáp án ứng viên lấy từ annotation, nên ảnh đúng mà annotation bỏ sót sẽ không được tính, và recall là cận dưới. Bộ chỉ có 38 câu, nên chênh lệch giữa các mô hình trên bộ này chỉ là xu hướng. Riêng trên MMKG (Mục~\ref{sec:mmkg}), nhóm đã có bộ 318 truy vấn trực tiếp và gián tiếp được đánh giá đầy đủ.
