@@ -3,8 +3,9 @@ r"""Build the official KG benchmark from the human-reviewed manifest (ADR-0057).
 Logic: mmxai.queries.validator.run_build_benchmark.
 
 What it does:
-    Keeps ONLY pairs whose manifest row is "verified" (reviewer and a different
-    checker filled in, human-confirmed answer ids from the test split), replaces
+    Keeps ONLY pairs whose manifest row is "verified" (reviewer filled in, plus a
+    different checker when required_reviewers is 2; human-confirmed answer ids
+    from the test split), replaces
     the candidate answers by the confirmed ones, checks the result and writes it.
     Candidate, reviewed and rejected rows never enter the benchmark.
 
@@ -43,6 +44,7 @@ def main() -> None:
         config.split_file,
         config.benchmark_path,
         config.min_verified_pairs,
+        config.required_reviewers,
     )
     print(f"wrote {num_pairs} verified pairs ({2 * num_pairs} queries) to {config.benchmark_path}")
 

@@ -60,3 +60,5 @@ manifest_path: queries/query_review_manifest_kg.csv
 benchmark_path: queries/visual_genome_kg_test.jsonl
 # PDF Task 2: at least 20 queries = 10 direct/indirect pairs.
 min_verified_pairs: 10
+# Decision (ADR-0058, team 2026-11-21): one member reviews the KG benchmark.
+required_reviewers: 1

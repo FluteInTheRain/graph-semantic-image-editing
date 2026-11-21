@@ -76,6 +76,8 @@ class KgQueryConfig:
     manifest_path: str
     benchmark_path: str
     min_verified_pairs: int
+    # 1 = one member reviews (ADR-0058); 2 = reviewer plus a different checker.
+    required_reviewers: int = 2
 
 
 def load_kg_query_config(path: str | Path) -> KgQueryConfig:

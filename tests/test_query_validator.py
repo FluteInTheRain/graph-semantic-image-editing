@@ -161,6 +161,48 @@ def test_reviewer_cannot_check_their_own_review():
         build_verified_benchmark(records, [row], TEST_ID_STRINGS)
 
 
+def test_single_reviewer_mode_accepts_an_empty_checker():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], checker="")
+
+    final = build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+    assert len(final) == 2
+
+
+def test_single_reviewer_mode_accepts_checker_equal_to_reviewer():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], reviewer="an", checker="An")
+
+    final = build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+    assert len(final) == 2
+
+
+def test_single_reviewer_mode_still_needs_a_reviewer():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], reviewer="", checker="binh")
+
+    with pytest.raises(ValueError, match="needs a reviewer"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=1)
+
+
+def test_two_reviewer_mode_rejects_an_empty_checker():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0], checker="")
+
+    with pytest.raises(ValueError, match="both reviewer and checker"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS)
+
+
+def test_required_reviewers_must_be_one_or_two():
+    _, records = graphs_and_candidates()
+    row = verified_row(manifest_rows(records)[0])
+
+    with pytest.raises(ValueError, match="required_reviewers"):
+        build_verified_benchmark(records, [row], TEST_ID_STRINGS, required_reviewers=3)
+
+
 def test_verified_answer_outside_test_is_refused():
     _, records = graphs_and_candidates()
     row = verified_row(manifest_rows(records)[0])
