@@ -2,7 +2,7 @@
 
 **Là gì?** Các file chạy trực tiếp bằng `uv run python scripts/<tên>.py --config configs/<file>.yaml`. Script chỉ **đọc tham số và gọi hàm** trong `src/mmxai/`; logic thật nằm trong package để test được.
 
-Danh sách script, theo thứ tự chạy pipeline. Thứ tự chạy đầy đủ từ đầu đến cuối: `README.md` mục 19.
+Danh sách script, theo thứ tự chạy pipeline. Thứ tự chạy đầy đủ theo từng cấp độ: [`REPRODUCE.md`](../REPRODUCE.md).
 
 | Script | Làm gì | Gọi vào |
 |---|---|---|
