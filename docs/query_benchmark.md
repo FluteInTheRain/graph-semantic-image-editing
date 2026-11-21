@@ -118,6 +118,8 @@ Quy tắc khi xem ảnh: câu gián tiếp phải đúng với ảnh **và** ch�
 
 `build_query_benchmark.py` chỉ lấy dòng `verified`; dòng `verified` mà thiếu người kiểm, trùng người, hay có ảnh ngoài test thì script **dừng và báo lỗi**, không lặng lẽ bỏ qua.
 
+**Bộ KG (ADR-0057) chỉ cần một người duyệt (ADR-0058).** Config `configs/query_benchmark_vg_kg.yaml` đặt `required_reviewers: 1`: dòng `verified` cần `reviewer` và `verified_relevant`, còn `checker` có thể trống. Bộ v1 vẫn cần hai người khác nhau (mặc định `required_reviewers: 2`). Ngày 2026-11-21, Nguyễn Thiện Thuật duyệt cả 28 cặp: giữ 19, bỏ 9. Báo cáo phải ghi rõ đáp án do một người kiểm.
+
 
 ## 5. Quy tắc sinh truy vấn
 
