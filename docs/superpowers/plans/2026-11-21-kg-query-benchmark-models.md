@@ -57,21 +57,21 @@ Sau mỗi batch có một lượt review chỉ theo spec (Haiku). Cuối cùng c
 ## Batch B2
 
 ### T3 [M]: bảng tổng hợp
-- [ ] Thêm `summarize_benchmark_runs(runs_dir) -> list[dict]` trong module trên. Hàm gom `metrics.json` theo experiment, tính mean ± std mẫu (`ddof = 1`) của R@1/5/10 và MRR@100 cho:
+- [x] Thêm `summarize_benchmark_runs(runs_dir) -> list[dict]` trong module trên. Hàm gom `metrics.json` theo experiment, tính mean ± std mẫu (`ddof = 1`) của R@1/5/10 và MRR@100 cho:
   - `all`, `direct`, `indirect`;
   - `by_query_group` × loại.
 
   Hàm từ chối seed trùng trong một experiment, và từ chối các run có `benchmark_sha256` khác nhau.
-- [ ] Tạo `scripts/summarize_query_benchmark.py --runs-dir results/query_benchmark/runs --output results/tables/kg_query_benchmark.csv`.
-- [ ] Viết test bằng run giả.
-- [ ] Commit: `feat(eval): summarize query benchmark runs into one table`.
+- [x] Tạo `scripts/summarize_query_benchmark.py --runs-dir results/query_benchmark/runs --output results/tables/kg_query_benchmark.csv`.
+- [x] Viết test bằng run giả.
+- [x] Commit: `feat(eval): summarize query benchmark runs into one table`.
 
 ### T4 [S]: tài liệu
-- [ ] Thêm mục "Đánh giá các mô hình đã huấn luyện" vào cuối `docs/query_benchmark.md` (tiếng Việt), gồm:
+- [x] Thêm mục "Đánh giá các mô hình đã huấn luyện" vào cuối `docs/query_benchmark.md` (tiếng Việt), gồm:
   - bảng 5 experiment;
   - điều kiện: bộ đã duyệt, có checkpoint;
   - lệnh theo thứ tự: CLIP thuần bằng script cũ, 5 mô hình × 3 seed, tổng hợp;
   - các cell Colab kiểu mục 11 của `docs/guides/huan-luyen-va-xep-hang-lai.md` (bundle, symlink Drive);
   - nguyên tắc chống rò rỉ của spec mục 2.
-- [ ] Thêm một dòng vào cuối bảng `docs/ai-usage-log.md` (CRLF, thành viên `Thuat Nguyen`, cột cuối `Chưa`).
-- [ ] Commit: `docs: how to evaluate trained models on the KG query benchmark`.
+- [x] Thêm một dòng vào cuối bảng `docs/ai-usage-log.md` (CRLF, thành viên `Thuat Nguyen`, cột cuối `Chưa`).
+- [x] Commit: `docs: how to evaluate trained models on the KG query benchmark`.
