@@ -112,7 +112,7 @@
     NV1 mở rộng & nDCG, ảnh $\to$ văn bản, nhóm truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     2 (8.5) & Tập công khai thứ hai (Flickr30k) & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     2 (8.5) & Phương pháp từ năm 2024 (G-Retriever) & \textcolor{xanh}{\textbf{Hoàn thành}}, kết quả âm \\
-    2 (8.5) & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & 38 câu VG (\textcolor{cam}{chấm 3/6}); 318 câu MMKG \\
+    2 (8.5) & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & \textcolor{xanh}{\textbf{Hoàn thành}}: 38 câu VG; 318 câu MMKG \\
     3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} (val + test) \\
     3 (10) & MMKG tiếng Việt tự xây & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     4 (+1--2) & Cải tiến riêng & \textcolor{do}{Chưa làm} \\
@@ -523,7 +523,7 @@
         G-Retriever GĐ2 & 0,559\pmm0,010 & \textbf{0,377}\pmm0,032 & \textbf{0,468}\pmm0,021 \\
         \bottomrule
       \end{tabular}
-      \par\smallskip{\color{xam} 3 seed; đối chứng: không đồ thị, cùng cấu hình (lr $10^{-4}$). Ba mô hình còn lại chưa chấm.}
+      \par\smallskip{\color{xam} 3 seed; đối chứng: không đồ thị, cùng cấu hình (lr $10^{-4}$).}
       \par\medskip\raggedright\small
       \begin{itemize}
         \item Mức tăng ở câu gián tiếp lớn hơn nhiều so với câu trực tiếp, nhưng phần lớn đã có ở đối chứng.
@@ -727,7 +727,7 @@
           \item \textbf{Đồ thị ít ``quan hệ''}: cạnh suy từ chính CLIP, chưa có quan hệ scene graph, chưa dùng ConceptNet.
           \item \textbf{$\alpha$ cố định} gây các ca thất bại lớn (hạng 7--15 rơi xuống 92--100).
           \item \textbf{Thống kê}: 3 seed, một bản xáo, chưa kiểm định theo truy vấn.
-          \item \textbf{Chưa xong}: chấm 3 mô hình còn lại trên bộ 38 truy vấn VG; cấp độ 4.
+          \item \textbf{Chưa xong}: cấp độ 4.
         \end{enumerate}
       \end{alertblock}
     \column{.43\textwidth}
@@ -736,6 +736,7 @@
           \item \textbf{$\alpha(q)$ thích nghi theo truy vấn}.
           \item Thêm cạnh quan hệ scene graph + ConceptNet để kiểm giả thuyết ``đồ thị giàu quan hệ giúp truy vấn gián tiếp''.
           \item Bộ mã hoá văn bản đa ngôn ngữ cho truy vấn tiếng Việt (phải huấn luyện lại GNN).
+          \item Chấm CLIP + Graph cấp độ 1 trên bộ 38 truy vấn trực tiếp/gián tiếp.
         \end{itemize}
       \end{exampleblock}
   \end{columns}

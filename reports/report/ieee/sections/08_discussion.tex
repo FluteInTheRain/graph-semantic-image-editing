@@ -77,13 +77,13 @@ Mỗi quyết định thiết kế quan trọng được ghi thành một ADR (a
 
 \textit{Giới hạn của MMKG.} Truy vấn được sinh bằng mẫu câu cố định, chưa có câu tự nhiên do người viết; mỗi nhóm chỉ có 35--80 câu; 2/158 câu gián tiếp vẫn để lộ tên hiện vật qua tên của thực thể đích. Nhóm chưa chạy ablation bỏ hoặc xáo bộ ba. Muốn chuyển ngôn ngữ thật sự, cần một bộ mã hóa văn bản đa ngôn ngữ; khi đó không gian vectơ thay đổi và phải huấn luyện lại GNN.
 
-\textit{Phần chưa hoàn thành.} Bộ 38 truy vấn trực tiếp và gián tiếp trên test Visual Genome đã được xây, duyệt và chấm cho CLIP thuần, G-Retriever và đối chứng (Mục~\ref{sec:kgbench}); ba mô hình cấp độ 1 còn chờ checkpoint; cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
+\textit{Phần chưa hoàn thành.} Cải tiến riêng của nhóm (cấp độ 4) chưa được thực hiện.
 
 \section{Kết luận và hướng phát triển}
 \label{sec:conclusion}
 Đồ án xây dựng một hệ thống truy vấn ảnh bằng văn bản có đồ thị, với năm quy tắc chống rò rỉ (Mục~\ref{sec:data}) và giải thích được kiểm chứng bằng can thiệp. Trên Visual Genome, CLIP kết hợp GraphSAGE nâng \mrr{} test từ 0,1076 lên 0,1284. Các đối chứng cho thấy khoảng 91\% mức tăng đến từ phép chiếu học được; cấu trúc ảnh--khái niệm thật đóng góp phần nhỏ nhưng ổn định so với đồ thị xáo, rõ nhất ở các truy vấn chung chung. Việc phần lớn mức tăng đến từ phép chiếu lặp lại trên Flickr30k, trên MMKG tiếng Việt và với phần truy xuất đồ thị con của G-Retriever; ở ba thí nghiệm này, đồ thị không tốt hơn mô hình không đồ thị. Giải thích bằng Integrated Gradients trung thực với mô hình trên cả Visual Genome lẫn MMKG, với mức tụt hạng khi bỏ cạnh giải thích lớn hơn nhiều so với bỏ cạnh ngẫu nhiên.
 
-Nhóm đề xuất ba hướng tiếp theo. Thứ nhất, học $\alpha(q)$ thay đổi theo từng truy vấn thay cho một $\alpha$ cố định, nhắm vào các trường hợp thất bại ở Bảng~\ref{tab:case}. Thứ hai, thêm cạnh quan hệ từ scene graph và ConceptNet để kiểm chứng giả thuyết rằng đồ thị giàu quan hệ giúp ích cho truy vấn gián tiếp. Thứ ba, dùng bộ mã hóa văn bản đa ngôn ngữ để truy vấn tiếng Việt có thể khai thác được MMKG.
+Nhóm đề xuất bốn hướng tiếp theo. Thứ nhất, học $\alpha(q)$ thay đổi theo từng truy vấn thay cho một $\alpha$ cố định, nhắm vào các trường hợp thất bại ở Bảng~\ref{tab:case}. Thứ hai, thêm cạnh quan hệ từ scene graph và ConceptNet để kiểm chứng giả thuyết rằng đồ thị giàu quan hệ giúp ích cho truy vấn gián tiếp. Thứ ba, dùng bộ mã hóa văn bản đa ngôn ngữ để truy vấn tiếng Việt có thể khai thác được MMKG. Thứ tư, chấm các mô hình cấp độ 1 (CLIP + Graph, mô hình có cạnh đồng xuất hiện) trên bộ 38 truy vấn trực tiếp và gián tiếp (Mục~\ref{sec:kgbench}), để biết đồ thị ảnh--khái niệm có giúp truy vấn gián tiếp hay không.
 
 \section*{Khai báo sử dụng AI}
 Nhóm dùng Claude Code để hỗ trợ viết mã, kiểm thử, tài liệu ADR, rà soát mã và soạn bản nháp báo cáo. Mọi lần sử dụng được ghi trong \code{docs/ai-usage-log.md} của kho mã. Số liệu trong báo cáo được chép từ \code{results/tables/}, không tính lại. Các thành viên đã đọc lại toàn bộ nội dung và chịu trách nhiệm giải thích mọi phần khi vấn đáp.
