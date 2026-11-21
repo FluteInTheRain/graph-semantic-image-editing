@@ -79,6 +79,79 @@ class ImagePath:
     occlusion_drop: dict[int, float]  # concept row -> graph score lost without that edge
 
 
+@dataclass(frozen=True)
+class ClipHit:
+    """One result image of plain CLIP (no graph, so nothing to explain)."""
+
+    rank: int  # 1 = best
+    image_id: int
+    clip_score: float
+
+
+def search_clip(engine: QueryEngine, query: np.ndarray, k: int) -> list[ClipHit]:
+    """Return the first k images of plain CLIP: the baseline the graph re-ranks.
+
+    Same index and search as step 1 of search_and_explain, so it equals CLIP + Graph
+    with alpha = 1.
+    """
+    if not 1 <= k <= engine.top_k:
+        raise ValueError(f"k must be between 1 and top_k={engine.top_k}, got {k}")
+    clip_scores, image_ids = search_images(engine.image_index, query[None, :], k)
+    hits = []
+    for column in range(k):
+        hits.append(
+            ClipHit(
+                rank=column + 1,
+                image_id=int(image_ids[0, column]),
+                clip_score=float(clip_scores[0, column]),
+            )
+        )
+    return hits
+
+
+@dataclass(frozen=True)
+class RankedCandidates:
+    """CLIP's top_k candidates of one query with the scores CLIP + Graph ranked them by.
+
+    Arrays are in CLIP's order (column c = CLIP rank c + 1); order lists the columns
+    best first under the final score.
+    """
+
+    candidate_ids: np.ndarray  # (top_k,)
+    clip_scores: np.ndarray  # (top_k,)
+    graph_scores: np.ndarray  # (top_k,)
+    final_scores: np.ndarray  # (top_k,)
+    order: np.ndarray  # (top_k,) columns, best first
+    image_rows: np.ndarray  # (top_k,) row of each candidate in engine.split_graph
+
+
+def rank_candidates(engine: QueryEngine, query: np.ndarray) -> RankedCandidates:
+    """Steps 1-3 of search_and_explain: CLIP top_k, graph scores, re-rank by final score."""
+    # 1. CLIP top-k, in CLIP's order.
+    clip_scores, candidate_ids = search_images(engine.image_index, query[None, :], engine.top_k)
+    # relevant is empty: a typed query has no ground truth, nothing is measured here.
+    candidates = Candidates(query[None, :], candidate_ids, clip_scores, [set()])
+
+    # 2. The ranking's scores, from the evaluation's own functions.
+    graph_scores = candidate_graph_scores(candidates, engine.image_h, engine.split_graph.image_ids)
+    final_scores = fuse_scores(clip_scores[0], graph_scores[0], engine.alpha)
+
+    row_of_id = {}
+    for row, image_id in enumerate(engine.split_graph.image_ids.tolist()):
+        row_of_id[image_id] = row
+    image_rows = np.array([row_of_id[int(image_id)] for image_id in candidate_ids[0]])
+
+    # 3. The evaluation's stable sort.
+    return RankedCandidates(
+        candidate_ids=candidate_ids[0],
+        clip_scores=clip_scores[0],
+        graph_scores=graph_scores[0],
+        final_scores=final_scores,
+        order=ranked_columns(final_scores),
+        image_rows=image_rows,
+    )
+
+
 def search_and_explain(engine: QueryEngine, query: np.ndarray, k: int) -> list[ImagePath]:
     """Return the first k images under CLIP + Graph for this query, each with its paths.
 
@@ -86,42 +159,27 @@ def search_and_explain(engine: QueryEngine, query: np.ndarray, k: int) -> list[I
     """
     if not 1 <= k <= engine.top_k:
         raise ValueError(f"k must be between 1 and top_k={engine.top_k}, got {k}")
+    ranked = rank_candidates(engine, query)
 
-    # 1. CLIP top-k, in CLIP's order.
-    clip_scores, candidate_ids = search_images(engine.image_index, query[None, :], engine.top_k)
-    # relevant is empty: a typed query has no ground truth, nothing is measured here.
-    candidates = Candidates(query[None, :], candidate_ids, clip_scores, [set()])
-
-    # 2. The ranking's scores, from the evaluation's own functions.
-    graph_scores = candidate_graph_scores(candidates, engine.image_h, engine.split_graph.image_ids)[
-        0
-    ]
-    final_scores = fuse_scores(clip_scores[0], graph_scores, engine.alpha)
-
-    row_of_id = {}
-    for row, image_id in enumerate(engine.split_graph.image_ids.tolist()):
-        row_of_id[image_id] = row
-
-    # 3. and 4.
+    # 4. The paths of the first k images.
     results = []
-    order = ranked_columns(final_scores)
-    for rank, column in enumerate(order[:k].tolist(), start=1):
-        image_row = row_of_id[int(candidate_ids[0, column])]
+    for rank, column in enumerate(ranked.order[:k].tolist(), start=1):
+        image_row = int(ranked.image_rows[column])
         path = decompose_graph_score(engine.model, engine.split_graph, image_row, query)
         # Guard: the explained score must be the one that ranked the image.
-        if abs(path.graph_score - float(graph_scores[column])) > SCORE_TOLERANCE:
+        if abs(path.graph_score - float(ranked.graph_scores[column])) > SCORE_TOLERANCE:
             raise ValueError(
                 f"image row {image_row}: path gives graph score {path.graph_score}, "
-                f"the ranking used {graph_scores[column]} (image_h from another model?)"
+                f"the ranking used {ranked.graph_scores[column]} (image_h from another model?)"
             )
         results.append(
             ImagePath(
                 rank=rank,
                 clip_rank=column + 1,  # search_images returns CLIP's order
-                image_id=int(candidate_ids[0, column]),
-                clip_score=float(clip_scores[0, column]),
-                graph_score=float(graph_scores[column]),
-                final_score=float(final_scores[column]),
+                image_id=int(ranked.candidate_ids[column]),
+                clip_score=float(ranked.clip_scores[column]),
+                graph_score=float(ranked.graph_scores[column]),
+                final_score=float(ranked.final_scores[column]),
                 path=path,
                 occlusion_drop=occlusion_drops(engine, image_row, query),
             )

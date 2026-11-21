@@ -10,7 +10,12 @@ pytest.importorskip("torch_geometric")
 pytest.importorskip("faiss")
 
 from mmxai.eval.graph_rerank import image_vectors  # noqa: E402
-from mmxai.explain.query_path import QueryEngine, concept_name, search_and_explain  # noqa: E402
+from mmxai.explain.query_path import (  # noqa: E402
+    QueryEngine,
+    concept_name,
+    search_and_explain,
+    search_clip,
+)
 from mmxai.explain.ranking_model import graph_scores_with_edges  # noqa: E402
 from mmxai.index.image_index import build_image_index  # noqa: E402
 from test_explain_ranking_model import EDGE_INDEX, GRAPH, random_model  # noqa: E402
@@ -118,3 +123,28 @@ def test_concept_rows_are_named_after_the_images():
     # Rows 0-2 are images, so concept row 3 is the first concept.
     assert concept_name(engine, 3) == "dog.n.01"
     assert concept_name(engine, 5) == "car.n.01"
+
+
+def test_plain_clip_ranks_by_cosine_only():
+    # QUERY gives all three images the same cosine; this one gives 0.96, 0.36, 0.64.
+    query = np.array([0.8, 0.6, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+    hits = search_clip(make_engine(alpha=0.5), query, k=3)
+
+    expected_ids = GRAPH.image_ids[np.argsort(-(IMAGE_EMBEDDINGS @ query))].tolist()
+    assert [hit.image_id for hit in hits] == expected_ids
+    assert [hit.rank for hit in hits] == [1, 2, 3]
+
+
+def test_plain_clip_equals_clip_plus_graph_with_alpha_one():
+    engine = make_engine(alpha=1.0)
+
+    hits = search_clip(engine, QUERY, k=3)
+    results = search_and_explain(engine, QUERY, k=3)
+
+    assert [hit.image_id for hit in hits] == [item.image_id for item in results]
+
+
+@pytest.mark.parametrize("k", [0, 4])
+def test_plain_clip_rejects_k_outside_the_candidates(k):
+    with pytest.raises(ValueError):
+        search_clip(make_engine(alpha=0.5), QUERY, k=k)
