@@ -112,7 +112,7 @@
     NV1 mở rộng & nDCG, ảnh $\to$ văn bản, nhóm truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     2 (8.5) & Tập công khai thứ hai (Flickr30k) & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     2 (8.5) & Phương pháp từ năm 2024 (G-Retriever) & \textcolor{xanh}{\textbf{Hoàn thành}}, kết quả âm \\
-    2 (8.5) & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & \textcolor{cam}{Đang làm} trên VG; có 318 câu trên MMKG \\
+    2 (8.5) & Bộ $\ge$20 truy vấn trực tiếp/gián tiếp & 38 câu VG (\textcolor{cam}{chấm 3/6}); 318 câu MMKG \\
     3 (10) & Fidelity, validity, sparsity trên $\ge$10 truy vấn & \textcolor{xanh}{\textbf{Hoàn thành}} (val + test) \\
     3 (10) & MMKG tiếng Việt tự xây & \textcolor{xanh}{\textbf{Hoàn thành}} \\
     4 (+1--2) & Cải tiến riêng & \textcolor{do}{Chưa làm} \\
@@ -499,6 +499,40 @@
   \nhanxet{đồ thị con phụ thuộc truy vấn không mang thêm thông tin so với phép chiếu học được.}
 \end{frame}
 
+\begin{frame}{Bộ 38 truy vấn trực tiếp / gián tiếp (test VG)}
+  \begin{columns}[T]
+    \column{.44\textwidth}
+      \begin{block}{Cách xây (ADR-0057, ADR-0058)}
+        \small
+        \begin{itemize}
+          \item Giấu một khái niệm, mô tả bằng từ chỉ loại + 2 tính chất ConceptNet.
+          \item \textit{Trực tiếp:} ``A person playing tennis.''
+          \item \textit{Gián tiếp:} ``A person playing a sport that has an advantage and uses a ball.''
+          \item Luật chốt trên val; 28 cặp sinh trên test, 1 thành viên duyệt có ảnh, giữ 19 cặp $\to$ \textbf{38 câu}.
+        \end{itemize}
+      \end{block}
+    \column{.54\textwidth}
+      \centering\scriptsize
+      \begin{tabular}{l c c c}
+        \toprule
+        \textbf{\mrr} & \textbf{Trực tiếp} & \textbf{Gián tiếp} & \textbf{Tất cả} \\
+         & (19) & (19) & (38) \\
+        \midrule
+        CLIP thuần & 0,531 & 0,205 & 0,368 \\
+        Đối chứng & \textbf{0,585}\pmm0,037 & 0,331\pmm0,013 & 0,458\pmm0,015 \\
+        G-Retriever GĐ2 & 0,559\pmm0,010 & \textbf{0,377}\pmm0,032 & \textbf{0,468}\pmm0,021 \\
+        \bottomrule
+      \end{tabular}
+      \par\smallskip{\color{xam} 3 seed; đối chứng: không đồ thị, cùng cấu hình (lr $10^{-4}$). Ba mô hình còn lại chưa chấm.}
+      \par\medskip\raggedright\small
+      \begin{itemize}
+        \item Mức tăng ở câu gián tiếp lớn hơn nhiều so với câu trực tiếp, nhưng phần lớn đã có ở đối chứng.
+        \item G-Retriever hơn đối chứng ở gián tiếp đồ vật (+0,105 \pmm{} 0,051, 3/3 seed), kém ở gián tiếp hoạt động.
+      \end{itemize}
+  \end{columns}
+  \nhanxet{chỉ 38 câu, một người duyệt: chênh lệch giữa mô hình mới là xu hướng.}
+\end{frame}
+
 % ══════════════════════════════════════════════════════════════
 \section{Kết quả Nhiệm vụ 3: giải thích}
 
@@ -693,7 +727,7 @@
           \item \textbf{Đồ thị ít ``quan hệ''}: cạnh suy từ chính CLIP, chưa có quan hệ scene graph, chưa dùng ConceptNet.
           \item \textbf{$\alpha$ cố định} gây các ca thất bại lớn (hạng 7--15 rơi xuống 92--100).
           \item \textbf{Thống kê}: 3 seed, một bản xáo, chưa kiểm định theo truy vấn.
-          \item \textbf{Chưa xong}: bộ $\ge$20 truy vấn trên test VG; cấp độ 4.
+          \item \textbf{Chưa xong}: chấm 3 mô hình còn lại trên bộ 38 truy vấn VG; cấp độ 4.
         \end{enumerate}
       \end{alertblock}
     \column{.43\textwidth}
