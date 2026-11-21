@@ -88,7 +88,15 @@ Tuỳ chọn, đánh giá mở rộng (nDCG, ảnh → văn bản, nhóm truy v�
 
 Cần chạy xong bước 2 của cấp độ 1 trước.
 
-### 2a. Flickr30k
+Cấp độ 2 chạy trên **2 tập công khai**: Visual Genome và Flickr30k.
+
+| Yêu cầu | Visual Genome | Flickr30k |
+|---|---|---|
+| CLIP, CLIP + Graph, ablation | cấp độ 1 (mục 1) | mục 2a |
+| G-Retriever + đối chứng không đồ thị | mục 2b | mục 2b |
+| Bộ 38 truy vấn trực tiếp / gián tiếp | mục 2c | – |
+
+### 2a. CLIP + Graph trên Flickr30k (tập thứ hai)
 
 ```bash
 for s in 0 1 2; do uv run python scripts/evaluate_clip.py --config configs/clip_flickr30k.yaml --seed $s; done
@@ -104,26 +112,33 @@ done
 uv run python scripts/summarize_runs.py --split test --output results/tables/level1_flickr30k_test.csv
 ```
 
-### 2b. G-Retriever (PCST + GraphSAGE)
+### 2b. G-Retriever (PCST + GraphSAGE) trên cả hai tập
 
-Bước cache PCST chậm, khoảng 1 giờ CPU mỗi bộ dữ liệu.
+Bước cache PCST chậm, khoảng 1 giờ CPU mỗi tập. Mỗi tập chạy G-Retriever và một đối chứng không đồ thị cùng cấu hình huấn luyện.
 
 ```bash
-# Visual Genome
+# Visual Genome → results/tables/g_retriever_test.csv
 uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_vg.yaml --seed 0
 for s in 0 1 2; do
   uv run python scripts/train_pcst_sage.py --config configs/clip_pcst_sage_vg.yaml --seed $s
   uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_vg.yaml --seed $s
 done
-
-# Đối chứng không đồ thị, cùng cấu hình huấn luyện
 uv run python scripts/train_graph_rerank.py --config configs/clip_nograph_vg_lr1e4.yaml --seeds 0 1 2 --threads 4
 for s in 0 1 2; do uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_vg_lr1e4.yaml --seed $s; done
-
 uv run python scripts/summarize_runs.py --split test --output results/tables/g_retriever_test.csv
+
+# Flickr30k (cần đồ thị Flickr30k ở 2a) → results/tables/g_retriever_flickr30k_test.csv
+uv run python scripts/prepare_pcst_cache.py --config configs/clip_pcst_sage_flickr30k.yaml --seed 0
+for s in 0 1 2; do
+  uv run python scripts/train_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed $s
+  uv run python scripts/evaluate_pcst_sage.py --config configs/clip_pcst_sage_flickr30k.yaml --seed $s
+done
+uv run python scripts/train_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seeds 0 1 2 --threads 4
+for s in 0 1 2; do uv run python scripts/evaluate_graph_rerank.py --config configs/clip_nograph_flickr30k_lr1e4.yaml --seed $s; done
+uv run python scripts/summarize_runs.py --split test --output results/tables/g_retriever_flickr30k_test.csv
 ```
 
-Trên Flickr30k: chạy y hệt, thay `clip_pcst_sage_vg` bằng `clip_pcst_sage_flickr30k` và `clip_nograph_vg_lr1e4` bằng `clip_nograph_flickr30k_lr1e4`. Bảng ra là `g_retriever_flickr30k_test.csv`.
+`summarize_runs.py` gom mọi run trong `results/runs/`. Muốn ra đúng bảng của từng tập, thêm `--runs-dir <thư mục chỉ chứa run của tập đó>`.
 
 ### 2c. Bộ 38 truy vấn trực tiếp / gián tiếp
 
