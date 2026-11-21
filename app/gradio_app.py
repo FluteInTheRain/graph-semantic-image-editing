@@ -2,16 +2,20 @@
 
 Levels follow the assignment (PDF section 5):
     1  plain CLIP or CLIP + Graph (the team's one-layer GraphSAGE), basic explanation (paths)
-    2  adds G-Retriever (PCST subgraph, stage 2)                         [not wired yet]
-    3  adds the quantitative explanation (IG, m = 10, fidelity) for CLIP + Graph [not wired yet]
+    2  adds G-Retriever stage 2 (GraphSAGE on the query's PCST subgraph), explained by
+       the concepts its score uses
+    3  adds the quantitative explanation of CLIP + Graph: the main explainer and m chosen
+       on val (configs/explain_vg.yaml), with fidelity, sparsity and validity
 
-Only calls functions of src/mmxai/explain/ (query_path, path_view, path_graph); the UI
-only decides which of them to call. Searches val only (ADR-0009). alpha is the one
-training chose on val; the UI cannot change it.
+Only calls functions of src/mmxai/explain/; the UI only decides which of them to call.
+Searches val only (ADR-0009). Every alpha is the one training chose on val; the UI
+cannot change it.
 
 Before running:
     uv sync --group ml --group graph --group demo
     The trained model: scripts/train_graph_rerank.py with the same --config and seed.
+    For G-Retriever (loaded the first time it is picked): the PMI concept edges and the
+    stage-2 model of --retriever-config (scripts/train_pcst_sage.py).
     Optional, for thumbnails: Visual Genome image_data.json and the images/ folder.
 
 Run (from the repo root; loading takes about 10 s on a laptop CPU):
@@ -28,14 +32,29 @@ from matplotlib import pyplot as plt
 from mmxai.data.image_sources import image_sources
 from mmxai.data.visual_genome import IMAGE_FILE
 from mmxai.eval.graph_rerank import load_graph_rerank_config
+from mmxai.eval.pcst_sage_rerank import load_pcst_sage_config
+from mmxai.explain.config import load_explain_config
+from mmxai.explain.evaluation import check_settings
 from mmxai.explain.path_graph import build_path_graph, draw_path_graph
 from mmxai.explain.path_view import HOW_TO_READ, format_image_path
+from mmxai.explain.quantitative_view import (
+    HOW_TO_READ_QUANTITATIVE,
+    format_quantified,
+    format_quantified_summary,
+)
 from mmxai.explain.query_path import (
     encode_query,
     load_engine,
     load_text_encoder,
     search_and_explain,
     search_clip,
+)
+from mmxai.explain.query_quantitative import explain_quantitatively
+from mmxai.explain.retriever_path import load_retriever_engine, search_retriever
+from mmxai.explain.retriever_view import (
+    HOW_TO_READ_RETRIEVER,
+    format_retriever_result,
+    format_subgraph,
 )
 
 MAX_K = 10  # more image nodes than this do not fit one screen during the oral exam
@@ -56,10 +75,6 @@ METHODS_BY_LEVEL = {
     "1": [CLIP_ONLY, CLIP_GRAPH],
     "2": [CLIP_ONLY, CLIP_GRAPH, G_RETRIEVER],
     "3": [CLIP_ONLY, CLIP_GRAPH, G_RETRIEVER],
-}
-NOT_WIRED = {
-    G_RETRIEVER: "G-Retriever is not wired into the demo yet (next step).",
-    QUANTITATIVE: "The quantitative explanation is not wired into the demo yet (next step).",
 }
 
 
@@ -91,9 +106,29 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--num-edges", type=int, default=3, help="edges shown per side")
     parser.add_argument("--vg-data-dir", help="folder with image_data.json (and images/)")
+    parser.add_argument(
+        "--explain-config",
+        default="configs/explain_vg.yaml",
+        help="level 3: main explainer and m chosen on val for this model",
+    )
+    parser.add_argument(
+        "--retriever-config",
+        default="configs/clip_pcst_sage_vg.yaml",
+        help="level 2: the G-Retriever stage-2 experiment",
+    )
     args = parser.parse_args()
 
     config = load_graph_rerank_config(args.config)
+    explain_config = load_explain_config(args.explain_config)
+    # The explainer and m were chosen on val for one model; never use them on another.
+    quantitative_problem = None
+    if Path(explain_config.ranking_config) != Path(args.config):
+        quantitative_problem = (
+            f"The quantitative explanation is not available: {args.explain_config} was "
+            f"chosen on val for {explain_config.ranking_config}, not for {args.config}."
+        )
+    else:
+        check_settings(explain_config, config)
     engine = load_engine(config, args.seed)
     encoder = load_text_encoder(config)
     sources = load_sources(args.vg_data_dir)
@@ -116,7 +151,57 @@ def main() -> None:
         note = "Plain CLIP ranks by cosine only: no graph, so no explanation."
         if not gallery:
             note += "\n\n" + NO_IMAGES
-        return gallery, note, None, "\n".join(rows)
+        return gallery, note, gr.Plot(value=None, visible=False), "\n".join(rows)
+
+    retriever = {}  # loaded on first use: it reads every feature again (about a minute)
+
+    def get_retriever():
+        if "engine" not in retriever:
+            retriever_config = load_pcst_sage_config(args.retriever_config)
+            retriever["engine"] = load_retriever_engine(retriever_config, args.seed)
+        return retriever["engine"]
+
+    def answer_retriever(text: str, k: int):
+        try:
+            retriever_engine = get_retriever()
+        except FileNotFoundError as error:
+            message = (
+                f"G-Retriever cannot be loaded: {error}. It needs the PMI concept edges "
+                f"and the stage-2 model of {args.retriever_config} (see app/README.md)."
+            )
+            return [], message, None, ""
+        answer = search_retriever(retriever_engine, encode_query(encoder, text), k)
+        gallery = thumbnails([(item.rank, item.image_id) for item in answer.results])
+        alpha = retriever_engine.alpha
+        note = (
+            f"G-Retriever stage 2, alpha {alpha:g} (chosen on val by training).\n\n"
+            + format_subgraph(answer)
+        )
+        if not gallery:
+            note += "\n\n" + NO_IMAGES
+        tables = [HOW_TO_READ_RETRIEVER]
+        for item in answer.results:
+            tables.append(format_retriever_result(item, retriever_engine.alpha))
+        return gallery, note, None, "\n\n".join(tables)
+
+    def answer_quantitative(text: str, k: int):
+        if quantitative_problem is not None:
+            return [], quantitative_problem, None, ""
+        items = explain_quantitatively(
+            engine, encode_query(encoder, text), k, explain_config, args.seed
+        )
+        gallery = thumbnails([(item.rank, item.image_id) for item in items])
+        explainer = explain_config.main_explainer
+        note = (
+            f"Explainer {explainer}, m = {explain_config.top_m} (both chosen on val).\n\n"
+            + format_quantified_summary(items)
+        )
+        if not gallery:
+            note += "\n\n" + NO_IMAGES
+        tables = [HOW_TO_READ_QUANTITATIVE]
+        for item in items:
+            tables.append(format_quantified(engine, item, explainer))
+        return gallery, note, None, "\n\n".join(tables)
 
     def answer_paths(text: str, k: int):
         results = search_and_explain(engine, encode_query(encoder, text), k)
@@ -135,11 +220,14 @@ def main() -> None:
         k = int(k)
         if method == CLIP_ONLY:
             return answer_clip(text, k)
-        if method in NOT_WIRED:
-            return [], NOT_WIRED[method], None, ""
-        if explanation in NOT_WIRED:
-            return [], NOT_WIRED[explanation], None, ""
-        return answer_paths(text, k)
+        if method == G_RETRIEVER:
+            gallery, note, figure, tables = answer_retriever(text, k)
+        elif explanation == QUANTITATIVE:
+            gallery, note, figure, tables = answer_quantitative(text, k)
+        else:
+            gallery, note, figure, tables = answer_paths(text, k)
+        # The path graph exists only for the basic CLIP + Graph explanation.
+        return gallery, note, gr.Plot(value=figure, visible=figure is not None), tables
 
     def on_level(level: str, method: str):
         methods = METHODS_BY_LEVEL[level]

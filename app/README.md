@@ -8,8 +8,23 @@
 
 ## Chạy demo đường đi giải thích
 
-`app/gradio_app.py`: nhập một câu truy vấn, xem top-k ảnh **val** và, với mỗi ảnh, đường đi
-`truy vấn → khái niệm → contains → ảnh` đã tạo ra điểm đồ thị của ảnh đó.
+`app/gradio_app.py`: nhập một câu truy vấn, xem top-k ảnh **val** và giải thích của từng ảnh.
+Ba nhóm nút chọn cho biết đang demo phần nào của đề (PDF §5):
+
+| Nút | Lựa chọn | Hiện khi |
+|---|---|---|
+| **Level** | 1, 2, 3 | luôn hiện |
+| **Method** | `Plain CLIP` (baseline) · `CLIP + Graph (GraphSAGE, ours)` · `G-Retriever (PCST, stage 2)` | G-Retriever từ cấp 2 |
+| **Explanation** | `Basic: paths (Occlusion)` · `Quantitative: IG (m = 10) + fidelity` | ẩn với CLIP thuần; định lượng chỉ ở cấp 3 với CLIP + Graph |
+
+| Kết hợp | Màn hình hiện gì | Code |
+|---|---|---|
+| CLIP thuần | top-k theo cosine, không có giải thích (không có đồ thị) | `query_path.search_clip` |
+| CLIP + Graph, cơ bản | đồ thị đường đi `truy vấn → khái niệm → contains → ảnh` + bảng tách điểm (giữ như trước) | `query_path`, `path_graph`, `path_view` |
+| CLIP + Graph, định lượng | với mỗi ảnh: m cạnh của explainer chính (IG, m = 10, **đọc từ `configs/explain_vg.yaml`**, đã chọn trên val), rồi Fid+ và tụt hạng khi xoá chúng so với xoá ngẫu nhiên, Fid−, sparsity, validity; dòng đầu là trung bình k ảnh | `query_quantitative`, `quantitative_view` (dùng lại `order_relations`, `evaluate_explanation` của `scripts/evaluate_explanations.py`) |
+| G-Retriever, cơ bản | đồ thị con `S_q` của truy vấn (khái niệm được thưởng + cầu nối PCST), rồi với mỗi ảnh: các khái niệm của ảnh nằm trong `S_q` (đúng tập điểm đồ thị dùng) và điểm mất khi bỏ từng khái niệm | `retriever_path`, `retriever_view` (dùng lại `PcstSageRanker`, `explain_candidate`) |
+
+Không có lựa chọn nào đổi `alpha`, explainer hay m: tất cả đã chốt trên val.
 
 ### Setup trên máy mới (vừa clone repo)
 
@@ -84,6 +99,19 @@ uv run python app/gradio_app.py --config configs/clip_graph_vg_lr1e4.yaml --seed
 Mở <http://127.0.0.1:7860>, gõ truy vấn (ví dụ `man riding a horse`), bấm **Search**. Nạp mất khoảng
 10 giây, mỗi truy vấn khoảng 0,1 giây trên CPU laptop.
 
+Mạng công ty: nếu app đứng im lúc nạp (treo khi gọi Hugging Face qua proxy) mà máy đã có trọng số
+CLIP trong cache, thêm `HF_HUB_OFFLINE=1` trước lệnh.
+
+**Bước 7 (tuỳ chọn). G-Retriever cho cấp 2.** App chỉ nạp G-Retriever lần đầu bạn chọn nó; thiếu
+file thì app báo lỗi trong ô kết quả, các chế độ khác vẫn chạy. Cần hai thứ của
+`configs/clip_pcst_sage_vg.yaml` (đổi bằng `--retriever-config`):
+
+- Cạnh đồng xuất hiện PMI (khoảng 1 phút):
+  `uv run python scripts/build_concept_edges.py --config configs/concept_edges_vg_cooccurrence.yaml`
+- Checkpoint giai đoạn 2 `artifacts/models/visual_genome/clip_pcst_sage_vg/seed<k>/` (`model.pt`,
+  `selection.json`): xin từ nhóm, hoặc tự chạy `scripts/prepare_pcst_cache.py` rồi
+  `scripts/train_pcst_sage.py` (xem docstring hai script; PCST trên train mất khoảng một giờ).
+
 **Kiểm tra nhanh** (thiếu gì thì app báo lỗi ngay lúc nạp):
 
 ```bash
@@ -100,13 +128,13 @@ ls artifacts/models/visual_genome/clip_graph_vg_lr1e4/seed0/             # model
 | `the analysis does not reproduce training` | checkpoint và đồ thị/embedding không cùng bộ: dựng lại đồ thị hoặc huấn luyện lại |
 | Gallery trống, có dòng "No thumbnails" | thiếu `data/visual_genome/image_data.json` hoặc quên `--vg-data-dir` |
 
-**Màn hình gồm gì?**
+**Màn hình gồm gì?** (chế độ CLIP + Graph, giải thích cơ bản)
 
 | Phần | Nội dung |
 |---|---|
 | Gallery | top-k ảnh val. Cần `data/visual_genome/image_data.json`; có ảnh trong `images/` thì dùng file trên máy, không có thì dùng URL gốc (cần mạng) |
 | Đồ thị (phần chính) | 3 cột: truy vấn → node khái niệm → node ảnh. Cạnh `contains` được tô là cạnh Occlusion chọn: **xanh** = xoá thì `g` giảm (cạnh đẩy ảnh lên), **đỏ** = xoá thì `g` tăng (kéo xuống), dày hơn = tác động lớn hơn. Cung xám từ truy vấn tới ảnh là phần "ảnh tự đi" (`W_self x_i`), số ghi trong ô ảnh. Đường chấm truy vấn → khái niệm không phải cạnh đồ thị |
-| "Numbers behind the graph" | bảng số của từng ảnh (mục thu gọn), giải thích ở dưới |
+| "Numbers behind the result" | bảng số của từng ảnh (mục thu gọn), giải thích ở dưới cho chế độ cơ bản của CLIP + Graph; các chế độ khác có đoạn "How to read" ở đầu bảng |
 
 Logic vẽ nằm ở `src/mmxai/explain/path_graph.py` (`build_path_graph` chọn node/cạnh, `draw_path_graph` vẽ);
 không có bước tìm đường nào, mọi cạnh được tô đều là cạnh Occlusion đã chọn (ADR-0016).
