@@ -30,9 +30,9 @@ Gián tiếp, Việt (79) & 0,101 & \textbf{0,126} & 0,124 & 0,115 \\
 \end{table}
 
 \subsection{Kết quả chuyển giao}
-Các nhận xét dưới đây là xu hướng và chưa được kiểm định theo truy vấn, vì mỗi nhóm chỉ có 35--80 câu.
+Các nhận xét dưới đây là xu hướng và chưa được kiểm định theo truy vấn, vì mỗi nhóm chỉ có 35-80 câu.
 
-\textit{Chuyển miền.} Không cần huấn luyện lại, cả ba mô hình học trên Visual Genome đều nâng \mrr{} so với CLIP, từ 0,2766 lên 0,2836--0,2872 (tăng 2,5--3,8\%). Tuy nhiên đối chứng không đồ thị đã đạt 0,2861 \pmm{} 0,0035, cao hơn mô hình một lớp và ngang mô hình hai lớp (chênh 0,0011, nhỏ hơn độ lệch chuẩn). Giống như trên Visual Genome, gần như toàn bộ mức tăng trên MMKG thuộc về phép chiếu tuyến tính học được.
+\textit{Chuyển miền.} Không cần huấn luyện lại, cả ba mô hình học trên Visual Genome đều nâng \mrr{} so với CLIP, từ 0,2766 lên 0,2836-0,2872 (tăng 2,5-3,8\%). Tuy nhiên đối chứng không đồ thị đã đạt 0,2861 \pmm{} 0,0035, cao hơn mô hình một lớp và ngang mô hình hai lớp (chênh 0,0011, nhỏ hơn độ lệch chuẩn). Giống như trên Visual Genome, gần như toàn bộ mức tăng trên MMKG thuộc về phép chiếu tuyến tính học được.
 
 \textit{Đóng góp của đồ thị theo nhóm câu.} So với đối chứng không đồ thị, mô hình hai lớp cao hơn ở câu gián tiếp tiếng Anh (0,458 so với 0,442), rõ nhất ở câu chung chung (0,609 so với 0,592). R@5 của câu gián tiếp chung chung tiếng Việt tăng từ 0,477 lên 0,568 với cả hai mô hình có đồ thị. Ngược lại, mô hình một lớp thấp hơn đối chứng ở gần như mọi nhóm. Ở câu trực tiếp (gọi tên riêng), mọi mô hình học trên Visual Genome đều hơi thấp hơn CLIP, nên nguyên nhân nằm ở phép chiếu chứ không riêng ở đồ thị.
 

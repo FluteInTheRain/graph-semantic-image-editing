@@ -1,8 +1,8 @@
 \section{Cơ sở lý thuyết và công trình liên quan}
 \label{sec:background}
 
-\subsection{Truy vấn văn bản--ảnh bằng CLIP}
-CLIP~\cite{radford2021clip} huấn luyện song song một bộ mã hóa ảnh $f_I$ và một bộ mã hóa văn bản $f_T$ bằng học tương phản trên các cặp ảnh--chú thích. Sau khi chuẩn hóa L2, độ phù hợp giữa truy vấn $q$ và ảnh $i$ là $\cos(f_T(q), f_I(i))$, và việc tìm kiếm quy về tìm láng giềng gần nhất. Nhóm dùng bản OpenCLIP~\cite{cherti2023openclip} ViT-B/32 huấn luyện trên LAION-2B~\cite{schuhmann2022laion}, giữ đóng băng toàn bộ, và dùng FAISS~\cite{johnson2019faiss} với chỉ mục \code{IndexFlatIP} để tìm kiếm chính xác.
+\subsection{Truy vấn văn bản-ảnh bằng CLIP}
+CLIP~\cite{radford2021clip} huấn luyện song song một bộ mã hóa ảnh $f_I$ và một bộ mã hóa văn bản $f_T$ bằng học tương phản trên các cặp ảnh-chú thích. Sau khi chuẩn hóa L2, độ phù hợp giữa truy vấn $q$ và ảnh $i$ là $\cos(f_T(q), f_I(i))$, và việc tìm kiếm quy về tìm láng giềng gần nhất. Nhóm dùng bản OpenCLIP~\cite{cherti2023openclip} ViT-B/32 huấn luyện trên LAION-2B~\cite{schuhmann2022laion}, giữ đóng băng toàn bộ, và dùng FAISS~\cite{johnson2019faiss} với chỉ mục \code{IndexFlatIP} để tìm kiếm chính xác.
 
 \subsection{Mạng nơ-ron đồ thị}
 Mạng nơ-ron đồ thị (GNN) cập nhật biểu diễn của một đỉnh bằng cách gom thông tin từ các đỉnh láng giềng. GCN~\cite{kipf2017gcn} lấy trung bình có chuẩn hóa theo bậc, GAT~\cite{velickovic2018gat} dùng trọng số chú ý, còn GraphSAGE~\cite{hamilton2017sage} tách riêng phần của chính đỉnh và phần của láng giềng:

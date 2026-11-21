@@ -16,10 +16,10 @@ Hình~\ref{fig:pipeline} mô tả pipeline theo quy trình đề bài gợi ý: 
 \node[box,right=of clip] (faiss) {FAISS\\top-100};
 \node[box,right=of faiss] (gnn) {GraphSAGE\\điểm $g$};
 \node[box,below=0.6cm of gnn] (fuse) {Kết hợp\\{\tiny $\alpha\cos+(1{-}\alpha)g$}};
-\node[box,left=of fuse] (exp) {Giải thích\\cạnh $i$--$c$};
+\node[box,left=of fuse] (exp) {Giải thích\\cạnh $i$-$c$};
 \node[box,left=of exp] (fid) {Fidelity,\\validity};
 \node[data,above=0.45cm of faiss] (img) {Ảnh $f_I$\\(tính trước)};
-\node[data,above=0.45cm of gnn] (graph) {Đồ thị\\ảnh--khái niệm};
+\node[data,above=0.45cm of gnn] (graph) {Đồ thị\\ảnh-khái niệm};
 \draw[arr] (q) -- (clip); \draw[arr] (clip) -- (faiss); \draw[arr] (faiss) -- (gnn);
 \draw[arr] (img) -- (faiss); \draw[arr] (graph) -- (gnn);
 \draw[arr] (gnn) -- (fuse); \draw[arr] (fuse) -- (exp); \draw[arr] (exp) -- (fid);
@@ -28,7 +28,7 @@ Hình~\ref{fig:pipeline} mô tả pipeline theo quy trình đề bài gợi ý: 
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Đồ thị ảnh--khái niệm}
+\subsection{Đồ thị ảnh-khái niệm}
 \label{sec:graph}
 Đồ thị có hai loại đỉnh. Đỉnh ảnh gồm mọi ảnh trong tập, kể cả ảnh không có đối tượng nào. Đỉnh khái niệm gồm 3.880 synset WordNet xuất hiện trong ít nhất 5 ảnh train. Vectơ của ảnh là embedding CLIP; vectơ của khái niệm là embedding văn bản CLIP của câu ``a photo of a \{lemma\}'' (ví dụ \code{fire\_hydrant.n.01} trở thành ``a photo of a fire hydrant''). Nhờ vậy ảnh và khái niệm nằm trong cùng một không gian 512 chiều.
 
@@ -53,11 +53,11 @@ Hình~\ref{fig:pipeline} mô tả pipeline theo quy trình đề bài gợi ý: 
 \draw[co] (c1) -- (c2); \draw[co] (c2) -- (c3); \draw[co] (c1) -- (c3);
 \node[font=\tiny,align=left,anchor=west] at (-0.6,-1.75) {\tikz\draw[-{Stealth[length=1.4mm]},blue!50!black](0,0)--(0.4,0); \code{contains}: 16 khái niệm gần nhất theo CLIP \quad \tikz\draw[dashed,red!60!black](0,0)--(0.4,0); \code{cooccurs\_with}: PMI trên train};
 \end{tikzpicture}
-\caption{Minh họa đồ thị ảnh--khái niệm (mỗi ảnh thật có 16 cạnh \code{contains}; hình chỉ vẽ vài cạnh). Cạnh của ảnh test chỉ dựa vào vectơ CLIP của chính ảnh, nên không đọc annotation.}
+\caption{Minh họa đồ thị ảnh-khái niệm (mỗi ảnh thật có 16 cạnh \code{contains}; hình chỉ vẽ vài cạnh). Cạnh của ảnh test chỉ dựa vào vectơ CLIP của chính ảnh, nên không đọc annotation.}
 \label{fig:graph}
 \end{figure}
 
-Hình~\ref{fig:graph} minh họa cấu trúc của đồ thị. \textbf{Cạnh \code{cooccurs\_with} (khái niệm--khái niệm).} Một biến thể thêm quan hệ giữa các khái niệm, đếm trên annotation của ảnh train: cặp $(a, b)$ được giữ khi hai khái niệm cùng xuất hiện trong ít nhất 10 ảnh và có PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
+Hình~\ref{fig:graph} minh họa cấu trúc của đồ thị. \textbf{Cạnh \code{cooccurs\_with} (khái niệm-khái niệm).} Một biến thể thêm quan hệ giữa các khái niệm, đếm trên annotation của ảnh train: cặp $(a, b)$ được giữ khi hai khái niệm cùng xuất hiện trong ít nhất 10 ảnh và có PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
 
 \subsection{Mô hình xếp hạng lại}
 \label{sec:model}
@@ -92,12 +92,12 @@ Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung các
 \toprule
 \textbf{Tên} & \textbf{lr} & \textbf{Câu hỏi} \\
 \midrule
-\code{clip\_vg} & -- & Baseline CLIP thuần \\
+\code{clip\_vg} & - & Baseline CLIP thuần \\
 \code{clip\_nograph\_vg} & $10^{-3}$ & $W_{\text{nb}} = 0$: mức tăng có cần đến đồ thị không? \\
 \code{clip\_graph\_vg\_lr1e4} & $10^{-4}$ & Mô hình chính: GraphSAGE một lớp \\
 \code{clip\_cooc\_graph\_\dots} & $10^{-4}$ & Cạnh đồng xuất hiện có giúp thêm không? \\
 \code{\dots\_shuffled} & $10^{-4}$ & Cấu trúc thật có quan trọng không? \\
-\code{clip\_pcst\_vg} & -- & G-Retriever GĐ1: đồ thị con theo truy vấn \\
+\code{clip\_pcst\_vg} & - & G-Retriever GĐ1: đồ thị con theo truy vấn \\
 \code{clip\_pcst\_sage\_\dots} & $10^{-4}$ & G-Retriever GĐ2: GraphSAGE trên đồ thị con \\
 \code{clip\_nograph\_\dots\_lr1e4} & $10^{-4}$ & Đối chứng cùng cấu hình của GĐ2 \\
 \bottomrule
@@ -109,7 +109,7 @@ Bảng~\ref{tab:exps} liệt kê các thí nghiệm. Tất cả dùng chung các
 Đồ thị ở trên không phụ thuộc vào truy vấn: mọi truy vấn nhìn thấy cùng 16 cạnh của một ảnh. Để có điểm đồ thị phụ thuộc vào truy vấn, nhóm tái lập ba bước đầu của G-Retriever~\cite{he2024gretriever} và bỏ bước sinh câu trả lời bằng mô hình ngôn ngữ lớn:
 \begin{enumerate}
 \item Chấm độ liên quan của các khái niệm với truy vấn và gán giải thưởng cho $k$ khái niệm liên quan nhất.
-\item Chọn một cây liên thông $S_q$ trên đồ thị đồng xuất hiện bằng PCST, gọi thư viện \code{pcst\_fast} với tham số giống mã gốc. PCST giữ cả những đỉnh không có thưởng nếu chúng là cầu nối giữa hai đỉnh có thưởng, phù hợp với kiểu truy vấn gián tiếp như \emph{child -- plays -- football}.
+\item Chọn một cây liên thông $S_q$ trên đồ thị đồng xuất hiện bằng PCST, gọi thư viện \code{pcst\_fast} với tham số giống mã gốc. PCST giữ cả những đỉnh không có thưởng nếu chúng là cầu nối giữa hai đỉnh có thưởng, phù hợp với kiểu truy vấn gián tiếp như \emph{child - plays - football}.
 \item Chấm điểm ứng viên dựa trên đồ thị con. Giai đoạn 1 dùng tỉ lệ khái niệm của ảnh nằm trong $S_q$. Giai đoạn 2 thay tỉ lệ này bằng một GraphSAGE một lớp chỉ gộp các khái niệm thuộc $S_q$, huấn luyện bằng InfoNCE như trên.
 \end{enumerate}
 Ở giai đoạn 1, các tham số $k \in \{3, 5, 10\}$, phí cạnh $C \in \{0,25; 0,5; 1\}$ và $\alpha$ được chọn trên val. Giai đoạn 2 dùng cố định $k = 3$, $C = 0,5$ (giá trị của mã gốc cho SceneGraphs), vì mỗi lượt PCST trên toàn bộ câu train mất khoảng một giờ; epoch và $\alpha$ chọn trên val, lr $10^{-4}$ giống mô hình chính. Đối chứng của giai đoạn 2 là mô hình không đồ thị cùng cấu hình huấn luyện. Trên Flickr30k không có annotation đối tượng để đếm đồng xuất hiện, nên nhóm dùng lại cạnh đồng xuất hiện đếm trên train Visual Genome; làm được vì đồ thị Flickr30k chép nguyên 3.880 khái niệm của Visual Genome, cùng thứ tự. Hai ablation đi kèm giai đoạn 1 là bỏ bước dựng cây (chỉ giữ top-$k$ khái niệm) và xáo cạnh. Thư viện \code{pcst\_fast} chỉ cho kết quả đúng với numpy 1.x nên dự án ghim phiên bản \code{numpy<2}.
