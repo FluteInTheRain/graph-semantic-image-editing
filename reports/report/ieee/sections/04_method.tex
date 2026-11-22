@@ -57,7 +57,9 @@ Hình~\ref{fig:pipeline} mô tả pipeline theo quy trình đề bài gợi ý: 
 \label{fig:graph}
 \end{figure}
 
-Hình~\ref{fig:graph} minh họa cấu trúc của đồ thị. \textbf{Cạnh \code{cooccurs\_with} (khái niệm-khái niệm).} Một biến thể thêm quan hệ giữa các khái niệm, đếm trên annotation của ảnh train: cặp $(a, b)$ được giữ khi hai khái niệm cùng xuất hiện trong ít nhất 10 ảnh và có PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
+Hình~\ref{fig:graph} minh họa cấu trúc của đồ thị.
+
+\textbf{Cạnh \code{cooccurs\_with} (khái niệm-khái niệm).} Một biến thể thêm quan hệ giữa các khái niệm, đếm trên annotation của ảnh train: cặp $(a, b)$ được giữ khi hai khái niệm cùng xuất hiện trong ít nhất 10 ảnh và có PMI~\cite{church1990pmi} dương; mỗi khái niệm giữ tối đa 10 láng giềng có PMI cao nhất.
 
 \subsection{Mô hình xếp hạng lại}
 \label{sec:model}
